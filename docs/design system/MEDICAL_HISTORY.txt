@@ -1,0 +1,133 @@
+Design a medical-grade "Antecedents" form component for an ophthalmology platform.
+
+THIS COMPONENT IS CLINICAL.
+It MUST strictly follow backend schema.
+Do NOT invent fields.
+Do NOT allow free text for diseases.
+
+TARGET SCHEMA:
+
+antecedents_medico_chirurgicaux: string[]
+
+pathologie_ophtalmologique: string[]
+
+familial: ["CECITE", "GPAO", "OTHER"]
+
+autre_familial_detail: string
+
+uses_screen: boolean
+
+screen_time_hours_per_day: number
+
+==================================================
+SECTION 1 — MEDICAL & SURGICAL ANTECEDENTS
+
+Design a multi-select ICD-11 disease selector.
+
+DATA SOURCE:
+
+WHO ICD-11 API
+
+React library: @whoicd/icd11ect
+
+UX RULES:
+
+Search-based input
+
+Asynchronous results
+
+Pagination mandatory
+
+10 results per page
+
+Explicit Previous / Next controls
+
+Show result count (e.g. 1–10 / 134)
+
+SELECTION RULES:
+
+Multiple selection
+
+Maximum 5 items selectable
+
+Selected items displayed as non-editable tags
+
+Each tag shows ICD code + label
+
+Remove action allowed per tag
+
+NO free text allowed.
+
+==================================================
+SECTION 2 — OPHTHALMOLOGICAL PATHOLOGIES
+
+Same ICD-11 selector behavior as Section 1.
+
+This field is independent from medico-surgical antecedents.
+Maximum 5 items selectable.
+
+==================================================
+SECTION 3 — FAMILY HISTORY
+
+Design a radio group with values:
+
+CECITE
+
+GPAO
+
+OTHER
+
+If OTHER is selected:
+
+Display a text input "autre_familial_detail"
+
+Field becomes required
+
+Placeholder: "Précisez l’antécédent familial"
+
+If OTHER is not selected:
+
+Hide the text input
+
+Clear its value
+
+==================================================
+SECTION 4 — VISUAL HABITS
+
+Design a boolean field:
+
+uses_screen (Yes / No)
+
+If uses_screen is true:
+
+Display numeric input "screen_time_hours_per_day"
+
+Unit: hours per day
+
+Value >= 0
+
+Show warning for unrealistic values (e.g. > 12h)
+
+If uses_screen is false:
+
+Hide the numeric input
+
+Value is null
+
+==================================================
+GLOBAL UX RULES
+
+Medical-grade UI
+
+Clear section separation
+
+No decorative elements
+
+Explicit validation messages
+
+No inline editing of ICD labels
+
+Accessibility compliant
+
+Each section must be visually distinct.
+This component must be reusable in both Adult and Child exam contexts.

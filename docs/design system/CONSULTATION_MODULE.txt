@@ -1,0 +1,233 @@
+You are designing the Consultation module of a professional ophthalmology medical platform.
+
+THIS MODULE IS STRICTLY ADMINISTRATIVE AND CONTEXTUAL.
+It MUST NOT contain clinical data.
+It MUST NOT replace exams.
+It MUST follow strict medical workflow rules.
+
+Do NOT invent fields.
+Do NOT merge all components into a single file.
+Each screen MUST be implemented as a separate component.
+
+==================================================
+MODULE PURPOSE
+==================================================
+
+The Consultation module represents the real medical visit context.
+It links:
+- a Patient
+- a date and time
+- a status
+- optionally an Exam (Child or Adult)
+
+It does NOT store medical or clinical information.
+
+==================================================
+CONSULTATION CORE MODEL (CONCEPTUAL)
+==================================================
+
+A consultation:
+- Belongs to exactly one patient
+- Has a consultation type: Child or Adult
+- Has a date and time
+- Has a status
+- May be linked to:
+  - zero exam
+  - one Child exam
+  - one Adult exam
+- May be linked to one appointment (optional)
+
+Consultation statuses:
+- Planned
+- In progress
+- Completed
+- Cancelled
+
+==================================================
+CONSULTATION STATE MACHINE
+==================================================
+
+Allowed transitions only:
+
+Planned → In progress
+Planned → Cancelled
+
+In progress → Completed
+In progress → Cancelled (exceptional)
+
+Completed → no transition
+Cancelled → no transition
+
+A consultation is NEVER deleted.
+State changes are timestamped.
+
+==================================================
+SCREENS TO IMPLEMENT
+==================================================
+
+The Consultation module contains EXACTLY TWO screens:
+
+1) Consultations List
+2) Consultation Detail
+
+==================================================
+SCREEN 1 — CONSULTATIONS LIST
+==================================================
+
+Design a consultations list screen.
+
+PURPOSE:
+- View all consultations
+- Filter activity
+- Access consultation context
+
+LAYOUT:
+- Table layout only
+- No cards
+
+COLUMNS:
+- Date
+- Time
+- Patient full name
+- Patient age
+- Consultation type (Child / Adult)
+- Status (Planned / In progress / Completed / Cancelled)
+- Linked exam (None / Child / Adult)
+- Action (View or Continue)
+
+FILTERS:
+- Date range
+- Status
+- Consultation type (Child / Adult)
+- With exam / Without exam
+
+RULES:
+- One action per row
+- No inline editing
+- Status displayed with clear but subtle badges
+- Clicking a row or action opens Consultation Detail
+
+DESIGN:
+- Medical-grade
+- High readability
+- Neutral colors
+- No decorative elements
+
+==================================================
+SCREEN 2 — CONSULTATION DETAIL
+==================================================
+
+Design a consultation detail screen.
+
+PURPOSE:
+- Act as a contextual hub for a single consultation
+- Allow controlled state transitions
+- Provide navigation to exams
+
+--------------------------------------------------
+HEADER SECTION (READ-ONLY)
+--------------------------------------------------
+
+Display:
+- Patient full name
+- Patient ID
+- Age at consultation
+- Consultation type (Child / Adult)
+- Consultation date and time
+- Current status
+
+--------------------------------------------------
+SECTION: ORGANIZATION
+--------------------------------------------------
+
+Display:
+- Linked appointment (if any)
+- Practitioner (if any)
+- Administrative notes (optional, non-clinical)
+
+Notes:
+- Notes are plain text
+- No structured medical fields
+
+--------------------------------------------------
+SECTION: LINKED EXAM
+--------------------------------------------------
+
+If NO exam linked:
+- Display message: "No exam linked to this consultation"
+- Display action button:
+  - "Create exam" (Child or Adult depending on consultation type)
+
+If exam IS linked:
+- Display exam type
+- Display exam status
+- Display action button:
+  - "View exam"
+
+RULES:
+- Exams are edited ONLY in exam modules
+- No inline exam editing here
+
+--------------------------------------------------
+ACTIONS (STATE-DEPENDENT)
+--------------------------------------------------
+
+Buttons MUST appear or disappear based on:
+- Consultation status
+- User role (handled externally)
+
+Possible actions:
+- Start consultation (Planned → In progress)
+- Create exam
+- Link existing exam
+- Complete consultation (In progress → Completed)
+- Cancel consultation (Planned or In progress)
+
+Each action:
+- Requires explicit user intent
+- Has a confirmation step if destructive (Cancel)
+
+--------------------------------------------------
+UX RULES
+--------------------------------------------------
+
+- No clinical fields allowed
+- No exam fields displayed
+- No scheduling edits here
+- No historical data modification
+
+The screen is a coordinator, not a form-heavy interface.
+
+==================================================
+NAVIGATION RULES
+==================================================
+
+From Consultation Detail:
+- Navigate to Exam (read-only or edit depending on permissions)
+- Navigate back to:
+  - Consultations list
+  - Patient Medical Record
+
+==================================================
+VISUAL & UX TONE
+==================================================
+
+- Professional
+- Calm
+- Neutral
+- Explicit
+- Predictable
+
+No animations.
+No visual overload.
+No decorative UI.
+
+==================================================
+FINAL IMPLEMENTATION RULES
+==================================================
+
+- Consultation screens are NOT reusable for exams
+- Consultation screens do NOT embed medical forms
+- One component per screen
+- Follow backend logic strictly
+- Respect state machine constraints

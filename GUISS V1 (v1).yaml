@@ -1,0 +1,3964 @@
+openapi: 3.0.3
+info:
+  title: GUISS V1
+  version: 1.0.0 (v1)
+  description: Guiss est une plateforme web de suivi médical dédiée à la collecte,
+    l’analyse et la prévention des troubles visuels, en particulier chez les conducteurs.
+    Elle permet une gestion sécurisée des dossiers, des rendez-vous et des rapports,
+    accessible selon les rôles utilisateurs.
+paths:
+  /api/v1/depistage/attachments/{id}/:
+    get:
+      operationId: v1_depistage_attachments_retrieve
+      description: Retourne les détails complets d'une pièce jointe.
+      summary: Détail d'une pièce jointe
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Pièces jointes
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenSupplementaire'
+          description: ''
+    delete:
+      operationId: v1_depistage_attachments_destroy
+      description: Supprime définitivement une pièce jointe.
+      summary: Supprime une pièce jointe
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Pièces jointes
+      responses:
+        '204':
+          description: No response body
+  /api/v1/depistage/clinical-examens/{clinical_examen_id}/attachments/:
+    get:
+      operationId: v1_depistage_clinical_examens_attachments_list
+      description: Retourne toutes les pièces jointes associées à un examen clinique.
+      summary: Liste les pièces jointes d'un examen clinique
+      parameters:
+      - in: path
+        name: clinical_examen_id
+        schema:
+          type: integer
+        required: true
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Pièces jointes
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExamenSupplementaireListList'
+          description: ''
+    post:
+      operationId: v1_depistage_clinical_examens_attachments_create
+      description: |-
+        Upload un fichier PDF ou image pour un examen clinique.
+
+        **Limites:**
+        - Maximum 5 pièces jointes par examen
+        - Types: PDF, JPEG, PNG, WEBP
+        - Taille max: 10MB
+      summary: Upload une pièce jointe
+      parameters:
+      - in: path
+        name: clinical_examen_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Pièces jointes
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenSupplementaireCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenSupplementaire'
+          description: ''
+        '400':
+          description: Fichier invalide ou limite atteinte
+        '404':
+          description: Examen clinique non trouvé
+  /api/v1/depistage/examens/adultes/:
+    get:
+      operationId: v1_depistage_examens_adultes_list
+      description: Retourne la liste paginée des examens adulte.
+      summary: Liste des examens adulte
+      parameters:
+      - in: query
+        name: created_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: has_clinical
+        schema:
+          type: boolean
+      - in: query
+        name: has_technical
+        schema:
+          type: boolean
+      - in: query
+        name: is_completed
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: patient
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Examens Adulte
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExamenAdultList'
+          description: ''
+  /api/v1/depistage/examens/adultes/{id}/:
+    get:
+      operationId: v1_depistage_examens_adultes_retrieve
+      description: |-
+        Retourne les informations complètes d'un examen adulte.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen adulte (`ExamensAdult.id`), **PAS l'ID du patient!**
+
+        Pour obtenir l'ID de l'examen:
+        1. `GET /examens/adultes/by-patient/{patient_id}/`
+        2. Utilisez le champ `id` de l'examen retourné
+      summary: Détail d'un examen adulte
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+        '404':
+          description: Examen non trouvé
+  /api/v1/depistage/examens/adultes/{id}/add-clinical/:
+    post:
+      operationId: v1_depistage_examens_adultes_add_clinical_create
+      description: |-
+        Ajoute ou met à jour l'examen clinique complet en une fois.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen adulte (`ExamensAdult.id`)
+
+        ### Permission
+        DOCTOR, ADMIN uniquement
+      summary: Ajouter données cliniques
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultAddClinical'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultAddClinical'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultAddClinical'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+  /api/v1/depistage/examens/adultes/{id}/add-technical/:
+    post:
+      operationId: v1_depistage_examens_adultes_add_technical_create
+      description: |-
+        Ajoute ou met à jour l'examen technique complet en une fois.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen adulte (`ExamensAdult.id`)
+
+        ### Permission
+        TECHNICIAN, DOCTOR, ADMIN
+      summary: Ajouter données techniques
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultAddTechnical'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultAddTechnical'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultAddTechnical'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+  /api/v1/depistage/examens/adultes/{id}/complete/:
+    post:
+      operationId: v1_depistage_examens_adultes_complete_create
+      description: |-
+        Marque l'examen comme complété.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen adulte (`ExamensAdult.id`)
+      summary: Finaliser l'examen
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultComplete'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultComplete'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultComplete'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+  /api/v1/depistage/examens/adultes/{id}/delete/:
+    delete:
+      operationId: v1_depistage_examens_adultes_delete_destroy
+      description: Supprime un examen adulte.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      responses:
+        '204':
+          description: No response body
+  /api/v1/depistage/examens/adultes/{id}/section/:
+    patch:
+      operationId: v1_depistage_examens_adultes_section_partial_update
+      description: |-
+        Met à jour une section spécifique de l'examen.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen adulte (`ExamensAdult.id`)
+
+        ### Body
+        ```json
+        {"section": "visual_acuity", "data": {...}}
+        ```
+
+        ### Sections disponibles
+        - **Techniques** (TECHNICIAN/DOCTOR): visual_acuity, refraction, ocular_tension, pachymetry
+        - **Cliniques** (DOCTOR only): plaintes, biomicro_ant_od/og, perimetry, conclusion
+      summary: Mettre à jour une section
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenAdultProgressive'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenAdultProgressive'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenAdultProgressive'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+  /api/v1/depistage/examens/adultes/{id}/status/:
+    get:
+      operationId: v1_depistage_examens_adultes_status_retrieve
+      description: |-
+        Retourne le pourcentage de complétion et l'état de chaque section.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen adulte (`ExamensAdult.id`)
+      summary: Statut de complétion d'un examen
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+  /api/v1/depistage/examens/adultes/by-patient/{patient_id}/:
+    get:
+      operationId: v1_depistage_examens_adultes_by_patient_retrieve
+      description: |-
+        Liste tous les examens adultes d'un patient spécifique.
+
+        ### Paramètre
+        - **patient_id** (path): ID du **patient** (pas de l'examen!)
+      summary: Examens d'un patient
+      parameters:
+      - in: path
+        name: patient_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Adulte
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdult'
+          description: ''
+  /api/v1/depistage/examens/adultes/create/:
+    post:
+      operationId: v1_depistage_examens_adultes_create_create
+      description: |-
+        Crée un nouvel examen pour un patient adulte.
+
+        ### Champ requis
+        - **patient**: ID du patient (doit être adulte)
+
+        ### Retour
+        L'examen créé avec son `id` à utiliser pour les mises à jour.
+      summary: Créer un examen adulte
+      tags:
+      - Examens Adulte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenAdultCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdultDetail'
+          description: ''
+  /api/v1/depistage/examens/adultes/incomplete/:
+    get:
+      operationId: v1_depistage_examens_adultes_incomplete_retrieve
+      description: Liste les examens adultes qui ne sont pas encore complétés.
+      summary: Examens non complétés
+      tags:
+      - Examens Adulte
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenAdult'
+          description: ''
+  /api/v1/depistage/examens/enfants/:
+    get:
+      operationId: v1_depistage_examens_enfants_list
+      description: Retourne la liste paginée des examens enfant.
+      summary: Liste des examens enfant
+      parameters:
+      - in: query
+        name: created_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: is_completed
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: patient
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Examens Enfant
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExamenChildList'
+          description: ''
+  /api/v1/depistage/examens/enfants/{id}/:
+    get:
+      operationId: v1_depistage_examens_enfants_retrieve
+      description: |-
+        Retourne les informations complètes d'un examen enfant.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen enfant (`ExamenChild.id`), **PAS l'ID du patient!**
+
+        Pour obtenir l'ID de l'examen:
+        1. `GET /examens/enfants/by-patient/{patient_id}/`
+        2. Utilisez le champ `id` de l'examen retourné
+      summary: Détail d'un examen enfant
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '404':
+          description: Examen non trouvé
+  /api/v1/depistage/examens/enfants/{id}/clinical/:
+    put:
+      operationId: v1_depistage_examens_enfants_clinical_update
+      description: |-
+        Met à jour les données cliniques d'un examen enfant existant.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen enfant (`ExamenChild.id`), **PAS l'ID du patient!**
+
+        ### Corps de la requête
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+
+        ### Permission
+        DOCTOR, ADMIN uniquement
+      summary: Mettre à jour les données cliniques
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenChildUpdateClinical'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenChildUpdateClinical'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenChildUpdateClinical'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '400':
+          description: Données invalides
+        '404':
+          description: Examen non trouvé
+    patch:
+      operationId: v1_depistage_examens_enfants_clinical_partial_update
+      description: |-
+        Met à jour les données cliniques d'un examen enfant existant.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen enfant (`ExamenChild.id`), **PAS l'ID du patient!**
+
+        ### Corps de la requête
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+
+        ### Permission
+        DOCTOR, ADMIN uniquement
+      summary: Mettre à jour les données cliniques
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenChildUpdateClinical'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenChildUpdateClinical'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenChildUpdateClinical'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '400':
+          description: Données invalides
+        '404':
+          description: Examen non trouvé
+  /api/v1/depistage/examens/enfants/{id}/delete/:
+    delete:
+      operationId: v1_depistage_examens_enfants_delete_destroy
+      description: Supprime un examen enfant.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      responses:
+        '204':
+          description: No response body
+  /api/v1/depistage/examens/enfants/{id}/status/:
+    get:
+      operationId: v1_depistage_examens_enfants_status_retrieve
+      description: '**id** (path): ID de l''examen enfant (`ExamenChild.id`)'
+      summary: Statut de complétion d'un examen enfant
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+  /api/v1/depistage/examens/enfants/{id}/technical/:
+    put:
+      operationId: v1_depistage_examens_enfants_technical_update
+      description: |-
+        Met à jour les données techniques d'un examen enfant existant.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen enfant (`ExamenChild.id`), **PAS l'ID du patient!**
+
+        ### Corps de la requête
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+
+        ### Permission
+        TECHNICIAN, DOCTOR, ADMIN
+      summary: Mettre à jour les données techniques
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenChildUpdateTechnical'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenChildUpdateTechnical'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenChildUpdateTechnical'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '400':
+          description: Données invalides
+        '404':
+          description: Examen non trouvé
+    patch:
+      operationId: v1_depistage_examens_enfants_technical_partial_update
+      description: |-
+        Met à jour les données techniques d'un examen enfant existant.
+
+        ### Paramètre
+        - **id** (path): ID de l'examen enfant (`ExamenChild.id`), **PAS l'ID du patient!**
+
+        ### Corps de la requête
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+
+        ### Permission
+        TECHNICIAN, DOCTOR, ADMIN
+      summary: Mettre à jour les données techniques
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenChildUpdateTechnical'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenChildUpdateTechnical'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedExamenChildUpdateTechnical'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '400':
+          description: Données invalides
+        '404':
+          description: Examen non trouvé
+  /api/v1/depistage/examens/enfants/by-patient/{patient_id}/:
+    get:
+      operationId: v1_depistage_examens_enfants_by_patient_retrieve
+      description: |-
+        Liste tous les examens d'un patient enfant spécifique.
+
+        ### Paramètre
+        - **patient_id** (path): ID du **patient** (pas de l'examen!)
+      summary: Examens d'un patient enfant
+      parameters:
+      - in: path
+        name: patient_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Examens Enfant
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChild'
+          description: ''
+  /api/v1/depistage/examens/enfants/create/:
+    post:
+      operationId: v1_depistage_examens_enfants_create_create
+      description: |-
+        Crée un nouvel examen pour un patient enfant.
+
+        ### Pattern STEPPER
+        Toutes les données peuvent être envoyées en une fois ou juste le `patient_id`.
+
+        ### Champ requis
+        - **patient_id**: ID du patient (doit être un enfant avec `is_adult=false`)
+
+        ### Champs optionnels
+        - **reflet_pupillaire**: 'normal' ou 'anormal'
+        - **fo**: Fond d'œil 'normal' ou 'anormal'
+        - **technical_data**: Données techniques (acuité, réfraction, tension...)
+        - **clinical_data**: Données cliniques (plaintes, biomicroscopie, conclusion...)
+      summary: Créer un examen enfant
+      tags:
+      - Examens Enfant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamenChildCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExamenChildCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExamenChildCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '400':
+          description: Données invalides
+        '404':
+          description: Patient non trouvé
+  /api/v1/depistage/examens/enfants/create/minimal/:
+    post:
+      operationId: v1_depistage_examens_enfants_create_minimal_create
+      description: |-
+        Crée un examen enfant vide (sans données techniques/cliniques).
+
+        Utile pour démarrer un examen qui sera complété plus tard via les endpoints `PUT /examens/enfants/{id}/technical/` et `PUT /examens/enfants/{id}/clinical/`.
+      summary: Créer un examen enfant minimal
+      tags:
+      - Examens Enfant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - patient_id
+              properties:
+                patient_id:
+                  type: integer
+                  description: ID du patient (doit être un enfant)
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChildDetail'
+          description: ''
+        '400':
+          description: patient_id requis
+        '404':
+          description: Patient non trouvé
+  /api/v1/depistage/examens/enfants/incomplete/:
+    get:
+      operationId: v1_depistage_examens_enfants_incomplete_retrieve
+      description: Liste les examens enfant qui ne sont pas encore complétés.
+      summary: Examens enfant non complétés
+      tags:
+      - Examens Enfant
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamenChild'
+          description: ''
+  /api/v1/depistage/patients/:
+    get:
+      operationId: v1_depistage_patients_list
+      description: |-
+        Retourne la liste paginée des patients **non supprimés**.
+
+        Les patients soft-deleted sont automatiquement exclus.
+      summary: Liste des patients
+      parameters:
+      - in: query
+        name: created_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: is_adult
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: sex
+        schema:
+          type: string
+          title: Sexe
+          enum:
+          - A
+          - F
+          - H
+        description: |-
+          * `H` - Homme
+          * `F` - Femme
+          * `A` - Anonyme
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPatientListList'
+          description: ''
+  /api/v1/depistage/patients/{id}/:
+    get:
+      operationId: v1_depistage_patients_retrieve
+      description: '**id** (path): ID numérique du patient (ex: 1, 2, 3)'
+      summary: Détail d'un patient
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+        '404':
+          description: Patient non trouvé
+  /api/v1/depistage/patients/{id}/antecedent/:
+    get:
+      operationId: v1_depistage_patients_antecedent_retrieve
+      description: '**id** (path): ID numérique du patient'
+      summary: Antécédent d'un patient
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Antecedent'
+          description: ''
+        '404':
+          description: Non trouvé
+  /api/v1/depistage/patients/{id}/antecedent/edit/:
+    post:
+      operationId: v1_depistage_patients_antecedent_edit_create
+      description: |-
+        Crée ou met à jour l'antécédent d'un patient.
+
+        **id** (path): ID du patient
+
+        Si l'antécédent n'existe pas, il sera créé. Sinon, il sera mis à jour.
+      summary: Créer/modifier antécédent
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Antecedent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Antecedent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Antecedent'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Antecedent'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Antecedent'
+          description: ''
+        '400':
+          description: Données invalides
+    put:
+      operationId: v1_depistage_patients_antecedent_edit_update
+      description: |-
+        Crée ou met à jour l'antécédent d'un patient.
+
+        **id** (path): ID du patient
+
+        Si l'antécédent n'existe pas, il sera créé. Sinon, il sera mis à jour.
+      summary: Créer/modifier antécédent
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Antecedent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Antecedent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Antecedent'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Antecedent'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Antecedent'
+          description: ''
+        '400':
+          description: Données invalides
+  /api/v1/depistage/patients/{id}/delete/:
+    delete:
+      operationId: v1_depistage_patients_delete_destroy
+      description: |-
+        Marque comme supprimé **sans retirer de la base**.
+
+        **id** (path): ID du patient
+
+        - Le patient disparaît des listes
+        - Peut être restauré avec POST /patients/{id}/restore/
+      summary: Soft-delete un patient
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      responses:
+        '204':
+          description: Patient soft-deleted
+        '400':
+          description: Patient a des examens
+  /api/v1/depistage/patients/{id}/edit/:
+    put:
+      operationId: v1_depistage_patients_edit_update
+      description: '**id** (path): ID numérique du patient'
+      summary: Modifier un patient (complet)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Patient'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    patch:
+      operationId: v1_depistage_patients_edit_partial_update
+      description: '**id** (path): ID du patient. Seuls les champs fournis sont modifiés.'
+      summary: Modifier un patient (partiel)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+  /api/v1/depistage/patients/{id}/examens/:
+    get:
+      operationId: v1_depistage_patients_examens_retrieve
+      description: '**id** (path): ID numérique du patient. Retourne examens enfant
+        et adulte.'
+      summary: Tous les examens d'un patient
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+  /api/v1/depistage/patients/{id}/hard-delete/:
+    delete:
+      operationId: v1_depistage_patients_hard_delete_destroy
+      description: |-
+        ⚠️ **ATTENTION: Cette action est irréversible!**
+
+        **id** (path): ID du patient
+
+        Supprime définitivement le patient de la base de données.
+      summary: Suppression définitive (IRRÉVERSIBLE)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      responses:
+        '204':
+          description: Patient supprimé définitivement
+        '400':
+          description: Patient a des examens
+  /api/v1/depistage/patients/{id}/restore/:
+    post:
+      operationId: v1_depistage_patients_restore_create
+      description: |-
+        Restaure un patient qui a été soft-deleted.
+
+        **id** (path): ID du patient supprimé
+      summary: Restaurer un patient supprimé
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+        '400':
+          description: Patient non supprimé
+  /api/v1/depistage/patients/adults/:
+    get:
+      operationId: v1_depistage_patients_adults_retrieve
+      description: Retourne uniquement les patients avec âge supérieur à 17 ans.
+      summary: Patients adultes (âge > 17)
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientList'
+          description: ''
+  /api/v1/depistage/patients/bulk-import/:
+    post:
+      operationId: v1_depistage_patients_bulk_import_create
+      description: |-
+        Déclenche une tâche Celery pour importer plusieurs patients.
+
+        **Retourne immédiatement** un `task_id` pour suivre l'avancement.
+
+        Utilisez `GET /api/v1/depistage/tasks/{task_id}/status/` pour vérifier le statut.
+
+        ## Champs requis par patient
+        - **name**: Prénom
+        - **last_name**: Nom
+        - **date_de_naissance**: Date de naissance (format: YYYY-MM-DD)
+        - **sex**: Sexe (H/F/A)
+
+        ## Champ optionnel
+        - **phone_number**: Format +221XXXXXXXXX
+
+        ## Exemple de requête
+        ```json
+        {
+          "patients": [
+            {"name": "Amadou", "last_name": "Diallo", "date_de_naissance": "1991-05-15", "sex": "H"},
+            {"name": "Fatou", "last_name": "Sow", "date_de_naissance": "1998-03-20", "sex": "F", "phone_number": "+221771234567"}
+          ]
+        }
+        ```
+      summary: Import bulk de patients
+      tags:
+      - Import Bulk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPatientImport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkPatientImport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkPatientImport'
+        required: true
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+          description: ''
+        '400':
+          description: Données invalides
+        '429':
+          description: Rate limit atteint
+  /api/v1/depistage/patients/children/:
+    get:
+      operationId: v1_depistage_patients_children_retrieve
+      description: Retourne uniquement les patients avec âge inférieur ou égal à 17
+        ans.
+      summary: Patients enfants (âge ≤ 17)
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientList'
+          description: ''
+  /api/v1/depistage/patients/create/:
+    post:
+      operationId: v1_depistage_patients_create_create
+      description: |-
+        ### Champs requis
+        - **name**: Prénom
+        - **last_name**: Nom
+        - **date_de_naissance**: Date de naissance (format: YYYY-MM-DD)
+        - **sex**: Sexe (`H`, `F`, ou `A`)
+
+        ### Optionnel
+        - **phone_number**: Format +221XXXXXXXXX
+
+        ### Note
+        L'âge et le statut adulte/enfant sont calculés automatiquement à partir de la date de naissance.
+      summary: Créer un patient
+      tags:
+      - Patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientCreate'
+            examples:
+              PatientAdulte:
+                value:
+                  name: Amadou
+                  last_name: Diallo
+                  date_de_naissance: '1991-05-15'
+                  sex: H
+                  phone_number: '+221771234567'
+                summary: Patient adulte
+              PatientEnfant:
+                value:
+                  name: Fatou
+                  last_name: Sow
+                  date_de_naissance: '2018-03-20'
+                  sex: F
+                summary: Patient enfant
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatientCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatientCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+        '400':
+          description: Données invalides
+  /api/v1/depistage/patients/deleted/:
+    get:
+      operationId: v1_depistage_patients_deleted_retrieve
+      description: 'Retourne les patients qui ont été soft-deleted. Permission: DOCTOR/ADMIN.'
+      summary: Patients supprimés (soft-delete)
+      tags:
+      - Patients
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientList'
+          description: ''
+  /api/v1/depistage/tasks/{task_id}/status/:
+    get:
+      operationId: v1_depistage_tasks_status_retrieve
+      description: |-
+        Retourne le statut actuel d'une tâche Celery.
+
+        ## Statuts possibles
+        - `PENDING`: En attente d'exécution
+        - `STARTED`: En cours d'exécution
+        - `SUCCESS`: Terminé avec succès
+        - `FAILURE`: Échoué
+        - `RETRY`: En cours de nouvelle tentative
+
+        ## Résultat
+        Quand `status=SUCCESS`, le champ `result` contient:
+        ```json
+        {
+          "status": "completed",
+          "success_count": 10,
+          "error_count": 2,
+          "errors": ["Ligne 3: Téléphone déjà existant", ...],
+          "created_ids": [1, 2, 3, ...]
+        }
+        ```
+      summary: Statut d'une tâche Celery
+      parameters:
+      - in: path
+        name: task_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Import Bulk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatus'
+          description: ''
+        '404':
+          description: Tâche non trouvée
+components:
+  schemas:
+    Antecedent:
+      type: object
+      description: Serializer pour les antécédents patient.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        patient:
+          type: integer
+        antecedents_medico_chirurgicaux:
+          type: array
+          items:
+            type: string
+            maxLength: 255
+          title: Antécédents médico-chirurgicaux
+        pathologie_ophtalmologique:
+          type: array
+          items:
+            type: string
+            maxLength: 255
+          title: Pathologies ophtalmologiques
+        familial:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilialEnum'
+          title: Antécédents familiaux
+        autre_familial_detail:
+          type: string
+          title: Détail autre familial
+          maxLength: 255
+        uses_screen:
+          type: boolean
+          nullable: true
+          title: Utilise des écrans
+        screen_time_hours_per_day:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: Heures d'écran par jour
+          description: Durée d'utilisation des écrans en heures par jour
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+      - patient
+    AxeVisuelEnum:
+      enum:
+      - DEGAGE
+      - OBSTRUE
+      - LEUCOCORIE
+      type: string
+      description: |-
+        * `DEGAGE` - DEGAGE
+        * `OBSTRUE` - OBSTRUE
+        * `LEUCOCORIE` - LEUCOCORIE
+    BiomicroscopyAnterieur:
+      type: object
+      description: Serializer pour la biomicroscopie segment antérieur.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        segment:
+          $ref: '#/components/schemas/SegmentEnum'
+        cornee:
+          nullable: true
+          title: Cornée
+          oneOf:
+          - $ref: '#/components/schemas/CorneeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        cornee_autre:
+          type: string
+          nullable: true
+          title: Autres anomalies cornéennes
+          maxLength: 255
+        profondeur:
+          nullable: true
+          title: Profondeur CA
+          oneOf:
+          - $ref: '#/components/schemas/ProfondeurEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        transparence:
+          nullable: true
+          title: Transparence CA
+          oneOf:
+          - $ref: '#/components/schemas/TransparenceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        type_anomalie_value:
+          nullable: true
+          title: Type d'anomalie
+          oneOf:
+          - $ref: '#/components/schemas/TypeAnomalieValueEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        type_anomalie_autre:
+          type: string
+          nullable: true
+          title: Autre type d'anomalie
+          maxLength: 255
+        quantite_anomalie:
+          nullable: true
+          title: Quantité anomalie
+          oneOf:
+          - $ref: '#/components/schemas/QuantiteAnomalieEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        pupille:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/PupilleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        axe_visuel:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/AxeVisuelEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        rpm:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RpmEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        iris:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/IrisEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        iris_autres:
+          type: string
+          nullable: true
+          title: Autres anomalies iris
+          maxLength: 255
+        cristallin:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/CristallinEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        position_cristallin:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/PositionCristallinEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+      - segment
+    BiomicroscopyPosterieur:
+      type: object
+      description: Serializer pour la biomicroscopie segment postérieur.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        segment:
+          $ref: '#/components/schemas/SegmentEnum'
+        vitre:
+          nullable: true
+          title: Vitré
+          oneOf:
+          - $ref: '#/components/schemas/VitreEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        vitre_autres:
+          type: string
+          nullable: true
+          title: Autres anomalies vitré
+          maxLength: 255
+        papille:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/PapilleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        papille_autres:
+          type: string
+          nullable: true
+          title: Autres anomalies papille
+          maxLength: 255
+        macula:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MaculaEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        retinien_peripherique:
+          nullable: true
+          title: Champ rétinien périphérique
+          oneOf:
+          - $ref: '#/components/schemas/RetinienPeripheriqueEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        retinien_peripherique_autre:
+          type: string
+          nullable: true
+          title: Autres anomalies rétine
+          maxLength: 255
+        vaissaux:
+          nullable: true
+          title: Vaisseaux
+          oneOf:
+          - $ref: '#/components/schemas/VaissauxEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        cd:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          nullable: true
+          title: C/D
+        observation:
+          type: string
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+      - segment
+    BlankEnum:
+      enum:
+      - ''
+    BulkImportResult:
+      type: object
+      description: |-
+        Serializer pour le résultat d'un import bulk.
+
+        Contenu du champ 'result' dans TaskStatusSerializer quand status=SUCCESS.
+      properties:
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            completed: tous réussis, partial: certains échecs, failed: tous échecs
+
+            * `completed` - completed
+            * `partial` - partial
+            * `failed` - failed
+        success_count:
+          type: integer
+          description: Nombre de patients créés avec succès
+        error_count:
+          type: integer
+          description: Nombre d'erreurs rencontrées
+        errors:
+          type: array
+          items:
+            type: string
+          description: Liste des messages d'erreur (max 50)
+        created_ids:
+          type: array
+          items:
+            type: integer
+          description: IDs des patients créés
+      required:
+      - created_ids
+      - error_count
+      - errors
+      - status
+      - success_count
+    BulkPatientImport:
+      type: object
+      description: |-
+        Serializer pour l'import bulk de patients.
+
+        Accepte une liste de patients à importer (max 100 par requête).
+
+        Example request body:
+        {
+            "patients": [
+                {"name": "Amadou", "last_name": "Diallo", "date_de_naissance": "1991-05-15", "sex": "H"},
+                {"name": "Fatou", "last_name": "Sow", "date_de_naissance": "1998-03-20", "sex": "F", "phone_number": "+221771234567"}
+            ]
+        }
+      properties:
+        patients:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientImportRow'
+          description: Liste des patients à importer (maximum 100)
+      required:
+      - patients
+    ClinicalExamenDetail:
+      type: object
+      description: Serializer détaillé avec nested serializers.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        plaintes:
+          allOf:
+          - $ref: '#/components/schemas/Plaintes'
+          readOnly: true
+        biomicro_ant_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          readOnly: true
+        biomicro_ant_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          readOnly: true
+        biomicro_post_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          readOnly: true
+        biomicro_post_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          readOnly: true
+        perimetry:
+          allOf:
+          - $ref: '#/components/schemas/Perimetry'
+          readOnly: true
+        conclusion:
+          allOf:
+          - $ref: '#/components/schemas/Conclusion'
+          readOnly: true
+        is_completed:
+          type: boolean
+          readOnly: true
+          title: Examen clinique complété
+        completion_status:
+          type: object
+          additionalProperties: {}
+          description: Retourne l'état de complétion de chaque composant.
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - biomicro_ant_od
+      - biomicro_ant_og
+      - biomicro_post_od
+      - biomicro_post_og
+      - completion_status
+      - conclusion
+      - created
+      - id
+      - is_completed
+      - modified
+      - perimetry
+      - plaintes
+    Conclusion:
+      type: object
+      description: Serializer pour la conclusion.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        vision:
+          nullable: true
+          title: Conclusion
+          oneOf:
+          - $ref: '#/components/schemas/VisionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        cat:
+          type: string
+          nullable: true
+        traitement:
+          type: string
+          nullable: true
+        observation:
+          type: string
+          nullable: true
+        diagnostic_cim_11:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          title: Diagnostics CIM-11
+          description: Maximum 3 diagnostics CIM-11
+          maxItems: 3
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    CorneeEnum:
+      enum:
+      - NORMAL
+      - OPACITE_AXE
+      - OPACITE_PERIPHERIE
+      - OPACITE_TOTALE
+      - AUTRE
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `OPACITE_AXE` - OPACITE_AXE
+        * `OPACITE_PERIPHERIE` - OPACITE_PERIPHERIE
+        * `OPACITE_TOTALE` - OPACITE_TOTALE
+        * `AUTRE` - AUTRE
+    CoverVlDirectionEnum:
+      enum:
+      - exo
+      - eso
+      - normale
+      type: string
+      description: |-
+        * `exo` - EXO
+        * `eso` - ESO
+        * `normale` - Normale
+    CoverVlTypeEnum:
+      enum:
+      - orthotropie
+      - tropie
+      - phorie
+      type: string
+      description: |-
+        * `orthotropie` - Orthotropie
+        * `tropie` - Tropie
+        * `phorie` - Phorie
+    CoverVpDirectionEnum:
+      enum:
+      - exo
+      - eso
+      - normale
+      type: string
+      description: |-
+        * `exo` - EXO
+        * `eso` - ESO
+        * `normale` - Normale
+    CoverVpTypeEnum:
+      enum:
+      - orthotropie
+      - tropie
+      - phorie
+      type: string
+      description: |-
+        * `orthotropie` - Orthotropie
+        * `tropie` - Tropie
+        * `phorie` - Phorie
+    CristallinEnum:
+      enum:
+      - NORMAL
+      - OPAQUE
+      - COLOBOME
+      - APHAKIE
+      - PSEUDOPHAKIE
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `OPAQUE` - OPAQUE
+        * `COLOBOME` - COLOBOME
+        * `APHAKIE` - APHAKIE
+        * `PSEUDOPHAKIE` - PSEUDOPHAKIE
+    DiplopieTypeEnum:
+      enum:
+      - monoculaire
+      - binoculaire
+      type: string
+      description: |-
+        * `monoculaire` - Monoculaire
+        * `binoculaire` - Binoculaire
+    ExamenAdult:
+      type: object
+      description: Serializer de base pour les examens adulte.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_examen:
+          type: string
+          readOnly: true
+          title: Numéro d'examen
+          description: Identifiant unique de l'examen adulte (généré automatiquement)
+        patient:
+          type: integer
+        patient_name:
+          type: string
+          readOnly: true
+        is_completed:
+          type: boolean
+          readOnly: true
+          title: Examen global complété
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - is_completed
+      - modified
+      - numero_examen
+      - patient
+      - patient_name
+    ExamenAdultAddClinical:
+      type: object
+      description: |-
+        Serializer pour ajouter des données cliniques à un examen adulte.
+
+        Inclut toutes les composantes de l'examen clinique.
+      properties:
+        plaintes:
+          allOf:
+          - $ref: '#/components/schemas/Plaintes'
+          description: Plaintes et symptômes oculaires
+        biomicro_ant_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil droit
+        biomicro_ant_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil gauche
+        biomicro_post_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil droit
+        biomicro_post_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil gauche
+        perimetry:
+          allOf:
+          - $ref: '#/components/schemas/Perimetry'
+          description: Périmétrie / champ visuel
+        conclusion:
+          allOf:
+          - $ref: '#/components/schemas/Conclusion'
+          description: Conclusion et diagnostic CIM-11
+    ExamenAdultAddTechnical:
+      type: object
+      description: |-
+        Serializer pour ajouter des données techniques à un examen adulte.
+
+        Utilise TechnicalDataRequestSerializer pour un schéma OpenAPI explicite.
+      properties:
+        visual_acuity:
+          $ref: '#/components/schemas/VisualAcuity'
+        refraction:
+          $ref: '#/components/schemas/Refraction'
+        ocular_tension:
+          $ref: '#/components/schemas/OcularTension'
+        pachymetry:
+          $ref: '#/components/schemas/Pachymetry'
+        vision_binoculaire:
+          $ref: '#/components/schemas/VisionBinoculaire'
+    ExamenAdultComplete:
+      type: object
+      description: Serializer pour finaliser un examen avec données manquantes.
+      properties:
+        technical_data:
+          type: object
+          additionalProperties: {}
+        clinical_data:
+          type: object
+          additionalProperties: {}
+        mark_completed:
+          type: boolean
+          default: true
+    ExamenAdultCreate:
+      type: object
+      description: |-
+        Serializer pour créer un examen adulte.
+
+        Pattern PROGRESSIVE: L'examen peut être créé vide ou avec données initiales.
+      properties:
+        patient_id:
+          type: integer
+          description: ID du patient (doit être un adulte avec is_adult=true)
+      required:
+      - patient_id
+    ExamenAdultDetail:
+      type: object
+      description: Serializer détaillé avec toutes les données nested.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_examen:
+          type: string
+          readOnly: true
+          title: Numéro d'examen
+          description: Identifiant unique de l'examen adulte (généré automatiquement)
+        patient:
+          allOf:
+          - $ref: '#/components/schemas/PatientList'
+          readOnly: true
+        technical_examen:
+          allOf:
+          - $ref: '#/components/schemas/TechnicalExamenDetail'
+          readOnly: true
+        clinical_examen:
+          allOf:
+          - $ref: '#/components/schemas/ClinicalExamenDetail'
+          readOnly: true
+        is_completed:
+          type: boolean
+          readOnly: true
+          title: Examen global complété
+        completion_status:
+          type: object
+          additionalProperties: {}
+          description: Retourne l'état de complétion détaillé.
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - clinical_examen
+      - completion_status
+      - created
+      - id
+      - is_completed
+      - modified
+      - numero_examen
+      - patient
+      - technical_examen
+    ExamenChild:
+      type: object
+      description: Serializer de base pour les examens enfant.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_examen:
+          type: string
+          readOnly: true
+          title: Numéro d'examen
+          description: Identifiant unique de l'examen enfant (généré automatiquement)
+        patient:
+          type: integer
+        patient_name:
+          type: string
+          readOnly: true
+        reflet_pupillaire:
+          $ref: '#/components/schemas/RefletPupillaire32fEnum'
+        reflet_pupillaire_detail:
+          type: string
+          nullable: true
+          title: Détails reflet pupillaire
+          description: Requis si reflet pupillaire est anormal
+          maxLength: 255
+        fo:
+          allOf:
+          - $ref: '#/components/schemas/Fo32fEnum'
+          title: Fond d'œil
+        fo_detail:
+          type: string
+          nullable: true
+          title: Détails fond d'œil
+          description: Requis si fond d'œil est anormal
+          maxLength: 255
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+      - numero_examen
+      - patient
+      - patient_name
+    ExamenChildClinicalData:
+      type: object
+      description: |-
+        Données cliniques pour un examen enfant.
+
+        Tous les champs sont optionnels pour les mises à jour partielles.
+      properties:
+        plaintes:
+          allOf:
+          - $ref: '#/components/schemas/Plaintes'
+          description: Plaintes et symptômes oculaires
+        biomicro_ant_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil droit
+        biomicro_ant_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil gauche
+        biomicro_post_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil droit
+        biomicro_post_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil gauche
+        perimetry:
+          allOf:
+          - $ref: '#/components/schemas/Perimetry'
+          description: Périmétrie / champ visuel
+        conclusion:
+          allOf:
+          - $ref: '#/components/schemas/Conclusion'
+          description: Conclusion et diagnostic CIM-11
+    ExamenChildCreate:
+      type: object
+      description: |-
+        Serializer pour créer un examen enfant.
+
+        Pattern STEPPER: Toutes les données peuvent être envoyées en une fois
+        ou juste le patient_id pour créer un examen vide.
+      properties:
+        patient_id:
+          type: integer
+          description: ID du patient (doit être un enfant avec is_adult=false)
+        reflet_pupillaire:
+          nullable: true
+          description: |-
+            Reflet pupillaire: 'normal' ou 'anormal'
+
+            * `normal` - normal
+            * `anormal` - anormal
+          oneOf:
+          - $ref: '#/components/schemas/RefletPupillaire3b1Enum'
+          - $ref: '#/components/schemas/NullEnum'
+        reflet_pupillaire_detail:
+          type: string
+          description: Détails sur le reflet pupillaire (optionnel)
+        fo:
+          nullable: true
+          description: |-
+            Fond d'œil: 'normal' ou 'anormal'
+
+            * `normal` - normal
+            * `anormal` - anormal
+          oneOf:
+          - $ref: '#/components/schemas/Fo3b1Enum'
+          - $ref: '#/components/schemas/NullEnum'
+        fo_detail:
+          type: string
+          description: Détails sur le fond d'œil (optionnel)
+        technical_data:
+          allOf:
+          - $ref: '#/components/schemas/ExamenChildTechnicalData'
+          description: Données techniques (acuité, réfraction, tension, pachymétrie,
+            vision binoculaire)
+        clinical_data:
+          allOf:
+          - $ref: '#/components/schemas/ExamenChildClinicalData'
+          description: Données cliniques (plaintes, biomicroscopie, périmétrie, conclusion)
+      required:
+      - patient_id
+    ExamenChildDetail:
+      type: object
+      description: Serializer détaillé avec toutes les données nested.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_examen:
+          type: string
+          readOnly: true
+          title: Numéro d'examen
+          description: Identifiant unique de l'examen enfant (généré automatiquement)
+        patient:
+          allOf:
+          - $ref: '#/components/schemas/PatientList'
+          readOnly: true
+        reflet_pupillaire:
+          allOf:
+          - $ref: '#/components/schemas/RefletPupillaire32fEnum'
+          readOnly: true
+        reflet_pupillaire_detail:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Détails reflet pupillaire
+          description: Requis si reflet pupillaire est anormal
+        fo:
+          allOf:
+          - $ref: '#/components/schemas/Fo32fEnum'
+          readOnly: true
+          title: Fond d'œil
+        fo_detail:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Détails fond d'œil
+          description: Requis si fond d'œil est anormal
+        visual_acuity:
+          allOf:
+          - $ref: '#/components/schemas/VisualAcuity'
+          readOnly: true
+        ocular_tension:
+          allOf:
+          - $ref: '#/components/schemas/OcularTension'
+          readOnly: true
+        refraction:
+          allOf:
+          - $ref: '#/components/schemas/Refraction'
+          readOnly: true
+        vision_binoculaire:
+          allOf:
+          - $ref: '#/components/schemas/VisionBinoculaire'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - fo
+      - fo_detail
+      - id
+      - modified
+      - numero_examen
+      - ocular_tension
+      - patient
+      - reflet_pupillaire
+      - reflet_pupillaire_detail
+      - refraction
+      - vision_binoculaire
+      - visual_acuity
+    ExamenChildTechnicalData:
+      type: object
+      description: |-
+        Données techniques pour un examen enfant.
+
+        Tous les champs sont optionnels pour les mises à jour partielles.
+
+        Note: ExamenChild a une structure directe (visual_acuity, ocular_tension,
+        refraction, vision_binoculaire) sans pachymetry contrairement à ExamensAdult.
+      properties:
+        visual_acuity:
+          allOf:
+          - $ref: '#/components/schemas/VisualAcuity'
+          description: Acuité visuelle (AVSC/AVAC pour OD, OG, ODG)
+        refraction:
+          allOf:
+          - $ref: '#/components/schemas/Refraction'
+          description: Données de réfraction (sphère, cylindre, axe)
+        ocular_tension:
+          allOf:
+          - $ref: '#/components/schemas/OcularTension'
+          description: Tension oculaire OD/OG en mmHg
+        vision_binoculaire:
+          allOf:
+          - $ref: '#/components/schemas/VisionBinoculaire'
+          description: Vision binoculaire (Hirschberg, stéréoscopie, cover test)
+    ExamenChildUpdateClinical:
+      type: object
+      description: |-
+        Serializer pour mettre à jour les données cliniques d'un examen enfant.
+
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+      properties:
+        plaintes:
+          allOf:
+          - $ref: '#/components/schemas/Plaintes'
+          description: Plaintes et symptômes
+        biomicro_ant_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil droit
+        biomicro_ant_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil gauche
+        biomicro_post_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil droit
+        biomicro_post_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil gauche
+        perimetry:
+          allOf:
+          - $ref: '#/components/schemas/Perimetry'
+          description: Périmétrie
+        conclusion:
+          allOf:
+          - $ref: '#/components/schemas/Conclusion'
+          description: Conclusion et diagnostic
+    ExamenChildUpdateTechnical:
+      type: object
+      description: |-
+        Serializer pour mettre à jour les données techniques d'un examen enfant.
+
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+      properties:
+        visual_acuity:
+          allOf:
+          - $ref: '#/components/schemas/VisualAcuity'
+          description: Acuité visuelle (AVSC/AVAC)
+        refraction:
+          allOf:
+          - $ref: '#/components/schemas/Refraction'
+          description: Données de réfraction
+        ocular_tension:
+          allOf:
+          - $ref: '#/components/schemas/OcularTension'
+          description: Tension oculaire OD/OG
+        vision_binoculaire:
+          allOf:
+          - $ref: '#/components/schemas/VisionBinoculaire'
+          description: Vision binoculaire
+    ExamenSupplementaire:
+      type: object
+      description: |-
+        Serializer complet pour une pièce jointe.
+
+        Utilisé pour les réponses détaillées (retrieve, create response).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        clinical_examen:
+          type: integer
+          title: Examen clinique
+        file_url:
+          type: string
+          nullable: true
+          description: Retourne l'URL du fichier (MinIO presigned URL).
+          readOnly: true
+        file_type:
+          type: string
+          readOnly: true
+          title: Type MIME
+          description: 'Ex: application/pdf, image/jpeg'
+        original_filename:
+          type: string
+          readOnly: true
+          title: Nom original
+        file_size:
+          type: integer
+          readOnly: true
+          title: Taille (bytes)
+        description:
+          type: string
+          nullable: true
+          description: Description optionnelle de la pièce jointe
+        is_image:
+          type: boolean
+          description: Retourne True si le fichier est une image.
+          readOnly: true
+        is_pdf:
+          type: boolean
+          description: Retourne True si le fichier est un PDF.
+          readOnly: true
+        uploaded_by_keycloak_id:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Uploadé par
+          description: ID Keycloak de l'utilisateur
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - clinical_examen
+      - created
+      - file_size
+      - file_type
+      - file_url
+      - id
+      - is_image
+      - is_pdf
+      - modified
+      - original_filename
+      - uploaded_by_keycloak_id
+    ExamenSupplementaireCreate:
+      type: object
+      description: |-
+        Serializer pour l'upload d'une pièce jointe.
+
+        Valide le type et la taille du fichier avant upload.
+      properties:
+        file:
+          type: string
+          format: uri
+          description: Fichier PDF ou image (JPEG, PNG, WEBP). Max 10MB.
+        description:
+          type: string
+          description: Description optionnelle de la pièce jointe
+          maxLength: 500
+      required:
+      - file
+    ExamenSupplementaireList:
+      type: object
+      description: |-
+        Serializer léger pour la liste des pièces jointes.
+
+        Utilisé pour les réponses de liste (moins de données).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        original_filename:
+          type: string
+          title: Nom original
+          maxLength: 255
+        file_type:
+          type: string
+          title: Type MIME
+          description: 'Ex: application/pdf, image/jpeg'
+          maxLength: 100
+        file_size:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Taille (bytes)
+        description:
+          type: string
+          nullable: true
+          description: Description optionnelle de la pièce jointe
+        is_image:
+          type: boolean
+          description: Retourne True si le fichier est une image.
+          readOnly: true
+        is_pdf:
+          type: boolean
+          description: Retourne True si le fichier est un PDF.
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+      required:
+      - created
+      - file_type
+      - id
+      - is_image
+      - is_pdf
+      - original_filename
+    EyeSymptomEnum:
+      enum:
+      - AUCUN
+      - BAV
+      - ROUGEUR
+      - DOULEUR
+      - DIPLOPIE
+      - STRABISME
+      - NYSTAGMUS
+      - PTOSIS
+      - PURIT_OCULAIRE
+      - LARMOIEMENT
+      - SECRETIONS
+      - AUTRES
+      type: string
+      description: |-
+        * `AUCUN` - AUCUN
+        * `BAV` - BAV
+        * `ROUGEUR` - ROUGEUR
+        * `DOULEUR` - DOULEUR
+        * `DIPLOPIE` - DIPLOPIE
+        * `STRABISME` - STRABISME
+        * `NYSTAGMUS` - NYSTAGMUS
+        * `PTOSIS` - PTOSIS
+        * `PURIT_OCULAIRE` - PURIT OCULAIRE
+        * `LARMOIEMENT` - LARMOIEMENT
+        * `SECRETIONS` - SECRETIONS
+        * `AUTRES` - AUTRES
+    FamilialEnum:
+      enum:
+      - CECITE
+      - GPAO
+      - OTHER
+      type: string
+      description: |-
+        * `CECITE` - CECITE
+        * `GPAO` - GPAO
+        * `OTHER` - OTHER
+    Fo32fEnum:
+      enum:
+      - normal
+      - anormal
+      type: string
+      description: |-
+        * `normal` - Normal
+        * `anormal` - Anormal
+    Fo3b1Enum:
+      enum:
+      - normal
+      - anormal
+      type: string
+      description: |-
+        * `normal` - normal
+        * `anormal` - anormal
+    HirschbergDetailEnum:
+      enum:
+      - bord_pupillaire
+      - iris
+      - limbe
+      type: string
+      description: |-
+        * `bord_pupillaire` - Bord pupillaire
+        * `iris` - Iris
+        * `limbe` - Limbe
+    HirschbergTypeEnum:
+      enum:
+      - orthotropie
+      - exotropie
+      - esotropie
+      type: string
+      description: |-
+        * `orthotropie` - Orthotropie
+        * `exotropie` - Exotropie
+        * `esotropie` - Esotropie
+    IrisEnum:
+      enum:
+      - NORMAL
+      - IRIDODONESIS
+      - RUBEOSE
+      - SYNECHIES
+      - AUTRES
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `IRIDODONESIS` - IRIDODONESIS
+        * `RUBEOSE` - RUBEOSE
+        * `SYNECHIES` - SYNECHIES
+        * `AUTRES` - AUTRES
+    MaculaEnum:
+      enum:
+      - NORMAL
+      - CICATRICE
+      - OEDEME
+      - DMLA
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `CICATRICE` - CICATRICE
+        * `OEDEME` - OEDEME
+        * `DMLA` - DMLA
+    NullEnum:
+      enum:
+      - null
+    NystagmusEyeEnum:
+      enum:
+      - od
+      - og
+      - odg
+      type: string
+      description: |-
+        * `od` - OD
+        * `og` - OG
+        * `odg` - ODG
+    OcularTension:
+      type: object
+      description: Serializer pour la tension oculaire.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        od:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: OD (œil droit)
+        og:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: OG (œil gauche)
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    Pachymetry:
+      type: object
+      description: Serializer pour la pachymétrie.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        od:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: OD (œil droit)
+        og:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: OG (œil gauche)
+        cto_od:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          title: CTO OD (œil droit)
+        cto_og:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          title: CTO OG (œil gauche)
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    PaginatedExamenAdultList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExamenAdult'
+    PaginatedExamenChildList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExamenChild'
+    PaginatedExamenSupplementaireListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExamenSupplementaireList'
+    PaginatedPatientListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientList'
+    PapilleEnum:
+      enum:
+      - NORMALE
+      - EXCAVATION_ELARGIE
+      - ATROPHIE
+      - OEDEME
+      - DYSMORPHIE
+      - AUTRES
+      type: string
+      description: |-
+        * `NORMALE` - NORMALE
+        * `EXCAVATION_ELARGIE` - EXCAVATION_ELARGIE
+        * `ATROPHIE` - ATROPHIE
+        * `OEDEME` - OEDEME
+        * `DYSMORPHIE` - DYSMORPHIE
+        * `AUTRES` - AUTRES
+    PatchedExamenAdultProgressive:
+      type: object
+      description: |-
+        Serializer pour mise à jour progressive (builder pattern).
+
+        Permet de mettre à jour une seule section à la fois.
+      properties:
+        section:
+          $ref: '#/components/schemas/SectionEnum'
+        data:
+          type: object
+          additionalProperties: {}
+    PatchedExamenChildUpdateClinical:
+      type: object
+      description: |-
+        Serializer pour mettre à jour les données cliniques d'un examen enfant.
+
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+      properties:
+        plaintes:
+          allOf:
+          - $ref: '#/components/schemas/Plaintes'
+          description: Plaintes et symptômes
+        biomicro_ant_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil droit
+        biomicro_ant_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur - œil gauche
+        biomicro_post_od:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil droit
+        biomicro_post_og:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur - œil gauche
+        perimetry:
+          allOf:
+          - $ref: '#/components/schemas/Perimetry'
+          description: Périmétrie
+        conclusion:
+          allOf:
+          - $ref: '#/components/schemas/Conclusion'
+          description: Conclusion et diagnostic
+    PatchedExamenChildUpdateTechnical:
+      type: object
+      description: |-
+        Serializer pour mettre à jour les données techniques d'un examen enfant.
+
+        Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
+      properties:
+        visual_acuity:
+          allOf:
+          - $ref: '#/components/schemas/VisualAcuity'
+          description: Acuité visuelle (AVSC/AVAC)
+        refraction:
+          allOf:
+          - $ref: '#/components/schemas/Refraction'
+          description: Données de réfraction
+        ocular_tension:
+          allOf:
+          - $ref: '#/components/schemas/OcularTension'
+          description: Tension oculaire OD/OG
+        vision_binoculaire:
+          allOf:
+          - $ref: '#/components/schemas/VisionBinoculaire'
+          description: Vision binoculaire
+    PatchedPatient:
+      type: object
+      description: Serializer complet pour un patient.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_identifiant:
+          type: string
+          readOnly: true
+          title: Numéro d'identifiant
+          description: Identifiant unique du patient (généré automatiquement)
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 100
+        name:
+          type: string
+          title: Prénom
+          maxLength: 100
+        full_name:
+          type: string
+          description: Retourne le nom complet du patient.
+          readOnly: true
+        date_de_naissance:
+          type: string
+          format: date
+          description: 'Date de naissance du patient (format: YYYY-MM-DD)'
+        age:
+          type: integer
+          description: Retourne l'âge calculé à partir de la date de naissance.
+          readOnly: true
+        sex:
+          allOf:
+          - $ref: '#/components/schemas/Sex1a8Enum'
+          title: Sexe
+        is_adult:
+          type: boolean
+          readOnly: true
+          title: Est adulte
+        phone_number:
+          type: string
+          nullable: true
+          title: Numéro de téléphone
+          maxLength: 128
+        examens_count:
+          type: object
+          additionalProperties: {}
+          description: Retourne le nombre d'examens par type.
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+    Patient:
+      type: object
+      description: Serializer complet pour un patient.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_identifiant:
+          type: string
+          readOnly: true
+          title: Numéro d'identifiant
+          description: Identifiant unique du patient (généré automatiquement)
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 100
+        name:
+          type: string
+          title: Prénom
+          maxLength: 100
+        full_name:
+          type: string
+          description: Retourne le nom complet du patient.
+          readOnly: true
+        date_de_naissance:
+          type: string
+          format: date
+          description: 'Date de naissance du patient (format: YYYY-MM-DD)'
+        age:
+          type: integer
+          description: Retourne l'âge calculé à partir de la date de naissance.
+          readOnly: true
+        sex:
+          allOf:
+          - $ref: '#/components/schemas/Sex1a8Enum'
+          title: Sexe
+        is_adult:
+          type: boolean
+          readOnly: true
+          title: Est adulte
+        phone_number:
+          type: string
+          nullable: true
+          title: Numéro de téléphone
+          maxLength: 128
+        examens_count:
+          type: object
+          additionalProperties: {}
+          description: Retourne le nombre d'examens par type.
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - age
+      - created
+      - examens_count
+      - full_name
+      - id
+      - is_adult
+      - last_name
+      - modified
+      - name
+      - numero_identifiant
+    PatientCreate:
+      type: object
+      description: Serializer pour la création de patient.
+      properties:
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 100
+        name:
+          type: string
+          title: Prénom
+          maxLength: 100
+        date_de_naissance:
+          type: string
+          format: date
+          description: 'Date de naissance du patient (format: YYYY-MM-DD)'
+        sex:
+          allOf:
+          - $ref: '#/components/schemas/Sex1a8Enum'
+          title: Sexe
+        phone_number:
+          type: string
+          nullable: true
+          title: Numéro de téléphone
+          maxLength: 128
+      required:
+      - last_name
+      - name
+    PatientImportRow:
+      type: object
+      description: |-
+        Serializer pour une ligne d'import patient.
+
+        Représente un patient individuel dans le batch d'import.
+      properties:
+        name:
+          type: string
+          description: Prénom du patient
+          maxLength: 100
+        last_name:
+          type: string
+          description: Nom de famille du patient
+          maxLength: 100
+        date_de_naissance:
+          type: string
+          format: date
+          description: 'Date de naissance du patient (format: YYYY-MM-DD)'
+        sex:
+          allOf:
+          - $ref: '#/components/schemas/PatientImportRowSexEnum'
+          description: |-
+            Sexe: H (Homme), F (Femme), A (Anonyme)
+
+            * `H` - H
+            * `F` - F
+            * `A` - A
+        phone_number:
+          type: string
+          description: 'Numéro de téléphone (format international recommandé: +221...)'
+          maxLength: 20
+      required:
+      - date_de_naissance
+      - last_name
+      - name
+      - sex
+    PatientImportRowSexEnum:
+      enum:
+      - H
+      - F
+      - A
+      type: string
+      description: |-
+        * `H` - H
+        * `F` - F
+        * `A` - A
+    PatientList:
+      type: object
+      description: Serializer léger pour les listes de patients.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_identifiant:
+          type: string
+          readOnly: true
+          title: Numéro d'identifiant
+          description: Identifiant unique du patient (généré automatiquement)
+        last_name:
+          type: string
+          title: Nom
+          maxLength: 100
+        name:
+          type: string
+          title: Prénom
+          maxLength: 100
+        full_name:
+          type: string
+          description: Retourne le nom complet du patient.
+          readOnly: true
+        date_de_naissance:
+          type: string
+          format: date
+          description: 'Date de naissance du patient (format: YYYY-MM-DD)'
+        age:
+          type: integer
+          description: Retourne l'âge calculé à partir de la date de naissance.
+          readOnly: true
+        sex:
+          allOf:
+          - $ref: '#/components/schemas/Sex1a8Enum'
+          title: Sexe
+        is_adult:
+          type: boolean
+          readOnly: true
+          title: Est adulte
+        phone_number:
+          type: string
+          nullable: true
+          title: Numéro de téléphone
+          maxLength: 128
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+      required:
+      - age
+      - created
+      - full_name
+      - id
+      - is_adult
+      - last_name
+      - name
+      - numero_identifiant
+    PboEnum:
+      enum:
+      - NORMAL
+      - SCOTOME_CENTRAL
+      - SCOTOME_PERIPHERIQUE
+      - AMPUTATION
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `SCOTOME_CENTRAL` - SCOTOME_CENTRAL
+        * `SCOTOME_PERIPHERIQUE` - SCOTOME_PERIPHERIQUE
+        * `AMPUTATION` - AMPUTATION
+    Perimetry:
+      type: object
+      description: Serializer pour la périmétrie.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        pbo:
+          type: array
+          items:
+            $ref: '#/components/schemas/PboEnum'
+          title: Périmétrie binoculaire
+          description: Liste des résultats de périmétrie
+        limite_superieure:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: Limite supérieure (°)
+        limite_inferieure:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: Limite inférieure (°)
+        etendue_horizontal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: Étendue horizontale (°)
+        limite_temporale_droit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: Limite temporale droite (°)
+        limite_temporale_gauche:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: Limite temporale gauche (°)
+        score_esternmen:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          nullable: true
+          title: Score d'Esterman (%)
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    Plaintes:
+      type: object
+      description: Serializer pour les plaintes.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        eye_symptom:
+          type: array
+          items:
+            $ref: '#/components/schemas/EyeSymptomEnum'
+          title: Symptômes oculaires
+          description: Liste des symptômes oculaires du patient
+        autre:
+          type: string
+          nullable: true
+          title: Autres symptômes
+          maxLength: 255
+        diplopie:
+          type: boolean
+        diplopie_type:
+          nullable: true
+          title: Type de diplopie
+          oneOf:
+          - $ref: '#/components/schemas/DiplopieTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        strabisme:
+          type: boolean
+        strabisme_eye:
+          nullable: true
+          title: Œil affecté par strabisme
+          oneOf:
+          - $ref: '#/components/schemas/StrabismeEyeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        nystagmus:
+          type: boolean
+        nystagmus_eye:
+          nullable: true
+          title: Œil affecté par nystagmus
+          oneOf:
+          - $ref: '#/components/schemas/NystagmusEyeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        ptosis:
+          type: boolean
+        ptosis_eye:
+          nullable: true
+          title: Œil affecté par ptosis
+          oneOf:
+          - $ref: '#/components/schemas/PtosisEyeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    PositionCristallinEnum:
+      enum:
+      - NORMALE
+      - ECTOPIE
+      - LUXATION_SUBLUXATION_ANTERIEURE
+      - LUXATION_SUBLUXATION_POSTERIEURE
+      type: string
+      description: |-
+        * `NORMALE` - NORMALE
+        * `ECTOPIE` - ECTOPIE
+        * `LUXATION_SUBLUXATION_ANTERIEURE` - LUXATION_SUBLUXATION_ANTERIEURE
+        * `LUXATION_SUBLUXATION_POSTERIEURE` - LUXATION_SUBLUXATION_POSTERIEURE
+    ProfondeurEnum:
+      enum:
+      - NORMALE
+      - REDUITE
+      - AUGMENTEE
+      - ASYMETRIQUE
+      type: string
+      description: |-
+        * `NORMALE` - NORMALE
+        * `REDUITE` - REDUITE
+        * `AUGMENTEE` - AUGMENTEE
+        * `ASYMETRIQUE` - ASYMETRIQUE
+    PtosisEyeEnum:
+      enum:
+      - od
+      - og
+      - odg
+      type: string
+      description: |-
+        * `od` - OD
+        * `og` - OG
+        * `odg` - ODG
+    PupilleEnum:
+      enum:
+      - NORMAL
+      - MYOSIS
+      - MYDRIASE
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `MYOSIS` - MYOSIS
+        * `MYDRIASE` - MYDRIASE
+    QuantiteAnomalieEnum:
+      enum:
+      - MINIME
+      - ATTEIGNANT_AIR_PUPILLAIRE
+      - RECOUVRANT_PUPILLE
+      type: string
+      description: |-
+        * `MINIME` - MINIME
+        * `ATTEIGNANT_AIR_PUPILLAIRE` - ATTEIGNANT_AIR_PUPILLAIRE
+        * `RECOUVRANT_PUPILLE` - RECOUVRANT_PUPILLE
+    RefletLateraliteEnum:
+      enum:
+      - od
+      - og
+      - odg
+      type: string
+      description: |-
+        * `od` - OD
+        * `og` - OG
+        * `odg` - ODG
+    RefletPupillaire32fEnum:
+      enum:
+      - normal
+      - anormal
+      type: string
+      description: |-
+        * `normal` - Normal
+        * `anormal` - Anormal
+    RefletPupillaire3b1Enum:
+      enum:
+      - normal
+      - anormal
+      type: string
+      description: |-
+        * `normal` - normal
+        * `anormal` - anormal
+    Refraction:
+      type: object
+      description: Serializer pour la réfraction.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        od_s:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Sphère OD
+        od_c:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Cylindre OD
+        od_a:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+          nullable: true
+          title: Axe OD
+        og_s:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Sphère OG
+        og_c:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Cylindre OG
+        og_a:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+          nullable: true
+          title: Axe OG
+        retinoscopie_focale_h:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Rétinoscopie Focale Horizontal
+          description: Focale horizontal en dioptries
+        retinoscopie_focale_v:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Rétinoscopie Focale Vertical
+          description: Focale vertical en dioptries
+        retinoscopie_axe_h:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+          nullable: true
+          title: Rétinoscopie Axe Horizontal
+          description: Axe horizontal en degrés (0-180)
+        retinoscopie_avec_focale_h:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Rétinoscopie cyclo. Focale Horizontal
+          description: Focale horizontal avec cycloplégique en dioptries
+        retinoscopie_avec_focale_v:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Rétinoscopie cyclo. Focale Vertical
+          description: Focale vertical avec cycloplégique en dioptries
+        retinoscopie_avec_axe_h:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+          nullable: true
+          title: Rétinoscopie cyclo. Axe Horizontal
+          description: Axe horizontal avec cycloplégique en degrés (0-180)
+        avod:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avog:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avodg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        dp:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          title: Distance pupillaire
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    RetinienPeripheriqueEnum:
+      enum:
+      - NORMAL
+      - CICATRICE
+      - OEDEME
+      - HEMORRAGIE
+      - EXUDATS
+      - DEHISCENCE
+      - AUTRE
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `CICATRICE` - CICATRICE
+        * `OEDEME` - OEDEME
+        * `HEMORRAGIE` - HEMORRAGIE
+        * `EXUDATS` - EXUDATS
+        * `DEHISCENCE` - DEHISCENCE
+        * `AUTRE` - AUTRE
+    RpmEnum:
+      enum:
+      - NORMAL
+      - LENT
+      - ABOLI
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `LENT` - LENT
+        * `ABOLI` - ABOLI
+    SectionEnum:
+      enum:
+      - visual_acuity
+      - refraction
+      - ocular_tension
+      - pachymetry
+      - vision_binoculaire
+      - plaintes
+      - biomicro_ant_od
+      - biomicro_ant_og
+      - biomicro_post_od
+      - biomicro_post_og
+      - perimetry
+      - conclusion
+      type: string
+      description: |-
+        * `visual_acuity` - Acuité visuelle
+        * `refraction` - Réfraction
+        * `ocular_tension` - Tension oculaire
+        * `pachymetry` - Pachymétrie
+        * `vision_binoculaire` - Vision binoculaire
+        * `plaintes` - Plaintes
+        * `biomicro_ant_od` - Biomicroscopie antérieure OD
+        * `biomicro_ant_og` - Biomicroscopie antérieure OG
+        * `biomicro_post_od` - Biomicroscopie postérieure OD
+        * `biomicro_post_og` - Biomicroscopie postérieure OG
+        * `perimetry` - Périmétrie
+        * `conclusion` - Conclusion
+    SegmentEnum:
+      enum:
+      - NORMAL
+      - PRESENCE_LESION
+      - REMANIEMENT_TOTAL
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `PRESENCE_LESION` - PRESENCE_LESION
+        * `REMANIEMENT_TOTAL` - REMANIEMENT_TOTAL
+    Sex1a8Enum:
+      enum:
+      - H
+      - F
+      - A
+      type: string
+      description: |-
+        * `H` - Homme
+        * `F` - Femme
+        * `A` - Anonyme
+    StatusEnum:
+      enum:
+      - completed
+      - partial
+      - failed
+      type: string
+      description: |-
+        * `completed` - completed
+        * `partial` - partial
+        * `failed` - failed
+    StereoscopieLangIiEnum:
+      enum:
+      - etoile
+      - lune
+      - auto
+      - elephant
+      type: string
+      description: |-
+        * `etoile` - Étoile
+        * `lune` - Lune
+        * `auto` - Auto
+        * `elephant` - Éléphant
+    StrabismeEyeEnum:
+      enum:
+      - od
+      - og
+      - odg
+      type: string
+      description: |-
+        * `od` - OD
+        * `og` - OG
+        * `odg` - ODG
+    TaskResponse:
+      type: object
+      description: |-
+        Serializer pour la réponse de création de tâche Celery.
+
+        Retourné immédiatement après le déclenchement du bulk import.
+      properties:
+        task_id:
+          type: string
+          description: ID unique de la tâche Celery (UUID)
+        status:
+          type: string
+          description: Statut initial de la tâche (généralement 'pending')
+        message:
+          type: string
+          description: Message descriptif de l'action en cours
+      required:
+      - message
+      - status
+      - task_id
+    TaskStatus:
+      type: object
+      description: |-
+        Serializer pour le statut d'une tâche Celery.
+
+        Statuts possibles:
+        - PENDING: En attente d'exécution
+        - STARTED: En cours d'exécution
+        - SUCCESS: Terminé avec succès (result contient BulkImportResultSerializer)
+        - FAILURE: Échoué (error contient le message d'erreur)
+        - RETRY: En cours de nouvelle tentative
+      properties:
+        task_id:
+          type: string
+          description: ID de la tâche
+        status:
+          type: string
+          description: 'Statut Celery: PENDING, STARTED, SUCCESS, FAILURE, RETRY'
+        result:
+          allOf:
+          - $ref: '#/components/schemas/BulkImportResult'
+          nullable: true
+          description: Résultat de l'import (présent si status=SUCCESS)
+        error:
+          type: string
+          nullable: true
+          description: Message d'erreur (présent si status=FAILURE)
+      required:
+      - status
+      - task_id
+    TechnicalExamenDetail:
+      type: object
+      description: Serializer détaillé avec nested serializers.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        visual_acuity:
+          allOf:
+          - $ref: '#/components/schemas/VisualAcuity'
+          readOnly: true
+        refraction:
+          allOf:
+          - $ref: '#/components/schemas/Refraction'
+          readOnly: true
+        ocular_tension:
+          allOf:
+          - $ref: '#/components/schemas/OcularTension'
+          readOnly: true
+        pachymetry:
+          allOf:
+          - $ref: '#/components/schemas/Pachymetry'
+          readOnly: true
+        vision_binoculaire:
+          allOf:
+          - $ref: '#/components/schemas/VisionBinoculaire'
+          readOnly: true
+        is_completed:
+          type: boolean
+          readOnly: true
+          title: Examen technique complété
+        completion_status:
+          type: object
+          additionalProperties: {}
+          description: Retourne l'état de complétion de chaque composant.
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - completion_status
+      - created
+      - id
+      - is_completed
+      - modified
+      - ocular_tension
+      - pachymetry
+      - refraction
+      - vision_binoculaire
+      - visual_acuity
+    TransparenceEnum:
+      enum:
+      - NORMAL
+      - ANORMALE
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `ANORMALE` - ANORMALE
+    TypeAnomalieValueEnum:
+      enum:
+      - PIGMENTS
+      - HYPHEMA
+      - HYPOPION
+      - AUTRE
+      type: string
+      description: |-
+        * `PIGMENTS` - PIGMENTS
+        * `HYPHEMA` - HYPHEMA
+        * `HYPOPION` - HYPOPION
+        * `AUTRE` - AUTRE
+    VaissauxEnum:
+      enum:
+      - NORMAUX
+      - ARTERIOSCLEROSE
+      - OVR
+      - OAR
+      - NEOVAISSEUX
+      type: string
+      description: |-
+        * `NORMAUX` - NORMAUX
+        * `ARTERIOSCLEROSE` - ARTERIOSCLEROSE
+        * `OVR` - OVR
+        * `OAR` - OAR
+        * `NEOVAISSEUX` - NEOVAISSEUX
+    VisionBinoculaire:
+      type: object
+      description: Serializer pour la vision binoculaire.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        hirschberg_type:
+          allOf:
+          - $ref: '#/components/schemas/HirschbergTypeEnum'
+          title: Type Hirschberg
+        hirschberg_detail:
+          nullable: true
+          title: Détail Hirschberg
+          description: |-
+            Requis si Hirschberg ≠ Orthotropie
+
+            * `bord_pupillaire` - Bord pupillaire
+            * `iris` - Iris
+            * `limbe` - Limbe
+          oneOf:
+          - $ref: '#/components/schemas/HirschbergDetailEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        stereoscopie_lang_ii:
+          nullable: true
+          title: Stéréoscopie Lang II
+          oneOf:
+          - $ref: '#/components/schemas/StereoscopieLangIiEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        reflet_pupillaire:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/VisionBinoculaireRefletPupillaireEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        reflet_pupillaire_detail:
+          type: string
+          nullable: true
+          title: Détail reflet pupillaire
+          description: Requis si reflet pupillaire est anormal (valeur autre que 'rouge')
+          maxLength: 255
+        reflet_lateralite:
+          nullable: true
+          title: Latéralité reflet
+          oneOf:
+          - $ref: '#/components/schemas/RefletLateraliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        cover_vl_type:
+          allOf:
+          - $ref: '#/components/schemas/CoverVlTypeEnum'
+          title: Cover test VL
+        cover_vl_direction:
+          nullable: true
+          title: Direction VL
+          description: |-
+            Requis si VL = Tropie ou Phorie
+
+            * `exo` - EXO
+            * `eso` - ESO
+            * `normale` - Normale
+          oneOf:
+          - $ref: '#/components/schemas/CoverVlDirectionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        cover_vp_type:
+          allOf:
+          - $ref: '#/components/schemas/CoverVpTypeEnum'
+          title: Cover test VP
+        cover_vp_direction:
+          nullable: true
+          title: Direction VP
+          description: |-
+            Requis si VP = Tropie ou Phorie
+
+            * `exo` - EXO
+            * `eso` - ESO
+            * `normale` - Normale
+          oneOf:
+          - $ref: '#/components/schemas/CoverVpDirectionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    VisionBinoculaireRefletPupillaireEnum:
+      enum:
+      - rouge
+      - leucocorie
+      - anormal
+      type: string
+      description: |-
+        * `rouge` - Rouge
+        * `leucocorie` - Leucocorie
+        * `anormal` - Anormal
+    VisionEnum:
+      enum:
+      - compatible
+      - incompatible
+      - a_risque
+      type: string
+      description: |-
+        * `compatible` - Compatible
+        * `incompatible` - Incompatible
+        * `a_risque` - À risque
+    VisualAcuity:
+      type: object
+      description: Serializer pour l'acuité visuelle.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        avsc_od:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avsc_og:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avsc_odg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avac_od:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avac_og:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        avac_odg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - created
+      - id
+      - modified
+    VitreEnum:
+      enum:
+      - NORMAL
+      - CORPS_FLOTTANTS
+      - HEMORRAGIE
+      - HYALITE
+      - PVR
+      - AUTRES
+      type: string
+      description: |-
+        * `NORMAL` - NORMAL
+        * `CORPS_FLOTTANTS` - CORPS_FLOTTANTS
+        * `HEMORRAGIE` - HEMORRAGIE
+        * `HYALITE` - HYALITE
+        * `PVR` - PVR
+        * `AUTRES` - AUTRES

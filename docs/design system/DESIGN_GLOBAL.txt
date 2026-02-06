@@ -1,0 +1,329 @@
+You are designing a professional medical frontend for an ophthalmology platform.
+
+THIS DOCUMENT IS THE SINGLE SOURCE OF TRUTH.
+All interfaces MUST strictly follow medical and organizational rules.
+Do NOT invent fields.
+Do NOT merge all components into a single file.
+Each screen and each form MUST be a separate component.
+
+==================================================
+CORE DOMAIN
+==================================================
+
+The platform already manages:
+- Patients
+- Medical History (Antecedents)
+- Child Exams (ExamenChild)
+- Adult Exams (ExamensAdult)
+
+The platform also includes:
+- Consultations
+- Appointments (Rendez-vous)
+- Planning / Agenda
+- Analytics
+- Reports
+
+A central concept must be implemented:
+- Patient Medical Record (Dossier Patient)
+
+==================================================
+GLOBAL PRINCIPLES
+==================================================
+
+- Medical-grade UI
+- Calm, neutral, professional
+- No marketing visuals
+- No decorative animations
+- Explicit actions only
+- High readability
+- Low cognitive load
+- Light & Dark mode supported
+
+Typography:
+- Inter
+- Clear hierarchy
+- No decorative fonts
+
+Design rules:
+- Tables for structured data
+- Clear separation of responsibilities
+- No inline editing of clinical data
+- Clear validation and error messages
+
+==================================================
+GLOBAL APPLICATION STRUCTURE
+==================================================
+
+Main navigation (sidebar):
+
+- Dashboard
+- Patients
+- Patient Records
+- Consultations
+- Appointments / Agenda
+- Exams (Adult / Child)
+- Analytics
+- Reports
+- Settings
+
+RULE:
+- Do NOT mix scheduling, consultations, and exams in the same screens.
+- Each module has a single responsibility.
+
+==================================================
+CENTRAL MODULE — PATIENT MEDICAL RECORD
+==================================================
+
+Definition:
+A Patient Medical Record (Dossier Patient) is a longitudinal container.
+It aggregates all information related to a patient over time.
+It does NOT create medical data and does NOT replace exams or consultations.
+
+The Patient Medical Record MUST be accessible from:
+- Patient list
+- Consultations
+- Exams
+- Appointments
+
+--------------------------------------------------
+PATIENT MEDICAL RECORD – GLOBAL LAYOUT
+--------------------------------------------------
+
+Design a Patient Medical Record screen.
+
+TOP HEADER:
+- Patient identity (read-only)
+  - Full name
+  - Patient ID
+  - Age
+  - Sex
+  - Child / Adult indicator
+
+LAYOUT:
+- Horizontal tabs or vertical sections
+
+SECTIONS:
+- Summary
+- Medical History
+- Consultations
+- Exams
+- Appointments & Follow-up
+- Documents
+
+--------------------------------------------------
+SECTION: SUMMARY
+--------------------------------------------------
+
+Purpose:
+Provide an instant clinical overview.
+
+CONTENT (read-only):
+- Last consultation date and status
+- Last exam (type, date, status)
+- Active diagnoses (aggregated)
+- Next appointment (if any)
+- Alerts (incomplete exam, follow-up required)
+
+--------------------------------------------------
+SECTION: MEDICAL HISTORY
+--------------------------------------------------
+
+- Display antecedents (ICD-based)
+- Show last update date
+- Edit action redirects to Medical History module
+
+--------------------------------------------------
+SECTION: CONSULTATIONS
+--------------------------------------------------
+
+- Chronological table
+- Date, status, linked exam
+- Access to consultation detail
+
+--------------------------------------------------
+SECTION: EXAMS
+--------------------------------------------------
+
+- Child exams and Adult exams clearly separated
+- Chronological order
+- Status (Completed / Incomplete)
+- Access to exam view (read-only)
+
+--------------------------------------------------
+SECTION: APPOINTMENTS & FOLLOW-UP
+--------------------------------------------------
+
+- Upcoming appointments
+- Past appointments
+- Status (planned, cancelled, no-show)
+
+--------------------------------------------------
+SECTION: DOCUMENTS
+--------------------------------------------------
+
+- Reports (PDF)
+- Medical images
+- Export history
+
+RULES:
+- No editing of clinical data inside the Patient Medical Record
+- All edits happen in dedicated modules
+
+==================================================
+MODULE — CONSULTATIONS
+==================================================
+
+Definition:
+A consultation represents a medical visit context.
+It links a patient, a date/time, and optionally an exam.
+It does NOT contain clinical data itself.
+
+Statuses:
+- Planned
+- In progress
+- Completed
+- Cancelled
+
+--------------------------------------------------
+CONSULTATIONS LIST SCREEN
+--------------------------------------------------
+
+Design a consultations list screen.
+
+COLUMNS:
+- Date
+- Time
+- Patient name
+- Age
+- Consultation type (Child / Adult)
+- Status
+- Linked exam
+- Action (View / Continue)
+
+FILTERS:
+- Date range
+- Status
+- Child / Adult
+- With exam / Without exam
+
+--------------------------------------------------
+CONSULTATION DETAIL SCREEN
+--------------------------------------------------
+
+TOP SECTION:
+- Patient identity
+- Consultation date and time
+- Status
+- Consultation type
+
+SECTIONS:
+- Linked appointment
+- Linked exam (if exists)
+- Administrative notes (non-clinical)
+
+ACTIONS:
+- Start consultation
+- Create or link exam
+- Cancel consultation
+
+==================================================
+MODULE — APPOINTMENTS (RENDEZ-VOUS)
+==================================================
+
+Definition:
+An appointment is a scheduled time slot.
+It contains no clinical data.
+
+--------------------------------------------------
+APPOINTMENT CREATION MODAL
+--------------------------------------------------
+
+FIELDS:
+- Patient
+- Date
+- Time
+- Duration
+- Consultation type (Child / Adult)
+- Practitioner (optional)
+- Administrative notes
+
+RULES:
+- Prevent overlaps
+- Validate availability
+
+==================================================
+MODULE — PLANNING / AGENDA
+==================================================
+
+Design a planning agenda screen.
+
+LAYOUT:
+- Calendar-based
+- Day / Week views
+
+APPOINTMENT BLOCKS:
+- Patient name
+- Consultation type
+- Status
+
+RULES:
+- No overlapping appointments
+- Past appointments read-only
+
+==================================================
+MODULE — ANALYTICS
+==================================================
+
+Design a medical analytics dashboard.
+
+RULES:
+- Aggregated data only
+- No patient-level analytics
+- No gamification
+
+SECTIONS:
+- Activity overview
+- Temporal trends
+- Clinical distributions
+- Operational metrics
+
+==================================================
+MODULE — REPORTS
+==================================================
+
+Design a reporting and export module.
+
+EXPORTS:
+- Consultations
+- Appointments
+- Exams
+- Analytics summary
+
+FORMATS:
+- PDF
+- CSV
+
+==================================================
+FINAL UX SAFETY RULES
+==================================================
+
+DO NOT:
+- Edit exams from the Patient Medical Record
+- Mix scheduling with clinical data
+- Display individual patient analytics
+
+ALWAYS:
+- Keep Patient Medical Record as the central navigation hub
+- Separate concerns
+- Respect medical context
+- Favor clarity over density
+
+==================================================
+FINAL INSTRUCTION
+==================================================
+
+- Each screen is a separate component
+- Each form is a separate component
+- No giant files
+- Follow backend logic strictly
+- Do not invent fields or workflows

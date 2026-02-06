@@ -1,0 +1,333 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ===== GUISS MEDICAL DESIGN TOKENS - LIGHT MODE ===== */
+  /* Application médicale professionnelle - Single Source of Truth */
+
+  /* Background & Surface */
+  --background: #f8fafc;                       /* slate-50 */
+  --foreground: #0f172a;                       /* slate-900 */
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;                    /* slate-100 */
+  --surface-subtle: #e2e8f0;                   /* slate-200 */
+
+  /* Card & Popover */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* Primary - Sky (Medical) */
+  --primary: #0ea5e9;                          /* sky-500 */
+  --primary-hover: #0284c7;                    /* sky-600 */
+  --primary-subtle: #e0f2fe;                   /* sky-100 */
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: #f1f5f9;                        /* slate-100 */
+  --secondary-foreground: #334155;             /* slate-700 */
+
+  /* Muted */
+  --muted: #f1f5f9;                            /* slate-100 */
+  --muted-foreground: #64748b;                 /* slate-500 */
+
+  /* Accent */
+  --accent: #f1f5f9;
+  --accent-foreground: #334155;
+
+  /* Text hierarchy */
+  --text-primary: #0f172a;                     /* slate-900 */
+  --text-secondary: #334155;                   /* slate-700 */
+  --text-muted: #64748b;                       /* slate-500 */
+  --text-disabled: #94a3b8;                    /* slate-400 */
+
+  /* Status Colors */
+  --success: #16a34a;                          /* green-600 */
+  --success-subtle: #dcfce7;                   /* green-100 */
+  --warning: #d97706;                          /* amber-600 */
+  --warning-subtle: #fef3c7;                   /* amber-100 */
+  --danger: #dc2626;                           /* red-600 */
+  --danger-subtle: #fee2e2;                    /* red-100 */
+  --info: #0284c7;                             /* sky-600 */
+  --info-subtle: #e0f2fe;                      /* sky-100 */
+
+  /* Destructive (alias for danger) */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  /* Borders */
+  --border: #e2e8f0;                           /* slate-200 */
+  --border-strong: #cbd5e1;                    /* slate-300 */
+  --input: #e2e8f0;
+  --ring: #0ea5e9;                             /* sky-500 */
+
+  /* Charts */
+  --chart-1: #0ea5e9;
+  --chart-2: #0284c7;
+  --chart-3: #16a34a;
+  --chart-4: #d97706;
+  --chart-5: #64748b;
+
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0ea5e9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #334155;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0ea5e9;
+}
+
+.dark {
+  /* ===== GUISS MEDICAL DESIGN TOKENS - DARK MODE ===== */
+
+  /* Background & Surface */
+  --background: #020617;                       /* slate-950 */
+  --foreground: #f8fafc;                       /* slate-50 */
+  --surface: #020617;
+  --surface-muted: #0f172a;                    /* slate-900 */
+  --surface-subtle: #1e293b;                   /* slate-800 */
+
+  /* Card & Popover */
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  /* Primary - Sky (Medical) */
+  --primary: #38bdf8;                          /* sky-400 */
+  --primary-hover: #7dd3fc;                    /* sky-300 */
+  --primary-subtle: #0c4a6e;                   /* sky-900 */
+  --primary-foreground: #020617;
+
+  /* Secondary */
+  --secondary: #1e293b;                        /* slate-800 */
+  --secondary-foreground: #cbd5e1;             /* slate-300 */
+
+  /* Muted */
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;                 /* slate-400 */
+
+  /* Accent */
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+
+  /* Text hierarchy */
+  --text-primary: #f8fafc;                     /* slate-50 */
+  --text-secondary: #cbd5e1;                   /* slate-300 */
+  --text-muted: #94a3b8;                       /* slate-400 */
+  --text-disabled: #64748b;                    /* slate-500 */
+
+  /* Status Colors */
+  --success: #22c55e;                          /* green-500 */
+  --success-subtle: #14532d;                   /* green-900 */
+  --warning: #f59e0b;                          /* amber-500 */
+  --warning-subtle: #78350f;                   /* amber-900 */
+  --danger: #ef4444;                           /* red-500 */
+  --danger-subtle: #7f1d1d;                    /* red-900 */
+  --info: #38bdf8;                             /* sky-400 */
+  --info-subtle: #075985;                      /* sky-800 */
+
+  /* Destructive (alias for danger) */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Borders */
+  --border: #1e293b;                           /* slate-800 */
+  --border-strong: #334155;                    /* slate-700 */
+  --input: #1e293b;
+  --ring: #38bdf8;
+
+  /* Charts */
+  --chart-1: #38bdf8;
+  --chart-2: #0ea5e9;
+  --chart-3: #22c55e;
+  --chart-4: #f59e0b;
+  --chart-5: #94a3b8;
+
+  /* Sidebar */
+  --sidebar: #0f172a;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #020617;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #38bdf8;
+}
+
+.dark {
+  /* ===== ADMIN DESIGN TOKENS - DARK MODE ===== */
+
+  --background: oklch(0.129 0.042 264);        /* Slate 900 */
+  --foreground: oklch(0.985 0.002 247);        /* Slate 50 */
+
+  --card: oklch(0.208 0.042 265);              /* Slate 800 */
+  --card-foreground: oklch(0.985 0.002 247);
+
+  --popover: oklch(0.208 0.042 265);
+  --popover-foreground: oklch(0.985 0.002 247);
+
+  --primary: oklch(0.704 0.015 256);           /* Slate 400 */
+  --primary-foreground: oklch(0.129 0.042 264);
+
+  --secondary: oklch(0.279 0.041 260);         /* Slate 700 */
+  --secondary-foreground: oklch(0.869 0.022 252);
+
+  --muted: oklch(0.279 0.041 260);
+  --muted-foreground: oklch(0.704 0.015 256);  /* Slate 400 */
+
+  --accent: oklch(0.279 0.041 260);
+  --accent-foreground: oklch(0.929 0.013 255);
+
+  --destructive: oklch(0.577 0.245 27);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.279 0.041 260);            /* Slate 700 */
+  --input: oklch(0.279 0.041 260);
+  --ring: oklch(0.704 0.015 256);
+
+  /* Charts - dark mode */
+  --chart-1: oklch(0.704 0.015 256);
+  --chart-2: oklch(0.554 0.022 257);
+  --chart-3: oklch(0.446 0.043 257);
+  --chart-4: oklch(0.334 0.039 257);
+  --chart-5: oklch(0.279 0.041 260);
+
+  /* Sidebar */
+  --sidebar: oklch(0.208 0.042 265);
+  --sidebar-foreground: oklch(0.985 0.002 247);
+  --sidebar-primary: oklch(0.704 0.015 256);
+  --sidebar-primary-foreground: oklch(0.129 0.042 264);
+  --sidebar-accent: oklch(0.279 0.041 260);
+  --sidebar-accent-foreground: oklch(0.929 0.013 255);
+  --sidebar-border: oklch(0.279 0.041 260);
+  --sidebar-ring: oklch(0.704 0.015 256);
+}
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  /* Background & Foreground */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Surface */
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-subtle: var(--surface-subtle);
+
+  /* Card & Popover */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Primary */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Muted */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+
+  /* Destructive */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Border */
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Base styles */
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Medical Badge utilities - GUISS Design Tokens */
+@layer components {
+  .badge-default {
+    background-color: var(--surface-muted);
+    color: var(--text-secondary);
+  }
+  .badge-success {
+    background-color: var(--success-subtle);
+    color: var(--success);
+  }
+  .badge-warning {
+    background-color: var(--warning-subtle);
+    color: var(--warning);
+  }
+  .badge-danger {
+    background-color: var(--danger-subtle);
+    color: var(--danger);
+  }
+  .badge-info {
+    background-color: var(--info-subtle);
+    color: var(--info);
+  }
+}
