@@ -192,8 +192,8 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    // No custom signIn page - NextAuth will redirect directly to Keycloak
-    // since there's only one provider
+    // Page personnalisée qui redirige automatiquement vers Keycloak
+    signIn: '/auth/signin',
     error: '/unauthorized',
   },
   session: {

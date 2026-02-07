@@ -47,9 +47,8 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      // Use NextAuth's provider-specific signin route - it handles PKCE automatically
-      // This redirects directly to Keycloak without showing NextAuth's signin page
-      signIn: '/api/auth/signin/keycloak',
+      // Page personnalisée qui redirige automatiquement vers Keycloak
+      signIn: '/auth/signin',
     },
   },
 );
@@ -57,6 +56,6 @@ export default withAuth(
 // Protect all routes except public ones
 export const config = {
   matcher: [
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|unauthorized|maintenance).*)',
+    '/((?!api/auth|auth|_next/static|_next/image|favicon.ico|public|unauthorized|maintenance).*)',
   ],
 };

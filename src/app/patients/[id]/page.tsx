@@ -1,6 +1,8 @@
 'use client';
 
+// eslint-disable-next-line import/no-duplicates
 import { format } from 'date-fns';
+// eslint-disable-next-line import/no-duplicates
 import { fr } from 'date-fns/locale';
 import {
   ArrowLeft,
