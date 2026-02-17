@@ -21,7 +21,7 @@ const clientEnvSchema = z.object({
 const serverEnvSchema = z.object({
   KEYCLOAK_ISSUER: z.string(),
   KEYCLOAK_CLIENT_ID: z.string(),
-  KEYCLOAK_CLIENT_SECRET: z.string().optional(),
+  KEYCLOAK_CLIENT_SECRET: z.string().optional().default(''),
   NEXTAUTH_URL: z.string(),
   NEXTAUTH_SECRET: z.string(),
 });

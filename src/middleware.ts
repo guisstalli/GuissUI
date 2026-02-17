@@ -3,59 +3,49 @@ import { withAuth } from 'next-auth/middleware';
 
 import { INTERNAL_APP_ROLES, ROLES } from '@/lib/authorization';
 
-// Rôles autorisés pour l'application interne
 const ALLOWED_ROLES = INTERNAL_APP_ROLES;
 
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
+    const { pathname } = req.nextUrl;
 
-    // Check if token has expired or has refresh error
-    if (token?.error === 'RefreshAccessTokenError') {
-      // Redirect to Keycloak signin - NextAuth handles PKCE
-      const signInUrl = new URL('/api/auth/signin/keycloak', req.url);
-      signInUrl.searchParams.set('callbackUrl', req.url);
-      return NextResponse.redirect(signInUrl);
+    // Routes publiques - laisser passer
+    if (
+      pathname.startsWith('/api/auth') ||
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/unauthorized') ||
+      pathname.includes('.')
+    ) {
+      return NextResponse.next();
     }
 
-    // Vérifier les rôles de l'utilisateur
-    const userRoles = (token?.roles as string[]) || [];
+    // Si pas de token, withAuth redirigera automatiquement vers la page signin par défaut
+    if (!token) {
+      return NextResponse.next();
+    }
 
-    // Si l'utilisateur est UNIQUEMENT admin (pas d'autre rôle interne), bloquer l'accès
+    // Vérification des rôles
+    const userRoles = (token.roles as string[]) || [];
     const hasInternalRole = userRoles.some((role) =>
       ALLOWED_ROLES.includes(role as (typeof ROLES)[keyof typeof ROLES]),
     );
-
     const isOnlyAdmin = userRoles.includes(ROLES.ADMIN) && !hasInternalRole;
 
-    if (isOnlyAdmin) {
-      // Rediriger les admins purs vers la page unauthorized
-      const unauthorizedUrl = new URL('/unauthorized', req.url);
-      return NextResponse.redirect(unauthorizedUrl);
-    }
-
-    // Si l'utilisateur n'a aucun rôle autorisé
-    if (!hasInternalRole) {
-      const unauthorizedUrl = new URL('/unauthorized', req.url);
-      return NextResponse.redirect(unauthorizedUrl);
+    if (isOnlyAdmin || !hasInternalRole) {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
+      // Laisser NextAuth gérer l'authentification par défaut
       authorized: ({ token }) => !!token,
-    },
-    pages: {
-      // Page personnalisée qui redirige automatiquement vers Keycloak
-      signIn: '/auth/signin',
     },
   },
 );
 
-// Protect all routes except public ones
 export const config = {
-  matcher: [
-    '/((?!api/auth|auth|_next/static|_next/image|favicon.ico|public|unauthorized|maintenance).*)',
-  ],
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 };

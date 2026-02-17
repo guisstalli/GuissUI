@@ -1,0 +1,146 @@
+{
+  "realm": "guiss",
+  "enabled": true,
+
+  "displayName": "GUISS",
+  "sslRequired": "none",
+
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "verifyEmail": true,
+  "rememberMe": true,
+
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+
+  "internationalizationEnabled": true,
+  "supportedLocales": ["en", "fr"],
+  "defaultLocale": "fr",
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "defaultSignatureAlgorithm": "RS256",
+
+  "passwordPolicy": "length(12) and digits(1) and upperCase(1) and lowerCase(1) and specialChars(1) and notUsername and notEmail",
+
+  "roles": {
+    "realm": [
+      { "name": "ADMIN" },
+      { "name": "DOCTOR" },
+      { "name": "TECHNICIAN" },
+      { "name": "DATA_ENTRY" },
+      { "name": "PARTNER_USER" }
+    ]
+  },
+
+  "groups": [
+    {
+      "name": "Administrators",
+      "path": "/Administrators",
+      "realmRoles": ["ADMIN"]
+    },
+    {
+      "name": "MedicalStaff",
+      "path": "/MedicalStaff",
+      "subGroups": [
+        {
+          "name": "Doctors",
+          "path": "/MedicalStaff/Doctors",
+          "realmRoles": ["DOCTOR"]
+        },
+        {
+          "name": "Technicians",
+          "path": "/MedicalStaff/Technicians",
+          "realmRoles": ["TECHNICIAN"]
+        }
+      ]
+    },
+    {
+      "name": "DataEntry",
+      "path": "/DataEntry",
+      "realmRoles": ["DATA_ENTRY"]
+    }
+  ],
+
+  "clients": [
+    {
+      "clientId": "guiss-frontend",
+      "name": "GUISS Frontend (NextAuth PKCE)",
+      "protocol": "openid-connect",
+
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+
+      "rootUrl": "http://localhost:3000",
+
+      "redirectUris": ["http://localhost:3000/api/auth/callback/keycloak"],
+
+      "webOrigins": ["http://localhost:3000"],
+
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+
+      "fullScopeAllowed": true
+    },
+
+    {
+      "clientId": "guiss-admin-client",
+      "name": "GUISS Admin Service Account",
+      "protocol": "openid-connect",
+
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    },
+
+    {
+      "clientId": "guiss-depistage-api",
+      "name": "GUISS Depistage API",
+      "protocol": "openid-connect",
+
+      "publicClient": false,
+      "bearerOnly": true
+    },
+
+    {
+      "clientId": "guiss-iam-api",
+      "name": "GUISS IAM API",
+      "protocol": "openid-connect",
+
+      "publicClient": false,
+      "bearerOnly": true
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin.guiss",
+      "enabled": true,
+      "email": "admin@guiss.local",
+      "firstName": "Admin",
+      "lastName": "GUISS",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "TempAdmin@2026!",
+          "temporary": true
+        }
+      ],
+      "requiredActions": ["UPDATE_PASSWORD"],
+      "groups": ["/Administrators"]
+    }
+  ],
+
+  "userManagedAccessAllowed": false
+}

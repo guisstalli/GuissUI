@@ -28,8 +28,8 @@ export function InternalAppGuard({ children }: InternalAppGuardProps) {
   const user = session?.user
     ? {
         id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
+        email: session.user.email ?? '',
+        name: session.user.name ?? '',
         roles: (session.user as { roles?: string[] }).roles || [],
       }
     : null;
