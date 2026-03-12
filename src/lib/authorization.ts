@@ -86,6 +86,12 @@ export const PERMISSIONS = {
 
   // Dossier Patient
   'patient-records:view': 'Voir les dossiers patients',
+
+  // Sites
+  'sites:view': 'Voir les sites',
+  'sites:create': 'Créer un site',
+  'sites:edit': 'Modifier un site',
+  'sites:delete': 'Supprimer un site',
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -142,6 +148,11 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:export',
     // Dossier Patient
     'patient-records:view',
+    // Sites
+    'sites:view',
+    'sites:create',
+    'sites:edit',
+    'sites:delete',
   ],
 
   // TECHNICIAN : données techniques uniquement
@@ -171,6 +182,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'planning:view',
     // Dossier Patient
     'patient-records:view',
+    // Sites
+    'sites:view',
+    'sites:create',
+    'sites:edit',
   ],
 
   // DATA_ENTRY : saisie de données
@@ -202,6 +217,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'planning:view',
     // Dossier Patient
     'patient-records:view',
+    // Sites
+    'sites:view',
+    'sites:create',
+    'sites:edit',
   ],
 
   // PARTNER_USER : accès limité en lecture

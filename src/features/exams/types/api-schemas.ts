@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+import {
+  EyeEnum,
+  DiplopieTypeEnum,
+  StrabismeTypeEnum,
+  PtosisTypeEnum,
+} from './schemas';
+
 // =============================================================================
 // API RESPONSE SCHEMAS - Correspond exactement aux réponses du backend
 // Ces schémas représentent les données telles qu'elles sont retournées par l'API
@@ -24,20 +31,27 @@ export const PatientNestedApiSchema = z.object({
 // TECHNICAL EXAM API SCHEMAS
 // =============================================================================
 
-/** Visual Acuity API Response - Les valeurs sont des strings */
 export const VisualAcuityApiSchema = z.object({
   id: z.number().optional(),
+  parinaud: z.string().nullable().optional(),
+  correction: z.boolean().optional(),
   avsc_od: z.string().nullable().optional(),
   avsc_og: z.string().nullable().optional(),
   avsc_odg: z.string().nullable().optional(),
   avac_od: z.string().nullable().optional(),
   avac_og: z.string().nullable().optional(),
   avac_odg: z.string().nullable().optional(),
+  avsc_od_avec_correction: z.string().nullable().optional(),
+  avsc_og_avec_correction: z.string().nullable().optional(),
+  avsc_odg_avec_correction: z.string().nullable().optional(),
+  avac_od_avec_correction: z.string().nullable().optional(),
+  avac_og_avec_correction: z.string().nullable().optional(),
+  avac_odg_avec_correction: z.string().nullable().optional(),
   created: z.string().optional(),
   modified: z.string().optional(),
 });
 
-/** Refraction API Response - utilise od_s, od_c, od_a au lieu de od_sphere, etc. */
+/** Refraction API Response - utilise od_s, od_c, od_a */
 export const RefractionApiSchema = z.object({
   id: z.number().optional(),
   // OD
@@ -108,13 +122,15 @@ export const PlaintesApiSchema = z.object({
   eye_symptom: z.array(z.string()),
   autre: z.string().nullable().optional(),
   diplopie: z.boolean(),
-  diplopie_type: z.string().nullable().optional(),
-  strabisme: z.boolean(),
-  strabisme_eye: z.string().nullable().optional(),
-  nystagmus: z.boolean(),
+  diplopie_type: z.string().optional().nullable(),
+  strabisme: z.boolean().optional(),
+  strabisme_type: z.string().optional().nullable(),
+  strabisme_eye: z.string().optional().nullable(),
+  nystagmus: z.boolean().optional(),
   nystagmus_eye: z.string().nullable().optional(),
   ptosis: z.boolean(),
   ptosis_eye: z.string().nullable().optional(),
+  ptosis_type: z.string().optional().nullable(),
   created: z.string().optional(),
   modified: z.string().optional(),
 });
@@ -150,9 +166,9 @@ export const BiomicroscopyPosteriorApiSchema = z.object({
   papille: z.string().nullable().optional(),
   papille_autres: z.string().nullable().optional(),
   macula: z.string().nullable().optional(),
-  retinien_peripherique: z.string().nullable().optional(),
-  retinien_peripherique_autre: z.string().nullable().optional(),
-  vaissaux: z.string().nullable().optional(),
+  retine_peripherique: z.string().nullable().optional(),
+  retine_peripherique_autre: z.string().nullable().optional(),
+  vaissaux_retinien: z.string().nullable().optional(),
   cd: z.string().nullable().optional(),
   observation: z.string().nullable().optional(),
   created: z.string().optional(),
@@ -194,10 +210,27 @@ export const ConclusionApiSchema = z.object({
   modified: z.string().optional(),
 });
 
+/** Medical History API Response */
+export const MedicalHistoryApiSchema = z.object({
+  id: z.number().optional(),
+  patient: z.number().optional(),
+  has_antecedents_medico_chirurgicaux: z.boolean(),
+  antecedents_medico_chirurgicaux: z.array(z.string()),
+  has_pathologie_ophtalmologique: z.boolean(),
+  pathologie_ophtalmologique: z.array(z.string()),
+  familial: z.array(z.string()),
+  autre_familial_detail: z.string().nullable().optional(),
+  uses_screen: z.boolean(),
+  screen_time_hours_per_day: z.number().nullable().optional(),
+  created: z.string().optional(),
+  modified: z.string().optional(),
+});
+
 /** Clinical Examen API Response */
 export const ClinicalExamenApiSchema = z.object({
   id: z.number(),
   plaintes: PlaintesApiSchema.nullable().optional(),
+  medical_history: MedicalHistoryApiSchema.nullable().optional(),
   od: EyeExamApiSchema.nullable().optional(),
   og: EyeExamApiSchema.nullable().optional(),
   perimetry: PerimetryApiSchema.nullable().optional(),
@@ -283,7 +316,13 @@ export type BiomicroscopyPosteriorApi = z.infer<
 export type EyeExamApi = z.infer<typeof EyeExamApiSchema>;
 export type PerimetryApi = z.infer<typeof PerimetryApiSchema>;
 export type ConclusionApi = z.infer<typeof ConclusionApiSchema>;
+export type MedicalHistoryApi = z.infer<typeof MedicalHistoryApiSchema>;
 export type ClinicalExamenApi = z.infer<typeof ClinicalExamenApiSchema>;
 export type ExamenAdultDetailApi = z.infer<typeof ExamenAdultDetailApiSchema>;
 export type VisionBinoculaireApi = z.infer<typeof VisionBinoculaireApiSchema>;
 export type ExamenChildDetailApi = z.infer<typeof ExamenChildDetailApiSchema>;
+
+export type Eye = z.infer<typeof EyeEnum>;
+export type DiplopieType = z.infer<typeof DiplopieTypeEnum>;
+export type StrabismeType = z.infer<typeof StrabismeTypeEnum>;
+export type PtosisType = z.infer<typeof PtosisTypeEnum>;

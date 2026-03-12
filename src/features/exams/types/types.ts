@@ -14,6 +14,8 @@ import {
   CoverTestTypeEnum,
   CristallinEnum,
   DiplopieTypeEnum,
+  StrabismeTypeEnum,
+  PtosisTypeEnum,
   ExamenAdultCompleteSchema,
   ExamenAdultCreateSchema,
   ExamenAdultDetailSchema,
@@ -40,6 +42,7 @@ import {
   PatientNestedSchema,
   PboEnum,
   PerimetrySchema,
+  MedicalHistorySchema,
   PlaintesSchema,
   PositionCristallinEnum,
   ProfondeurEnum,
@@ -47,7 +50,7 @@ import {
   QuantiteAnomalieEnum,
   ReflexEnum,
   RefractionSchema,
-  RetinienPeripheriqueEnum,
+  RetinePeripheriqueEnum,
   RpmEnum,
   SectionEnum,
   SegmentEnum,
@@ -61,6 +64,7 @@ import {
   VisionBinoculaireSchema,
   VisualAcuitySchema,
   VitreEnum,
+  FamilialEnum,
 } from './schemas';
 
 // =============================================================================
@@ -78,6 +82,8 @@ export type ClinicalCheck = z.infer<typeof ClinicalCheckEnum>;
 export type EyeSymptom = z.infer<typeof EyeSymptomEnum>;
 export type Eye = z.infer<typeof EyeEnum>;
 export type DiplopieType = z.infer<typeof DiplopieTypeEnum>;
+export type StrabismeType = z.infer<typeof StrabismeTypeEnum>;
+export type PtosisType = z.infer<typeof PtosisTypeEnum>;
 export type Pbo = z.infer<typeof PboEnum>;
 export type Segment = z.infer<typeof SegmentEnum>;
 export type Cornee = z.infer<typeof CorneeEnum>;
@@ -94,9 +100,10 @@ export type PositionCristallin = z.infer<typeof PositionCristallinEnum>;
 export type Vitre = z.infer<typeof VitreEnum>;
 export type Papille = z.infer<typeof PapilleEnum>;
 export type Macula = z.infer<typeof MaculaEnum>;
-export type RetinienPeripherique = z.infer<typeof RetinienPeripheriqueEnum>;
+export type RetinePeripherique = z.infer<typeof RetinePeripheriqueEnum>;
 export type Vaissaux = z.infer<typeof VaissauxEnum>;
 export type VisionAptitude = z.infer<typeof VisionAptitudeEnum>;
+export type Familial = z.infer<typeof FamilialEnum>;
 export type Section = z.infer<typeof SectionEnum>;
 
 // =============================================================================
@@ -123,6 +130,7 @@ export type BiomicroscopyPosterior = z.infer<
 >;
 export type BpSup = z.infer<typeof BpSupSchema>;
 export type Conclusion = z.infer<typeof ConclusionSchema>;
+export type MedicalHistory = z.infer<typeof MedicalHistorySchema>;
 export type ClinicalExam = z.infer<typeof ClinicalExamSchema>;
 
 // =============================================================================

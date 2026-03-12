@@ -57,6 +57,7 @@ import { useDeletePatient, usePatients } from '@/features/patients/api';
 import { NewPatientModal } from '@/features/patients/components/new-patient-modal';
 import type { Sex } from '@/features/patients/types';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
+import { SiteSelector } from '@/features/sites/components/site-selector';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -76,10 +77,13 @@ export default function PatientsPage() {
     name: string;
   } | null>(null);
 
-  // État pour le patient en cours de création d'examen
-  const [creatingExamForPatient, setCreatingExamForPatient] = useState<
-    number | null
-  >(null);
+  // État pour le patient en cours de création d'examen et les données associées
+  const [examCreationModal, setExamCreationModal] = useState<{
+    isOpen: boolean;
+    patientId: number | null;
+    isAdult: boolean | null;
+  }>({ isOpen: false, patientId: null, isAdult: null });
+  const [selectedSite, setSelectedSite] = useState<number | null>(null);
 
   // Construire les paramètres de requête
   const getIsAdultFilter = () => {
@@ -119,11 +123,8 @@ export default function PatientsPage() {
   const createAdultExamMutation = useCreateAdultExam({
     mutationConfig: {
       onSuccess: (data) => {
-        setCreatingExamForPatient(null);
+        setExamCreationModal({ isOpen: false, patientId: null, isAdult: null });
         router.push(`/exams/adult/${data.id}`);
-      },
-      onError: () => {
-        setCreatingExamForPatient(null);
       },
     },
   });
@@ -131,11 +132,8 @@ export default function PatientsPage() {
   const createChildExamMutation = useCreateChildExam({
     mutationConfig: {
       onSuccess: (data) => {
-        setCreatingExamForPatient(null);
+        setExamCreationModal({ isOpen: false, patientId: null, isAdult: null });
         router.push(`/exams/child/${data.id}`);
-      },
-      onError: () => {
-        setCreatingExamForPatient(null);
       },
     },
   });
@@ -190,13 +188,26 @@ export default function PatientsPage() {
     }
   };
 
-  // Handler pour créer un examen
-  const handleCreateExam = (patientId: number, isAdult: boolean) => {
-    setCreatingExamForPatient(patientId);
-    if (isAdult) {
-      createAdultExamMutation.mutate({ patient_id: patientId });
+  // Handler pour lancer la création d'un examen (ouvre le modal)
+  const handleOpenCreateExamModal = (patientId: number, isAdult: boolean) => {
+    setExamCreationModal({ isOpen: true, patientId, isAdult });
+    setSelectedSite(null); // Reset
+  };
+
+  // Handler de confirmation
+  const handleConfirmCreateExam = () => {
+    if (!examCreationModal.patientId || !selectedSite) return;
+
+    if (examCreationModal.isAdult) {
+      createAdultExamMutation.mutate({
+        patient_id: examCreationModal.patientId,
+        site_id: selectedSite,
+      });
     } else {
-      createChildExamMutation.mutate({ patient_id: patientId });
+      createChildExamMutation.mutate({
+        patient_id: examCreationModal.patientId,
+        site_id: selectedSite,
+      });
     }
   };
 
@@ -425,21 +436,14 @@ export default function PatientsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                handleCreateExam(patient.id, patient.is_adult)
+                                handleOpenCreateExamModal(
+                                  patient.id,
+                                  patient.is_adult,
+                                )
                               }
-                              disabled={creatingExamForPatient === patient.id}
                             >
-                              {creatingExamForPatient === patient.id ? (
-                                <>
-                                  <Loader2 className="mr-2 size-4 animate-spin" />
-                                  Création...
-                                </>
-                              ) : (
-                                <>
-                                  <Plus className="mr-2 size-4" />
-                                  Créer un examen
-                                </>
-                              )}
+                              <Plus className="mr-2 size-4" />
+                              Créer un examen
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -536,6 +540,76 @@ export default function PatientsPage() {
               disabled={deletePatientMutation.isPending}
             >
               {deletePatientMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exam Creation Dialog */}
+      <Dialog
+        open={examCreationModal.isOpen}
+        onOpenChange={(open) =>
+          !open &&
+          setExamCreationModal({
+            isOpen: false,
+            patientId: null,
+            isAdult: null,
+          })
+        }
+      >
+        <DialogContent
+          className="sm:max-w-[425px]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Créer un nouvel examen</DialogTitle>
+            <DialogDescription>
+              Veuillez sélectionner le site de dépistage avant de poursuivre
+              vers l&apos;examen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Site de dépistage
+              </span>
+              <SiteSelector
+                value={selectedSite}
+                onChange={(id: number | null) => setSelectedSite(id)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setExamCreationModal({
+                  isOpen: false,
+                  patientId: null,
+                  isAdult: null,
+                })
+              }
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleConfirmCreateExam}
+              disabled={
+                !selectedSite ||
+                createAdultExamMutation.isPending ||
+                createChildExamMutation.isPending
+              }
+            >
+              {createAdultExamMutation.isPending ||
+                createChildExamMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                'Créer'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

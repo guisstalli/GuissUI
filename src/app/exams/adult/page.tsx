@@ -149,6 +149,7 @@ export default function AdultExamsPage() {
                 <TableRow>
                   <TableHead>N° Examen</TableHead>
                   <TableHead>Patient</TableHead>
+                  <TableHead>Site</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Dernière mise à jour</TableHead>
@@ -159,7 +160,7 @@ export default function AdultExamsPage() {
                 {exams.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Aucun examen trouvé.
@@ -178,6 +179,9 @@ export default function AdultExamsPage() {
                         >
                           {exam.patient_name}
                         </Link>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {exam.site_libelle || '—'}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {new Date(exam.created).toLocaleDateString('fr-FR')}

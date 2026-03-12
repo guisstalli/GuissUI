@@ -9,6 +9,7 @@ import {
   Eye,
   LayoutDashboard,
   Users,
+  MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -88,6 +89,17 @@ const navigation: NavSection[] = [
         href: paths.exams.incomplete.getHref(),
         icon: AlertCircle,
         permission: 'exams:view',
+      },
+    ],
+  },
+  {
+    title: 'Site',
+    items: [
+      {
+        name: 'Sites',
+        href: paths.sites.list.getHref(),
+        icon: MapPin,
+        permission: 'sites:view',
       },
     ],
   },

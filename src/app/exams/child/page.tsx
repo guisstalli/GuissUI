@@ -156,6 +156,7 @@ export default function ChildExamsPage() {
                 <TableRow>
                   <TableHead>N° Examen</TableHead>
                   <TableHead>Patient</TableHead>
+                  <TableHead>Site</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Reflet Pupillaire</TableHead>
                   <TableHead>Fond d&apos;œil</TableHead>
@@ -167,7 +168,7 @@ export default function ChildExamsPage() {
                 {filteredExams.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Aucun examen trouvé.
@@ -188,6 +189,9 @@ export default function ChildExamsPage() {
                           >
                             {exam.patient_name}
                           </Link>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {exam.site_libelle || '—'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(exam.created).toLocaleDateString('fr-FR')}

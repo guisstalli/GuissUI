@@ -39,10 +39,8 @@ export interface ICDSelectorProps {
 // ICD-11 API SERVICE
 // =============================================================================
 
-const ICD_API_URL = 'https://icd11restapi-developer-test.azurewebsites.net';
-
 /**
- * Recherche dans l'API ICD-11 de l'OMS
+ * Recherche dans l'API ICD-11 de l'OMS via le proxy serveur
  */
 async function searchICD11(query: string): Promise<ICDSearchResult[]> {
   if (!query || query.trim().length < 2) {
@@ -51,14 +49,7 @@ async function searchICD11(query: string): Promise<ICDSearchResult[]> {
 
   try {
     const response = await fetch(
-      `${ICD_API_URL}/icd/release/11/2024-01/mms/search?q=${encodeURIComponent(query)}&useFlexisearch=true&flatResults=true&highlightingEnabled=false`,
-      {
-        headers: {
-          Accept: 'application/json',
-          'Accept-Language': 'fr',
-          'API-Version': 'v2',
-        },
-      },
+      `/api/icd/search?q=${encodeURIComponent(query)}`,
     );
 
     if (!response.ok) {

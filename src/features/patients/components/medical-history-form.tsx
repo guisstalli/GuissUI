@@ -18,6 +18,7 @@ import {
   FormMessage,
   Input,
 } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { useAntecedent, useUpdateAntecedent } from '@/features/patients/api';
 import { FAMILIAL_LABELS } from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';
@@ -44,10 +45,8 @@ interface ICDApiResponse {
 // ICD-11 API SERVICE
 // =============================================================================
 
-const ICD_API_URL = 'https://icd11restapi-developer-test.azurewebsites.net';
-
 /**
- * Recherche dans l'API ICD-11 de l'OMS
+ * Recherche dans l'API ICD-11 de l'OMS via le proxy serveur
  */
 async function searchICD11(query: string): Promise<ICDSearchResult[]> {
   if (!query || query.trim().length < 2) {
@@ -56,14 +55,7 @@ async function searchICD11(query: string): Promise<ICDSearchResult[]> {
 
   try {
     const response = await fetch(
-      `${ICD_API_URL}/icd/release/11/2024-01/mms/search?q=${encodeURIComponent(query)}&useFlexisearch=true&flatResults=true&highlightingEnabled=false`,
-      {
-        headers: {
-          Accept: 'application/json',
-          'Accept-Language': 'fr',
-          'API-Version': 'v2',
-        },
-      },
+      `/api/icd/search?q=${encodeURIComponent(query)}`,
     );
 
     if (!response.ok) {
@@ -92,7 +84,9 @@ const FamilialEnum = z.enum(['CECITE', 'GPAO', 'OTHER']);
 
 const medicalHistorySchema = z
   .object({
+    has_antecedents_medico_chirurgicaux: z.boolean(),
     antecedents_medico_chirurgicaux: z.array(z.string().max(255)),
+    has_pathologie_ophtalmologique: z.boolean(),
     pathologie_ophtalmologique: z.array(z.string().max(255)),
     familial: z.array(FamilialEnum),
     autre_familial_detail: z.string().max(255).nullable().optional(),
@@ -346,7 +340,9 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
   const form = useForm<MedicalHistoryFormValues>({
     resolver: zodResolver(medicalHistorySchema),
     defaultValues: {
+      has_antecedents_medico_chirurgicaux: false,
       antecedents_medico_chirurgicaux: [],
+      has_pathologie_ophtalmologique: false,
       pathologie_ophtalmologique: [],
       familial: [],
       autre_familial_detail: null,
@@ -359,8 +355,14 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
   useEffect(() => {
     if (antecedent) {
       form.reset({
+        has_antecedents_medico_chirurgicaux:
+          antecedent.has_antecedents_medico_chirurgicaux ??
+          (antecedent.antecedents_medico_chirurgicaux || []).length > 0,
         antecedents_medico_chirurgicaux:
           antecedent.antecedents_medico_chirurgicaux || [],
+        has_pathologie_ophtalmologique:
+          antecedent.has_pathologie_ophtalmologique ??
+          (antecedent.pathologie_ophtalmologique || []).length > 0,
         pathologie_ophtalmologique: antecedent.pathologie_ophtalmologique || [],
         familial: antecedent.familial || [],
         autre_familial_detail: antecedent.autre_familial_detail || null,
@@ -373,16 +375,28 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
   const watchFamilial = form.watch('familial');
   const watchUsesScreen = form.watch('uses_screen');
   const watchScreenTime = form.watch('screen_time_hours_per_day');
+  const watchHasMedicoChir = form.watch('has_antecedents_medico_chirurgicaux');
+  const watchHasOphtalmo = form.watch('has_pathologie_ophtalmologique');
 
   const showOtherFamilialDetail = watchFamilial?.includes('OTHER');
 
   const onSubmit = (data: MedicalHistoryFormValues) => {
     // Clean up data before submission
-    const cleanedData = {
-      ...data,
+    const apiPayload = {
+      has_antecedents_medico_chirurgicaux:
+        data.has_antecedents_medico_chirurgicaux,
+      antecedents_medico_chirurgicaux: data.has_antecedents_medico_chirurgicaux
+        ? data.antecedents_medico_chirurgicaux
+        : [],
+      has_pathologie_ophtalmologique: data.has_pathologie_ophtalmologique,
+      pathologie_ophtalmologique: data.has_pathologie_ophtalmologique
+        ? data.pathologie_ophtalmologique
+        : [],
+      familial: data.familial,
       autre_familial_detail: showOtherFamilialDetail
         ? data.autre_familial_detail
         : null,
+      uses_screen: data.uses_screen,
       screen_time_hours_per_day: data.uses_screen
         ? data.screen_time_hours_per_day
         : null,
@@ -392,7 +406,7 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
       patientId,
       data: {
         patient: patientId,
-        ...cleanedData,
+        ...apiPayload,
       },
     });
   };
@@ -427,53 +441,108 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
 
         {/* Section 1: Antécédents médico-chirurgicaux */}
         <section className="space-y-4 rounded-lg border border-border p-6">
-          <div className="border-b border-border pb-3">
-            <h3 className="text-base font-semibold text-foreground">
-              Antécédents médico-chirurgicaux
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sélectionnez les pathologies du patient
-            </p>
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                Antécédents médico-chirurgicaux
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Le patient a-t-il des antécédents médico-chirurgicaux ?
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="has_antecedents_medico_chirurgicaux"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2">
+                  <FormLabel className="text-sm">
+                    {field.value ? 'Oui' : 'Non'}
+                  </FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) {
+                          form.setValue('antecedents_medico_chirurgicaux', []);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
-          <FormField
-            control={form.control}
-            name="antecedents_medico_chirurgicaux"
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <ICDSelector
-                  label="Pathologies générales"
-                  description="Recherchez et sélectionnez dans la nomenclature ICD-11"
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={fieldState.error?.message}
-                />
-              </FormItem>
-            )}
-          />
+          {watchHasMedicoChir && (
+            <FormField
+              control={form.control}
+              name="antecedents_medico_chirurgicaux"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <ICDSelector
+                    label="Pathologies générales"
+                    description="Recherchez et sélectionnez dans la nomenclature ICD-11"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={fieldState.error?.message}
+                  />
+                </FormItem>
+              )}
+            />
+          )}
         </section>
 
         {/* Section 2: Pathologies ophtalmologiques */}
         <section className="space-y-4 rounded-lg border border-border p-6">
-          <div className="border-b border-border pb-3">
-            <h3 className="text-base font-semibold text-foreground">
-              Pathologies ophtalmologiques
-            </h3>
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                Pathologies ophtalmologiques
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Le patient a-t-il des pathologies ophtalmologiques ?
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="has_pathologie_ophtalmologique"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2">
+                  <FormLabel className="text-sm">
+                    {field.value ? 'Oui' : 'Non'}
+                  </FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) {
+                          form.setValue('pathologie_ophtalmologique', []);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
-          <FormField
-            control={form.control}
-            name="pathologie_ophtalmologique"
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <ICDSelector
-                  label=""
-                  description="Recherchez et sélectionnez dans la nomenclature ICD-11"
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={fieldState.error?.message}
-                />
-              </FormItem>
-            )}
-          />
+          {watchHasOphtalmo && (
+            <FormField
+              control={form.control}
+              name="pathologie_ophtalmologique"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <ICDSelector
+                    label=""
+                    description="Recherchez et sélectionnez dans la nomenclature ICD-11"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={fieldState.error?.message}
+                  />
+                </FormItem>
+              )}
+            />
+          )}
         </section>
 
         {/* Section 3: Antécédents familiaux */}

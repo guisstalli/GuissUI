@@ -1,0 +1,30 @@
+yarn run v1.22.22
+$ next lint
+
+./src/app/patients/[id]/page.tsx
+32:3  Error: 'Select' is defined but never used.  @typescript-eslint/no-unused-vars
+33:3  Error: 'SelectContent' is defined but never used.  @typescript-eslint/no-unused-vars
+34:3  Error: 'SelectItem' is defined but never used.  @typescript-eslint/no-unused-vars
+35:3  Error: 'SelectTrigger' is defined but never used.  @typescript-eslint/no-unused-vars
+36:3  Error: 'SelectValue' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/sites/page.tsx
+3:10  Error: 'MapPin' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/features/exams/components/forms/visual-acuity-form.tsx
+302:14  Warning: Classname 'border-medical-info/20' is not a Tailwind CSS class!  tailwindcss/no-custom-classname
+302:14  Warning: Classname 'bg-medical-info/5' is not a Tailwind CSS class!  tailwindcss/no-custom-classname
+304:20  Warning: Classname 'text-medical-info' is not a Tailwind CSS class!  tailwindcss/no-custom-classname
+343:20  Warning: Classname 'text-medical-info' is not a Tailwind CSS class!  tailwindcss/no-custom-classname
+
+./src/features/exams/utils/api-to-form-mappers.ts
+29:3  Error: 'DiplopieType' is defined but never used.  @typescript-eslint/no-unused-vars
+31:3  Error: 'PtosisType' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/features/sites/components/site-selector.tsx
+96:25  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+96:34  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

@@ -109,7 +109,7 @@ export function BiomicroscopyPosteriorForm({
   });
   const retinien = useWatch({
     control: form.control,
-    name: `${namePrefix}.retinien_peripherique`,
+    name: `${namePrefix}.retine_peripherique`,
   });
 
   const isNormal = segment === 'NORMAL';
@@ -123,9 +123,9 @@ export function BiomicroscopyPosteriorForm({
       form.setValue(`${namePrefix}.papille`, null);
       form.setValue(`${namePrefix}.papille_autres`, null);
       form.setValue(`${namePrefix}.macula`, null);
-      form.setValue(`${namePrefix}.retinien_peripherique`, null);
-      form.setValue(`${namePrefix}.retinien_peripherique_autre`, null);
-      form.setValue(`${namePrefix}.vaissaux`, null);
+      form.setValue(`${namePrefix}.retine_peripherique`, null);
+      form.setValue(`${namePrefix}.retine_peripherique_autre`, null);
+      form.setValue(`${namePrefix}.vaissaux_retinien`, null);
       form.setValue(`${namePrefix}.cd`, null);
       form.setValue(`${namePrefix}.observation`, null);
     }
@@ -146,7 +146,7 @@ export function BiomicroscopyPosteriorForm({
 
   useEffect(() => {
     if (retinien !== 'AUTRE') {
-      form.setValue(`${namePrefix}.retinien_peripherique_autre`, null);
+      form.setValue(`${namePrefix}.retine_peripherique_autre`, null);
     }
   }, [retinien, form, namePrefix]);
 
@@ -346,11 +346,11 @@ export function BiomicroscopyPosteriorForm({
             {/* Rétinien périphérique */}
             <FormField
               control={form.control}
-              name={`${namePrefix}.retinien_peripherique`}
+              name={`${namePrefix}.retine_peripherique`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Rétinien périphérique <RequiredIndicator />
+                    Rétine périphérique <RequiredIndicator />
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -377,7 +377,7 @@ export function BiomicroscopyPosteriorForm({
             {retinien === 'AUTRE' && (
               <FormField
                 control={form.control}
-                name={`${namePrefix}.retinien_peripherique_autre`}
+                name={`${namePrefix}.retine_peripherique_autre`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
@@ -396,14 +396,14 @@ export function BiomicroscopyPosteriorForm({
               />
             )}
 
-            {/* Vaisseaux */}
             <FormField
               control={form.control}
-              name={`${namePrefix}.vaissaux`}
+              name={`${namePrefix}.vaissaux_retinien`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Vaisseaux <RequiredIndicator />
+                    Vaisseaux Rétiniens
+                    <RequiredIndicator />
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}

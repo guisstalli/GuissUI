@@ -146,6 +146,22 @@ export const paths = {
     },
   },
 
+  // Sites
+  sites: {
+    list: {
+      getHref: () => '/sites',
+    },
+    detail: {
+      getHref: (id: number | string) => `/sites/${id}`,
+    },
+    create: {
+      getHref: () => '/sites/new',
+    },
+    edit: {
+      getHref: (id: number | string) => `/sites/${id}/edit`,
+    },
+  },
+
   // Unauthorized page
   unauthorized: {
     getHref: () => '/unauthorized',
@@ -167,6 +183,7 @@ export const activePaths = [
   '/planning',
   '/analytics',
   '/reports',
+  '/sites',
   '/unauthorized',
   '/maintenance',
 ] as const;

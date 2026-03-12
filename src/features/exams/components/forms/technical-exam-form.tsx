@@ -119,12 +119,26 @@ export function TechnicalExamForm({
     resolver: zodResolver(technicalExamFormSchema),
     defaultValues: {
       visualAcuity: {
+        parinaud: initialData?.visualAcuity?.parinaud ?? null,
+        correction: initialData?.visualAcuity?.correction ?? false,
         avsc_od: initialData?.visualAcuity?.avsc_od ?? null,
         avsc_og: initialData?.visualAcuity?.avsc_og ?? null,
         avsc_odg: initialData?.visualAcuity?.avsc_odg ?? null,
         avac_od: initialData?.visualAcuity?.avac_od ?? null,
         avac_og: initialData?.visualAcuity?.avac_og ?? null,
         avac_odg: initialData?.visualAcuity?.avac_odg ?? null,
+        avsc_od_avec_correction:
+          initialData?.visualAcuity?.avsc_od_avec_correction ?? null,
+        avsc_og_avec_correction:
+          initialData?.visualAcuity?.avsc_og_avec_correction ?? null,
+        avsc_odg_avec_correction:
+          initialData?.visualAcuity?.avsc_odg_avec_correction ?? null,
+        avac_od_avec_correction:
+          initialData?.visualAcuity?.avac_od_avec_correction ?? null,
+        avac_og_avec_correction:
+          initialData?.visualAcuity?.avac_og_avec_correction ?? null,
+        avac_odg_avec_correction:
+          initialData?.visualAcuity?.avac_odg_avec_correction ?? null,
       },
       refraction: {
         od_sphere: initialData?.refraction?.od_sphere ?? null,

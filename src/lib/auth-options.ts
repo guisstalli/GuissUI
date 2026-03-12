@@ -22,9 +22,48 @@ function extractRoles(decoded: any): string[] {
   return roles;
 }
 
-// CRITIQUE: Cookies non sécurisés en développement pour localhost HTTP
-const useSecureCookies = process.env.NODE_ENV === 'production';
-const cookiePrefix = useSecureCookies ? '__Secure-' : '';
+async function refreshAccessToken(token: any) {
+  try {
+    const url = `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: env.KEYCLOAK_CLIENT_ID,
+        grant_type: 'refresh_token',
+        refresh_token: token.refreshToken,
+      }),
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    let roles: string[] = [];
+    try {
+      const decoded: any = jwtDecode(refreshedTokens.access_token);
+      roles = extractRoles(decoded);
+    } catch (error) {
+      console.error('Erreur décodage JWT lors du rafraîchissement:', error);
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+      roles: roles.length > 0 ? roles : token.roles,
+    };
+  } catch (error) {
+    console.error('Error refreshing access token', error);
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+    };
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
@@ -32,65 +71,28 @@ export const authOptions: NextAuthOptions = {
   providers: [
     KeycloakProvider({
       clientId: env.KEYCLOAK_CLIENT_ID,
-      clientSecret: '', // Public client = chaîne vide obligatoire
+      clientSecret: '',
       issuer: env.KEYCLOAK_ISSUER,
-      checks: ['pkce', 'state'],
+      authorization: {
+        url: `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/auth`,
+        params: {
+          scope: 'openid email profile',
+          audience: 'guiss-depistage-api',
+        },
+      },
+      token: {
+        url: `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`,
+        params: { audience: 'guiss-depistage-api' },
+      },
+      userinfo: `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/userinfo`,
       client: {
-        token_endpoint_auth_method: 'none', // Force le mode public
+        token_endpoint_auth_method: 'none',
+      },
+      httpOptions: {
+        timeout: 10000,
       },
     }),
   ],
-
-  // CRITIQUE: Configuration des cookies pour localhost (HTTP)
-  cookies: {
-    sessionToken: {
-      name: `${cookiePrefix}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: useSecureCookies,
-      },
-    },
-    callbackUrl: {
-      name: `${cookiePrefix}next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: useSecureCookies,
-      },
-    },
-    csrfToken: {
-      name: `${cookiePrefix}next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: useSecureCookies,
-      },
-    },
-    pkceCodeVerifier: {
-      name: `${cookiePrefix}next-auth.pkce.code_verifier`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 15,
-        secure: useSecureCookies,
-      },
-    },
-    state: {
-      name: `${cookiePrefix}next-auth.state`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 15,
-        secure: useSecureCookies,
-      },
-    },
-  },
 
   session: {
     strategy: 'jwt',
@@ -99,19 +101,35 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, account }) {
+      // Connexion initiale
       if (account?.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
+        // account.expires_at est en secondes depuis l'epoch (fourni par Keycloak via OAuth2)
+        token.expiresAt = account.expires_at
+          ? account.expires_at * 1000
+          : Date.now() + 300 * 1000;
 
         try {
           const decoded: any = jwtDecode(account.access_token);
           token.roles = extractRoles(decoded);
+          console.debug('[NextAuth] Token roles extracted:', token.roles);
         } catch (error) {
-          console.error('Erreur décodage JWT:', error);
+          console.error('[NextAuth] Erreur décodage JWT initial:', error);
           token.roles = [];
         }
+        console.debug('[NextAuth] Session initiale établie pour:', token.sub);
+        return token;
       }
-      return token;
+
+      // Si le token n'a pas expiré, on le retourne directement
+      // On anticipe de 10 secondes pour éviter que le token expire pendant la requête en cours
+      if (Date.now() < (token.expiresAt as number) - 10000) {
+        return token;
+      }
+
+      // Le token a expiré, on le rafraîchit
+      return await refreshAccessToken(token);
     },
 
     async session({ session, token }) {
@@ -121,24 +139,26 @@ export const authOptions: NextAuthOptions = {
       }
       session.accessToken = token.accessToken as string;
       session.error = token.error as string | undefined;
+      console.debug(
+        '[NextAuth] Session renvoyée au client, token présent:',
+        !!session.accessToken,
+      );
       return session;
     },
 
     async redirect({ url, baseUrl }) {
-      if (url.startsWith('/')) {
-        return `${baseUrl}${url}`;
+      // Loop protection - log for debug
+      console.debug('[NextAuth] Redirecting to:', url, 'BaseURL:', baseUrl);
+      if (url.includes('error=')) {
+        console.warn('[NextAuth] Error in redirect URL:', url);
+        return baseUrl;
       }
-      try {
-        if (new URL(url).origin === baseUrl) {
-          return url;
-        }
-      } catch {
-        // URL invalide
-      }
-      return baseUrl;
+      return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
 
-  // Utiliser les pages par défaut de NextAuth
-  // pages: {} - NextAuth utilisera /api/auth/signin avec le bouton Keycloak
+  // pages: {
+  //   // Redirige directement vers le flux Keycloak en contournant la page par défaut de NextAuth
+  //   signIn: '/api/auth/signin/keycloak',
+  // },
 };

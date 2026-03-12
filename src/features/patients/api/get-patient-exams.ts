@@ -11,6 +11,7 @@ export interface PatientExamAdult {
   numero_examen: string;
   patient: number;
   patient_name: string;
+  site_libelle: string | null;
   is_completed: boolean;
   created: string;
   modified: string;
@@ -21,6 +22,7 @@ export interface PatientExamChild {
   numero_examen: string;
   patient: number;
   patient_name: string;
+  site_libelle: string | null;
   reflet_pupillaire: string | null;
   fo: string | null;
   created: string;

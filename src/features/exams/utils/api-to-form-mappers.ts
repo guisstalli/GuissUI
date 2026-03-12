@@ -9,6 +9,7 @@ import type {
   PerimetryApi,
   ConclusionApi,
   VisionBinoculaireApi,
+  MedicalHistoryApi,
 } from '../types/api-schemas';
 import type {
   VisualAcuity,
@@ -21,11 +22,17 @@ import type {
   Perimetry,
   Conclusion,
   VisionBinoculaire,
+  MedicalHistory,
   ClinicalCheckChild,
   Segment,
   Pbo,
   EyeSymptom,
   VisionAptitude,
+  DiplopieType,
+  StrabismeType,
+  PtosisType,
+  Eye,
+  Vaissaux,
 } from '../types/types';
 
 // =============================================================================
@@ -67,12 +74,20 @@ export const mapVisualAcuityApiToForm = (
 ): VisualAcuity | undefined => {
   if (!data) return undefined;
   return {
+    parinaud: toNumber(data.parinaud),
+    correction: data.correction ?? false,
     avsc_od: toNumber(data.avsc_od),
     avsc_og: toNumber(data.avsc_og),
     avsc_odg: toNumber(data.avsc_odg),
     avac_od: toNumber(data.avac_od),
     avac_og: toNumber(data.avac_og),
     avac_odg: toNumber(data.avac_odg),
+    avsc_od_avec_correction: toNumber(data.avsc_od_avec_correction),
+    avsc_og_avec_correction: toNumber(data.avsc_og_avec_correction),
+    avsc_odg_avec_correction: toNumber(data.avsc_odg_avec_correction),
+    avac_od_avec_correction: toNumber(data.avac_od_avec_correction),
+    avac_og_avec_correction: toNumber(data.avac_og_avec_correction),
+    avac_odg_avec_correction: toNumber(data.avac_odg_avec_correction),
   };
 };
 
@@ -184,13 +199,15 @@ export const mapPlaintesApiToForm = (
     eye_symptom: (data.eye_symptom || []) as EyeSymptom[],
     autre: data.autre ?? null,
     diplopie: data.diplopie ?? false,
-    diplopie_type: data.diplopie_type as 'monoculaire' | 'binoculaire' | null,
+    diplopie_type: data.diplopie_type as DiplopieType | null,
     strabisme: data.strabisme ?? false,
-    strabisme_eye: data.strabisme_eye as 'od' | 'og' | 'odg' | null,
+    strabisme_type: data.strabisme_type as StrabismeType | null,
+    strabisme_eye: data.strabisme_eye as Eye | null,
     nystagmus: data.nystagmus ?? false,
-    nystagmus_eye: data.nystagmus_eye as 'od' | 'og' | 'odg' | null,
+    nystagmus_eye: data.nystagmus_eye as Eye | null,
     ptosis: data.ptosis ?? false,
-    ptosis_eye: data.ptosis_eye as 'od' | 'og' | 'odg' | null,
+    ptosis_eye: data.ptosis_eye as Eye | null,
+    ptosis_type: data.ptosis_type as PtosisType | null,
   };
 };
 
@@ -237,10 +254,10 @@ export const mapBiomicroscopyPosteriorApiToForm = (
     papille: data.papille as BiomicroscopyPosterior['papille'],
     papille_autres: data.papille_autres ?? null,
     macula: data.macula as BiomicroscopyPosterior['macula'],
-    retinien_peripherique:
-      data.retinien_peripherique as BiomicroscopyPosterior['retinien_peripherique'],
-    retinien_peripherique_autre: data.retinien_peripherique_autre ?? null,
-    vaissaux: data.vaissaux as BiomicroscopyPosterior['vaissaux'],
+    retine_peripherique:
+      data.retine_peripherique as BiomicroscopyPosterior['retine_peripherique'],
+    retine_peripherique_autre: data.retine_peripherique_autre ?? null,
+    vaissaux_retinien: data.vaissaux_retinien as Vaissaux | null,
     cd: toNumber(data.cd),
     observation: data.observation ?? null,
   };
@@ -334,5 +351,28 @@ export const mapClinicalCheckChildApiToForm = (data: {
     reflet_pupillaire_detail: data.reflet_pupillaire_detail ?? null,
     fond_oeil: data.fo as ClinicalCheckChild['fond_oeil'],
     fo_detail: data.fo_detail ?? null,
+  };
+};
+
+/**
+ * Mappe les données API de Medical History vers les données de formulaire
+ */
+export const mapMedicalHistoryApiToForm = (
+  data: MedicalHistoryApi | null | undefined,
+): MedicalHistory | undefined => {
+  if (!data) return undefined;
+  return {
+    id: data.id,
+    patient: data.patient,
+    has_antecedents_medico_chirurgicaux:
+      data.has_antecedents_medico_chirurgicaux ?? false,
+    antecedents_medico_chirurgicaux: data.antecedents_medico_chirurgicaux || [],
+    has_pathologie_ophtalmologique:
+      data.has_pathologie_ophtalmologique ?? false,
+    pathologie_ophtalmologique: data.pathologie_ophtalmologique || [],
+    familial: (data.familial || []) as MedicalHistory['familial'],
+    autre_familial_detail: data.autre_familial_detail ?? null,
+    uses_screen: data.uses_screen ?? false,
+    screen_time_hours_per_day: data.screen_time_hours_per_day ?? null,
   };
 };

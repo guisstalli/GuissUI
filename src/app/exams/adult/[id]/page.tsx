@@ -7,6 +7,7 @@ import {
   Check,
   Circle,
   Eye,
+  FileImage,
   FileText,
   Loader2,
   Paperclip,
@@ -14,6 +15,7 @@ import {
   Stethoscope,
   Trash2,
   Upload,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -50,6 +52,7 @@ import {
   useAttachments,
   useUploadAttachment,
   useDeleteAttachment,
+  downloadAttachment,
 } from '@/features/exams/api';
 import {
   BiomicroscopyAnteriorForm,
@@ -86,6 +89,7 @@ import {
   mapPerimetryApiToForm,
   mapConclusionApiToForm,
   mapTechnicalFormToApi,
+  mapClinicalFormToApi,
 } from '@/features/exams/utils';
 import { cn } from '@/lib/utils';
 
@@ -221,6 +225,30 @@ export default function AdultExamPage() {
     useUploadAttachment();
   const { mutate: deleteAttachment, isPending: isDeleting } =
     useDeleteAttachment();
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  const handleDownloadAttachment = async (
+    id: number,
+    originalFilename: string,
+  ) => {
+    try {
+      setDownloadingId(id);
+      const { url } = await downloadAttachment(id);
+
+      // Télécharger via un lien temporaire
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = originalFilename; // Tente de forcer le nom du fichier si cross-origin le permet
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+      // Optionnel: ajouter une notification d'erreur si disponible
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // Données patient depuis l'API
   const patient = examData?.patient
@@ -249,12 +277,20 @@ export default function AdultExamPage() {
     resolver: zodResolver(adultExamSchema),
     defaultValues: {
       visualAcuity: {
+        parinaud: null,
+        correction: false,
         avsc_od: null,
         avsc_og: null,
         avsc_odg: null,
         avac_od: null,
         avac_og: null,
         avac_odg: null,
+        avsc_od_avec_correction: null,
+        avsc_og_avec_correction: null,
+        avsc_odg_avec_correction: null,
+        avac_od_avec_correction: null,
+        avac_og_avec_correction: null,
+        avac_odg_avec_correction: null,
       },
       refraction: {
         od_sphere: null,
@@ -287,7 +323,7 @@ export default function AdultExamPage() {
         diplopie: false,
         diplopie_type: null,
         strabisme: false,
-        strabisme_eye: null,
+        strabisme_type: null,
         nystagmus: false,
         nystagmus_eye: null,
         ptosis: false,
@@ -341,7 +377,7 @@ export default function AdultExamPage() {
           plaintes: hasClinical,
           biomicroscopy: hasClinical,
           perimetry: hasClinical,
-          attachments: (attachmentsData?.results?.length ?? 0) > 0,
+          attachments: (attachmentsData?.length ?? 0) > 0,
         },
         conclusion: hasClinical,
       });
@@ -440,8 +476,11 @@ export default function AdultExamPage() {
       conclusion: form.getValues('conclusion'),
     };
 
+    // Mapper les données du formulaire vers le format API
+    const apiData = mapClinicalFormToApi(data);
+
     addClinical(
-      { id: numericExamId, data },
+      { id: numericExamId, data: apiData as any },
       {
         onSuccess: () => {
           refetchExam();
@@ -621,7 +660,7 @@ export default function AdultExamPage() {
         isCompleting={isCompleting}
         // Attachments props
         clinicalExamId={clinicalExamId}
-        attachments={attachmentsData?.results ?? []}
+        attachments={attachmentsData ?? []}
         isLoadingAttachments={isLoadingAttachments}
         selectedFiles={selectedFiles}
         setSelectedFiles={setSelectedFiles}
@@ -630,8 +669,10 @@ export default function AdultExamPage() {
         handleFileSelect={handleFileSelect}
         handleUploadFiles={handleUploadFiles}
         handleDeleteAttachment={handleDeleteAttachment}
+        handleDownloadAttachment={handleDownloadAttachment}
         isUploading={isUploading}
         isDeleting={isDeleting}
+        downloadingId={downloadingId}
       />
     </SidebarProvider>
   );
@@ -677,8 +718,11 @@ interface AdultExamContentProps {
   attachments: Array<{
     id: number;
     original_filename: string;
+    file_url?: string | null;
     file_size: number;
     description?: string | null;
+    is_image: boolean;
+    is_pdf: boolean;
     created: string;
   }>;
   isLoadingAttachments: boolean;
@@ -689,8 +733,10 @@ interface AdultExamContentProps {
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleUploadFiles: () => void;
   handleDeleteAttachment: (id: number) => void;
+  handleDownloadAttachment: (id: number, filename: string) => void;
   isUploading: boolean;
   isDeleting: boolean;
+  downloadingId: number | null;
 }
 
 function AdultExamContent(props: AdultExamContentProps) {
@@ -726,8 +772,10 @@ function AdultExamContent(props: AdultExamContentProps) {
     handleFileSelect,
     handleUploadFiles,
     handleDeleteAttachment,
+    handleDownloadAttachment,
     isUploading,
     isDeleting,
+    downloadingId,
   } = props;
   const { isCollapsed } = useSidebar();
 
@@ -1066,7 +1114,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                         value="perimetry"
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
                       >
-                        Périmétrie
+                        Examens complementaires
                         {sectionStatus.clinical.perimetry && (
                           <Check className="ml-1 size-3 text-primary" />
                         )}
@@ -1334,35 +1382,85 @@ function AdultExamContent(props: AdultExamContentProps) {
                                       className="flex items-center justify-between rounded-lg border p-3"
                                     >
                                       <div className="flex items-center gap-3">
-                                        <Paperclip className="size-4 text-muted-foreground" />
+                                        {attachment.is_image ? (
+                                          <FileImage className="size-4 text-blue-500" />
+                                        ) : attachment.is_pdf ? (
+                                          <FileText className="size-4 text-red-500" />
+                                        ) : (
+                                          <Paperclip className="size-4 text-muted-foreground" />
+                                        )}
                                         <div>
                                           <p className="text-sm font-medium">
                                             {attachment.original_filename}
                                           </p>
                                           <p className="text-xs text-muted-foreground">
-                                            {(
-                                              attachment.file_size / 1024
-                                            ).toFixed(1)}{' '}
-                                            Ko
+                                            {attachment.file_size >= 1024 * 1024
+                                              ? `${(attachment.file_size / (1024 * 1024)).toFixed(1)} Mo`
+                                              : `${(attachment.file_size / 1024).toFixed(1)} Ko`}
                                             {attachment.description &&
                                               ` • ${attachment.description}`}
                                           </p>
                                         </div>
                                       </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          handleDeleteAttachment(attachment.id)
-                                        }
-                                        disabled={isDeleting}
-                                      >
-                                        {isDeleting ? (
-                                          <Loader2 className="size-4 animate-spin" />
+                                      <div className="flex items-center gap-1">
+                                        {attachment.file_url ? (
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            asChild
+                                            title="Télécharger"
+                                          >
+                                            <a
+                                              href={attachment.file_url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              download={
+                                                attachment.original_filename
+                                              }
+                                            >
+                                              <Download className="size-4 text-muted-foreground" />
+                                            </a>
+                                          </Button>
                                         ) : (
-                                          <Trash2 className="size-4 text-destructive" />
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() =>
+                                              handleDownloadAttachment(
+                                                attachment.id,
+                                                attachment.original_filename,
+                                              )
+                                            }
+                                            disabled={
+                                              downloadingId === attachment.id
+                                            }
+                                            title="Télécharger"
+                                          >
+                                            {downloadingId === attachment.id ? (
+                                              <Loader2 className="size-4 animate-spin" />
+                                            ) : (
+                                              <Download className="size-4 text-muted-foreground" />
+                                            )}
+                                          </Button>
                                         )}
-                                      </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            handleDeleteAttachment(
+                                              attachment.id,
+                                            )
+                                          }
+                                          disabled={isDeleting}
+                                          title="Supprimer"
+                                        >
+                                          {isDeleting ? (
+                                            <Loader2 className="size-4 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="size-4 text-destructive" />
+                                          )}
+                                        </Button>
+                                      </div>
                                     </li>
                                   ))}
                                 </ul>

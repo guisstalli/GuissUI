@@ -1,0 +1,29 @@
+yarn run v1.22.22
+$ next lint -f stylish
+
+C:\Users\hp\WebstormProjects\guisstalli\GuissPlatform\src\app\layout.tsx
+  7:1  error  `next/font/google` import should occur before type import of `react`  import/order
+  9:1  error  `@/lib/utils` import should occur before import of `./provider`       import/order
+
+C:\Users\hp\WebstormProjects\guisstalli\GuissPlatform\src\app\patients\[id]\page.tsx
+  541:21  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\hp\WebstormProjects\guisstalli\GuissPlatform\src\app\patients\page.tsx
+  578:21  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\hp\WebstormProjects\guisstalli\GuissPlatform\src\features\exams\components\forms\visual-acuity-form.tsx
+  302:14  warning  Classname 'border-medical-info/20' is not a Tailwind CSS class!  tailwindcss/no-custom-classname
+  302:14  warning  Classname 'bg-medical-info/5' is not a Tailwind CSS class!       tailwindcss/no-custom-classname
+  302:14  error    Classnames rounded-lg, rounded-md are conflicting!               tailwindcss/no-contradicting-classname
+  304:20  warning  Classname 'text-medical-info' is not a Tailwind CSS class!       tailwindcss/no-custom-classname
+  343:20  warning  Classname 'text-medical-info' is not a Tailwind CSS class!       tailwindcss/no-custom-classname
+
+C:\Users\hp\WebstormProjects\guisstalli\GuissPlatform\src\features\exams\components\medical-history-tab.tsx
+  264:26  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+Ô£û 10 problems (6 errors, 4 warnings)
+
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

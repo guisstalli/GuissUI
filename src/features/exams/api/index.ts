@@ -80,4 +80,5 @@ export {
   useUploadAttachment,
   deleteAttachment,
   useDeleteAttachment,
+  downloadAttachment,
 } from './attachments';

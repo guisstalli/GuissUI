@@ -20,11 +20,15 @@ import {
   SelectValue,
   Switch,
 } from '@/components/ui/form';
+
 import {
-  DIPLOPIE_TYPES,
   EYE_OPTIONS,
   EYE_SYMPTOMS,
-} from '@/features/exams/types';
+  DIPLOPIE_TYPES,
+  EYE_LABELS,
+  STRABISME_TYPES,
+  PTOSIS_TYPES,
+} from '../../types';
 
 interface PlaintesFormProps {
   namePrefix?: string;
@@ -43,12 +47,6 @@ const SYMPTOM_LABELS: Record<(typeof EYE_SYMPTOMS)[number], string> = {
   LARMOIEMENT: 'Larmoiement',
   SECRETIONS: 'Sécrétions',
   AUTRES: 'Autres',
-};
-
-const EYE_LABELS: Record<(typeof EYE_OPTIONS)[number], string> = {
-  od: 'OD (Droit)',
-  og: 'OG (Gauche)',
-  odg: 'ODG (Les deux)',
 };
 
 /**
@@ -106,6 +104,7 @@ export function PlaintesForm({ namePrefix = '' }: PlaintesFormProps) {
   useEffect(() => {
     if (!strabisme) {
       form.setValue(`${prefix}strabisme_eye`, null);
+      form.setValue(`${prefix}strabisme_type`, null);
     }
   }, [strabisme, form, prefix]);
 
@@ -118,6 +117,7 @@ export function PlaintesForm({ namePrefix = '' }: PlaintesFormProps) {
   useEffect(() => {
     if (!ptosis) {
       form.setValue(`${prefix}ptosis_eye`, null);
+      form.setValue(`${prefix}ptosis_type`, null);
     }
   }, [ptosis, form, prefix]);
 
@@ -186,7 +186,12 @@ export function PlaintesForm({ namePrefix = '' }: PlaintesFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {DIPLOPIE_TYPES.map((type) => (
+                    {(name === 'strabisme'
+                      ? STRABISME_TYPES
+                      : name === 'ptosis'
+                        ? PTOSIS_TYPES
+                        : DIPLOPIE_TYPES
+                    ).map((type: string) => (
                       <SelectItem key={type} value={type}>
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                       </SelectItem>
@@ -329,6 +334,7 @@ export function PlaintesForm({ namePrefix = '' }: PlaintesFormProps) {
           name="strabisme"
           label="Strabisme"
           description="Déviation des yeux"
+          showTypeSelect={true}
         />
         <ConditionalBooleanField
           name="nystagmus"
@@ -339,6 +345,7 @@ export function PlaintesForm({ namePrefix = '' }: PlaintesFormProps) {
           name="ptosis"
           label="Ptosis"
           description="Chute de la paupière supérieure"
+          showTypeSelect={true}
         />
       </div>
     </section>
