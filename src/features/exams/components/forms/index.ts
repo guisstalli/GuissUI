@@ -14,3 +14,6 @@ export { ConclusionForm } from './conclusion-form';
 // Child-Specific Components
 export { VisionBinoculaireForm } from './vision-binoculaire-form';
 export { ClinicalCheckChildForm } from './clinical-check-child-form';
+
+// Tabs
+export { MedicalHistoryTab } from '../medical-history-tab';

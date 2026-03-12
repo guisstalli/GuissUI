@@ -10,7 +10,7 @@ import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
 import type {
-  PaginatedExamenSupplementaireList,
+  ExamenSupplementaireList,
   ExamenSupplementaire,
 } from '../../types';
 
@@ -30,8 +30,8 @@ type GetAttachmentsParams = {
 export const getAttachments = ({
   clinicalExamId,
   ...params
-}: GetAttachmentsParams): Promise<PaginatedExamenSupplementaireList> => {
-  return api.get<PaginatedExamenSupplementaireList>(
+}: GetAttachmentsParams): Promise<ExamenSupplementaireList[]> => {
+  return api.get<ExamenSupplementaireList[]>(
     `/api/v1/depistage/clinical-examens/${clinicalExamId}/attachments/`,
     { params },
   );
@@ -90,6 +90,19 @@ export const useAttachment = (id: number, enabled = true) => {
     ...getAttachmentQueryOptions(id),
     enabled: enabled && !!id,
   });
+};
+
+// =============================================================================
+// DOWNLOAD ATTACHMENT
+// =============================================================================
+
+/**
+ * Télécharge une pièce jointe (récupère l'URL signée ou le fichier)
+ */
+export const downloadAttachment = (id: number): Promise<{ url: string }> => {
+  return api.get<{ url: string }>(
+    `/api/v1/depistage/examens-supplementaires/${id}/download/`,
+  );
 };
 
 // =============================================================================

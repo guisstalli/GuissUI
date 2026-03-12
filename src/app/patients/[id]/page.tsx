@@ -15,15 +15,25 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { Shell } from '@/components/layouts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
 import { usePatient, usePatientExams } from '@/features/patients/api';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
+import { SiteSelector } from '@/features/sites/components/site-selector';
 
 export default function PatientDetailPage() {
   const params = useParams();
@@ -46,10 +56,15 @@ export default function PatientDetailPage() {
     enabled: !!patientId,
   });
 
+  // Modal State for Exam Creation + Site Selection
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
+
   // Mutations pour créer un examen - sélection automatique basée sur patient.is_adult
   const createAdultExamMutation = useCreateAdultExam({
     mutationConfig: {
       onSuccess: (data) => {
+        setIsExamModalOpen(false);
         router.push(`/exams/adult/${data.id}`);
       },
     },
@@ -58,6 +73,7 @@ export default function PatientDetailPage() {
   const createChildExamMutation = useCreateChildExam({
     mutationConfig: {
       onSuccess: (data) => {
+        setIsExamModalOpen(false);
         router.push(`/exams/child/${data.id}`);
       },
     },
@@ -66,15 +82,26 @@ export default function PatientDetailPage() {
   const isCreatingExam =
     createAdultExamMutation.isPending || createChildExamMutation.isPending;
 
-  // Sélection automatique du type d'examen basée sur patient.is_adult
-  const handleCreateExam = () => {
-    if (!patient) return;
+  // Sélection automatique du type d'examen avec inclusion du site
+  const handleConfirmCreateExam = () => {
+    if (!patient || !selectedSiteId) return;
 
     if (patient.is_adult) {
-      createAdultExamMutation.mutate({ patient_id: patientId });
+      createAdultExamMutation.mutate({
+        patient_id: patientId,
+        site_id: selectedSiteId,
+      });
     } else {
-      createChildExamMutation.mutate({ patient_id: patientId });
+      createChildExamMutation.mutate({
+        patient_id: patientId,
+        site_id: selectedSiteId,
+      });
     }
+  };
+
+  const handleOpenExamModal = () => {
+    setIsExamModalOpen(true);
+    setSelectedSiteId(null);
   };
 
   if (isLoading) {
@@ -147,21 +174,12 @@ export default function PatientDetailPage() {
               {patient.is_adult ? 'Adulte' : 'Enfant'}
             </Badge>
             <Button
-              onClick={handleCreateExam}
+              onClick={handleOpenExamModal}
               disabled={isCreatingExam}
               size="sm"
             >
-              {isCreatingExam ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Création...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-1.5 size-4" aria-hidden="true" />
-                  Nouvel examen
-                </>
-              )}
+              <Plus className="mr-1.5 size-4" aria-hidden="true" />
+              Nouvel examen
             </Button>
           </div>
         </div>
@@ -360,6 +378,9 @@ export default function PatientDetailPage() {
                             N° Examen
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                            Site
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
                             Date
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
@@ -375,6 +396,9 @@ export default function PatientDetailPage() {
                           <tr key={exam.id} className="hover:bg-muted/30">
                             <td className="px-4 py-3 font-mono text-sm">
                               {exam.numero_examen}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                              {exam.site_libelle || '—'}
                             </td>
                             <td className="px-4 py-3 text-sm text-muted-foreground">
                               {format(new Date(exam.created), 'dd/MM/yyyy', {
@@ -420,6 +444,9 @@ export default function PatientDetailPage() {
                             N° Examen
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                            Site
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
                             Date
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
@@ -438,6 +465,9 @@ export default function PatientDetailPage() {
                           <tr key={exam.id} className="hover:bg-muted/30">
                             <td className="px-4 py-3 font-mono text-sm">
                               {exam.numero_examen}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                              {exam.site_libelle || '—'}
                             </td>
                             <td className="px-4 py-3 text-sm text-muted-foreground">
                               {format(new Date(exam.created), 'dd/MM/yyyy', {
@@ -477,7 +507,7 @@ export default function PatientDetailPage() {
                     <Button
                       className="mt-4"
                       size="sm"
-                      onClick={handleCreateExam}
+                      onClick={handleOpenExamModal}
                       disabled={isCreatingExam}
                     >
                       <Plus className="mr-1.5 size-4" />
@@ -489,6 +519,60 @@ export default function PatientDetailPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Exam Creation Dialog */}
+      <Dialog
+        open={isExamModalOpen}
+        onOpenChange={(open) => !open && setIsExamModalOpen(false)}
+      >
+        <DialogContent
+          className="sm:max-w-[425px]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Créer un nouvel examen</DialogTitle>
+            <DialogDescription>
+              Veuillez sélectionner le site de dépistage avant de poursuivre
+              vers l&apos;examen pour le patient {patient.full_name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Site de dépistage
+              </span>
+              <SiteSelector
+                value={selectedSiteId}
+                onChange={(id: number | null) => setSelectedSiteId(id)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExamModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleConfirmCreateExam}
+              disabled={
+                !selectedSiteId ||
+                createAdultExamMutation.isPending ||
+                createChildExamMutation.isPending
+              }
+            >
+              {createAdultExamMutation.isPending ||
+              createChildExamMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                'Créer'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Shell>
   );
 }

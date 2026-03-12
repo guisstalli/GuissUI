@@ -102,6 +102,9 @@ module.exports = {
           subtle: 'var(--info-subtle)',
         },
 
+        // Medical Info (exam context)
+        'medical-info': 'var(--medical-info)',
+
         // Text Colors
         text: {
           primary: 'var(--text-primary)',

@@ -1,0 +1,14 @@
+yarn run v1.22.22
+$ next build
+  Ôû▓ Next.js 14.2.5
+  - Environments: .env
+
+   Creating an optimized production build ...
+ ÔÜá Compiled with warnings
+
+./src/app/exams/adult/[id]/page.tsx
+Attempted import error: 'MedicalHistoryTab' is not exported from '@/features/exams/components/forms' (imported as 'MedicalHistoryTab').
+
+Import trace for requested module:
+./src/app/exams/adult/[id]/page.tsx
+

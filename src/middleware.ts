@@ -10,7 +10,7 @@ export default withAuth(
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
-    // Routes publiques - laisser passer
+    // Routes publiques et API Auth - laisser passer impérativement
     if (
       pathname.startsWith('/api/auth') ||
       pathname.startsWith('/_next') ||
@@ -20,7 +20,7 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    // Si pas de token, withAuth redirigera automatiquement vers la page signin par défaut
+    // Si pas de token, withAuth redirigera vers la page signin (qui est Keycloak)
     if (!token) {
       return NextResponse.next();
     }

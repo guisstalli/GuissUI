@@ -124,7 +124,7 @@ export function ClinicalExamForm({
         diplopie: false,
         diplopie_type: null,
         strabisme: false,
-        strabisme_eye: null,
+        strabisme_type: null,
         nystagmus: false,
         nystagmus_eye: null,
         ptosis: false,
@@ -238,7 +238,7 @@ export function ClinicalExamForm({
 
   useEffect(() => {
     if (!strabisme) {
-      form.setValue('plaintes.strabisme_eye', null);
+      form.setValue('plaintes.strabisme_type', null);
     }
   }, [strabisme, form]);
 
@@ -302,9 +302,9 @@ export function ClinicalExamForm({
       form.setValue('od.bp_sg_posterieur.papille', null);
       form.setValue('od.bp_sg_posterieur.papille_autres', null);
       form.setValue('od.bp_sg_posterieur.macula', null);
-      form.setValue('od.bp_sg_posterieur.retinien_peripherique', null);
-      form.setValue('od.bp_sg_posterieur.retinien_peripherique_autre', null);
-      form.setValue('od.bp_sg_posterieur.vaissaux', null);
+      form.setValue('od.bp_sg_posterieur.retine_peripherique', null);
+      form.setValue('od.bp_sg_posterieur.retine_peripherique_autre', null);
+      form.setValue('od.bp_sg_posterieur.vaissaux_retinien', null);
       form.setValue('od.bp_sg_posterieur.cd', null);
       form.setValue('od.bp_sg_posterieur.observation', null);
     }
@@ -318,9 +318,9 @@ export function ClinicalExamForm({
       form.setValue('og.bp_sg_posterieur.papille', null);
       form.setValue('og.bp_sg_posterieur.papille_autres', null);
       form.setValue('og.bp_sg_posterieur.macula', null);
-      form.setValue('og.bp_sg_posterieur.retinien_peripherique', null);
-      form.setValue('og.bp_sg_posterieur.retinien_peripherique_autre', null);
-      form.setValue('og.bp_sg_posterieur.vaissaux', null);
+      form.setValue('og.bp_sg_posterieur.retine_peripherique', null);
+      form.setValue('og.bp_sg_posterieur.retine_peripherique_autre', null);
+      form.setValue('og.bp_sg_posterieur.vaissaux_retinien', null);
       form.setValue('og.bp_sg_posterieur.cd', null);
       form.setValue('og.bp_sg_posterieur.observation', null);
     }
@@ -539,11 +539,12 @@ export function ClinicalExamForm({
             {strabisme && (
               <FormField
                 control={form.control}
-                name="plaintes.strabisme_eye"
+                name="plaintes.strabisme_type"
                 render={({ field }) => (
                   <FormItem className="ml-6">
                     <FormLabel>
-                      Œil concerné <span className="text-destructive">*</span>
+                      Type de strabisme{' '}
+                      <span className="text-destructive">*</span>
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -555,9 +556,9 @@ export function ClinicalExamForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {EYE_OPTIONS.map((eye) => (
-                          <SelectItem key={eye} value={eye}>
-                            {EYE_LABELS[eye]}
+                        {['CONVERGEANT', 'DIVERGEANT'].map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.charAt(0) + type.slice(1).toLowerCase()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -684,7 +685,7 @@ export function ClinicalExamForm({
         <section className="space-y-4">
           <div className="border-b border-border pb-2">
             <h3 className="text-sm font-semibold text-foreground">
-              Périmétrie
+              Examens complémentaires
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
               Examen du champ visuel binoculaire
@@ -1456,7 +1457,7 @@ export function ClinicalExamForm({
                     />
                     <FormField
                       control={form.control}
-                      name="od.bp_sg_posterieur.retinien_peripherique"
+                      name="od.bp_sg_posterieur.retine_peripherique"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs">
@@ -1485,7 +1486,7 @@ export function ClinicalExamForm({
                     />
                     <FormField
                       control={form.control}
-                      name="od.bp_sg_posterieur.vaissaux"
+                      name="od.bp_sg_posterieur.vaissaux_retinien"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs">Vaisseaux</FormLabel>
@@ -2077,7 +2078,7 @@ export function ClinicalExamForm({
                     />
                     <FormField
                       control={form.control}
-                      name="og.bp_sg_posterieur.retinien_peripherique"
+                      name="og.bp_sg_posterieur.retine_peripherique"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs">
@@ -2106,7 +2107,7 @@ export function ClinicalExamForm({
                     />
                     <FormField
                       control={form.control}
-                      name="og.bp_sg_posterieur.vaissaux"
+                      name="og.bp_sg_posterieur.vaissaux_retinien"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs">Vaisseaux</FormLabel>

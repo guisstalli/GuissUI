@@ -12,6 +12,7 @@ export {
   mapConclusionApiToForm,
   mapVisionBinoculaireApiToForm,
   mapClinicalCheckChildApiToForm,
+  mapMedicalHistoryApiToForm,
 } from './api-to-form-mappers';
 
 // Form to API mappers (pour la soumission)
@@ -20,5 +21,12 @@ export {
   mapRefractionFormToApi,
   mapOcularTensionFormToApi,
   mapPachymetryFormToApi,
+  mapPlaintesFormToApi,
+  mapBiomicroscopyAnteriorFormToApi,
+  mapBiomicroscopyPosteriorFormToApi,
+  mapPerimetryFormToApi,
+  mapConclusionFormToApi,
   mapTechnicalFormToApi,
+  mapClinicalFormToApi,
+  mapMedicalHistoryFormToApi,
 } from './form-to-api-mappers';

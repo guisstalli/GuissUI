@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import {
   FormControl,
@@ -30,13 +30,13 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
   const form = useFormContext();
   const prefix = namePrefix ? `${namePrefix}.` : '';
 
-  const ctoOd = useWatch({ control: form.control, name: `${prefix}cto_od` });
-  const ctoOg = useWatch({ control: form.control, name: `${prefix}cto_og` });
+  // const ctoOd = useWatch({ control: form.control, name: `${prefix}cto_od` });
+  // const ctoOg = useWatch({ control: form.control, name: `${prefix}cto_og` });
 
-  const isAbnormal = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return false;
-    return value < 400 || value > 600;
-  };
+  // const isAbnormal = (value: number | null | undefined) => {
+  //   if (value === null || value === undefined) return false;
+  //   return value < 400 || value > 600;
+  // };
 
   return (
     <section className="space-y-4">
@@ -128,13 +128,13 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     <Input
                       type="number"
                       step="1"
-                      min="300"
-                      max="800"
-                      placeholder="300-800"
+                      // min="300"
+                      // max="800"
+                      // placeholder="300-800"
                       className={cn(
                         'pr-10',
-                        isAbnormal(ctoOd) &&
-                          'border-destructive focus-visible:ring-destructive/50',
+                        // isAbnormal(ctoOd) &&
+                        //   'border-destructive focus-visible:ring-destructive/50',
                       )}
                       {...field}
                       value={field.value ?? ''}
@@ -144,14 +144,14 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                         )
                       }
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    {/* <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                       µm
-                    </span>
+                    </span> */}
                   </div>
                 </FormControl>
-                {isAbnormal(ctoOd) && (
+                {/* {isAbnormal(ctoOd) && (
                   <p className="text-xs text-destructive">Valeur anormale</p>
-                )}
+                )} */}
                 <FormMessage />
               </FormItem>
             )}
@@ -167,13 +167,13 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     <Input
                       type="number"
                       step="1"
-                      min="300"
-                      max="800"
-                      placeholder="300-800"
+                      // min="300"
+                      // max="800"
+                      // placeholder="300-800"
                       className={cn(
                         'pr-10',
-                        isAbnormal(ctoOg) &&
-                          'border-destructive focus-visible:ring-destructive/50',
+                        // isAbnormal(ctoOg) &&
+                        //   'border-destructive focus-visible:ring-destructive/50',
                       )}
                       {...field}
                       value={field.value ?? ''}
@@ -183,14 +183,14 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                         )
                       }
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    {/* <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                       µm
-                    </span>
+                    </span> */}
                   </div>
                 </FormControl>
-                {isAbnormal(ctoOg) && (
+                {/* {isAbnormal(ctoOg) && (
                   <p className="text-xs text-destructive">Valeur anormale</p>
-                )}
+                )} */}
                 <FormMessage />
               </FormItem>
             )}

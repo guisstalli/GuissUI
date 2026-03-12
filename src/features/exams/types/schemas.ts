@@ -100,6 +100,21 @@ export const EyeEnum = z.enum(EYE_OPTIONS);
 export const DIPLOPIE_TYPES = ['monoculaire', 'binoculaire'] as const;
 export const DiplopieTypeEnum = z.enum(DIPLOPIE_TYPES);
 
+/** Antécédents familiaux - Aligné avec FamilialChoices Python */
+export const FAMILIAL_VALUES = [
+  'AUCUN',
+  'GLAUCOME',
+  'CECITE',
+  'CATARACTE',
+  'RETINOPATHIE',
+  'AUTRES',
+] as const;
+export const FamilialEnum = z.enum(FAMILIAL_VALUES);
+
+/** Strabisme types */
+export const STRABISME_TYPES = ['convergent', 'divergent'] as const;
+export const StrabismeTypeEnum = z.enum(STRABISME_TYPES);
+
 /** PBO values (Périmétrie) - Aligné avec PerimetrieBinoculaire Python */
 export const PBO_VALUES = [
   'NORMAL',
@@ -109,6 +124,10 @@ export const PBO_VALUES = [
 ] as const;
 
 export const PboEnum = z.enum(PBO_VALUES);
+
+/** Ptosis types */
+export const PTOSIS_TYPES = ['leger', 'moyen', 'SEVERE'] as const;
+export const PtosisTypeEnum = z.enum(PTOSIS_TYPES);
 
 /** Segment status - Aligné avec SegmentChoices Python */
 export const SEGMENT_STATUS = [
@@ -235,7 +254,7 @@ export const RETINIEN_VALUES = [
   'DEHISCENCE',
   'AUTRE',
 ] as const;
-export const RetinienPeripheriqueEnum = z.enum(RETINIEN_VALUES);
+export const RetinePeripheriqueEnum = z.enum(RETINIEN_VALUES);
 
 /** Vaisseaux values - Aligné avec Vaisseaux Python */
 export const VAISSEAUX_VALUES = [
@@ -276,17 +295,78 @@ export const SectionEnum = z.enum([
 // =============================================================================
 
 /** Acuité Visuelle - Values between 0.000 and 10.000 - All fields optional */
-export const VisualAcuitySchema = z.object({
-  id: z.number().optional(),
-  avsc_od: z.coerce.number().min(0).max(10).optional().nullable(),
-  avsc_og: z.coerce.number().min(0).max(10).optional().nullable(),
-  avsc_odg: z.coerce.number().min(0).max(10).optional().nullable(),
-  avac_od: z.coerce.number().min(0).max(10).optional().nullable(),
-  avac_og: z.coerce.number().min(0).max(10).optional().nullable(),
-  avac_odg: z.coerce.number().min(0).max(10).optional().nullable(),
-  created: z.string().datetime().optional(),
-  modified: z.string().datetime().optional(),
-});
+export const VisualAcuitySchema = z
+  .object({
+    id: z.number().optional(),
+    parinaud: z.coerce.number().optional().nullable(),
+    correction: z.boolean().default(false).optional(),
+    avsc_od: z.coerce.number().min(0).max(10).optional().nullable(),
+    avsc_og: z.coerce.number().min(0).max(10).optional().nullable(),
+    avsc_odg: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_od: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_og: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_odg: z.coerce.number().min(0).max(10).optional().nullable(),
+    avsc_od_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    avsc_og_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    avsc_odg_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    avac_od_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    avac_og_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    avac_odg_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    created: z.string().datetime().optional(),
+    modified: z.string().datetime().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.correction) {
+      const requiredFields = [
+        'avsc_od_avec_correction',
+        'avsc_og_avec_correction',
+        'avsc_odg_avec_correction',
+        'avac_od_avec_correction',
+        'avac_og_avec_correction',
+        'avac_odg_avec_correction',
+      ] as const;
+
+      requiredFields.forEach((field) => {
+        if (data[field] === null || data[field] === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Requis si correction sélectionnée',
+            path: [field],
+          });
+        }
+      });
+    }
+  });
 
 /** Réfraction - Sphere (-20 to +15), Cylinder (-8 to +8), Axis (0-180) */
 export const RefractionSchema = z.object({
@@ -339,8 +419,8 @@ export const PachymetrySchema = z.object({
   id: z.number().optional(),
   od: z.coerce.number().optional().nullable(),
   og: z.coerce.number().optional().nullable(),
-  cto_od: z.coerce.number().min(300).max(800).optional().nullable(),
-  cto_og: z.coerce.number().min(300).max(800).optional().nullable(),
+  cto_od: z.coerce.number().optional().nullable(),
+  cto_og: z.coerce.number().optional().nullable(),
   created: z.string().datetime().optional(),
   modified: z.string().datetime().optional(),
 });
@@ -486,11 +566,13 @@ export const PlaintesSchema = z
     diplopie: z.boolean().default(false),
     diplopie_type: DiplopieTypeEnum.optional().nullable(),
     strabisme: z.boolean().default(false),
+    strabisme_type: StrabismeTypeEnum.optional().nullable(),
     strabisme_eye: EyeEnum.optional().nullable(),
     nystagmus: z.boolean().default(false),
     nystagmus_eye: EyeEnum.optional().nullable(),
     ptosis: z.boolean().default(false),
     ptosis_eye: EyeEnum.optional().nullable(),
+    ptosis_type: PtosisTypeEnum.optional().nullable(),
     created: z.string().datetime().optional(),
     modified: z.string().datetime().optional(),
   })
@@ -521,13 +603,13 @@ export const PlaintesSchema = z
   .refine(
     (data) => {
       if (data.strabisme) {
-        return !!data.strabisme_eye;
+        return !!data.strabisme_type && !!data.strabisme_eye;
       }
       return true;
     },
     {
-      message: "Veuillez préciser l'œil concerné",
-      path: ['strabisme_eye'],
+      message: 'Type et œil requis si strabisme sélectionné',
+      path: ['strabisme_type'],
     },
   )
   .refine(
@@ -554,6 +636,27 @@ export const PlaintesSchema = z
       path: ['ptosis_eye'],
     },
   );
+
+/** Antécédents médicaux / Medical History */
+export const MedicalHistorySchema = z.object({
+  id: z.number().optional(),
+  patient: z.number().optional(),
+  has_antecedents_medico_chirurgicaux: z.boolean().default(false),
+  antecedents_medico_chirurgicaux: z.array(z.string()).default([]),
+  has_pathologie_ophtalmologique: z.boolean().default(false),
+  pathologie_ophtalmologique: z.array(z.string()).default([]),
+  familial: z.array(FamilialEnum).default([]),
+  autre_familial_detail: z.string().optional().nullable(),
+  uses_screen: z.boolean().default(false),
+  screen_time_hours_per_day: z.coerce
+    .number()
+    .min(0)
+    .max(24)
+    .optional()
+    .nullable(),
+  created: z.string().datetime().optional(),
+  modified: z.string().datetime().optional(),
+});
 
 /** Périmétrie */
 export const PerimetrySchema = z.object({
@@ -652,9 +755,9 @@ export const BiomicroscopyPosteriorSchema = z
     papille: PapilleEnum.optional().nullable(),
     papille_autres: z.string().optional().nullable(),
     macula: MaculaEnum.optional().nullable(),
-    retinien_peripherique: RetinienPeripheriqueEnum.optional().nullable(),
-    retinien_peripherique_autre: z.string().optional().nullable(),
-    vaissaux: VaissauxEnum.optional().nullable(),
+    retine_peripherique: RetinePeripheriqueEnum.optional().nullable(),
+    retine_peripherique_autre: z.string().optional().nullable(),
+    vaissaux_retinien: VaissauxEnum.optional().nullable(),
     cd: z.coerce.number().min(0).max(1).optional().nullable(),
     observation: z.string().optional().nullable(),
     created: z.string().datetime().optional(),
@@ -663,7 +766,7 @@ export const BiomicroscopyPosteriorSchema = z
   .refine(
     (data) => {
       if (data.vitre === 'AUTRES') {
-        return data.vitre_autres && data.vitre_autres.trim().length > 0;
+        return data.vitre_autres && data.vitre_autres.length > 0;
       }
       return true;
     },
@@ -675,7 +778,7 @@ export const BiomicroscopyPosteriorSchema = z
   .refine(
     (data) => {
       if (data.papille === 'AUTRES') {
-        return data.papille_autres && data.papille_autres.trim().length > 0;
+        return data.papille_autres && data.papille_autres.length > 0;
       }
       return true;
     },
@@ -686,17 +789,17 @@ export const BiomicroscopyPosteriorSchema = z
   )
   .refine(
     (data) => {
-      if (data.retinien_peripherique === 'AUTRE') {
+      if (data.retine_peripherique === 'AUTRE') {
         return (
-          data.retinien_peripherique_autre &&
-          data.retinien_peripherique_autre.trim().length > 0
+          data.retine_peripherique_autre &&
+          data.retine_peripherique_autre.length > 0
         );
       }
       return true;
     },
     {
       message: "Veuillez préciser le champ rétinien dans le champ 'Autre'",
-      path: ['retinien_peripherique_autre'],
+      path: ['retine_peripherique_autre'],
     },
   );
 
@@ -724,6 +827,7 @@ export const ConclusionSchema = z.object({
 /** Clinical Exam complet */
 export const ClinicalExamSchema = z.object({
   plaintes: PlaintesSchema,
+  medical_history: MedicalHistorySchema,
   perimetry: PerimetrySchema.optional(),
   bp_sup: BpSupSchema.optional(),
   od: z.object({
@@ -747,6 +851,7 @@ export const ExamenAdultSchema = z.object({
   numero_examen: z.string(),
   patient: z.number(),
   patient_name: z.string(),
+  site_libelle: z.string().nullable().optional(),
   is_completed: z.boolean(),
   created: z.string().datetime(),
   modified: z.string().datetime(),
@@ -755,6 +860,7 @@ export const ExamenAdultSchema = z.object({
 /** Examen adulte création */
 export const ExamenAdultCreateSchema = z.object({
   patient_id: z.number(),
+  site_id: z.number().optional(),
 });
 
 /** Patient nested schema */
@@ -816,6 +922,7 @@ export const ExamenChildSchema = z.object({
   numero_examen: z.string(),
   patient: z.number(),
   patient_name: z.string(),
+  site_libelle: z.string().nullable().optional(),
   reflet_pupillaire: ClinicalCheckEnum.optional().nullable(),
   reflet_pupillaire_detail: z.string().max(255).optional().nullable(),
   fo: ClinicalCheckEnum.optional().nullable(),
@@ -828,6 +935,7 @@ export const ExamenChildSchema = z.object({
 export const ExamenChildCreateSchema = z
   .object({
     patient_id: z.number(),
+    site_id: z.number().optional(),
     reflet_pupillaire: ClinicalCheckEnum.optional().nullable(),
     reflet_pupillaire_detail: z.string().max(255).optional().nullable(),
     fo: ClinicalCheckEnum.optional().nullable(),
@@ -898,6 +1006,7 @@ export const PaginatedExamenChildListSchema = z.object({
 export const ExamenSupplementaireListSchema = z.object({
   id: z.number(),
   original_filename: z.string(),
+  file_url: z.string().nullable().optional(),
   file_type: z.string(),
   file_size: z.number(),
   description: z.string().nullable().optional(),
@@ -965,9 +1074,9 @@ export const defaultBiomicroscopyPosterior: BiomicroscopyPosteriorFormValues = {
   papille: null,
   papille_autres: null,
   macula: null,
-  retinien_peripherique: null,
-  retinien_peripherique_autre: null,
-  vaissaux: null,
+  retine_peripherique: null,
+  retine_peripherique_autre: null,
+  vaissaux_retinien: null,
   cd: null,
   observation: null,
 };
@@ -995,6 +1104,7 @@ export type BiomicroscopyPosteriorFormValues = z.infer<
   typeof BiomicroscopyPosteriorSchema
 >;
 export type ConclusionFormValues = z.infer<typeof ConclusionSchema>;
+export type MedicalHistoryFormValues = z.infer<typeof MedicalHistorySchema>;
 export type ClinicalExamFormValues = z.infer<typeof ClinicalExamSchema>;
 
 // =============================================================================

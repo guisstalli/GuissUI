@@ -1,391 +1,349 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Loader2, Search, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { useEffect, useMemo } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
   Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '@/components/ui/form';
-import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/form/checkbox';
+import { ICDSelector } from '@/components/ui/icd-selector';
+import { Switch } from '@/components/ui/switch';
 
-const MAX_DISEASES = 5;
-
-interface ICDResult {
-  code: string;
-  title: string;
-}
-
-interface SelectedDisease {
-  id: string;
-  code: string;
-  title: string;
-  category: string;
-}
-
-// Simulated ICD search results (in production would use ICD WHO API)
-const mockICDSearch = async (query: string): Promise<ICDResult[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  if (!query || query.length < 2) return [];
-
-  const mockResults: ICDResult[] = [
-    { code: 'E11', title: 'Type 2 diabetes mellitus' },
-    { code: 'E10', title: 'Type 1 diabetes mellitus' },
-    { code: 'I10', title: 'Essential (primary) hypertension' },
-    { code: 'H40.1', title: 'Primary open-angle glaucoma' },
-    { code: 'H40.2', title: 'Primary angle-closure glaucoma' },
-    { code: 'H35.3', title: 'Degeneration of macula and posterior pole' },
-    { code: 'H26.9', title: 'Cataract, unspecified' },
-    { code: 'H52.1', title: 'Myopia' },
-    { code: 'H52.0', title: 'Hypermetropia' },
-    { code: 'H52.2', title: 'Astigmatism' },
-    { code: 'H47.1', title: 'Papilloedema' },
-    { code: 'H46', title: 'Optic neuritis' },
-  ];
-
-  return mockResults.filter(
-    (r) =>
-      r.title.toLowerCase().includes(query.toLowerCase()) ||
-      r.code.toLowerCase().includes(query.toLowerCase()),
-  );
-};
-
-const medicalHistorySchema = z.object({
-  screenUsage: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-type MedicalHistoryFormValues = z.infer<typeof medicalHistorySchema>;
+import {
+  MedicalHistorySchema,
+  type MedicalHistoryFormValues,
+  FAMILIAL_VALUES,
+} from '../types';
 
 interface MedicalHistoryTabProps {
   patientId: string;
-  initialData?: {
-    selectedDiseases: SelectedDisease[];
-    screenUsage?: string;
-    notes?: string;
-  };
-  onSave?: (data: {
-    selectedDiseases: SelectedDisease[];
-    screenUsage?: string;
-    notes?: string;
-  }) => void;
+  initialData?: Partial<MedicalHistoryFormValues>;
+  onSave?: (data: MedicalHistoryFormValues) => void;
+  isLoading?: boolean;
 }
+
+const FAMILIAL_LABELS: Record<string, string> = {
+  AUCUN: 'Aucun',
+  GLAUCOME: 'Glaucome',
+  CECITE: 'Cécité',
+  CATARACTE: 'Cataracte',
+  RETINOPATHIE: 'Rétinopathie',
+  AUTRES: 'Autres',
+};
 
 export function MedicalHistoryTab({
   initialData,
   onSave,
+  isLoading,
 }: MedicalHistoryTabProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ICDResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedDiseases, setSelectedDiseases] = useState<SelectedDisease[]>(
-    initialData?.selectedDiseases || [],
-  );
-  const [currentCategory, setCurrentCategory] = useState<string>('medical');
-
   const form = useForm<MedicalHistoryFormValues>({
-    resolver: zodResolver(medicalHistorySchema),
+    resolver: zodResolver(MedicalHistorySchema),
     defaultValues: {
-      screenUsage: initialData?.screenUsage || '',
-      notes: initialData?.notes || '',
+      has_antecedents_medico_chirurgicaux:
+        initialData?.has_antecedents_medico_chirurgicaux ?? false,
+      antecedents_medico_chirurgicaux:
+        initialData?.antecedents_medico_chirurgicaux ?? [],
+      has_pathologie_ophtalmologique:
+        initialData?.has_pathologie_ophtalmologique ?? false,
+      pathologie_ophtalmologique: initialData?.pathologie_ophtalmologique ?? [],
+      familial: initialData?.familial ?? [],
+      autre_familial_detail: initialData?.autre_familial_detail ?? '',
+      uses_screen: initialData?.uses_screen ?? false,
+      screen_time_hours_per_day: initialData?.screen_time_hours_per_day ?? null,
     },
   });
 
-  // Debounced search
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query);
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
+  const hasMedSurg = useWatch({
+    control: form.control,
+    name: 'has_antecedents_medico_chirurgicaux',
+  });
+  const hasOphthalmo = useWatch({
+    control: form.control,
+    name: 'has_pathologie_ophtalmologique',
+  });
+  const familialRaw = useWatch({ control: form.control, name: 'familial' });
+  const familial = useMemo(() => familialRaw || [], [familialRaw]);
+  const usesScreen = useWatch({ control: form.control, name: 'uses_screen' });
+
+  // Nettoyage automatique si les switches sont décochés
+  useEffect(() => {
+    if (!hasMedSurg) {
+      form.setValue('antecedents_medico_chirurgicaux', []);
     }
+  }, [hasMedSurg, form]);
 
-    setIsSearching(true);
-    try {
-      const results = await mockICDSearch(query);
-      setSearchResults(results);
-    } catch (error) {
-      console.error('ICD search error:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
+  useEffect(() => {
+    if (!hasOphthalmo) {
+      form.setValue('pathologie_ophtalmologique', []);
     }
-  }, []);
+  }, [hasOphthalmo, form]);
 
-  const handleSelectDisease = (result: ICDResult) => {
-    if (selectedDiseases.length >= MAX_DISEASES) return;
-    if (selectedDiseases.some((d) => d.code === result.code)) return;
+  useEffect(() => {
+    if (!familial.includes('AUTRES')) {
+      form.setValue('autre_familial_detail', '');
+    }
+  }, [familial, form]);
 
-    const newDisease: SelectedDisease = {
-      id: `${result.code}-${Date.now()}`,
-      code: result.code,
-      title: result.title,
-      category: currentCategory,
-    };
-
-    setSelectedDiseases([...selectedDiseases, newDisease]);
-    setSearchQuery('');
-    setSearchResults([]);
-  };
-
-  const handleRemoveDisease = (diseaseId: string) => {
-    setSelectedDiseases(selectedDiseases.filter((d) => d.id !== diseaseId));
-  };
-
-  const handleSave = () => {
-    const formData = form.getValues();
-    onSave?.({
-      selectedDiseases,
-      screenUsage: formData.screenUsage,
-      notes: formData.notes,
-    });
-  };
-
-  const diseasesAtLimit = selectedDiseases.length >= MAX_DISEASES;
-
-  const categorizedDiseases = {
-    medical: selectedDiseases.filter((d) => d.category === 'medical'),
-    surgical: selectedDiseases.filter((d) => d.category === 'surgical'),
-    ophthalmologic: selectedDiseases.filter(
-      (d) => d.category === 'ophthalmologic',
-    ),
-    family: selectedDiseases.filter((d) => d.category === 'family'),
+  const onSubmit = (data: MedicalHistoryFormValues) => {
+    onSave?.(data);
   };
 
   return (
-    <div className="space-y-8">
-      {/* ICD Disease Search */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-foreground">
-            Medical and Ophthalmologic History
-          </h3>
-          <span className="text-xs text-muted-foreground">
-            {selectedDiseases.length}/{MAX_DISEASES} conditions selected
-          </span>
-        </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Section Médicale / Chirurgicale */}
+          <div className="space-y-6">
+            <div className="border-b border-border pb-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Antécédents Médicaux & Chirurgicaux
+              </h3>
+            </div>
 
-        {/* Category Selection */}
-        <div className="flex items-center gap-4">
-          <Label htmlFor="category" className="text-sm text-muted-foreground">
-            Category:
-          </Label>
-          <Select value={currentCategory} onValueChange={setCurrentCategory}>
-            <SelectTrigger id="category" className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="medical">Medical / Surgical</SelectItem>
-              <SelectItem value="surgical">Surgical History</SelectItem>
-              <SelectItem value="ophthalmologic">Ophthalmologic</SelectItem>
-              <SelectItem value="family">Family History</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            <FormField
+              control={form.control}
+              name="has_antecedents_medico_chirurgicaux"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Antécédents ?</FormLabel>
+                    <FormDescription>
+                      Le patient a-t-il des antécédents médicaux ou chirurgicaux
+                      ?
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-        {/* ICD Search */}
-        <div className="space-y-2">
-          <Label htmlFor="icd-search" className="text-sm text-muted-foreground">
-            Search ICD-11 (WHO Release 2.5)
-          </Label>
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              id="icd-search"
-              type="search"
-              placeholder="Search by disease name or ICD code..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              disabled={diseasesAtLimit}
-              aria-label="Search ICD diseases"
-            />
-            {isSearching && (
-              <Loader2
-                className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
-                aria-hidden="true"
+            {hasMedSurg && (
+              <FormField
+                control={form.control}
+                name="antecedents_medico_chirurgicaux"
+                render={({ field }) => (
+                  <FormItem>
+                    <ICDSelector
+                      label="Recherche de pathologies (CIM-11)"
+                      description="Sélectionnez les pathologies médicales ou chirurgicales"
+                      value={field.value}
+                      onChange={field.onChange}
+                      maxItems={10}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             )}
           </div>
 
-          {/* Limit Warning */}
-          {diseasesAtLimit && (
-            <div className="border-warning/30 bg-warning/10 flex items-center gap-2 rounded-md border px-3 py-2">
-              <AlertCircle className="size-4 text-warning" aria-hidden="true" />
-              <p className="text-sm text-warning">
-                Maximum of {MAX_DISEASES} conditions reached. Remove a condition
-                to add more.
-              </p>
+          {/* Section Ophtalmologique */}
+          <div className="space-y-6">
+            <div className="border-b border-border pb-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Pathologies Ophtalmologiques
+              </h3>
             </div>
-          )}
 
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="rounded-lg border border-border bg-card shadow-sm">
-              <ul className="divide-y divide-border" role="listbox">
-                {searchResults.slice(0, 10).map((result) => {
-                  const isSelected = selectedDiseases.some(
-                    (d) => d.code === result.code,
-                  );
-                  return (
-                    <li key={result.code}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectDisease(result)}
-                        disabled={isSelected || diseasesAtLimit}
-                        className={cn(
-                          'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
-                          'hover:bg-muted/50 focus-visible:outline-none focus-visible:bg-muted/50',
-                          'disabled:cursor-not-allowed disabled:opacity-50',
-                        )}
-                        role="option"
-                        aria-selected={isSelected}
-                      >
-                        <Badge
-                          variant="outline"
-                          className="shrink-0 font-mono text-xs"
-                        >
-                          {result.code}
-                        </Badge>
-                        <span className="text-sm text-foreground">
-                          {result.title}
-                        </span>
-                        {isSelected && (
-                          <span className="ml-auto text-xs text-muted-foreground">
-                            Already selected
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+            <FormField
+              control={form.control}
+              name="has_pathologie_ophtalmologique"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Pathologies ophtalmo ?
+                    </FormLabel>
+                    <FormDescription>
+                      Le patient a-t-il des pathologies ou chirurgies oculaires
+                      ?
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {hasOphthalmo && (
+              <FormField
+                control={form.control}
+                name="pathologie_ophtalmologique"
+                render={({ field }) => (
+                  <FormItem>
+                    <ICDSelector
+                      label="Recherche de pathologies oculaires (CIM-11)"
+                      description="Sélectionnez les antécédents ophtalmologiques"
+                      value={field.value}
+                      onChange={field.onChange}
+                      maxItems={10}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Section Familiale */}
+          <div className="space-y-6">
+            <div className="border-b border-border pb-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Antécédents Familiaux
+              </h3>
             </div>
-          )}
-        </div>
 
-        {/* Selected Diseases by Category */}
-        <div className="space-y-4">
-          {Object.entries(categorizedDiseases).map(([category, diseases]) => {
-            if (diseases.length === 0) return null;
-            const categoryLabels: Record<string, string> = {
-              medical: 'Medical / Surgical History',
-              surgical: 'Surgical History',
-              ophthalmologic: 'Ophthalmologic History',
-              family: 'Family History',
-            };
-            return (
-              <div key={category} className="space-y-2">
-                <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {categoryLabels[category]}
-                </h4>
-                <ul className="space-y-2">
-                  {diseases.map((disease) => (
-                    <li
-                      key={disease.id}
-                      className="bg-muted/30 flex items-center justify-between rounded-md border border-border px-3 py-2"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          variant="outline"
-                          className="shrink-0 font-mono text-xs"
-                        >
-                          {disease.code}
-                        </Badge>
-                        <span className="text-sm text-foreground">
-                          {disease.title}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={() => handleRemoveDisease(disease.id)}
-                        aria-label={`Remove ${disease.title}`}
+            <div className="grid grid-cols-2 gap-4">
+              {FAMILIAL_VALUES.map((item) => (
+                <FormField
+                  key={item}
+                  control={form.control}
+                  name="familial"
+                  render={({ field }) => {
+                    return (
+                      <FormItem
+                        key={item}
+                        className="flex flex-row items-start space-x-3 space-y-0"
                       >
-                        <X className="size-4" aria-hidden="true" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value?.includes(item)}
+                            onCheckedChange={(checked: boolean) => {
+                              return checked
+                                ? field.onChange([...(field.value || []), item])
+                                : field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== item,
+                                    ),
+                                  );
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          {FAMILIAL_LABELS[item]}
+                        </FormLabel>
+                      </FormItem>
+                    );
+                  }}
+                />
+              ))}
+            </div>
 
-      {/* Screen Usage */}
-      <Form {...form}>
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-foreground">Screen Usage</h3>
-          <FormField
-            control={form.control}
-            name="screenUsage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-muted-foreground">
-                  Daily screen time and device usage
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="e.g., 8+ hours computer work, regular smartphone use..."
-                    className="min-h-20 resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            {familial.includes('AUTRES') && (
+              <FormField
+                control={form.control}
+                name="autre_familial_detail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Détails (Autres)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Précisez les antécédents familiaux..."
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-muted-foreground">
-                  Additional notes
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Any other relevant medical information..."
-                    className="min-h-20 resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          {/* Section Écrans */}
+          <div className="space-y-6">
+            <div className="border-b border-border pb-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Utilisation des Écrans
+              </h3>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="uses_screen"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Utilise des écrans ?
+                    </FormLabel>
+                    <FormDescription>
+                      Ordinateur, smartphone, tablette, etc.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {usesScreen && (
+              <FormField
+                control={form.control}
+                name="screen_time_hours_per_day"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Heures par jour</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={24}
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === ''
+                              ? null
+                              : Number(e.target.value),
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Nombre d&apos;heures approximatif d&apos;exposition
+                      quotidienne
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          />
+          </div>
         </div>
-      </Form>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-        <Button variant="outline">Cancel changes</Button>
-        <Button onClick={handleSave}>Save medical history</Button>
-      </div>
-    </div>
+        <div className="flex justify-end pt-4">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Enregistrement...' : 'Enregistrer les antécédents'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

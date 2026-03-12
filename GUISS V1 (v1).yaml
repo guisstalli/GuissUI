@@ -42,6 +42,27 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/depistage/attachments/{id}/download/:
+    get:
+      operationId: v1_depistage_attachments_download_retrieve
+      description: |-
+        Retourne l'URL de téléchargement du fichier.
+
+        Utile pour obtenir une URL fraîche si les URLs pré-signées expirent.
+      summary: Télécharger une pièce jointe
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Pièces jointes
+      responses:
+        '200':
+          description: URL de téléchargement
+        '404':
+          description: Pièce jointe non trouvée
   /api/v1/depistage/clinical-examens/{clinical_examen_id}/attachments/:
     get:
       operationId: v1_depistage_clinical_examens_attachments_list
@@ -498,9 +519,16 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: is_completed
+        name: fo
         schema:
-          type: boolean
+          type: string
+          title: Fond d'œil
+          enum:
+          - anormal
+          - normal
+        description: |-
+          * `normal` - Normal
+          * `anormal` - Anormal
       - name: limit
         required: false
         in: query
@@ -523,6 +551,16 @@ paths:
         name: patient
         schema:
           type: number
+      - in: query
+        name: reflet_pupillaire
+        schema:
+          type: string
+          enum:
+          - anormal
+          - normal
+        description: |-
+          * `normal` - Normal
+          * `anormal` - Anormal
       - name: search
         required: false
         in: query
@@ -1398,6 +1436,216 @@ paths:
               schema:
                 $ref: '#/components/schemas/PatientList'
           description: ''
+  /api/v1/depistage/sites/:
+    get:
+      operationId: v1_depistage_sites_list
+      description: Retourne la liste paginée des sites de dépistage avec filtres.
+      summary: Liste des sites
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Filtrer par statut actif
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Recherche dans le libellé et le code
+      tags:
+      - Sites
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSiteListList'
+          description: ''
+    post:
+      operationId: v1_depistage_sites_create
+      description: Crée un nouveau site de dépistage.
+      summary: Créer un site
+      tags:
+      - Sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteCreate'
+          description: ''
+  /api/v1/depistage/sites/{id}/:
+    get:
+      operationId: v1_depistage_sites_retrieve
+      description: Retourne les détails d'un site spécifique.
+      summary: Détail d'un site
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Sites
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
+    put:
+      operationId: v1_depistage_sites_update
+      description: Modifie complètement un site existant.
+      summary: Modifier un site
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteCreate'
+          description: ''
+    patch:
+      operationId: v1_depistage_sites_partial_update
+      description: Modifie partiellement un site existant.
+      summary: Modifier partiellement un site
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSiteCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSiteCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSiteCreate'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteCreate'
+          description: ''
+    delete:
+      operationId: v1_depistage_sites_destroy
+      description: Supprime un site (soft delete via is_active=False).
+      summary: Supprimer un site
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Sites
+      responses:
+        '204':
+          description: No response body
+  /api/v1/depistage/sites/{id}/reactivate/:
+    post:
+      operationId: v1_depistage_sites_reactivate_create
+      description: Réactive un site précédemment désactivé.
+      summary: Réactiver un site
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Site'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Site'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Site'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
+  /api/v1/depistage/sites/active/:
+    get:
+      operationId: v1_depistage_sites_active_retrieve
+      description: Retourne uniquement les sites actifs.
+      summary: Sites actifs
+      tags:
+      - Sites
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
   /api/v1/depistage/tasks/{task_id}/status/:
     get:
       operationId: v1_depistage_tasks_status_retrieve
@@ -1451,18 +1699,28 @@ components:
           readOnly: true
         patient:
           type: integer
+        has_antecedents_medico_chirurgicaux:
+          type: boolean
+          title: A des antécédents médico-chirurgicaux
+          description: Indique si le patient a des antécédents médico-chirurgicaux
         antecedents_medico_chirurgicaux:
           type: array
           items:
             type: string
             maxLength: 255
           title: Antécédents médico-chirurgicaux
+          description: Requis si has_antecedents_medico_chirurgicaux est True
+        has_pathologie_ophtalmologique:
+          type: boolean
+          title: A des pathologies ophtalmologiques
+          description: Indique si le patient a des pathologies ophtalmologiques
         pathologie_ophtalmologique:
           type: array
           items:
             type: string
             maxLength: 255
           title: Pathologies ophtalmologiques
+          description: Requis si has_pathologie_ophtalmologique est True
         familial:
           type: array
           items:
@@ -1470,6 +1728,7 @@ components:
           title: Antécédents familiaux
         autre_familial_detail:
           type: string
+          nullable: true
           title: Détail autre familial
           maxLength: 255
         uses_screen:
@@ -1516,7 +1775,11 @@ components:
           type: integer
           readOnly: true
         segment:
-          $ref: '#/components/schemas/SegmentEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SegmentEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         cornee:
           nullable: true
           title: Cornée
@@ -1617,7 +1880,6 @@ components:
       - created
       - id
       - modified
-      - segment
     BiomicroscopyPosterieur:
       type: object
       description: Serializer pour la biomicroscopie segment postérieur.
@@ -1626,7 +1888,11 @@ components:
           type: integer
           readOnly: true
         segment:
-          $ref: '#/components/schemas/SegmentEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SegmentEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         vitre:
           nullable: true
           title: Vitré
@@ -1656,23 +1922,23 @@ components:
           - $ref: '#/components/schemas/MaculaEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        retinien_peripherique:
+        retine_peripherique:
           nullable: true
-          title: Champ rétinien périphérique
+          title: Rétine périphérique
           oneOf:
-          - $ref: '#/components/schemas/RetinienPeripheriqueEnum'
+          - $ref: '#/components/schemas/RetinePeripheriqueEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        retinien_peripherique_autre:
+        retine_peripherique_autre:
           type: string
           nullable: true
           title: Autres anomalies rétine
           maxLength: 255
-        vaissaux:
+        vaissaux_retinien:
           nullable: true
-          title: Vaisseaux
+          title: Vaisseaux rétiniens
           oneOf:
-          - $ref: '#/components/schemas/VaissauxEnum'
+          - $ref: '#/components/schemas/VaissauxRetinienEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         cd:
@@ -1698,7 +1964,6 @@ components:
       - created
       - id
       - modified
-      - segment
     BlankEnum:
       enum:
       - ''
@@ -1773,21 +2038,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/Plaintes'
           readOnly: true
-        biomicro_ant_od:
+        og:
           allOf:
-          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          - $ref: '#/components/schemas/EyeSide'
           readOnly: true
-        biomicro_ant_og:
+        od:
           allOf:
-          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
-          readOnly: true
-        biomicro_post_od:
-          allOf:
-          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
-          readOnly: true
-        biomicro_post_og:
-          allOf:
-          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          - $ref: '#/components/schemas/EyeSide'
           readOnly: true
         perimetry:
           allOf:
@@ -1817,16 +2074,14 @@ components:
           readOnly: true
           title: Mise à jour
       required:
-      - biomicro_ant_od
-      - biomicro_ant_og
-      - biomicro_post_od
-      - biomicro_post_og
       - completion_status
       - conclusion
       - created
       - id
       - is_completed
       - modified
+      - od
+      - og
       - perimetry
       - plaintes
     Conclusion:
@@ -1856,7 +2111,7 @@ components:
           type: array
           items:
             type: string
-            maxLength: 100
+            maxLength: 500
           title: Diagnostics CIM-11
           description: Maximum 3 diagnostics CIM-11
           maxItems: 3
@@ -1966,6 +2221,15 @@ components:
           type: integer
         patient_name:
           type: string
+          description: Retourne le nom complet du patient.
+          readOnly: true
+        site:
+          type: integer
+          nullable: true
+          description: Site où l'examen a été réalisé
+        site_libelle:
+          type: string
+          description: Retourne le libellé du site.
           readOnly: true
         is_completed:
           type: boolean
@@ -1989,33 +2253,46 @@ components:
       - numero_examen
       - patient
       - patient_name
+      - site_libelle
     ExamenAdultAddClinical:
       type: object
       description: |-
         Serializer pour ajouter des données cliniques à un examen adulte.
 
         Inclut toutes les composantes de l'examen clinique.
+
+        Supporte deux formats de données pour les biomicroscopies:
+        1. Format plat: od_anterieur, od_posterieur, og_anterieur, og_posterieur
+        2. Format imbriqué: od.bp_sg_anterieur, od.bp_sg_posterieur, og.bp_sg_anterieur, og.bp_sg_posterieur
       properties:
         plaintes:
           allOf:
           - $ref: '#/components/schemas/Plaintes'
           description: Plaintes et symptômes oculaires
-        biomicro_ant_od:
+        od:
+          allOf:
+          - $ref: '#/components/schemas/EyeSideInput'
+          description: Données œil droit (OD) avec bp_sg_anterieur et bp_sg_posterieur
+        og:
+          allOf:
+          - $ref: '#/components/schemas/EyeSideInput'
+          description: Données œil gauche (OG) avec bp_sg_anterieur et bp_sg_posterieur
+        od_anterieur:
           allOf:
           - $ref: '#/components/schemas/BiomicroscopyAnterieur'
-          description: Biomicroscopie segment antérieur - œil droit
-        biomicro_ant_og:
+          description: '[Alternatif] Biomicroscopie segment antérieur - œil droit'
+        og_anterieur:
           allOf:
           - $ref: '#/components/schemas/BiomicroscopyAnterieur'
-          description: Biomicroscopie segment antérieur - œil gauche
-        biomicro_post_od:
+          description: '[Alternatif] Biomicroscopie segment antérieur - œil gauche'
+        od_posterieur:
           allOf:
           - $ref: '#/components/schemas/BiomicroscopyPosterieur'
-          description: Biomicroscopie segment postérieur - œil droit
-        biomicro_post_og:
+          description: '[Alternatif] Biomicroscopie segment postérieur - œil droit'
+        og_posterieur:
           allOf:
           - $ref: '#/components/schemas/BiomicroscopyPosterieur'
-          description: Biomicroscopie segment postérieur - œil gauche
+          description: '[Alternatif] Biomicroscopie segment postérieur - œil gauche'
         perimetry:
           allOf:
           - $ref: '#/components/schemas/Perimetry'
@@ -2029,7 +2306,7 @@ components:
       description: |-
         Serializer pour ajouter des données techniques à un examen adulte.
 
-        Utilise TechnicalDataRequestSerializer pour un schéma OpenAPI explicite.
+        Note: TechnicalExamen (adultes) n'a PAS vision_binoculaire.
       properties:
         visual_acuity:
           $ref: '#/components/schemas/VisualAcuity'
@@ -2039,8 +2316,6 @@ components:
           $ref: '#/components/schemas/OcularTension'
         pachymetry:
           $ref: '#/components/schemas/Pachymetry'
-        vision_binoculaire:
-          $ref: '#/components/schemas/VisionBinoculaire'
     ExamenAdultComplete:
       type: object
       description: Serializer pour finaliser un examen avec données manquantes.
@@ -2064,6 +2339,10 @@ components:
         patient_id:
           type: integer
           description: ID du patient (doit être un adulte avec is_adult=true)
+        site_id:
+          type: integer
+          nullable: true
+          description: ID du site de dépistage (optionnel)
       required:
       - patient_id
     ExamenAdultDetail:
@@ -2081,6 +2360,10 @@ components:
         patient:
           allOf:
           - $ref: '#/components/schemas/PatientList'
+          readOnly: true
+        site:
+          allOf:
+          - $ref: '#/components/schemas/SiteMinimal'
           readOnly: true
         technical_examen:
           allOf:
@@ -2118,6 +2401,7 @@ components:
       - modified
       - numero_examen
       - patient
+      - site
       - technical_examen
     ExamenChild:
       type: object
@@ -2135,6 +2419,15 @@ components:
           type: integer
         patient_name:
           type: string
+          description: Retourne le nom complet du patient.
+          readOnly: true
+        site:
+          type: integer
+          nullable: true
+          description: Site où l'examen a été réalisé
+        site_libelle:
+          type: string
+          description: Retourne le libellé du site.
           readOnly: true
         reflet_pupillaire:
           $ref: '#/components/schemas/RefletPupillaire32fEnum'
@@ -2171,6 +2464,7 @@ components:
       - numero_examen
       - patient
       - patient_name
+      - site_libelle
     ExamenChildClinicalData:
       type: object
       description: |-
@@ -2217,6 +2511,10 @@ components:
         patient_id:
           type: integer
           description: ID du patient (doit être un enfant avec is_adult=false)
+        site_id:
+          type: integer
+          nullable: true
+          description: ID du site de dépistage (optionnel)
         reflet_pupillaire:
           nullable: true
           description: |-
@@ -2269,6 +2567,10 @@ components:
         patient:
           allOf:
           - $ref: '#/components/schemas/PatientList'
+          readOnly: true
+        site:
+          allOf:
+          - $ref: '#/components/schemas/SiteMinimal'
           readOnly: true
         reflet_pupillaire:
           allOf:
@@ -2329,6 +2631,7 @@ components:
       - reflet_pupillaire
       - reflet_pupillaire_detail
       - refraction
+      - site
       - vision_binoculaire
       - visual_acuity
     ExamenChildTechnicalData:
@@ -2399,6 +2702,30 @@ components:
 
         Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
       properties:
+        reflet_pupillaire:
+          allOf:
+          - $ref: '#/components/schemas/RefletPupillaire32fEnum'
+          description: |-
+            Reflet pupillaire: 'normal' ou 'anormal'
+
+            * `normal` - Normal
+            * `anormal` - Anormal
+        reflet_pupillaire_detail:
+          type: string
+          nullable: true
+          description: Détails si reflet pupillaire anormal (requis si anormal)
+        fo:
+          allOf:
+          - $ref: '#/components/schemas/Fo32fEnum'
+          description: |-
+            Fond d'œil: 'normal' ou 'anormal'
+
+            * `normal` - Normal
+            * `anormal` - Anormal
+        fo_detail:
+          type: string
+          nullable: true
+          description: Détails si fond d'œil anormal (requis si anormal)
         visual_acuity:
           allOf:
           - $ref: '#/components/schemas/VisualAcuity'
@@ -2508,7 +2835,8 @@ components:
       description: |-
         Serializer léger pour la liste des pièces jointes.
 
-        Utilisé pour les réponses de liste (moins de données).
+        Utilisé pour les réponses de liste.
+        Inclut file_url pour permettre la lecture/visualisation des fichiers.
       properties:
         id:
           type: integer
@@ -2517,6 +2845,14 @@ components:
           type: string
           title: Nom original
           maxLength: 255
+        file_url:
+          type: string
+          nullable: true
+          description: |-
+            Retourne l'URL du fichier pour lecture/visualisation.
+
+            Pour MinIO, retourne l'URL directe du fichier.
+          readOnly: true
         file_type:
           type: string
           title: Type MIME
@@ -2547,10 +2883,54 @@ components:
       required:
       - created
       - file_type
+      - file_url
       - id
       - is_image
       - is_pdf
       - original_filename
+    EyeSide:
+      type: object
+      description: Serializer pour un côté d'œil avec biomicroscopie.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        bp_sg_anterieur:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          readOnly: true
+        bp_sg_posterieur:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - bp_sg_anterieur
+      - bp_sg_posterieur
+      - created
+      - id
+      - modified
+    EyeSideInput:
+      type: object
+      description: Serializer pour l'entrée des données d'un œil (OD ou OG).
+      properties:
+        bp_sg_anterieur:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyAnterieur'
+          description: Biomicroscopie segment antérieur
+        bp_sg_posterieur:
+          allOf:
+          - $ref: '#/components/schemas/BiomicroscopyPosterieur'
+          description: Biomicroscopie segment postérieur
     EyeSymptomEnum:
       enum:
       - AUCUN
@@ -2834,6 +3214,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PatientList'
+    PaginatedSiteListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteList'
     PapilleEnum:
       enum:
       - NORMALE
@@ -2904,6 +3307,30 @@ components:
 
         Tous les champs sont optionnels - seuls les champs fournis seront mis à jour.
       properties:
+        reflet_pupillaire:
+          allOf:
+          - $ref: '#/components/schemas/RefletPupillaire32fEnum'
+          description: |-
+            Reflet pupillaire: 'normal' ou 'anormal'
+
+            * `normal` - Normal
+            * `anormal` - Anormal
+        reflet_pupillaire_detail:
+          type: string
+          nullable: true
+          description: Détails si reflet pupillaire anormal (requis si anormal)
+        fo:
+          allOf:
+          - $ref: '#/components/schemas/Fo32fEnum'
+          description: |-
+            Fond d'œil: 'normal' ou 'anormal'
+
+            * `normal` - Normal
+            * `anormal` - Anormal
+        fo_detail:
+          type: string
+          nullable: true
+          description: Détails si fond d'œil anormal (requis si anormal)
         visual_acuity:
           allOf:
           - $ref: '#/components/schemas/VisualAcuity'
@@ -2980,6 +3407,27 @@ components:
           format: date-time
           readOnly: true
           title: Mise à jour
+    PatchedSiteCreate:
+      type: object
+      description: Serializer pour la création/modification d'un site.
+      properties:
+        libelle:
+          type: string
+          title: Libellé
+          description: Nom du site de dépistage
+          maxLength: 255
+        code:
+          type: string
+          description: 'Code unique du site (ex: SITE-001)'
+          maxLength: 50
+        adresse:
+          type: string
+          nullable: true
+          description: Adresse complète du site
+        is_active:
+          type: boolean
+          title: Actif
+          description: Indique si le site est actuellement actif
     Patient:
       type: object
       description: Serializer complet pour un patient.
@@ -3043,6 +3491,7 @@ components:
       required:
       - age
       - created
+      - date_de_naissance
       - examens_count
       - full_name
       - id
@@ -3077,6 +3526,7 @@ components:
           title: Numéro de téléphone
           maxLength: 128
       required:
+      - date_de_naissance
       - last_name
       - name
     PatientImportRow:
@@ -3179,6 +3629,7 @@ components:
       required:
       - age
       - created
+      - date_de_naissance
       - full_name
       - id
       - is_adult
@@ -3294,6 +3745,13 @@ components:
           title: Œil affecté par strabisme
           oneOf:
           - $ref: '#/components/schemas/StrabismeEyeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        strabisme_type:
+          nullable: true
+          title: Type de strabisme
+          oneOf:
+          - $ref: '#/components/schemas/StrabismeTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         nystagmus:
@@ -3528,7 +3986,7 @@ components:
       - created
       - id
       - modified
-    RetinienPeripheriqueEnum:
+    RetinePeripheriqueEnum:
       enum:
       - NORMAL
       - CICATRICE
@@ -3562,12 +4020,11 @@ components:
       - refraction
       - ocular_tension
       - pachymetry
-      - vision_binoculaire
       - plaintes
-      - biomicro_ant_od
-      - biomicro_ant_og
-      - biomicro_post_od
-      - biomicro_post_og
+      - od_anterieur
+      - og_anterieur
+      - od_posterieur
+      - og_posterieur
       - perimetry
       - conclusion
       type: string
@@ -3576,12 +4033,11 @@ components:
         * `refraction` - Réfraction
         * `ocular_tension` - Tension oculaire
         * `pachymetry` - Pachymétrie
-        * `vision_binoculaire` - Vision binoculaire
         * `plaintes` - Plaintes
-        * `biomicro_ant_od` - Biomicroscopie antérieure OD
-        * `biomicro_ant_og` - Biomicroscopie antérieure OG
-        * `biomicro_post_od` - Biomicroscopie postérieure OD
-        * `biomicro_post_og` - Biomicroscopie postérieure OG
+        * `od_anterieur` - Biomicroscopie antérieure OD
+        * `og_anterieur` - Biomicroscopie antérieure OG
+        * `od_posterieur` - Biomicroscopie postérieure OD
+        * `og_posterieur` - Biomicroscopie postérieure OG
         * `perimetry` - Périmétrie
         * `conclusion` - Conclusion
     SegmentEnum:
@@ -3604,6 +4060,118 @@ components:
         * `H` - Homme
         * `F` - Femme
         * `A` - Anonyme
+    Site:
+      type: object
+      description: Serializer complet pour le Site.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        libelle:
+          type: string
+          title: Libellé
+          description: Nom du site de dépistage
+          maxLength: 255
+        code:
+          type: string
+          description: 'Code unique du site (ex: SITE-001)'
+          maxLength: 50
+        adresse:
+          type: string
+          nullable: true
+          description: Adresse complète du site
+        is_active:
+          type: boolean
+          title: Actif
+          description: Indique si le site est actuellement actif
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Mise à jour
+      required:
+      - code
+      - created
+      - id
+      - libelle
+      - modified
+    SiteCreate:
+      type: object
+      description: Serializer pour la création/modification d'un site.
+      properties:
+        libelle:
+          type: string
+          title: Libellé
+          description: Nom du site de dépistage
+          maxLength: 255
+        code:
+          type: string
+          description: 'Code unique du site (ex: SITE-001)'
+          maxLength: 50
+        adresse:
+          type: string
+          nullable: true
+          description: Adresse complète du site
+        is_active:
+          type: boolean
+          title: Actif
+          description: Indique si le site est actuellement actif
+      required:
+      - code
+      - libelle
+    SiteList:
+      type: object
+      description: Serializer léger pour les listes de sites.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        libelle:
+          type: string
+          readOnly: true
+          title: Libellé
+          description: Nom du site de dépistage
+        code:
+          type: string
+          readOnly: true
+          description: 'Code unique du site (ex: SITE-001)'
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Actif
+          description: Indique si le site est actuellement actif
+      required:
+      - code
+      - id
+      - is_active
+      - libelle
+    SiteMinimal:
+      type: object
+      description: |-
+        Serializer minimal pour l'affichage dans les examens (GET).
+        Affiche uniquement le libellé.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        libelle:
+          type: string
+          readOnly: true
+          title: Libellé
+          description: Nom du site de dépistage
+        code:
+          type: string
+          readOnly: true
+          description: 'Code unique du site (ex: SITE-001)'
+      required:
+      - code
+      - id
+      - libelle
     StatusEnum:
       enum:
       - completed
@@ -3636,6 +4204,14 @@ components:
         * `od` - OD
         * `og` - OG
         * `odg` - ODG
+    StrabismeTypeEnum:
+      enum:
+      - convergeant
+      - divergeant
+      type: string
+      description: |-
+        * `convergeant` - Convergeant
+        * `divergeant` - Divergeant
     TaskResponse:
       type: object
       description: |-
@@ -3688,7 +4264,11 @@ components:
       - task_id
     TechnicalExamenDetail:
       type: object
-      description: Serializer détaillé avec nested serializers.
+      description: |-
+        Serializer détaillé avec nested serializers.
+
+        Note: TechnicalExamen (adultes) n'a PAS vision_binoculaire.
+        vision_binoculaire est directement sur ExamenChild.
       properties:
         id:
           type: integer
@@ -3708,10 +4288,6 @@ components:
         pachymetry:
           allOf:
           - $ref: '#/components/schemas/Pachymetry'
-          readOnly: true
-        vision_binoculaire:
-          allOf:
-          - $ref: '#/components/schemas/VisionBinoculaire'
           readOnly: true
         is_completed:
           type: boolean
@@ -3741,7 +4317,6 @@ components:
       - ocular_tension
       - pachymetry
       - refraction
-      - vision_binoculaire
       - visual_acuity
     TransparenceEnum:
       enum:
@@ -3763,7 +4338,7 @@ components:
         * `HYPHEMA` - HYPHEMA
         * `HYPOPION` - HYPOPION
         * `AUTRE` - AUTRE
-    VaissauxEnum:
+    VaissauxRetinienEnum:
       enum:
       - NORMAUX
       - ARTERIOSCLEROSE
@@ -3779,7 +4354,14 @@ components:
         * `NEOVAISSEUX` - NEOVAISSEUX
     VisionBinoculaire:
       type: object
-      description: Serializer pour la vision binoculaire.
+      description: |-
+        Serializer pour la vision binoculaire.
+
+        NOTE IMPORTANTE: Le champ 'reflet_pupillaire' ici est DIFFÉRENT de celui sur ExamenChild.
+        - VisionBinoculaire.reflet_pupillaire: enum PupillaryReflexChoices (rouge/leucocorie/anormal)
+        - ExamenChild.reflet_pupillaire: enum StatusChoices (normal/anormal)
+
+        Ces deux champs ont le même nom mais des significations et valeurs différentes!
       properties:
         id:
           type: integer
@@ -3902,6 +4484,16 @@ components:
         id:
           type: integer
           readOnly: true
+        parinaud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Échelle Parinaud (1.5 à 14)
+        correction:
+          type: boolean
+          title: Avec correction
+          description: Indique si les mesures avec correction sont requises
         avsc_od:
           type: string
           format: decimal
@@ -3932,6 +4524,42 @@ components:
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
           nullable: true
+        avsc_od_avec_correction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          description: Requis si correction est activée
+        avsc_og_avec_correction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          description: Requis si correction est activée
+        avsc_odg_avec_correction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          description: Requis si correction est activée
+        avac_od_avec_correction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          description: Requis si correction est activée
+        avac_og_avec_correction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          description: Requis si correction est activée
+        avac_odg_avec_correction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,3})?$
+          nullable: true
+          description: Requis si correction est activée
         created:
           type: string
           format: date-time

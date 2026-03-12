@@ -95,7 +95,9 @@ export const PatientUpdateSchema = PatientCreateSchema.partial();
 export const AntecedentSchema = z.object({
   id: z.number(),
   patient: z.number(),
+  has_antecedents_medico_chirurgicaux: z.boolean().optional(),
   antecedents_medico_chirurgicaux: z.array(z.string().max(255)).optional(),
+  has_pathologie_ophtalmologique: z.boolean().optional(),
   pathologie_ophtalmologique: z.array(z.string().max(255)).optional(),
   familial: z.array(FamilialEnum).optional(),
   autre_familial_detail: z.string().max(255).nullable().optional(),
@@ -110,7 +112,9 @@ export const AntecedentSchema = z.object({
  */
 export const AntecedentCreateSchema = z.object({
   patient: z.number(),
+  has_antecedents_medico_chirurgicaux: z.boolean().optional(),
   antecedents_medico_chirurgicaux: z.array(z.string().max(255)).optional(),
+  has_pathologie_ophtalmologique: z.boolean().optional(),
   pathologie_ophtalmologique: z.array(z.string().max(255)).optional(),
   familial: z.array(FamilialEnum).optional(),
   autre_familial_detail: z.string().max(255).nullable().optional(),

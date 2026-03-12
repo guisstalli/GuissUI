@@ -62,8 +62,8 @@ async function getAccessToken(): Promise<string | null> {
 
   // Check if session has an error (e.g., RefreshAccessTokenError)
   if (session?.error === 'RefreshAccessTokenError') {
-    // Token refresh failed, sign out the user and redirect to Keycloak
-    await signOut({ callbackUrl: '/api/auth/signin/keycloak' });
+    // Token refresh failed, sign out the user and redirect to default signin
+    await signOut({ callbackUrl: '/api/auth/signin' });
     return null;
   }
 
@@ -97,8 +97,8 @@ async function handleUnauthorized() {
       title: 'Session expirée',
       message: 'Votre session a expiré. Veuillez vous reconnecter.',
     });
-    // Sign out and redirect directly to Keycloak
-    await signOut({ callbackUrl: '/api/auth/signin/keycloak' });
+    // Sign out and redirect to default signin page
+    await signOut({ callbackUrl: '/api/auth/signin' });
   }
 }
 
@@ -169,6 +169,11 @@ async function fetchApi<T>(
 
   // Get access token for Authorization header
   const accessToken = providedToken ?? (await getAccessToken());
+
+  console.debug(
+    `[API Client] Request to ${url}, accessToken présent:`,
+    !!accessToken,
+  );
 
   const fullUrl = buildUrlWithParams(`${env.API_URL}${url}`, params);
 
