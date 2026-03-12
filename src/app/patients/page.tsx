@@ -602,7 +602,7 @@ export default function PatientsPage() {
               }
             >
               {createAdultExamMutation.isPending ||
-                createChildExamMutation.isPending ? (
+              createChildExamMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
                   Création...
