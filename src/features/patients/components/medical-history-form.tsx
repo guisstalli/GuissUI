@@ -84,6 +84,7 @@ const FamilialEnum = z.enum(['CECITE', 'GPAO', 'OTHER']);
 
 const medicalHistorySchema = z
   .object({
+    has_antecedents: z.boolean().default(false),
     has_antecedents_medico_chirurgicaux: z.boolean(),
     antecedents_medico_chirurgicaux: z.array(z.string().max(255)),
     has_pathologie_ophtalmologique: z.boolean(),
@@ -340,6 +341,7 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
   const form = useForm<MedicalHistoryFormValues>({
     resolver: zodResolver(medicalHistorySchema),
     defaultValues: {
+      has_antecedents: false,
       has_antecedents_medico_chirurgicaux: false,
       antecedents_medico_chirurgicaux: [],
       has_pathologie_ophtalmologique: false,
@@ -354,7 +356,19 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
   // Sync form with API data (only if antecedent exists)
   useEffect(() => {
     if (antecedent) {
+      const hasAnyAntecedentData =
+        (antecedent.has_antecedents_medico_chirurgicaux ?? false) ||
+        (antecedent.antecedents_medico_chirurgicaux || []).length > 0 ||
+        (antecedent.has_pathologie_ophtalmologique ?? false) ||
+        (antecedent.pathologie_ophtalmologique || []).length > 0 ||
+        (antecedent.familial || []).length > 0 ||
+        Boolean(antecedent.autre_familial_detail) ||
+        Boolean(antecedent.uses_screen) ||
+        antecedent.screen_time_hours_per_day !== null;
+
       form.reset({
+        has_antecedents:
+          hasAnyAntecedentData || form.getValues('has_antecedents'),
         has_antecedents_medico_chirurgicaux:
           antecedent.has_antecedents_medico_chirurgicaux ??
           (antecedent.antecedents_medico_chirurgicaux || []).length > 0,
@@ -369,9 +383,15 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
         uses_screen: antecedent.uses_screen ?? null,
         screen_time_hours_per_day: antecedent.screen_time_hours_per_day ?? null,
       });
+
+      hasHydratedFromApi.current = true;
     }
   }, [antecedent, form]);
 
+  const hasHydratedFromApi = useRef(false);
+  const previousHasAntecedents = useRef<boolean | null>(null);
+
+  const hasAntecedents = form.watch('has_antecedents');
   const watchFamilial = form.watch('familial');
   const watchUsesScreen = form.watch('uses_screen');
   const watchScreenTime = form.watch('screen_time_hours_per_day');
@@ -380,34 +400,111 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
 
   const showOtherFamilialDetail = watchFamilial?.includes('OTHER');
 
-  const onSubmit = (data: MedicalHistoryFormValues) => {
-    // Clean up data before submission
-    const apiPayload = {
-      has_antecedents_medico_chirurgicaux:
-        data.has_antecedents_medico_chirurgicaux,
-      antecedents_medico_chirurgicaux: data.has_antecedents_medico_chirurgicaux
-        ? data.antecedents_medico_chirurgicaux
-        : [],
-      has_pathologie_ophtalmologique: data.has_pathologie_ophtalmologique,
-      pathologie_ophtalmologique: data.has_pathologie_ophtalmologique
-        ? data.pathologie_ophtalmologique
-        : [],
-      familial: data.familial,
-      autre_familial_detail: showOtherFamilialDetail
-        ? data.autre_familial_detail
-        : null,
-      uses_screen: data.uses_screen,
-      screen_time_hours_per_day: data.uses_screen
-        ? data.screen_time_hours_per_day
-        : null,
-    };
+  const buildApiPayload = useCallback(
+    (data: MedicalHistoryFormValues) => {
+      if (!data.has_antecedents) {
+        return {
+          patient: patientId,
+          has_antecedents_medico_chirurgicaux: false,
+          antecedents_medico_chirurgicaux: [],
+          has_pathologie_ophtalmologique: false,
+          pathologie_ophtalmologique: [],
+          familial: [],
+          autre_familial_detail: null,
+          uses_screen: null,
+          screen_time_hours_per_day: null,
+        };
+      }
 
+      return {
+        patient: patientId,
+        has_antecedents_medico_chirurgicaux:
+          data.has_antecedents_medico_chirurgicaux,
+        antecedents_medico_chirurgicaux:
+          data.has_antecedents_medico_chirurgicaux
+            ? data.antecedents_medico_chirurgicaux
+            : [],
+        has_pathologie_ophtalmologique: data.has_pathologie_ophtalmologique,
+        pathologie_ophtalmologique: data.has_pathologie_ophtalmologique
+          ? data.pathologie_ophtalmologique
+          : [],
+        familial: data.familial,
+        autre_familial_detail: data.familial.includes('OTHER')
+          ? data.autre_familial_detail
+          : null,
+        uses_screen: data.uses_screen,
+        screen_time_hours_per_day: data.uses_screen
+          ? data.screen_time_hours_per_day
+          : null,
+      };
+    },
+    [patientId],
+  );
+
+  useEffect(() => {
+    if (!hasAntecedents) {
+      form.setValue('has_antecedents_medico_chirurgicaux', false);
+      form.setValue('antecedents_medico_chirurgicaux', []);
+      form.setValue('has_pathologie_ophtalmologique', false);
+      form.setValue('pathologie_ophtalmologique', []);
+      form.setValue('familial', []);
+      form.setValue('autre_familial_detail', null);
+      form.setValue('uses_screen', null);
+      form.setValue('screen_time_hours_per_day', null);
+    }
+  }, [hasAntecedents, form]);
+
+  useEffect(() => {
+    if (previousHasAntecedents.current === null) {
+      previousHasAntecedents.current = hasAntecedents;
+      return;
+    }
+
+    if (!hasHydratedFromApi.current && antecedent) {
+      previousHasAntecedents.current = hasAntecedents;
+      return;
+    }
+
+    const previousValue = previousHasAntecedents.current;
+    previousHasAntecedents.current = hasAntecedents;
+
+    if (updateAntecedentMutation.isPending) {
+      return;
+    }
+
+    if (previousValue === false && hasAntecedents && !antecedent) {
+      updateAntecedentMutation.mutate({
+        patientId,
+        data: buildApiPayload({
+          ...form.getValues(),
+          has_antecedents: true,
+        }),
+      });
+      return;
+    }
+
+    if (previousValue === true && !hasAntecedents && antecedent) {
+      updateAntecedentMutation.mutate({
+        patientId,
+        data: buildApiPayload({
+          ...form.getValues(),
+          has_antecedents: false,
+        }),
+      });
+    }
+  }, [
+    antecedent,
+    buildApiPayload,
+    form,
+    hasAntecedents,
+    patientId,
+    updateAntecedentMutation,
+  ]);
+
+  const onSubmit = (data: MedicalHistoryFormValues) => {
     updateAntecedentMutation.mutate({
       patientId,
-      data: {
-        patient: patientId,
-        ...apiPayload,
-      },
+      data: buildApiPayload(data),
     });
   };
 
@@ -439,314 +536,352 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
           </div>
         )}
 
-        {/* Section 1: Antécédents médico-chirurgicaux */}
-        <section className="space-y-4 rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div>
-              <h3 className="text-base font-semibold text-foreground">
-                Antécédents médico-chirurgicaux
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Le patient a-t-il des antécédents médico-chirurgicaux ?
-              </p>
-            </div>
-            <FormField
-              control={form.control}
-              name="has_antecedents_medico_chirurgicaux"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2">
-                  <FormLabel className="text-sm">
-                    {field.value ? 'Oui' : 'Non'}
-                  </FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        if (!checked) {
-                          form.setValue('antecedents_medico_chirurgicaux', []);
-                        }
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          {watchHasMedicoChir && (
-            <FormField
-              control={form.control}
-              name="antecedents_medico_chirurgicaux"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <ICDSelector
-                    label="Pathologies générales"
-                    description="Recherchez et sélectionnez dans la nomenclature ICD-11"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={fieldState.error?.message}
-                  />
-                </FormItem>
-              )}
-            />
+        <FormField
+          control={form.control}
+          name="has_antecedents"
+          render={({ field }) => (
+            <FormItem className="bg-muted/20 flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base font-semibold">
+                  Le patient a-t-il des antécédents médicaux ?
+                </FormLabel>
+                <FormDescription>
+                  Activez cette option pour afficher et renseigner les
+                  antécédents. Si désactivé, les valeurs sont nettoyées.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
           )}
-        </section>
+        />
 
-        {/* Section 2: Pathologies ophtalmologiques */}
-        <section className="space-y-4 rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div>
-              <h3 className="text-base font-semibold text-foreground">
-                Pathologies ophtalmologiques
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Le patient a-t-il des pathologies ophtalmologiques ?
-              </p>
-            </div>
-            <FormField
-              control={form.control}
-              name="has_pathologie_ophtalmologique"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2">
-                  <FormLabel className="text-sm">
-                    {field.value ? 'Oui' : 'Non'}
-                  </FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        if (!checked) {
-                          form.setValue('pathologie_ophtalmologique', []);
-                        }
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          {watchHasOphtalmo && (
-            <FormField
-              control={form.control}
-              name="pathologie_ophtalmologique"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <ICDSelector
-                    label=""
-                    description="Recherchez et sélectionnez dans la nomenclature ICD-11"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={fieldState.error?.message}
-                  />
-                </FormItem>
-              )}
-            />
-          )}
-        </section>
-
-        {/* Section 3: Antécédents familiaux */}
-        <section className="space-y-4 rounded-lg border border-border p-6">
-          <div className="border-b border-border pb-3">
-            <h3 className="text-base font-semibold text-foreground">
-              Antécédents familiaux
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Indiquez les antécédents familiaux ophtalmologiques
-            </p>
-          </div>
-          <FormField
-            control={form.control}
-            name="familial"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type d&apos;antécédent</FormLabel>
-                <div className="flex flex-wrap gap-3">
-                  {(
-                    Object.entries(FAMILIAL_LABELS) as [
-                      keyof typeof FAMILIAL_LABELS,
-                      string,
-                    ][]
-                  ).map(([key, labelText]) => (
-                    <label
-                      key={key}
-                      className={cn(
-                        'flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 transition-colors',
-                        field.value?.includes(key)
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border hover:bg-muted/50',
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        className="sr-only"
-                        checked={field.value?.includes(key)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            field.onChange([...(field.value || []), key]);
-                          } else {
-                            field.onChange(
-                              field.value?.filter((v) => v !== key) || [],
-                            );
-                          }
-                        }}
+        {hasAntecedents && (
+          <>
+            {/* Section 1: Antécédents médico-chirurgicaux */}
+            <section className="space-y-4 rounded-lg border border-border p-6">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Antécédents médico-chirurgicaux
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Le patient a-t-il des antécédents médico-chirurgicaux ?
+                  </p>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="has_antecedents_medico_chirurgicaux"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormLabel className="text-sm">
+                        {field.value ? 'Oui' : 'Non'}
+                      </FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (!checked) {
+                              form.setValue(
+                                'antecedents_medico_chirurgicaux',
+                                [],
+                              );
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {watchHasMedicoChir && (
+                <FormField
+                  control={form.control}
+                  name="antecedents_medico_chirurgicaux"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <ICDSelector
+                        label="Pathologies générales"
+                        description="Recherchez et sélectionnez dans la nomenclature ICD-11"
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={fieldState.error?.message}
                       />
-                      <span className="text-sm font-medium">{labelText}</span>
-                    </label>
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Conditional field for OTHER - required when OTHER is selected */}
-          {showOtherFamilialDetail && (
-            <FormField
-              control={form.control}
-              name="autre_familial_detail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Précisez l&apos;antécédent familial{' '}
-                    <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Précisez l'antécédent familial"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-          )}
-        </section>
+            </section>
 
-        {/* Section 4: Habitudes visuelles */}
-        <section className="space-y-4 rounded-lg border border-border p-6">
-          <div className="border-b border-border pb-3">
-            <h3 className="text-base font-semibold text-foreground">
-              Habitudes visuelles
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Informations sur l&apos;utilisation d&apos;écrans
-            </p>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="uses_screen"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Utilisation d&apos;écrans</FormLabel>
-                <div className="flex gap-4">
-                  <label
-                    className={cn(
-                      'flex cursor-pointer items-center gap-2 rounded-lg border px-6 py-2.5 transition-colors',
-                      field.value === true
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border hover:bg-muted/50',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      className="sr-only"
-                      name="uses_screen"
-                      checked={field.value === true}
-                      onChange={() => field.onChange(true)}
-                    />
-                    <span className="text-sm font-medium">Oui</span>
-                  </label>
-                  <label
-                    className={cn(
-                      'flex cursor-pointer items-center gap-2 rounded-lg border px-6 py-2.5 transition-colors',
-                      field.value === false
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border hover:bg-muted/50',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      className="sr-only"
-                      name="uses_screen"
-                      checked={field.value === false}
-                      onChange={() => field.onChange(false)}
-                    />
-                    <span className="text-sm font-medium">Non</span>
-                  </label>
+            {/* Section 2: Pathologies ophtalmologiques */}
+            <section className="space-y-4 rounded-lg border border-border p-6">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Pathologies ophtalmologiques
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Le patient a-t-il des pathologies ophtalmologiques ?
+                  </p>
                 </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Conditional field for screen time - only when uses_screen is true */}
-          {watchUsesScreen === true && (
-            <FormField
-              control={form.control}
-              name="screen_time_hours_per_day"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Temps d&apos;écran par jour (heures)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={24}
-                      placeholder="Ex: 8"
-                      className="w-32"
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? Number(e.target.value) : null,
-                        )
-                      }
-                    />
-                  </FormControl>
-                  {/* Warning for unrealistic values (> 12h) */}
-                  {watchScreenTime !== null &&
-                    watchScreenTime !== undefined &&
-                    watchScreenTime > 12 && (
-                      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                        <AlertTriangle className="size-4 shrink-0" />
-                        <span>
-                          Valeur élevée ({watchScreenTime}h/jour) - Vérifiez
-                          cette information
-                        </span>
-                      </div>
-                    )}
-                  <FormDescription>
-                    Incluez ordinateur, smartphone, tablette, télévision
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="has_pathologie_ophtalmologique"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormLabel className="text-sm">
+                        {field.value ? 'Oui' : 'Non'}
+                      </FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (!checked) {
+                              form.setValue('pathologie_ophtalmologique', []);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {watchHasOphtalmo && (
+                <FormField
+                  control={form.control}
+                  name="pathologie_ophtalmologique"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <ICDSelector
+                        label=""
+                        description="Recherchez et sélectionnez dans la nomenclature ICD-11"
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={fieldState.error?.message}
+                      />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-          )}
-        </section>
+            </section>
 
-        {/* Submit button */}
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => form.reset()}
-            disabled={updateAntecedentMutation.isPending}
-          >
-            Réinitialiser
-          </Button>
-          <Button type="submit" disabled={updateAntecedentMutation.isPending}>
-            {updateAntecedentMutation.isPending
-              ? 'Enregistrement...'
-              : isNewRecord
-                ? 'Créer les antécédents'
-                : 'Mettre à jour les antécédents'}
-          </Button>
-        </div>
+            {/* Section 3: Antécédents familiaux */}
+            <section className="space-y-4 rounded-lg border border-border p-6">
+              <div className="border-b border-border pb-3">
+                <h3 className="text-base font-semibold text-foreground">
+                  Antécédents familiaux
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Indiquez les antécédents familiaux ophtalmologiques
+                </p>
+              </div>
+              <FormField
+                control={form.control}
+                name="familial"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type d&apos;antécédent</FormLabel>
+                    <div className="flex flex-wrap gap-3">
+                      {(
+                        Object.entries(FAMILIAL_LABELS) as [
+                          keyof typeof FAMILIAL_LABELS,
+                          string,
+                        ][]
+                      ).map(([key, labelText]) => (
+                        <label
+                          key={key}
+                          className={cn(
+                            'flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 transition-colors',
+                            field.value?.includes(key)
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:bg-muted/50',
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={field.value?.includes(key)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                field.onChange([...(field.value || []), key]);
+                              } else {
+                                field.onChange(
+                                  field.value?.filter((v) => v !== key) || [],
+                                );
+                              }
+                            }}
+                          />
+                          <span className="text-sm font-medium">
+                            {labelText}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Conditional field for OTHER - required when OTHER is selected */}
+              {showOtherFamilialDetail && (
+                <FormField
+                  control={form.control}
+                  name="autre_familial_detail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Précisez l&apos;antécédent familial{' '}
+                        <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Précisez l'antécédent familial"
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </section>
+
+            {/* Section 4: Habitudes visuelles */}
+            <section className="space-y-4 rounded-lg border border-border p-6">
+              <div className="border-b border-border pb-3">
+                <h3 className="text-base font-semibold text-foreground">
+                  Habitudes visuelles
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Informations sur l&apos;utilisation d&apos;écrans
+                </p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="uses_screen"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Utilisation d&apos;écrans</FormLabel>
+                    <div className="flex gap-4">
+                      <label
+                        className={cn(
+                          'flex cursor-pointer items-center gap-2 rounded-lg border px-6 py-2.5 transition-colors',
+                          field.value === true
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border hover:bg-muted/50',
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          className="sr-only"
+                          name="uses_screen"
+                          checked={field.value === true}
+                          onChange={() => field.onChange(true)}
+                        />
+                        <span className="text-sm font-medium">Oui</span>
+                      </label>
+                      <label
+                        className={cn(
+                          'flex cursor-pointer items-center gap-2 rounded-lg border px-6 py-2.5 transition-colors',
+                          field.value === false
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border hover:bg-muted/50',
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          className="sr-only"
+                          name="uses_screen"
+                          checked={field.value === false}
+                          onChange={() => field.onChange(false)}
+                        />
+                        <span className="text-sm font-medium">Non</span>
+                      </label>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Conditional field for screen time - only when uses_screen is true */}
+              {watchUsesScreen === true && (
+                <FormField
+                  control={form.control}
+                  name="screen_time_hours_per_day"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Temps d&apos;écran par jour (heures)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={24}
+                          placeholder="Ex: 8"
+                          className="w-32"
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      {/* Warning for unrealistic values (> 12h) */}
+                      {watchScreenTime !== null &&
+                        watchScreenTime !== undefined &&
+                        watchScreenTime > 12 && (
+                          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                            <AlertTriangle className="size-4 shrink-0" />
+                            <span>
+                              Valeur élevée ({watchScreenTime}h/jour) - Vérifiez
+                              cette information
+                            </span>
+                          </div>
+                        )}
+                      <FormDescription>
+                        Incluez ordinateur, smartphone, tablette, télévision
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </section>
+
+            {/* Submit button */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+                disabled={updateAntecedentMutation.isPending}
+              >
+                Réinitialiser
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateAntecedentMutation.isPending}
+              >
+                {updateAntecedentMutation.isPending
+                  ? 'Enregistrement...'
+                  : isNewRecord
+                    ? 'Créer les antécédents'
+                    : 'Mettre à jour les antécédents'}
+              </Button>
+            </div>
+          </>
+        )}
       </form>
     </Form>
   );

@@ -4,12 +4,7 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type {
-  ExamenChildDetailApi,
-  ExamenChildCreate,
-  TechnicalExamenCreate,
-  ClinicalExamenCreate,
-} from '../../types';
+import type { ExamenChildDetailApi, ExamenChildCreate } from '../../types';
 
 import {
   getChildExamsQueryOptions,
@@ -133,7 +128,7 @@ export const useCreateMinimalChildExam = ({
 
 type UpdateTechnicalParams = {
   id: number;
-  data: TechnicalExamenCreate;
+  data: Record<string, unknown>;
 };
 
 /**
@@ -207,7 +202,7 @@ export const useUpdateTechnicalData = ({
 
 type UpdateClinicalParams = {
   id: number;
-  data: ClinicalExamenCreate;
+  data: Record<string, unknown>;
 };
 
 /**

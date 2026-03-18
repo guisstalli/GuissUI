@@ -131,9 +131,7 @@ export const paths = {
 
   // Analytics
   analytics: {
-    dashboard: {
-      getHref: () => '/analytics',
-    },
+    getHref: () => '/analytics',
   },
 
   // Reports

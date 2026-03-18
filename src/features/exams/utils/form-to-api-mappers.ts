@@ -48,7 +48,38 @@ export const mapVisualAcuityFormToApi = (data: VisualAcuity) => {
  * - etc.
  */
 export const mapRefractionFormToApi = (data: Refraction) => {
+  const correction = data.correction ?? false;
+
+  const odSphereAvecCorrection = correction
+    ? (data.od_sphere_avec_correction ?? null)
+    : null;
+  const odCylinderAvecCorrection = correction
+    ? (data.od_cylinder_avec_correction ?? null)
+    : null;
+  const odAxisAvecCorrection = correction
+    ? (data.od_axis_avec_correction ?? null)
+    : null;
+  const ogSphereAvecCorrection = correction
+    ? (data.og_sphere_avec_correction ?? null)
+    : null;
+  const ogCylinderAvecCorrection = correction
+    ? (data.og_cylinder_avec_correction ?? null)
+    : null;
+  const ogAxisAvecCorrection = correction
+    ? (data.og_axis_avec_correction ?? null)
+    : null;
+  const avodAvecCorrection = correction
+    ? (data.od_visual_acuity_avec_correction ?? null)
+    : null;
+  const avogAvecCorrection = correction
+    ? (data.og_visual_acuity_avec_correction ?? null)
+    : null;
+  const avodgAvecCorrection = correction
+    ? (data.odg_visual_acuity_avec_correction ?? null)
+    : null;
+
   return {
+    correction,
     od_s: data.od_sphere,
     od_c: data.od_cylinder,
     od_a: data.od_axis,
@@ -57,12 +88,24 @@ export const mapRefractionFormToApi = (data: Refraction) => {
     og_a: data.og_axis,
     avod: data.od_visual_acuity,
     avog: data.og_visual_acuity,
+    avodg: data.odg_visual_acuity ?? null,
+    od_s_avec_correction: odSphereAvecCorrection,
+    od_c_avec_correction: odCylinderAvecCorrection,
+    od_a_avec_correction: odAxisAvecCorrection,
+    og_s_avec_correction: ogSphereAvecCorrection,
+    og_c_avec_correction: ogCylinderAvecCorrection,
+    og_a_avec_correction: ogAxisAvecCorrection,
+    avod_avec_correction: avodAvecCorrection,
+    avog_avec_correction: avogAvecCorrection,
+    avodg_avec_correction: avodgAvecCorrection,
     retinoscopie_focale_h: data.retino_od_sphere,
     retinoscopie_focale_v: data.retino_od_cylinder,
     retinoscopie_axe_h: data.retino_od_axis,
-    retinoscopie_avec_focale_h: data.retino_og_sphere,
-    retinoscopie_avec_focale_v: data.retino_og_cylinder,
-    retinoscopie_avec_axe_h: data.retino_og_axis,
+    retinoscopie_avec_focale_h:
+      data.cyclo_od_sphere ?? data.retino_og_sphere ?? null,
+    retinoscopie_avec_focale_v:
+      data.cyclo_od_cylinder ?? data.retino_og_cylinder ?? null,
+    retinoscopie_avec_axe_h: data.cyclo_od_axis ?? data.retino_og_axis ?? null,
     dp: data.dp,
   };
 };
@@ -193,6 +236,7 @@ export const mapPerimetryFormToApi = (data: Perimetry) => {
  */
 export const mapMedicalHistoryFormToApi = (data: MedicalHistory) => {
   return {
+    has_antecedents: data.has_antecedents,
     has_antecedents_medico_chirurgicaux:
       data.has_antecedents_medico_chirurgicaux,
     antecedents_medico_chirurgicaux: data.antecedents_medico_chirurgicaux,

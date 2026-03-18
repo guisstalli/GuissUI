@@ -34,28 +34,54 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/dialog';
-import { useChildExam, useUpdateTechnicalData } from '@/features/exams/api';
+import { ExamAnalyticsContext } from '@/features/analytics';
+import {
+  useChildExam,
+  useUpdateClinicalData,
+  useUpdateTechnicalData,
+} from '@/features/exams/api';
 import { ExamStepper } from '@/features/exams/components/exam-stepper';
 import {
   ClinicalCheckChildForm,
+  BiomicroscopyAnteriorForm,
+  BiomicroscopyPosteriorForm,
   OcularTensionForm,
+  PerimetryForm,
+  PlaintesForm,
   RefractionForm,
   VisionBinoculaireForm,
   VisualAcuityForm,
 } from '@/features/exams/components/forms';
 import {
   ClinicalCheckChildSchema,
+  BiomicroscopyAnteriorSchema,
+  BiomicroscopyPosteriorSchema,
+  defaultBiomicroscopyAnterior,
+  defaultBiomicroscopyPosterior,
   OcularTensionSchema,
+  PerimetrySchema,
+  PlaintesSchema,
   RefractionSchema,
   VisionBinoculaireSchema,
   VisualAcuitySchema,
 } from '@/features/exams/types';
 import {
+  mapBiomicroscopyAnteriorApiToForm,
+  mapBiomicroscopyPosteriorApiToForm,
   mapClinicalCheckChildApiToForm,
+  mapOcularTensionFormToApi,
   mapOcularTensionApiToForm,
+  mapPerimetryApiToForm,
+  mapPerimetryFormToApi,
+  mapPlaintesApiToForm,
+  mapPlaintesFormToApi,
+  mapRefractionFormToApi,
   mapRefractionApiToForm,
   mapVisionBinoculaireApiToForm,
+  mapVisualAcuityFormToApi,
   mapVisualAcuityApiToForm,
+  mapBiomicroscopyAnteriorFormToApi,
+  mapBiomicroscopyPosteriorFormToApi,
 } from '@/features/exams/utils';
 import { cn } from '@/lib/utils';
 
@@ -81,20 +107,52 @@ const steps = [
   { id: 'technical', title: 'Examen Technique' },
   { id: 'binocular', title: 'Vision Binoculaire' },
   { id: 'clinical', title: 'Examen Clinique' },
+  { id: 'analytics', title: 'Analytiques' },
   { id: 'review', title: 'Validation' },
 ];
 
 // Combined schema for child exam
-const childExamSchema = z.object({
-  // Step 2: Technical
-  visualAcuity: VisualAcuitySchema,
-  refraction: RefractionSchema,
-  ocularTension: OcularTensionSchema,
-  // Step 3: Binocular Vision
-  visionBinoculaire: VisionBinoculaireSchema,
-  // Step 4: Clinical Check
-  clinicalCheck: ClinicalCheckChildSchema,
-});
+const childExamSchema = z
+  .object({
+    // Step 2: Technical
+    visualAcuity: VisualAcuitySchema,
+    refraction: RefractionSchema,
+    ocularTension: OcularTensionSchema,
+    // Step 3: Binocular Vision
+    visionBinoculaire: VisionBinoculaireSchema,
+    // Step 4: Clinical
+    simplifiedClinicalExam: z.boolean().default(true),
+    clinicalCheck: ClinicalCheckChildSchema,
+    plaintes: PlaintesSchema,
+    perimetry: PerimetrySchema,
+    od: z.object({
+      bp_sg_anterieur: BiomicroscopyAnteriorSchema,
+      bp_sg_posterieur: BiomicroscopyPosteriorSchema,
+    }),
+    og: z.object({
+      bp_sg_anterieur: BiomicroscopyAnteriorSchema,
+      bp_sg_posterieur: BiomicroscopyPosteriorSchema,
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.simplifiedClinicalExam) {
+      if (!data.clinicalCheck.reflet_pupillaire) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['clinicalCheck', 'reflet_pupillaire'],
+          message: 'Le reflet pupillaire est requis',
+        });
+      }
+
+      if (!data.clinicalCheck.fond_oeil) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['clinicalCheck', 'fond_oeil'],
+          message: "Le fond d'œil est requis",
+        });
+      }
+    }
+  });
 
 type ChildExamFormValues = z.infer<typeof childExamSchema>;
 
@@ -149,6 +207,8 @@ export default function ChildExamPage() {
   // Mutations pour mettre à jour les données
   const { mutate: updateTechnical, isPending: isUpdatingTechnical } =
     useUpdateTechnicalData({});
+  const { mutate: updateClinical, isPending: isUpdatingClinical } =
+    useUpdateClinicalData({});
 
   // Transform patient data from exam
   const patient = examData?.patient
@@ -218,6 +278,40 @@ export default function ChildExamPage() {
         fond_oeil: null,
         fo_detail: null,
       },
+      simplifiedClinicalExam: true,
+      plaintes: {
+        eye_symptom: ['AUCUN'],
+        autre: null,
+        diplopie: false,
+        diplopie_type: null,
+        strabisme: false,
+        strabisme_type: null,
+        strabisme_eye: null,
+        nystagmus: false,
+        nystagmus_eye: null,
+        ptosis: false,
+        ptosis_eye: null,
+        ptosis_type: null,
+      },
+      perimetry: {
+        pbo: ['NORMAL'],
+        limite_superieure: null,
+        limite_inferieure: null,
+        limite_temporale_droit: null,
+        limite_temporale_gauche: null,
+        etendue_horizontal: null,
+        score_esternmen: null,
+        image: null,
+        images: null,
+      },
+      od: {
+        bp_sg_anterieur: defaultBiomicroscopyAnterior,
+        bp_sg_posterieur: defaultBiomicroscopyPosterior,
+      },
+      og: {
+        bp_sg_anterieur: defaultBiomicroscopyAnterior,
+        bp_sg_posterieur: defaultBiomicroscopyPosterior,
+      },
     },
     mode: 'onBlur',
   });
@@ -238,6 +332,22 @@ export default function ChildExamPage() {
         fo: examData.fo,
         fo_detail: examData.fo_detail,
       });
+      const plaintes = mapPlaintesApiToForm(examData.clinical_examen?.plaintes);
+      const perimetry = mapPerimetryApiToForm(
+        examData.clinical_examen?.perimetry,
+      );
+      const odAnterior = mapBiomicroscopyAnteriorApiToForm(
+        examData.clinical_examen?.od?.bp_sg_anterieur,
+      );
+      const odPosterior = mapBiomicroscopyPosteriorApiToForm(
+        examData.clinical_examen?.od?.bp_sg_posterieur,
+      );
+      const ogAnterior = mapBiomicroscopyAnteriorApiToForm(
+        examData.clinical_examen?.og?.bp_sg_anterieur,
+      );
+      const ogPosterior = mapBiomicroscopyPosteriorApiToForm(
+        examData.clinical_examen?.og?.bp_sg_posterieur,
+      );
 
       form.reset({
         visualAcuity: visualAcuity ?? form.getValues().visualAcuity,
@@ -246,6 +356,17 @@ export default function ChildExamPage() {
         visionBinoculaire:
           visionBinoculaire ?? form.getValues().visionBinoculaire,
         clinicalCheck: clinicalCheck ?? form.getValues().clinicalCheck,
+        simplifiedClinicalExam: examData.simplified_clinical_exam ?? true,
+        plaintes: plaintes ?? form.getValues().plaintes,
+        perimetry: perimetry ?? form.getValues().perimetry,
+        od: {
+          bp_sg_anterieur: odAnterior ?? form.getValues().od.bp_sg_anterieur,
+          bp_sg_posterieur: odPosterior ?? form.getValues().od.bp_sg_posterieur,
+        },
+        og: {
+          bp_sg_anterieur: ogAnterior ?? form.getValues().og.bp_sg_anterieur,
+          bp_sg_posterieur: ogPosterior ?? form.getValues().og.bp_sg_posterieur,
+        },
       });
     }
   }, [examData, form]);
@@ -262,10 +383,7 @@ export default function ChildExamPage() {
     }
   };
 
-  // Fonction pour mapper les données du formulaire vers le format API
-  // Pour l'examen enfant, les champs cliniques (reflet_pupillaire, fo, etc.)
-  // sont au niveau racine, pas dans un objet séparé
-  const mapFormToApi = useCallback((data: ChildExamFormValues) => {
+  const mapTechnicalFormToApi = useCallback((data: ChildExamFormValues) => {
     // Construire l'objet vision_binoculaire conditionnellement
     // Règles du backend:
     // - Si reflet_pupillaire est null/undefined: ne pas envoyer le champ ou envoyer null
@@ -300,42 +418,47 @@ export default function ChildExamPage() {
 
     return {
       // Données techniques
-      visual_acuity: {
-        avsc_od: data.visualAcuity.avsc_od,
-        avsc_og: data.visualAcuity.avsc_og,
-        avsc_odg: data.visualAcuity.avsc_odg,
-        avac_od: data.visualAcuity.avac_od,
-        avac_og: data.visualAcuity.avac_og,
-        avac_odg: data.visualAcuity.avac_odg,
-      },
-      refraction: {
-        od_s: data.refraction.od_sphere,
-        od_c: data.refraction.od_cylinder,
-        od_a: data.refraction.od_axis,
-        og_s: data.refraction.og_sphere,
-        og_c: data.refraction.og_cylinder,
-        og_a: data.refraction.og_axis,
-        avod: data.refraction.od_visual_acuity,
-        avog: data.refraction.og_visual_acuity,
-        retinoscopie_focale_h: data.refraction.retino_od_sphere,
-        retinoscopie_focale_v: data.refraction.retino_od_cylinder,
-        retinoscopie_axe_h: data.refraction.retino_od_axis,
-        retinoscopie_avec_focale_h: data.refraction.retino_og_sphere,
-        retinoscopie_avec_focale_v: data.refraction.retino_og_cylinder,
-        retinoscopie_avec_axe_h: data.refraction.retino_og_axis,
-        dp: data.refraction.dp,
-      },
-      ocular_tension: {
-        od: data.ocularTension.od,
-        og: data.ocularTension.og,
-      },
+      visual_acuity: mapVisualAcuityFormToApi(data.visualAcuity),
+      refraction: mapRefractionFormToApi(data.refraction),
+      ocular_tension: mapOcularTensionFormToApi(data.ocularTension),
       // Vision binoculaire avec champs conditionnels
       vision_binoculaire: visionBinoculaireData,
-      // Champs cliniques au niveau racine de l'examen enfant
+    };
+  }, []);
+
+  const mapClinicalFormToApi = useCallback((data: ChildExamFormValues) => {
+    if (!data.simplifiedClinicalExam) {
+      return {
+        simplified_clinical_exam: false,
+      };
+    }
+
+    return {
+      simplified_clinical_exam: true,
       reflet_pupillaire: data.clinicalCheck.reflet_pupillaire,
       reflet_pupillaire_detail: data.clinicalCheck.reflet_pupillaire_detail,
       fo: data.clinicalCheck.fond_oeil,
       fo_detail: data.clinicalCheck.fo_detail,
+      clinical_examen: {
+        plaintes: mapPlaintesFormToApi(data.plaintes),
+        perimetry: mapPerimetryFormToApi(data.perimetry),
+        od: {
+          bp_sg_anterieur: mapBiomicroscopyAnteriorFormToApi(
+            data.od.bp_sg_anterieur,
+          ),
+          bp_sg_posterieur: mapBiomicroscopyPosteriorFormToApi(
+            data.od.bp_sg_posterieur,
+          ),
+        },
+        og: {
+          bp_sg_anterieur: mapBiomicroscopyAnteriorFormToApi(
+            data.og.bp_sg_anterieur,
+          ),
+          bp_sg_posterieur: mapBiomicroscopyPosteriorFormToApi(
+            data.og.bp_sg_posterieur,
+          ),
+        },
+      },
     };
   }, []);
 
@@ -348,25 +471,31 @@ export default function ChildExamPage() {
 
       setIsSubmitting(true);
 
-      // Mapper toutes les données vers le format API
-      const apiData = mapFormToApi(data);
-
-      // Soumettre toutes les données via l'endpoint technical
-      // (qui accepte aussi les champs cliniques au niveau racine pour l'examen enfant)
+      const technicalPayload = mapTechnicalFormToApi(data);
       updateTechnical(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { id: numericExamId, data: apiData as any },
+        { id: numericExamId, data: technicalPayload },
         {
           onSuccess: () => {
-            setIsSubmitting(false);
-            setShowSubmitDialog(false);
-            refetchExam();
-            // Rediriger vers la page patient
-            if (examData?.patient?.id) {
-              router.push(`/patients/${examData.patient.id}`);
-            } else {
-              router.push('/exams/child');
-            }
+            const clinicalPayload = mapClinicalFormToApi(data);
+
+            updateClinical(
+              { id: numericExamId, data: clinicalPayload },
+              {
+                onSuccess: () => {
+                  setIsSubmitting(false);
+                  setShowSubmitDialog(false);
+                  refetchExam();
+                  if (examData?.patient?.id) {
+                    router.push(`/patients/${examData.patient.id}`);
+                  } else {
+                    router.push('/exams/child');
+                  }
+                },
+                onError: () => {
+                  setIsSubmitting(false);
+                },
+              },
+            );
           },
           onError: () => {
             setIsSubmitting(false);
@@ -377,8 +506,10 @@ export default function ChildExamPage() {
     [
       isNewExam,
       numericExamId,
-      mapFormToApi,
+      mapTechnicalFormToApi,
+      mapClinicalFormToApi,
       updateTechnical,
+      updateClinical,
       refetchExam,
       examData?.patient?.id,
       router,
@@ -427,6 +558,7 @@ export default function ChildExamPage() {
     <SidebarProvider>
       <ChildExamContent
         patient={patient}
+        numericExamId={numericExamId}
         currentStep={currentStep}
         showSubmitDialog={showSubmitDialog}
         setShowSubmitDialog={setShowSubmitDialog}
@@ -437,7 +569,7 @@ export default function ChildExamPage() {
         onSubmit={onSubmit}
         isNewExam={isNewExam}
         examId={examId}
-        isSubmitting={isSubmitting || isUpdatingTechnical}
+        isSubmitting={isSubmitting || isUpdatingTechnical || isUpdatingClinical}
       />
     </SidebarProvider>
   );
@@ -446,6 +578,7 @@ export default function ChildExamPage() {
 // Internal component that uses useSidebar
 function ChildExamContent({
   patient,
+  numericExamId,
   currentStep,
   showSubmitDialog,
   setShowSubmitDialog,
@@ -467,6 +600,7 @@ function ChildExamContent({
     dateOfBirth: string;
     medicalRecordNumber: string;
   };
+  numericExamId: number;
   currentStep: number;
   showSubmitDialog: boolean;
   setShowSubmitDialog: (show: boolean) => void;
@@ -656,19 +790,136 @@ function ChildExamContent({
                   <div className="p-6">
                     <div className="mb-6">
                       <h2 className="mb-2 text-lg font-medium text-foreground">
-                        Examen Clinique Simplifié
+                        Examen Clinique
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        Contrôle du reflet pupillaire et du fond d&apos;œil.
+                        Activez l&apos;examen clinique simplifié ou passez en
+                        examen clinique complet.
                       </p>
                     </div>
 
-                    <ClinicalCheckChildForm namePrefix="clinicalCheck" />
+                    <Card className="mb-6">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Mode clinique
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant={
+                              form.watch('simplifiedClinicalExam')
+                                ? 'default'
+                                : 'outline'
+                            }
+                            onClick={() =>
+                              form.setValue('simplifiedClinicalExam', true, {
+                                shouldDirty: true,
+                              })
+                            }
+                          >
+                            Mode simplifié
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={
+                              !form.watch('simplifiedClinicalExam')
+                                ? 'default'
+                                : 'outline'
+                            }
+                            onClick={() =>
+                              form.setValue('simplifiedClinicalExam', false, {
+                                shouldDirty: true,
+                              })
+                            }
+                          >
+                            Désactiver le simplifié
+                          </Button>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground">
+                          {form.watch('simplifiedClinicalExam')
+                            ? "Le contrôle simplifié est actif. Les champs reflet pupillaire et fond d'œil seront envoyés."
+                            : 'Le mode simplifié est désactivé. Les données cliniques simplifiées ne seront pas envoyées.'}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    {form.watch('simplifiedClinicalExam') ? (
+                      <div className="space-y-8">
+                        <ClinicalCheckChildForm namePrefix="clinicalCheck" />
+
+                        <div className="space-y-6">
+                          <PlaintesForm namePrefix="plaintes" />
+                          <PerimetryForm namePrefix="perimetry" />
+
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-base">
+                                Biomicroscopie OD
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                              <BiomicroscopyAnteriorForm
+                                namePrefix="od.bp_sg_anterieur"
+                                eyeLabel="OD"
+                              />
+                              <BiomicroscopyPosteriorForm
+                                namePrefix="od.bp_sg_posterieur"
+                                eyeLabel="OD"
+                              />
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-base">
+                                Biomicroscopie OG
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                              <BiomicroscopyAnteriorForm
+                                namePrefix="og.bp_sg_anterieur"
+                                eyeLabel="OG"
+                              />
+                              <BiomicroscopyPosteriorForm
+                                namePrefix="og.bp_sg_posterieur"
+                                eyeLabel="OG"
+                              />
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border-warning/30 bg-warning/10 flex items-center gap-2 rounded-md border p-3">
+                        <AlertCircle
+                          className="size-4 text-warning"
+                          aria-hidden="true"
+                        />
+                        <p className="text-sm text-foreground">
+                          Examen clinique simplifié désactivé: seules les
+                          informations techniques et de vision binoculaire
+                          seront soumises.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Step 4: Review & Submit */}
+                {/* Step 4: Analytics */}
                 {currentStep === 4 && (
+                  <div className="p-6">
+                    <ExamAnalyticsContext
+                      examId={numericExamId}
+                      examType="child"
+                      examLabel="Pédiatrique"
+                    />
+                  </div>
+                )}
+
+                {/* Step 5: Review & Submit */}
+                {currentStep === 5 && (
                   <div className="p-6">
                     <h2 className="mb-4 text-lg font-medium text-foreground">
                       Validation de l&apos;examen
@@ -711,7 +962,9 @@ function ChildExamContent({
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            Complété
+                            {form.watch('simplifiedClinicalExam')
+                              ? 'Mode simplifié actif'
+                              : 'Mode simplifié désactivé'}
                           </p>
                         </CardContent>
                       </Card>

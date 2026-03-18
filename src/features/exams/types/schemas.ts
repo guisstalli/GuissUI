@@ -369,39 +369,123 @@ export const VisualAcuitySchema = z
   });
 
 /** Réfraction - Sphere (-20 to +15), Cylinder (-8 to +8), Axis (0-180) */
-export const RefractionSchema = z.object({
-  id: z.number().optional(),
-  // Per eye OD
-  od_sphere: z.coerce.number().min(-20).max(15).optional().nullable(),
-  od_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(),
-  od_axis: z.coerce.number().min(0).max(180).optional().nullable(),
-  od_visual_acuity: z.coerce.number().min(0).max(10).optional().nullable(),
-  // Per eye OG
-  og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(),
-  og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(),
-  og_axis: z.coerce.number().min(0).max(180).optional().nullable(),
-  og_visual_acuity: z.coerce.number().min(0).max(10).optional().nullable(),
-  // Retinoscopy Standard OD - Focale H, Focale V, Axe H
-  retino_od_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
-  retino_od_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
-  retino_od_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
-  // Retinoscopy Standard OG - Focale H, Focale V, Axe H
-  retino_og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
-  retino_og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
-  retino_og_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
-  // Retinoscopy Cycloplegic OD - Focale H, Focale V, Axe H
-  cyclo_od_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
-  cyclo_od_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
-  cyclo_od_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
-  // Retinoscopy Cycloplegic OG - Focale H, Focale V, Axe H
-  cyclo_og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
-  cyclo_og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
-  cyclo_og_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
-  // Pupillary Distance
-  dp: z.coerce.number().min(40).max(80).optional().nullable(),
-  created: z.string().datetime().optional(),
-  modified: z.string().datetime().optional(),
-});
+export const RefractionSchema = z
+  .object({
+    id: z.number().optional(),
+    correction: z.boolean().default(false).optional(),
+    // Per eye OD
+    od_sphere: z.coerce.number().min(-20).max(15).optional().nullable(),
+    od_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(),
+    od_axis: z.coerce.number().min(0).max(180).optional().nullable(),
+    od_visual_acuity: z.coerce.number().min(0).max(10).optional().nullable(),
+    // Per eye OG
+    og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(),
+    og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(),
+    og_axis: z.coerce.number().min(0).max(180).optional().nullable(),
+    og_visual_acuity: z.coerce.number().min(0).max(10).optional().nullable(),
+    // Binoculaire
+    odg_visual_acuity: z.coerce.number().min(0).max(10).optional().nullable(),
+    // Champs avec correction
+    od_sphere_avec_correction: z.coerce
+      .number()
+      .min(-20)
+      .max(15)
+      .optional()
+      .nullable(),
+    od_cylinder_avec_correction: z.coerce
+      .number()
+      .min(-8)
+      .max(8)
+      .optional()
+      .nullable(),
+    od_axis_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(180)
+      .optional()
+      .nullable(),
+    og_sphere_avec_correction: z.coerce
+      .number()
+      .min(-20)
+      .max(15)
+      .optional()
+      .nullable(),
+    og_cylinder_avec_correction: z.coerce
+      .number()
+      .min(-8)
+      .max(8)
+      .optional()
+      .nullable(),
+    og_axis_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(180)
+      .optional()
+      .nullable(),
+    od_visual_acuity_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    og_visual_acuity_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    odg_visual_acuity_avec_correction: z.coerce
+      .number()
+      .min(0)
+      .max(10)
+      .optional()
+      .nullable(),
+    // Retinoscopy Standard OD - Focale H, Focale V, Axe H
+    retino_od_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
+    retino_od_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
+    retino_od_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
+    // Retinoscopy Standard OG - Focale H, Focale V, Axe H
+    retino_og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
+    retino_og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
+    retino_og_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
+    // Retinoscopy Cycloplegic OD - Focale H, Focale V, Axe H
+    cyclo_od_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
+    cyclo_od_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
+    cyclo_od_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
+    // Retinoscopy Cycloplegic OG - Focale H, Focale V, Axe H
+    cyclo_og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
+    cyclo_og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
+    cyclo_og_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
+    // Pupillary Distance
+    dp: z.coerce.number().min(40).max(80).optional().nullable(),
+    created: z.string().datetime().optional(),
+    modified: z.string().datetime().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.correction) {
+      const requiredFields = [
+        'od_sphere_avec_correction',
+        'od_cylinder_avec_correction',
+        'od_axis_avec_correction',
+        'og_sphere_avec_correction',
+        'og_cylinder_avec_correction',
+        'og_axis_avec_correction',
+        'od_visual_acuity_avec_correction',
+        'og_visual_acuity_avec_correction',
+        'odg_visual_acuity_avec_correction',
+      ] as const;
+
+      requiredFields.forEach((field) => {
+        if (data[field] === null || data[field] === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Requis si correction sélectionnée',
+            path: [field],
+          });
+        }
+      });
+    }
+  });
 
 /** Tension Oculaire - mmHg (0-50) */
 export const OcularTensionSchema = z.object({
@@ -641,6 +725,7 @@ export const PlaintesSchema = z
 export const MedicalHistorySchema = z.object({
   id: z.number().optional(),
   patient: z.number().optional(),
+  has_antecedents: z.boolean().default(false),
   has_antecedents_medico_chirurgicaux: z.boolean().default(false),
   antecedents_medico_chirurgicaux: z.array(z.string()).default([]),
   has_pathologie_ophtalmologique: z.boolean().default(false),
@@ -936,6 +1021,8 @@ export const ExamenChildCreateSchema = z
   .object({
     patient_id: z.number(),
     site_id: z.number().optional(),
+    simplified_clinical_exam: z.boolean().optional(),
+    clinical_examen: ClinicalExamSchema.optional().nullable(),
     reflet_pupillaire: ClinicalCheckEnum.optional().nullable(),
     reflet_pupillaire_detail: z.string().max(255).optional().nullable(),
     fo: ClinicalCheckEnum.optional().nullable(),
@@ -978,6 +1065,8 @@ export const ExamenChildDetailSchema = z.object({
   id: z.number(),
   numero_examen: z.string(),
   patient: PatientNestedSchema,
+  simplified_clinical_exam: z.boolean().optional().nullable(),
+  clinical_examen: ClinicalExamSchema.nullable().optional(),
   reflet_pupillaire: ClinicalCheckEnum.nullable(),
   reflet_pupillaire_detail: z.string().max(255).optional().nullable(),
   fo: ClinicalCheckEnum.nullable(),

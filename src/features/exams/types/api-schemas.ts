@@ -54,6 +54,7 @@ export const VisualAcuityApiSchema = z.object({
 /** Refraction API Response - utilise od_s, od_c, od_a */
 export const RefractionApiSchema = z.object({
   id: z.number().optional(),
+  correction: z.boolean().optional(),
   // OD
   od_s: z.string().nullable().optional(),
   od_c: z.string().nullable().optional(),
@@ -73,6 +74,16 @@ export const RefractionApiSchema = z.object({
   avod: z.string().nullable().optional(),
   avog: z.string().nullable().optional(),
   avodg: z.string().nullable().optional(),
+  // Champs avec correction
+  od_s_avec_correction: z.string().nullable().optional(),
+  od_c_avec_correction: z.string().nullable().optional(),
+  od_a_avec_correction: z.string().nullable().optional(),
+  og_s_avec_correction: z.string().nullable().optional(),
+  og_c_avec_correction: z.string().nullable().optional(),
+  og_a_avec_correction: z.string().nullable().optional(),
+  avod_avec_correction: z.string().nullable().optional(),
+  avog_avec_correction: z.string().nullable().optional(),
+  avodg_avec_correction: z.string().nullable().optional(),
   // Pupillary distance
   dp: z.string().nullable().optional(),
   created: z.string().optional(),
@@ -214,6 +225,7 @@ export const ConclusionApiSchema = z.object({
 export const MedicalHistoryApiSchema = z.object({
   id: z.number().optional(),
   patient: z.number().optional(),
+  has_antecedents: z.boolean(),
   has_antecedents_medico_chirurgicaux: z.boolean(),
   antecedents_medico_chirurgicaux: z.array(z.string()),
   has_pathologie_ophtalmologique: z.boolean(),
@@ -284,6 +296,8 @@ export const ExamenChildDetailApiSchema = z.object({
   id: z.number(),
   numero_examen: z.string(),
   patient: PatientNestedApiSchema,
+  simplified_clinical_exam: z.boolean().optional().nullable(),
+  clinical_examen: ClinicalExamenApiSchema.nullable().optional(),
   reflet_pupillaire: z.string().nullable().optional(),
   reflet_pupillaire_detail: z.string().nullable().optional(),
   fo: z.string().nullable().optional(),
