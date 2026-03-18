@@ -124,6 +124,7 @@ export const mapRefractionApiToForm = (
 ): Refraction | undefined => {
   if (!data) return undefined;
   return {
+    correction: data.correction ?? false,
     // Réfraction standard OD
     od_sphere: toNumber(data.od_s),
     od_cylinder: toNumber(data.od_c),
@@ -134,21 +135,32 @@ export const mapRefractionApiToForm = (
     og_cylinder: toNumber(data.og_c),
     og_axis: toNumber(data.og_a),
     og_visual_acuity: toNumber(data.avog),
+    odg_visual_acuity: toNumber(data.avodg),
+    // Champs avec correction
+    od_sphere_avec_correction: toNumber(data.od_s_avec_correction),
+    od_cylinder_avec_correction: toNumber(data.od_c_avec_correction),
+    od_axis_avec_correction: toNumber(data.od_a_avec_correction),
+    og_sphere_avec_correction: toNumber(data.og_s_avec_correction),
+    og_cylinder_avec_correction: toNumber(data.og_c_avec_correction),
+    og_axis_avec_correction: toNumber(data.og_a_avec_correction),
+    od_visual_acuity_avec_correction: toNumber(data.avod_avec_correction),
+    og_visual_acuity_avec_correction: toNumber(data.avog_avec_correction),
+    odg_visual_acuity_avec_correction: toNumber(data.avodg_avec_correction),
     // Rétinoscopie OD (Focale H, Focale V, Axe H)
     retino_od_sphere: toNumber(data.retinoscopie_focale_h),
     retino_od_cylinder: toNumber(data.retinoscopie_focale_v),
     retino_od_axis: toNumber(data.retinoscopie_axe_h),
-    // Rétinoscopie OG (Focale H, Focale V, Axe H)
-    retino_og_sphere: toNumber(data.retinoscopie_avec_focale_h),
-    retino_og_cylinder: toNumber(data.retinoscopie_avec_focale_v),
-    retino_og_axis: toNumber(data.retinoscopie_avec_axe_h),
-    // Rétinoscopie cycloplégique (pas de mapping API pour l'instant)
-    cyclo_od_sphere: null,
-    cyclo_od_cylinder: null,
-    cyclo_od_axis: null,
-    cyclo_og_sphere: null,
-    cyclo_og_cylinder: null,
-    cyclo_og_axis: null,
+    // Rétinoscopie OG (même base que standard, backend sans différenciation OG)
+    retino_og_sphere: toNumber(data.retinoscopie_focale_h),
+    retino_og_cylinder: toNumber(data.retinoscopie_focale_v),
+    retino_og_axis: toNumber(data.retinoscopie_axe_h),
+    // Rétinoscopie cycloplégique
+    cyclo_od_sphere: toNumber(data.retinoscopie_avec_focale_h),
+    cyclo_od_cylinder: toNumber(data.retinoscopie_avec_focale_v),
+    cyclo_od_axis: toNumber(data.retinoscopie_avec_axe_h),
+    cyclo_og_sphere: toNumber(data.retinoscopie_avec_focale_h),
+    cyclo_og_cylinder: toNumber(data.retinoscopie_avec_focale_v),
+    cyclo_og_axis: toNumber(data.retinoscopie_avec_axe_h),
     // Distance pupillaire
     dp: toNumber(data.dp),
   };
@@ -364,6 +376,7 @@ export const mapMedicalHistoryApiToForm = (
   return {
     id: data.id,
     patient: data.patient,
+    has_antecedents: data.has_antecedents ?? false,
     has_antecedents_medico_chirurgicaux:
       data.has_antecedents_medico_chirurgicaux ?? false,
     antecedents_medico_chirurgicaux: data.antecedents_medico_chirurgicaux || [],

@@ -90,6 +90,12 @@ const navigation: NavSection[] = [
         icon: AlertCircle,
         permission: 'exams:view',
       },
+      {
+        name: 'Analytiques',
+        href: paths.analytics.getHref(),
+        icon: Eye,
+        permission: 'analytics:view',
+      },
     ],
   },
   {

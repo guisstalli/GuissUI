@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PatientAnalyticsContext } from '@/features/analytics/components';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
 import { usePatient, usePatientExams } from '@/features/patients/api';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
@@ -205,6 +206,12 @@ export default function PatientDetailPage() {
             className="rounded-none border-b-2 border-transparent px-4 pb-3 pt-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
           >
             Examens réalisés
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="rounded-none border-b-2 border-transparent px-4 pb-3 pt-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+          >
+            Analytiques
           </TabsTrigger>
         </TabsList>
 
@@ -517,6 +524,13 @@ export default function PatientDetailPage() {
                 )}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <PatientAnalyticsContext
+            patientId={patientId}
+            patientName={patient.full_name}
+          />
         </TabsContent>
       </Tabs>
 

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   ArrowLeft,
+  BarChart3,
   Check,
   Circle,
   Eye,
@@ -44,6 +45,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input, Label, Textarea } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExamAnalyticsContext } from '@/features/analytics';
 import {
   useAdultExam,
   useAddTechnicalData,
@@ -103,7 +105,7 @@ import { cn } from '@/lib/utils';
  * - Affichage de l'état de complétion (is_completed)
  */
 
-type Section = 'technical' | 'clinical' | 'conclusion';
+type Section = 'technical' | 'clinical' | 'analytics' | 'conclusion';
 type TechnicalSubsection = 'acuity' | 'refraction' | 'tension' | 'pachymetry';
 type ClinicalSubsection =
   | 'plaintes'
@@ -124,12 +126,14 @@ interface SectionStatus {
     perimetry: boolean;
     attachments: boolean;
   };
+  analytics: boolean;
   conclusion: boolean;
 }
 
 const sections = [
   { id: 'technical' as const, title: 'Examen Technique', icon: Eye },
   { id: 'clinical' as const, title: 'Examen Clinique', icon: Stethoscope },
+  { id: 'analytics' as const, title: 'Analytiques', icon: BarChart3 },
   { id: 'conclusion' as const, title: 'Conclusion', icon: FileText },
 ];
 
@@ -183,8 +187,11 @@ export default function AdultExamPage() {
       perimetry: false,
       attachments: false,
     },
+    analytics: false,
     conclusion: false,
   });
+
+  const hasAnalyticsContext = !isNewExam && numericExamId > 0;
 
   // =====================================================================
   // API Hooks
@@ -379,6 +386,7 @@ export default function AdultExamPage() {
           perimetry: hasClinical,
           attachments: (attachmentsData?.length ?? 0) > 0,
         },
+        analytics: hasAnalyticsContext,
         conclusion: hasClinical,
       });
 
@@ -429,7 +437,7 @@ export default function AdultExamPage() {
         if (conclusion) form.setValue('conclusion', conclusion);
       }
     }
-  }, [examData, attachmentsData, form]);
+  }, [examData, attachmentsData, form, hasAnalyticsContext]);
 
   // =====================================================================
   // Handlers
@@ -742,6 +750,7 @@ interface AdultExamContentProps {
 function AdultExamContent(props: AdultExamContentProps) {
   const {
     examId,
+    numericExamId,
     isNewExam,
     patient,
     form,
@@ -830,6 +839,13 @@ function AdultExamContent(props: AdultExamContentProps) {
                       ? 'Complété'
                       : 'En attente';
                     if (sectionStatus.conclusion) {
+                      statusIcon = <Check className="size-4 text-primary" />;
+                    }
+                  } else if (section.id === 'analytics') {
+                    statusText = sectionStatus.analytics
+                      ? 'Disponible'
+                      : 'Indisponible';
+                    if (sectionStatus.analytics) {
                       statusIcon = <Check className="size-4 text-primary" />;
                     }
                   }
@@ -1417,6 +1433,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                                               download={
                                                 attachment.original_filename
                                               }
+                                              aria-label={`Télécharger ${attachment.original_filename}`}
                                             >
                                               <Download className="size-4 text-muted-foreground" />
                                             </a>
@@ -1493,6 +1510,14 @@ function AdultExamContent(props: AdultExamContentProps) {
                     </Button>
                   </div>
                 </div>
+              )}
+
+              {activeSection === 'analytics' && (
+                <ExamAnalyticsContext
+                  examId={numericExamId}
+                  examType="adult"
+                  examLabel="Adulte"
+                />
               )}
             </FormProvider>
           </main>
