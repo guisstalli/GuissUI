@@ -16,25 +16,84 @@ import type {
 // Ces mappers convertissent les noms de champs du formulaire vers les noms API
 // =============================================================================
 
+const toFixedDecimalString = (
+  value: number | null | undefined,
+  decimalPlaces = 3,
+): string | null => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null;
+  }
+
+  const normalized = Number(value.toFixed(decimalPlaces));
+  return normalized.toString();
+};
+
+/**
+ * Helper: Use corrected value if available, fallback to base/uncorrected if correction enabled
+ * Prevents null fields when correction=true
+ */
+const coalesceValue = (
+  correctedValue: number | null | undefined,
+  baseValue: number | null | undefined,
+): number | null | undefined => {
+  if (correctedValue !== null && correctedValue !== undefined) {
+    return correctedValue;
+  }
+  return baseValue ?? null;
+};
+
 /**
  * Visual Acuity - Les noms de champs sont identiques
+ * Avec fallback: si correction=true mais champ absent, utilise la valeur sans correction
  */
 export const mapVisualAcuityFormToApi = (data: VisualAcuity) => {
+  const correction = data.correction ?? false;
+
   return {
-    parinaud: data.parinaud?.toString() || null,
+    parinaud: toFixedDecimalString(data.parinaud),
     correction: data.correction,
-    avsc_od: data.avsc_od?.toString() || null,
-    avsc_og: data.avsc_og?.toString() || null,
-    avsc_odg: data.avsc_odg?.toString() || null,
-    avac_od: data.avac_od?.toString() || null,
-    avac_og: data.avac_og?.toString() || null,
-    avac_odg: data.avac_odg?.toString() || null,
-    avsc_od_avec_correction: data.avsc_od_avec_correction?.toString() || null,
-    avsc_og_avec_correction: data.avsc_og_avec_correction?.toString() || null,
-    avsc_odg_avec_correction: data.avsc_odg_avec_correction?.toString() || null,
-    avac_od_avec_correction: data.avac_od_avec_correction?.toString() || null,
-    avac_og_avec_correction: data.avac_og_avec_correction?.toString() || null,
-    avac_odg_avec_correction: data.avac_odg_avec_correction?.toString() || null,
+    avsc_od: toFixedDecimalString(data.avsc_od),
+    avsc_og: toFixedDecimalString(data.avsc_og),
+    avsc_odg: toFixedDecimalString(data.avsc_odg),
+    avac_od: toFixedDecimalString(data.avac_od),
+    avac_og: toFixedDecimalString(data.avac_og),
+    avac_odg: toFixedDecimalString(data.avac_odg),
+    avsc_od_avec_correction: toFixedDecimalString(
+      coalesceValue(
+        data.avsc_od_avec_correction,
+        correction ? data.avsc_od : null,
+      ),
+    ),
+    avsc_og_avec_correction: toFixedDecimalString(
+      coalesceValue(
+        data.avsc_og_avec_correction,
+        correction ? data.avsc_og : null,
+      ),
+    ),
+    avsc_odg_avec_correction: toFixedDecimalString(
+      coalesceValue(
+        data.avsc_odg_avec_correction,
+        correction ? data.avsc_odg : null,
+      ),
+    ),
+    avac_od_avec_correction: toFixedDecimalString(
+      coalesceValue(
+        data.avac_od_avec_correction,
+        correction ? data.avac_od : null,
+      ),
+    ),
+    avac_og_avec_correction: toFixedDecimalString(
+      coalesceValue(
+        data.avac_og_avec_correction,
+        correction ? data.avac_og : null,
+      ),
+    ),
+    avac_odg_avec_correction: toFixedDecimalString(
+      coalesceValue(
+        data.avac_odg_avec_correction,
+        correction ? data.avac_odg : null,
+      ),
+    ),
   };
 };
 
@@ -50,63 +109,76 @@ export const mapVisualAcuityFormToApi = (data: VisualAcuity) => {
 export const mapRefractionFormToApi = (data: Refraction) => {
   const correction = data.correction ?? false;
 
-  const odSphereAvecCorrection = correction
-    ? (data.od_sphere_avec_correction ?? null)
-    : null;
-  const odCylinderAvecCorrection = correction
-    ? (data.od_cylinder_avec_correction ?? null)
-    : null;
-  const odAxisAvecCorrection = correction
-    ? (data.od_axis_avec_correction ?? null)
-    : null;
-  const ogSphereAvecCorrection = correction
-    ? (data.og_sphere_avec_correction ?? null)
-    : null;
-  const ogCylinderAvecCorrection = correction
-    ? (data.og_cylinder_avec_correction ?? null)
-    : null;
-  const ogAxisAvecCorrection = correction
-    ? (data.og_axis_avec_correction ?? null)
-    : null;
-  const avodAvecCorrection = correction
-    ? (data.od_visual_acuity_avec_correction ?? null)
-    : null;
-  const avogAvecCorrection = correction
-    ? (data.og_visual_acuity_avec_correction ?? null)
-    : null;
-  const avodgAvecCorrection = correction
-    ? (data.odg_visual_acuity_avec_correction ?? null)
-    : null;
+  const odSphereAvecCorrection = coalesceValue(
+    data.od_sphere_avec_correction,
+    correction ? data.od_sphere : null,
+  );
+  const odCylinderAvecCorrection = coalesceValue(
+    data.od_cylinder_avec_correction,
+    correction ? data.od_cylinder : null,
+  );
+  const odAxisAvecCorrection = coalesceValue(
+    data.od_axis_avec_correction,
+    correction ? data.od_axis : null,
+  );
+  const ogSphereAvecCorrection = coalesceValue(
+    data.og_sphere_avec_correction,
+    correction ? data.og_sphere : null,
+  );
+  const ogCylinderAvecCorrection = coalesceValue(
+    data.og_cylinder_avec_correction,
+    correction ? data.og_cylinder : null,
+  );
+  const ogAxisAvecCorrection = coalesceValue(
+    data.og_axis_avec_correction,
+    correction ? data.og_axis : null,
+  );
+  const avodAvecCorrection = coalesceValue(
+    data.od_visual_acuity_avec_correction,
+    correction ? data.od_visual_acuity : null,
+  );
+  const avogAvecCorrection = coalesceValue(
+    data.og_visual_acuity_avec_correction,
+    correction ? data.og_visual_acuity : null,
+  );
+  const avodgAvecCorrection = coalesceValue(
+    data.odg_visual_acuity_avec_correction,
+    correction ? data.odg_visual_acuity : null,
+  );
 
   return {
     correction,
-    od_s: data.od_sphere,
-    od_c: data.od_cylinder,
-    od_a: data.od_axis,
-    og_s: data.og_sphere,
-    og_c: data.og_cylinder,
-    og_a: data.og_axis,
-    avod: data.od_visual_acuity,
-    avog: data.og_visual_acuity,
-    avodg: data.odg_visual_acuity ?? null,
-    od_s_avec_correction: odSphereAvecCorrection,
-    od_c_avec_correction: odCylinderAvecCorrection,
-    od_a_avec_correction: odAxisAvecCorrection,
-    og_s_avec_correction: ogSphereAvecCorrection,
-    og_c_avec_correction: ogCylinderAvecCorrection,
-    og_a_avec_correction: ogAxisAvecCorrection,
-    avod_avec_correction: avodAvecCorrection,
-    avog_avec_correction: avogAvecCorrection,
-    avodg_avec_correction: avodgAvecCorrection,
-    retinoscopie_focale_h: data.retino_od_sphere,
-    retinoscopie_focale_v: data.retino_od_cylinder,
-    retinoscopie_axe_h: data.retino_od_axis,
-    retinoscopie_avec_focale_h:
+    od_s: toFixedDecimalString(data.od_sphere),
+    od_c: toFixedDecimalString(data.od_cylinder),
+    od_a: toFixedDecimalString(data.od_axis),
+    og_s: toFixedDecimalString(data.og_sphere),
+    og_c: toFixedDecimalString(data.og_cylinder),
+    og_a: toFixedDecimalString(data.og_axis),
+    avod: toFixedDecimalString(data.od_visual_acuity),
+    avog: toFixedDecimalString(data.og_visual_acuity),
+    avodg: toFixedDecimalString(data.odg_visual_acuity),
+    od_s_avec_correction: toFixedDecimalString(odSphereAvecCorrection),
+    od_c_avec_correction: toFixedDecimalString(odCylinderAvecCorrection),
+    od_a_avec_correction: toFixedDecimalString(odAxisAvecCorrection),
+    og_s_avec_correction: toFixedDecimalString(ogSphereAvecCorrection),
+    og_c_avec_correction: toFixedDecimalString(ogCylinderAvecCorrection),
+    og_a_avec_correction: toFixedDecimalString(ogAxisAvecCorrection),
+    avod_avec_correction: toFixedDecimalString(avodAvecCorrection),
+    avog_avec_correction: toFixedDecimalString(avogAvecCorrection),
+    avodg_avec_correction: toFixedDecimalString(avodgAvecCorrection),
+    retinoscopie_focale_h: toFixedDecimalString(data.retino_od_sphere),
+    retinoscopie_focale_v: toFixedDecimalString(data.retino_od_cylinder),
+    retinoscopie_axe_h: toFixedDecimalString(data.retino_od_axis),
+    retinoscopie_avec_focale_h: toFixedDecimalString(
       data.cyclo_od_sphere ?? data.retino_og_sphere ?? null,
-    retinoscopie_avec_focale_v:
+    ),
+    retinoscopie_avec_focale_v: toFixedDecimalString(
       data.cyclo_od_cylinder ?? data.retino_og_cylinder ?? null,
-    retinoscopie_avec_axe_h: data.cyclo_od_axis ?? data.retino_og_axis ?? null,
-    dp: data.dp,
+    ),
+    retinoscopie_avec_axe_h: toFixedDecimalString(
+      data.cyclo_od_axis ?? data.retino_og_axis ?? null,
+    ),
+    dp: toFixedDecimalString(data.dp),
   };
 };
 
