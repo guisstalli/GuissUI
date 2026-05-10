@@ -14,7 +14,7 @@ interface InternalAppGuardProps {
 
 /**
  * Garde d'accès pour l'application interne
- * Vérifie que l'utilisateur a un rôle autorisé (DOCTOR, TECHNICIAN, DATA_ENTRY, PARTNER_USER)
+ * Vérifie que l'utilisateur a un rôle autorisé (STAFF, DOCTEUR, TECHNICIEN)
  * Redirige vers /unauthorized si l'utilisateur est ADMIN ou n'a pas de rôle autorisé
  */
 export function InternalAppGuard({ children }: InternalAppGuardProps) {
@@ -24,13 +24,12 @@ export function InternalAppGuard({ children }: InternalAppGuardProps) {
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
 
-  // Construire l'objet user pour les fonctions d'autorisation
   const user = session?.user
     ? {
         id: session.user.id,
         email: session.user.email ?? '',
         name: session.user.name ?? '',
-        roles: (session.user as { roles?: string[] }).roles || [],
+        role: session.user.role ?? '',
       }
     : null;
 

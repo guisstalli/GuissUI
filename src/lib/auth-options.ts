@@ -1,63 +1,32 @@
-import { jwtDecode } from 'jwt-decode';
 import { NextAuthOptions } from 'next-auth';
-import KeycloakProvider from 'next-auth/providers/keycloak';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
-import { env } from '@/config/env';
+import { clientEnv } from '@/config/env';
 
-function extractRoles(decoded: any): string[] {
-  const roles: string[] = [];
-
-  if (decoded?.realm_access?.roles) {
-    roles.push(...decoded.realm_access.roles);
-  }
-
-  if (decoded?.resource_access) {
-    Object.values(decoded.resource_access).forEach((resource: any) => {
-      if (resource?.roles) {
-        roles.push(...resource.roles);
-      }
-    });
-  }
-
-  return roles;
-}
+const API_URL = clientEnv.API_URL;
 
 async function refreshAccessToken(token: any) {
   try {
-    const url = `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`;
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}/auth/jwt/refresh/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: env.KEYCLOAK_CLIENT_ID,
-        grant_type: 'refresh_token',
-        refresh_token: token.refreshToken,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: token.refreshToken }),
     });
 
-    const refreshedTokens = await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
-      throw refreshedTokens;
-    }
-
-    let roles: string[] = [];
-    try {
-      const decoded: any = jwtDecode(refreshedTokens.access_token);
-      roles = extractRoles(decoded);
-    } catch (error) {
-      console.error('Erreur décodage JWT lors du rafraîchissement:', error);
+      throw data;
     }
 
     return {
       ...token,
-      accessToken: refreshedTokens.access_token,
-      expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-      roles: roles.length > 0 ? roles : token.roles,
+      accessToken: data.access,
+      // Refresh token rotation: use new refresh if provided, keep old otherwise
+      refreshToken: data.refresh ?? token.refreshToken,
+      expiresAt: Date.now() + 60 * 60 * 1000,
     };
-  } catch (error) {
-    console.error('Error refreshing access token', error);
+  } catch {
     return {
       ...token,
       error: 'RefreshAccessTokenError',
@@ -69,96 +38,85 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 
   providers: [
-    KeycloakProvider({
-      clientId: env.KEYCLOAK_CLIENT_ID,
-      clientSecret: '',
-      issuer: env.KEYCLOAK_ISSUER,
-      authorization: {
-        url: `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/auth`,
-        params: {
-          scope: 'openid email profile',
-          audience: 'guiss-depistage-api',
-        },
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Mot de passe', type: 'password' },
       },
-      token: {
-        url: `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`,
-        params: { audience: 'guiss-depistage-api' },
-      },
-      userinfo: `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/userinfo`,
-      client: {
-        token_endpoint_auth_method: 'none',
-      },
-      httpOptions: {
-        timeout: 10000,
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const response = await fetch(`${API_URL}/auth/jwt/login/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+          }),
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        return {
+          id: String(data.user.id),
+          email: data.user.email,
+          name:
+            `${data.user.profile?.first_name ?? ''} ${data.user.profile?.last_name ?? ''}`.trim() ||
+            data.user.email,
+          role: data.user.role,
+          accessToken: data.access,
+          refreshToken: data.refresh,
+        };
       },
     }),
   ],
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 7 * 24 * 60 * 60,
   },
 
   callbacks: {
-    async jwt({ token, account }) {
-      // Connexion initiale
-      if (account?.access_token) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-        // account.expires_at est en secondes depuis l'epoch (fourni par Keycloak via OAuth2)
-        token.expiresAt = account.expires_at
-          ? account.expires_at * 1000
-          : Date.now() + 300 * 1000;
-
-        try {
-          const decoded: any = jwtDecode(account.access_token);
-          token.roles = extractRoles(decoded);
-          console.debug('[NextAuth] Token roles extracted:', token.roles);
-        } catch (error) {
-          console.error('[NextAuth] Erreur décodage JWT initial:', error);
-          token.roles = [];
-        }
-        console.debug('[NextAuth] Session initiale établie pour:', token.sub);
+    async jwt({ token, user }) {
+      if (user) {
+        token.accessToken = (user as any).accessToken;
+        token.refreshToken = (user as any).refreshToken;
+        token.role = (user as any).role;
+        token.expiresAt = Date.now() + 60 * 60 * 1000;
         return token;
       }
 
-      // Si le token n'a pas expiré, on le retourne directement
-      // On anticipe de 10 secondes pour éviter que le token expire pendant la requête en cours
-      if (Date.now() < (token.expiresAt as number) - 10000) {
+      if (Date.now() < (token.expiresAt as number) - 10_000) {
         return token;
       }
 
-      // Le token a expiré, on le rafraîchit
-      return await refreshAccessToken(token);
+      return refreshAccessToken(token);
     },
 
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.roles = (token.roles as string[]) || [];
+        session.user.role = token.role as string;
       }
       session.accessToken = token.accessToken as string;
+      session.refreshToken = token.refreshToken as string;
       session.error = token.error as string | undefined;
-      console.debug(
-        '[NextAuth] Session renvoyée au client, token présent:',
-        !!session.accessToken,
-      );
       return session;
     },
 
     async redirect({ url, baseUrl }) {
-      // Loop protection - log for debug
-      console.debug('[NextAuth] Redirecting to:', url, 'BaseURL:', baseUrl);
-      if (url.includes('error=')) {
-        console.warn('[NextAuth] Error in redirect URL:', url);
-        return baseUrl;
-      }
       return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
 
-  // pages: {
-  //   // Redirige directement vers le flux Keycloak en contournant la page par défaut de NextAuth
-  //   signIn: '/api/auth/signin/keycloak',
-  // },
+  pages: {
+    signIn: '/auth/login',
+  },
 };

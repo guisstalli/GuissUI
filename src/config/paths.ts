@@ -1,11 +1,16 @@
-/**
- * Application paths configuration for GUISS Internal Platform
- * Medical application routes for patients and exams management
- * Authentication is handled by Keycloak via NextAuth
- */
 export const paths = {
   home: {
     getHref: () => '/',
+  },
+
+  // Authentication
+  auth: {
+    login: {
+      getHref: (returnTo?: string) =>
+        returnTo
+          ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}`
+          : '/auth/login',
+    },
   },
 
   // Dashboard
