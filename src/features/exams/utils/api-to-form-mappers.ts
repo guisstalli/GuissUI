@@ -11,6 +11,7 @@ import type {
   VisionBinoculaireApi,
   MedicalHistoryApi,
 } from '../types/api-schemas';
+import type { ExamenAdditionel } from '../types/schemas';
 import type {
   VisualAcuity,
   Refraction,
@@ -290,6 +291,8 @@ export const mapPerimetryApiToForm = (
     limite_temporale_gauche: toNumber(data.limite_temporale_gauche),
     etendue_horizontal: toNumber(data.etendue_horizontal),
     score_esternmen: toNumber(data.score_esternmen),
+    examens_additionnels: (data.examens_additionnels ??
+      []) as ExamenAdditionel[],
     image: null,
     images: null,
   };

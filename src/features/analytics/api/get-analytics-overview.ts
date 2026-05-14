@@ -25,8 +25,8 @@ const buildOverviewUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/overview/?${queryString}`
-    : '/api/v1/analytics/overview/';
+    ? `/analytics/overview/?${queryString}`
+    : '/analytics/overview/';
 };
 
 export const getAnalyticsOverview = (

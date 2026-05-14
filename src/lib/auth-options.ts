@@ -1,11 +1,12 @@
 import { NextAuthOptions } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 import { clientEnv } from '@/config/env';
 
 const API_URL = clientEnv.API_URL;
 
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     const response = await fetch(`${API_URL}/auth/jwt/refresh/`, {
       method: 'POST',
@@ -26,7 +27,8 @@ async function refreshAccessToken(token: any) {
       refreshToken: data.refresh ?? token.refreshToken,
       expiresAt: Date.now() + 60 * 60 * 1000,
     };
-  } catch {
+  } catch (error) {
+    console.error('[auth] Token refresh failed:', error);
     return {
       ...token,
       error: 'RefreshAccessTokenError',
@@ -86,9 +88,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.accessToken = (user as any).accessToken;
-        token.refreshToken = (user as any).refreshToken;
-        token.role = (user as any).role;
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
+        token.role = user.role;
         token.expiresAt = Date.now() + 60 * 60 * 1000;
         return token;
       }

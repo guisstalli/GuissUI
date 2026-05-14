@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,6 +58,7 @@ import { NewPatientModal } from '@/features/patients/components/new-patient-moda
 import type { Sex } from '@/features/patients/types';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { SiteSelector } from '@/features/sites/components/site-selector';
+import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -83,6 +84,8 @@ export default function PatientsPage() {
     patientId: number | null;
     isAdult: boolean | null;
   }>({ isOpen: false, patientId: null, isAdult: null });
+
+  useDialogCleanup([!!patientToDelete, examCreationModal.isOpen]);
   const [selectedSite, setSelectedSite] = useState<number | null>(null);
 
   // Construire les paramètres de requête
@@ -123,8 +126,9 @@ export default function PatientsPage() {
   const createAdultExamMutation = useCreateAdultExam({
     mutationConfig: {
       onSuccess: (data) => {
+        const examId = data.id;
         setExamCreationModal({ isOpen: false, patientId: null, isAdult: null });
-        router.push(`/exams/adult/${data.id}`);
+        requestAnimationFrame(() => router.push(`/exams/adult/${examId}`));
       },
     },
   });
@@ -132,8 +136,9 @@ export default function PatientsPage() {
   const createChildExamMutation = useCreateChildExam({
     mutationConfig: {
       onSuccess: (data) => {
+        const examId = data.id;
         setExamCreationModal({ isOpen: false, patientId: null, isAdult: null });
-        router.push(`/exams/child/${data.id}`);
+        requestAnimationFrame(() => router.push(`/exams/child/${examId}`));
       },
     },
   });
@@ -224,13 +229,17 @@ export default function PatientsPage() {
   return (
     <Shell
       title="Patients"
-      showCreatePatient
-      onCreatePatient={() => setShowNewPatientModal(true)}
+      headerActions={
+        <Button size="sm" onClick={() => setShowNewPatientModal(true)}>
+          <Plus className="mr-1.5 size-4" aria-hidden="true" />
+          Nouveau patient
+        </Button>
+      }
     >
       {/* Filters */}
       <div className="mb-6 space-y-4">
         {/* Search and Toggle Filters */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative max-w-sm flex-1">
             <Search
               className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -351,16 +360,20 @@ export default function PatientsPage() {
       {/* Patients Table */}
       {!isLoading && !error && (
         <>
-          <div className="rounded-lg border border-border bg-card">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID Patient</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    ID Patient
+                  </TableHead>
                   <TableHead>Nom complet</TableHead>
-                  <TableHead>Âge</TableHead>
-                  <TableHead>Sexe</TableHead>
+                  <TableHead className="hidden sm:table-cell">Âge</TableHead>
+                  <TableHead className="hidden md:table-cell">Sexe</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Date de création</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Date de création
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -377,7 +390,7 @@ export default function PatientsPage() {
                 ) : (
                   patients.map((patient) => (
                     <TableRow key={patient.id}>
-                      <TableCell className="font-mono text-sm text-muted-foreground">
+                      <TableCell className="hidden font-mono text-sm text-muted-foreground sm:table-cell">
                         {patient.numero_identifiant}
                       </TableCell>
                       <TableCell>
@@ -388,10 +401,10 @@ export default function PatientsPage() {
                           {patient.full_name}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
                         {patient.age} ans
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
                         {SEX_LABELS[patient.sex] || patient.sex}
                       </TableCell>
                       <TableCell>
@@ -406,7 +419,7 @@ export default function PatientsPage() {
                           {patient.is_adult ? 'Adulte' : 'Enfant'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
                         {new Date(patient.created).toLocaleDateString('fr-FR', {
                           day: '2-digit',
                           month: '2-digit',
@@ -469,7 +482,7 @@ export default function PatientsPage() {
           </div>
 
           {/* Pagination */}
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-y-3">
             <p className="text-sm text-muted-foreground">
               {totalCount > 0 ? (
                 <>

@@ -27,6 +27,9 @@ type LoginBody = {
 };
 
 export const authHandlers = [
+  // next-auth session endpoint — returns null session so getSession() resolves cleanly
+  http.get('*/api/auth/session', () => HttpResponse.json(null)),
+
   http.post(`${env.API_URL}/auth/register`, async ({ request }) => {
     await networkDelay();
     try {

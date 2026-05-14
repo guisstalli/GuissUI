@@ -3,6 +3,9 @@ export { VisualAcuityForm } from './visual-acuity-form';
 export { RefractionForm } from './refraction-form';
 export { OcularTensionForm } from './ocular-tension-form';
 
+// Shared (Adult + Child)
+export { ExamensAdditionelsSection } from './examens-additionnels-section';
+
 // Adult-Specific Components
 export { PachymetryForm } from './pachymetry-form';
 export { PlaintesForm } from './plaintes-form';
@@ -15,5 +18,5 @@ export { ConclusionForm } from './conclusion-form';
 export { VisionBinoculaireForm } from './vision-binoculaire-form';
 export { ClinicalCheckChildForm } from './clinical-check-child-form';
 
-// Tabs
-export { MedicalHistoryTab } from '../medical-history-tab';
+// Driver-Specific Components
+export { DriverExperienceForm } from './driver-experience-form';

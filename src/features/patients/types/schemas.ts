@@ -17,6 +17,18 @@ export const SEX_LABELS: Record<z.infer<typeof SexEnum>, string> = {
 /** Antécédents familiaux */
 export const FamilialEnum = z.enum(['CECITE', 'GPAO', 'OTHER']);
 
+/** Types d'addiction (conducteurs) */
+export const TypeAddictionEnum = z.enum(['TABAGISME', 'ALCOOL', 'AUTRES']);
+
+export const TYPE_ADDICTION_LABELS: Record<
+  z.infer<typeof TypeAddictionEnum>,
+  string
+> = {
+  TABAGISME: 'Tabagisme',
+  ALCOOL: 'Alcool',
+  AUTRES: 'Autres',
+};
+
 export const FAMILIAL_LABELS: Record<z.infer<typeof FamilialEnum>, string> = {
   CECITE: 'Cécité',
   GPAO: 'GPAO',
@@ -41,8 +53,10 @@ export const PatientListSchema = z.object({
   age: z.number(),
   sex: SexEnum,
   is_adult: z.boolean(),
+  has_driver: z.boolean().optional(),
   phone_number: z.string().nullable().optional(),
   created: z.string().datetime(),
+  deleted_at: z.string().nullable().optional(),
 });
 
 /**
@@ -58,6 +72,7 @@ export const PatientSchema = z.object({
   age: z.number(),
   sex: SexEnum,
   is_adult: z.boolean(),
+  has_driver: z.boolean().optional(),
   phone_number: z.string().max(128).nullable().optional(),
   examens_count: z
     .object({
@@ -103,6 +118,11 @@ export const AntecedentSchema = z.object({
   autre_familial_detail: z.string().max(255).nullable().optional(),
   uses_screen: z.boolean().nullable().optional(),
   screen_time_hours_per_day: z.number().int().min(0).nullable().optional(),
+  // Addictions (conducteurs)
+  addiction: z.boolean().optional(),
+  type_addiction: z.array(TypeAddictionEnum).optional(),
+  autre_addiction_detail: z.string().max(255).nullable().optional(),
+  tabagisme_detail: z.string().max(50).nullable().optional(),
   created: z.string().datetime(),
   modified: z.string().datetime(),
 });
@@ -120,6 +140,11 @@ export const AntecedentCreateSchema = z.object({
   autre_familial_detail: z.string().max(255).nullable().optional(),
   uses_screen: z.boolean().nullable().optional(),
   screen_time_hours_per_day: z.number().int().min(0).nullable().optional(),
+  // Addictions (conducteurs)
+  addiction: z.boolean().optional(),
+  type_addiction: z.array(TypeAddictionEnum).optional(),
+  autre_addiction_detail: z.string().max(255).nullable().optional(),
+  tabagisme_detail: z.string().max(50).nullable().optional(),
 });
 
 // =============================================================================

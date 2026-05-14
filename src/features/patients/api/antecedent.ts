@@ -17,7 +17,7 @@ import type { Antecedent, AntecedentCreate } from '../types';
  */
 export const getAntecedent = (patientId: number): Promise<Antecedent> => {
   return api.get<Antecedent>(
-    `/api/v1/depistage/patients/${patientId}/antecedent/`,
+    `/depistage/patients/${patientId}/antecedent/`,
     { silentStatusCodes: [404] }, // Ne pas afficher de toast pour 404
   );
 };
@@ -81,7 +81,7 @@ export const createOrUpdateAntecedent = ({
   data,
 }: UpdateAntecedentParams): Promise<Antecedent> => {
   return api.post<Antecedent>(
-    `/api/v1/depistage/patients/${patientId}/antecedent/edit/`,
+    `/depistage/patients/${patientId}/antecedent/edit/`,
     data,
   );
 };
@@ -94,7 +94,7 @@ export const updateAntecedent = ({
   data,
 }: UpdateAntecedentParams): Promise<Antecedent> => {
   return api.put<Antecedent>(
-    `/api/v1/depistage/patients/${patientId}/antecedent/edit/`,
+    `/depistage/patients/${patientId}/antecedent/edit/`,
     data,
   );
 };

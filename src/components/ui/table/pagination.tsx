@@ -5,7 +5,7 @@ import {
 } from '@radix-ui/react-icons';
 import * as React from 'react';
 
-import { ButtonProps, buttonVariants } from '@/components/ui/button';
+import { ButtonProps, buttonVariants } from '@/components/ui/button/button';
 import { cn } from '@/utils/cn';
 
 import { Link } from '../link';
@@ -42,8 +42,8 @@ PaginationItem.displayName = 'PaginationItem';
 
 type PaginationLinkProps = {
   isActive?: boolean;
-} & Pick<ButtonProps, 'size'> &
-  React.ComponentProps<'a'>;
+  size?: ButtonProps['size'];
+} & React.ComponentProps<'a'>;
 
 const PaginationLink = ({
   className,

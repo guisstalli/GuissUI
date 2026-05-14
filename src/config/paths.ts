@@ -11,6 +11,15 @@ export const paths = {
           ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}`
           : '/auth/login',
     },
+    forgotPassword: {
+      getHref: () => '/auth/forgot-password',
+    },
+    resetPassword: {
+      getHref: (token?: string) =>
+        token
+          ? `/auth/reset-password?token=${encodeURIComponent(token)}`
+          : '/auth/reset-password',
+    },
   },
 
   // Dashboard
@@ -38,6 +47,9 @@ export const paths = {
     children: {
       getHref: () => '/patients?type=child',
     },
+    trash: {
+      getHref: () => '/patients/corbeille',
+    },
   },
 
   // Patient Records (Dossier Patient)
@@ -47,8 +59,31 @@ export const paths = {
     },
   },
 
+  // Drivers (Conducteurs)
+  drivers: {
+    list: {
+      getHref: () => '/conducteurs',
+    },
+    detail: {
+      getHref: (id: number | string) => `/conducteurs/${id}`,
+    },
+    trash: {
+      getHref: () => '/conducteurs/corbeille',
+    },
+    exams: {
+      getHref: () => '/conducteurs/examens',
+    },
+    analytics: {
+      getHref: () => '/conducteurs/analytics',
+    },
+  },
+
   // Exams
   exams: {
+    // Unified list
+    list: {
+      getHref: () => '/exams',
+    },
     // Adult Exams
     adult: {
       list: {
@@ -149,6 +184,16 @@ export const paths = {
     },
   },
 
+  // Billing (Facturation)
+  billing: {
+    list: {
+      getHref: () => '/facturation',
+    },
+    detail: {
+      getHref: (id: number | string) => `/facturation/${id}`,
+    },
+  },
+
   // Sites
   sites: {
     list: {
@@ -162,6 +207,47 @@ export const paths = {
     },
     edit: {
       getHref: (id: number | string) => `/sites/${id}/edit`,
+    },
+  },
+
+  // Profile
+  profil: {
+    getHref: () => '/profil',
+  },
+
+  // Admin
+  admin: {
+    users: {
+      getHref: () => '/admin/utilisateurs',
+    },
+  },
+
+  // Events (public + staff)
+  events: {
+    publicList: {
+      getHref: () => '/evenements',
+    },
+    publicDetail: {
+      getHref: (slug: string) => `/evenements/${slug}`,
+    },
+    staff: {
+      list: { getHref: () => '/gestion/evenements' },
+      detail: { getHref: (id: number | string) => `/gestion/evenements/${id}` },
+      create: { getHref: () => '/gestion/evenements/nouveau' },
+    },
+  },
+
+  // Rendez-vous public + staff agenda
+  rdv: {
+    publicBooking: {
+      getHref: () => '/rendez-vous',
+    },
+    publicCancel: {
+      getHref: (token: string) => `/rendez-vous/annuler/${token}`,
+    },
+    staff: {
+      agenda: { getHref: () => '/gestion/rendez-vous' },
+      config: { getHref: () => '/gestion/rendez-vous/config' },
     },
   },
 

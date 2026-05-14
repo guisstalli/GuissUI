@@ -2,74 +2,41 @@
 
 import type { ReactNode } from 'react';
 
-import { cn } from '@/lib/utils';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 import { Header } from './header';
-import { Sidebar } from './sidebar';
-import { SidebarProvider, useSidebar } from './sidebar-context';
+import { AppSidebar } from './sidebar';
 
 interface AppShellProps {
   children: ReactNode;
   title: string;
   patientName?: string;
-  showCreateExam?: boolean;
-  onCreateExam?: () => void;
-  showCreatePatient?: boolean;
-  onCreatePatient?: () => void;
   rightPanel?: ReactNode;
+  /** Slot for feature-level header actions. Composed at the app/page level. */
+  headerActions?: ReactNode;
 }
 
-function ShellContent({
+export function Shell({
   children,
   title,
   patientName,
-  showCreateExam = false,
-  onCreateExam,
-  showCreatePatient = false,
-  onCreatePatient,
   rightPanel,
+  headerActions,
 }: AppShellProps) {
-  const { isCollapsed } = useSidebar();
-
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div
-        className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
-          isCollapsed ? 'pl-16' : 'pl-60',
-        )}
-      >
-        {/* Header */}
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
         <Header
           title={title}
           patientName={patientName}
-          showCreateExam={showCreateExam}
-          onCreateExam={onCreateExam}
-          showCreatePatient={showCreatePatient}
-          onCreatePatient={onCreatePatient}
+          actions={headerActions}
         />
-
-        {/* Content with Optional Right Panel */}
         <div className="flex flex-1">
-          {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-6">{children}</main>
-
-          {/* Optional Right Panel */}
           {rightPanel}
         </div>
-      </div>
-    </div>
-  );
-}
-
-export function Shell(props: AppShellProps) {
-  return (
-    <SidebarProvider>
-      <ShellContent {...props} />
+      </SidebarInset>
     </SidebarProvider>
   );
 }

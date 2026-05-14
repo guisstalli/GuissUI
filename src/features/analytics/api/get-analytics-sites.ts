@@ -24,9 +24,7 @@ const buildSitesUrl = (filters: AnalyticsFilters) => {
   });
 
   const queryString = params.toString();
-  return queryString
-    ? `/api/v1/analytics/sites/?${queryString}`
-    : '/api/v1/analytics/sites/';
+  return queryString ? `/analytics/sites/?${queryString}` : '/analytics/sites/';
 };
 
 export const getAnalyticsSites = (

@@ -2,54 +2,128 @@ import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 3000;
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   testDir: './e2e',
-  /* Run tests in files in parallel */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  reporter: [['html'], ['json', { outputFile: 'test-results/results.json' }]],
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://127.0.0.1:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
 
-  /* Configure projects for major browsers */
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+    // --- Setup projects (one per role) ---
     {
-      name: 'chromium',
+      name: 'setup:admin',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'setup:staff',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'setup:docteur',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'setup:technicien',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    // --- Test projects (authenticated, one per role) ---
+    {
+      name: 'admin',
       testMatch: /.*\.spec\.ts/,
+      testIgnore: [
+        /tests\/exams\/.*/, // exam tests require depistage permissions
+        /.*\.public\.spec\.ts/, // public tests run in the public project only
+        /tests\/auth\/login\.spec\.ts/, // login tests run in no-auth project
+        /tests\/patients\/.*/, // admin has no patients permissions
+        /tests\/appointments\/.*/, // admin has no appointments permissions
+        /tests\/billing\/.*/, // admin has no billing permissions
+        /tests\/events\/.*/, // admin has no events permissions
+        /tests\/conducteurs\/.*/, // admin has no conducteurs permissions
+      ],
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'e2e/.auth/user.json',
+        storageState: 'e2e/.auth/admin.json',
       },
-      dependencies: ['setup'],
+      dependencies: ['setup:admin'],
+    },
+    {
+      name: 'staff',
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: [
+        /tests\/exams\/.*/, // exam tests require depistage permissions
+        /.*\.public\.spec\.ts/,
+        /tests\/auth\/login\.spec\.ts/,
+        /tests\/admin\/.*/, // staff cannot manage users
+      ],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/.auth/staff.json',
+      },
+      dependencies: ['setup:staff'],
+    },
+    {
+      name: 'docteur',
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: [
+        /.*\.public\.spec\.ts/,
+        /tests\/auth\/login\.spec\.ts/,
+        /tests\/admin\/.*/, // admin pages require admin role
+      ],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/.auth/docteur.json',
+      },
+      dependencies: ['setup:docteur'],
+    },
+    {
+      name: 'technicien',
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: [
+        /.*\.public\.spec\.ts/,
+        /tests\/auth\/login\.spec\.ts/,
+        /tests\/admin\/.*/, // admin pages require admin role
+        /tests\/analytics\/.*/, // analytics reserved for médecins and admins
+      ],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/.auth/technicien.json',
+      },
+      dependencies: ['setup:technicien'],
+    },
+
+    // --- Public project (no auth required) ---
+    {
+      name: 'public',
+      testMatch: /.*\.public\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    // --- No-auth project for login flow tests ---
+    {
+      name: 'no-auth',
+      testMatch: /tests\/auth\/login\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: { cookies: [], origins: [] },
+      },
     },
   ],
 
-  /* Run your local dev server before starting the tests */
   webServer: {
     command: `yarn dev --port ${PORT}`,
-    timeout: 10 * 1000,
+    timeout: 120 * 1000,
     port: PORT,
     reuseExistingServer: !process.env.CI,
   },

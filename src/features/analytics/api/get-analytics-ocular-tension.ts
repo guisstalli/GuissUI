@@ -25,8 +25,8 @@ const buildOcularTensionUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/ocular-tension/?${queryString}`
-    : '/api/v1/analytics/ocular-tension/';
+    ? `/analytics/ocular-tension/?${queryString}`
+    : '/analytics/ocular-tension/';
 };
 
 export const getAnalyticsOcularTension = (

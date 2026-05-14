@@ -25,8 +25,8 @@ const buildPachymetryUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/pachymetry/?${queryString}`
-    : '/api/v1/analytics/pachymetry/';
+    ? `/analytics/pachymetry/?${queryString}`
+    : '/analytics/pachymetry/';
 };
 
 export const getAnalyticsPachymetry = (

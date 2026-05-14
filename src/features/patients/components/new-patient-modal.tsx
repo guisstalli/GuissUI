@@ -174,7 +174,12 @@ export function NewPatientModal({
   );
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) handleClose();
+      }}
+    >
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
         {step === 'type' ? (
           <>

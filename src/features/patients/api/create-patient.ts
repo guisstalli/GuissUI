@@ -12,7 +12,7 @@ import { getPatientsQueryOptions } from './get-patients';
  * Créer un nouveau patient
  */
 export const createPatient = (data: PatientCreate): Promise<Patient> => {
-  return api.post<Patient>('/api/v1/depistage/patients/create/', data);
+  return api.post<Patient>('/depistage/patients/create/', data);
 };
 
 type UseCreatePatientOptions = {
@@ -34,7 +34,8 @@ export const useCreatePatient = ({
     mutationFn: createPatient,
     onSuccess: (data, ...args) => {
       queryClient.invalidateQueries({
-        queryKey: getPatientsQueryOptions().queryKey,
+        queryKey: ['patients'],
+        exact: false,
       });
       addNotification({
         type: 'success',

@@ -1,259 +1,490 @@
 'use client';
 
 import {
-  AlertCircle,
-  Baby,
-  ChevronLeft,
+  BarChart3,
+  CalendarDays,
+  CalendarRange,
   ChevronRight,
+  ChevronUp,
   ClipboardList,
   Eye,
   LayoutDashboard,
-  Users,
+  LogOut,
   MapPin,
+  Receipt,
+  Settings,
+  ShieldCheck,
+  Trash2,
+  Truck,
+  UserCircle,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import * as React from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Can } from '@/components/ui/can';
+import { Can } from '@/components/ui/can/can';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible/collapsible';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown/dropdown';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+} from '@/components/ui/sidebar';
 import { paths } from '@/config/paths';
-import { Permission } from '@/lib/authorization';
+import { signOut, useUser } from '@/lib/auth';
+import { getRoleLabel, type Permission } from '@/lib/authorization';
 import { cn } from '@/lib/utils';
 
-import { useSidebar } from './sidebar-context';
-
-type NavItem = {
-  name: string;
-  href: string;
+type SubNavItem = {
+  title: string;
+  url: string;
   icon: React.ComponentType<{ className?: string }>;
   permission?: Permission;
 };
 
-type NavSection = {
-  title?: string;
+type NavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission: Permission | null;
+  children?: SubNavItem[];
+};
+
+type NavGroup = {
+  label: string | null;
   items: NavItem[];
 };
 
-const navigation: NavSection[] = [
+const navGroups: NavGroup[] = [
   {
+    label: null,
     items: [
       {
-        name: 'Tableau de bord',
-        href: paths.dashboard.getHref(),
+        title: 'Tableau de bord',
+        url: paths.dashboard.getHref(),
         icon: LayoutDashboard,
+        permission: null,
       },
     ],
   },
   {
-    title: 'Patients',
+    label: 'Patients',
     items: [
       {
-        name: 'Patients',
-        href: paths.patients.list.getHref(),
+        title: 'Patients',
+        url: paths.patients.list.getHref(),
         icon: Users,
         permission: 'patients:view',
+        children: [
+          {
+            title: 'Liste des patients',
+            url: paths.patients.list.getHref(),
+            icon: Users,
+            permission: 'patients:view',
+          },
+          {
+            title: 'Examens',
+            url: paths.exams.list.getHref(),
+            icon: ClipboardList,
+            permission: 'exams:view',
+          },
+          {
+            title: 'Corbeille',
+            url: paths.patients.trash.getHref(),
+            icon: Trash2,
+            permission: 'patients:view',
+          },
+        ],
       },
-      /*
-      {
-        name: 'Dossiers Patients',
-        href: '/patients/records',
-        icon: FolderOpen,
-        permission: 'patient-records:view',
-      },
-      */
     ],
   },
   {
-    title: 'Examens',
+    label: 'Activité',
     items: [
       {
-        name: 'Examens Adulte',
-        href: paths.exams.adult.list.getHref(),
-        icon: ClipboardList,
-        permission: 'exams:view',
+        title: 'Événements',
+        url: paths.events.staff.list.getHref(),
+        icon: CalendarRange,
+        permission: null,
       },
       {
-        name: 'Examens Enfant',
-        href: paths.exams.child.list.getHref(),
-        icon: Baby,
-        permission: 'exams:view',
+        title: 'Agenda',
+        url: paths.rdv.staff.agenda.getHref(),
+        icon: CalendarDays,
+        permission: null,
+        children: [
+          {
+            title: 'Rendez-vous',
+            url: paths.rdv.staff.agenda.getHref(),
+            icon: CalendarDays,
+          },
+          {
+            title: 'Configuration',
+            url: paths.rdv.staff.config.getHref(),
+            icon: Settings,
+          },
+        ],
       },
+    ],
+  },
+  {
+    label: 'Analyse',
+    items: [
       {
-        name: 'Examens Incomplets',
-        href: paths.exams.incomplete.getHref(),
-        icon: AlertCircle,
-        permission: 'exams:view',
-      },
-      {
-        name: 'Analytiques',
-        href: paths.analytics.getHref(),
-        icon: Eye,
+        title: 'Analytiques',
+        url: paths.analytics.getHref(),
+        icon: BarChart3,
         permission: 'analytics:view',
       },
     ],
   },
   {
-    title: 'Site',
+    label: 'Conducteurs',
     items: [
       {
-        name: 'Sites',
-        href: paths.sites.list.getHref(),
+        title: 'Conducteurs',
+        url: paths.drivers.list.getHref(),
+        icon: Truck,
+        permission: 'patients:view',
+        children: [
+          {
+            title: 'Liste des conducteurs',
+            url: paths.drivers.list.getHref(),
+            icon: Truck,
+            permission: 'patients:view',
+          },
+          {
+            title: 'Corbeille',
+            url: paths.drivers.trash.getHref(),
+            icon: Trash2,
+            permission: 'patients:view',
+          },
+          {
+            title: 'Examens',
+            url: paths.drivers.exams.getHref(),
+            icon: ClipboardList,
+            permission: 'exams:view',
+          },
+          {
+            title: 'Analytiques',
+            url: paths.drivers.analytics.getHref(),
+            icon: BarChart3,
+            permission: 'analytics:view',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Configuration',
+    items: [
+      {
+        title: 'Sites',
+        url: paths.sites.list.getHref(),
         icon: MapPin,
         permission: 'sites:view',
+      },
+      {
+        title: 'Facturation',
+        url: paths.billing.list.getHref(),
+        icon: Receipt,
+        permission: null,
       },
     ],
   },
 ];
 
-function NavLink({
-  item,
-  isActive,
-  isCollapsed,
-}: {
-  item: NavItem;
-  isActive: boolean;
-  isCollapsed: boolean;
-}) {
-  const linkContent = (
-    <Link
-      href={item.href}
-      className={cn(
-        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        isActive
-          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
-        isCollapsed && 'justify-center px-2',
-      )}
-      aria-current={isActive ? 'page' : undefined}
-    >
-      <item.icon className="size-4 shrink-0" aria-hidden="true" />
-      {!isCollapsed && <span>{item.name}</span>}
-    </Link>
-  );
+const adminItems: NavItem[] = [
+  {
+    title: 'Utilisateurs',
+    url: paths.admin.users.getHref(),
+    icon: ShieldCheck,
+    permission: 'admin:users',
+  },
+];
 
-  const content = isCollapsed ? (
-    <Tooltip delayDuration={0}>
-      <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-      <TooltipContent side="right" className="font-medium">
-        {item.name}
-      </TooltipContent>
-    </Tooltip>
-  ) : (
-    linkContent
-  );
+const roleColors: Record<string, string> = {
+  ADMIN: 'bg-red-500',
+  STAFF: 'bg-blue-500',
+  DOCTEUR: 'bg-green-500',
+  TECHNICIEN: 'bg-amber-500',
+};
 
-  if (item.permission) {
-    return <Can permission={item.permission}>{content}</Can>;
+function getInitials(name: string, email: string): string {
+  if (name && name.trim()) {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   }
-
-  return content;
+  return email.slice(0, 2).toUpperCase();
 }
 
-export function Sidebar() {
-  const pathname = usePathname();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+function CollapsibleNavItem({
+  item,
+  isActive,
+}: {
+  item: NavItem;
+  isActive: (url: string) => boolean;
+}) {
+  const isParentActive = item.children?.some((c) => isActive(c.url)) ?? false;
+  const [open, setOpen] = React.useState(isParentActive);
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
+  React.useEffect(() => {
+    if (isParentActive) setOpen(true);
+  }, [isParentActive]);
 
   return (
-    <TooltipProvider>
-      <aside
-        className={cn(
-          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300',
-          isCollapsed ? 'w-16' : 'w-60',
-        )}
-      >
-        {/* Logo + Toggle Button (moved to top) */}
-        <div
-          className={cn(
-            'flex h-14 items-center border-b border-sidebar-border',
-            isCollapsed ? 'justify-center px-2' : 'justify-between px-4',
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-              <Eye
-                className="size-4 text-primary-foreground"
-                aria-hidden="true"
-              />
-            </div>
-            {!isCollapsed && (
-              <span className="text-base font-semibold text-sidebar-foreground">
-                GUISS
-              </span>
-            )}
-          </div>
-          {/* Toggle Button - Now in header */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className={cn(
-              'size-8 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
-              isCollapsed && 'absolute right-2 top-3',
-            )}
-            aria-label={isCollapsed ? 'Étendre le menu' : 'Réduire le menu'}
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="group/collapsible"
+    >
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            tooltip={item.title}
+            isActive={isParentActive}
+            className="w-full"
           >
-            {isCollapsed ? (
-              <ChevronRight className="size-4" />
-            ) : (
-              <ChevronLeft className="size-4" />
+            <item.icon className="size-4" />
+            <span>{item.title}</span>
+            <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.children?.map((child) => {
+              const subItem = (
+                <SidebarMenuSubItem key={child.title}>
+                  <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
+                    <Link href={child.url}>
+                      <child.icon className="size-3.5" />
+                      <span>{child.title}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+
+              if (child.permission) {
+                return (
+                  <Can key={child.title} permission={child.permission}>
+                    {subItem}
+                  </Can>
+                );
+              }
+              return subItem;
+            })}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
+export function AppSidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useUser();
+
+  const isActive = (url: string) => {
+    if (url === '/') return pathname === '/';
+    return pathname === url || pathname.startsWith(url + '/');
+  };
+
+  const initials = user ? getInitials(user.name ?? '', user.email ?? '') : 'U';
+  const avatarBg = roleColors[user?.role ?? ''] ?? 'bg-muted';
+  const roleLabel = user?.role
+    ? getRoleLabel(user.role as Parameters<typeof getRoleLabel>[0])
+    : '';
+
+  return (
+    <Sidebar collapsible="icon">
+      {/* Header — Logo */}
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+                  <Eye
+                    className="size-4 text-primary-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">GUISS</span>
+                  <span className="text-xs text-muted-foreground">v1.0</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      {/* Main navigation */}
+      <SidebarContent>
+        {navGroups.map((group, i) => (
+          <SidebarGroup key={i}>
+            {group.label && (
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             )}
-          </Button>
-        </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  if (item.children && item.children.length > 0) {
+                    const node = (
+                      <CollapsibleNavItem
+                        key={item.title}
+                        item={item}
+                        isActive={isActive}
+                      />
+                    );
+                    if (item.permission) {
+                      return (
+                        <Can key={item.title} permission={item.permission}>
+                          {node}
+                        </Can>
+                      );
+                    }
+                    return node;
+                  }
 
-        {/* Main Navigation */}
-        <nav
-          className={cn(
-            'flex-1 space-y-6 overflow-y-auto py-4',
-            isCollapsed ? 'px-2' : 'px-3',
-          )}
-          aria-label="Navigation principale"
-        >
-          {navigation.map((section, sectionIndex) => (
-            <div key={sectionIndex}>
-              {section.title && !isCollapsed && (
-                <h3 className="text-sidebar-foreground/50 mb-2 px-3 text-xs font-semibold uppercase tracking-wider">
-                  {section.title}
-                </h3>
-              )}
-              {section.title && isCollapsed && (
-                <div className="my-2 border-t border-sidebar-border" />
-              )}
-              <ul className="space-y-1">
-                {section.items.map((item) => (
-                  <li key={item.name}>
-                    <NavLink
-                      item={item}
-                      isActive={isActive(item.href)}
-                      isCollapsed={isCollapsed}
-                    />
-                  </li>
+                  const menuItem = (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.url)}
+                        tooltip={item.title}
+                      >
+                        <Link href={item.url}>
+                          <item.icon className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+
+                  if (item.permission) {
+                    return (
+                      <Can key={item.title} permission={item.permission}>
+                        {menuItem}
+                      </Can>
+                    );
+                  }
+                  return menuItem;
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+
+        {/* Admin section */}
+        <Can permission="admin:users">
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      tooltip={item.title}
+                    >
+                      <Link href={item.url}>
+                        <item.icon className="size-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </Can>
+      </SidebarContent>
 
-        {/* Footer - only when expanded */}
-        {!isCollapsed && (
-          <div className="border-t border-sidebar-border px-4 py-3">
-            <p className="text-sidebar-foreground/50 text-xs">
-              GUISS v1.0 — Plateforme médicale
-            </p>
-          </div>
-        )}
-      </aside>
-    </TooltipProvider>
+      {/* Footer — User menu */}
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <div
+                    className={cn(
+                      'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white',
+                      avatarBg,
+                    )}
+                    aria-hidden="true"
+                  >
+                    {initials}
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user?.name || user?.email || 'Utilisateur'}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {roleLabel}
+                    </span>
+                  </div>
+                  <ChevronUp className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="end"
+                className="w-56 rounded-lg"
+                sideOffset={4}
+              >
+                <DropdownMenuItem onClick={() => router.push('/profil')}>
+                  <UserCircle className="mr-2 size-4" aria-hidden="true" />
+                  Mon profil
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <Settings className="mr-2 size-4" aria-hidden="true" />
+                  Paramètres
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                  className="focus:bg-destructive/10 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 size-4" aria-hidden="true" />
+                  Se déconnecter
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }

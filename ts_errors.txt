@@ -1,5 +1,5 @@
 yarn run v1.22.22
-$ C:\Users\hp\WebstormProjects\guisstalli\GuissPlatform\node_modules\.bin\tsc --noEmit
+$ C:\Users\hp\WebstormProjects\Guiss\GuissPlatform\node_modules\.bin\tsc --noEmit
 src/features/exams/types/index.ts(67,3): error TS2724: '"./schemas"' has no exported member named 'RetinienPeripheriqueEnum'. Did you mean 'RetinePeripheriqueEnum'?
 src/features/exams/types/types.ts(50,3): error TS2724: '"./schemas"' has no exported member named 'RetinienPeripheriqueEnum'. Did you mean 'RetinePeripheriqueEnum'?
 error Command failed with exit code 2.

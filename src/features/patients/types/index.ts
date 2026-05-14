@@ -2,6 +2,7 @@
 export {
   SexEnum,
   FamilialEnum,
+  TypeAddictionEnum,
   PatientSchema,
   PatientListSchema,
   PatientCreateSchema,
@@ -16,6 +17,7 @@ export {
   BulkImportResultSchema,
   SEX_LABELS,
   FAMILIAL_LABELS,
+  TYPE_ADDICTION_LABELS,
 } from './schemas';
 
 // Types

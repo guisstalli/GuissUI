@@ -10,8 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
-import { type AnalyticsFilters } from '../types';
+import {
+  type AnalyticsFilters,
+  SEX_VALUES,
+  AGE_BAND_VALUES,
+  EYE_STRATEGY_VALUES,
+  EXAM_SCOPE_VALUES,
+} from '../types';
 
 type Option = { label: string; value: string };
 
@@ -47,6 +54,8 @@ type AnalyticsFiltersProps = {
   onChange: (filters: AnalyticsFilters) => void;
   onApply: () => void;
   onReset: () => void;
+  /** When true, the driver_only toggle is locked and cannot be changed */
+  lockDriverOnly?: boolean;
 };
 
 export const AnalyticsFiltersBar = ({
@@ -56,6 +65,7 @@ export const AnalyticsFiltersBar = ({
   onChange,
   onApply,
   onReset,
+  lockDriverOnly = false,
 }: AnalyticsFiltersProps) => {
   const draftSites = (draftFilters.site_id ?? []).map((id) => id.toString());
 
@@ -127,9 +137,14 @@ export const AnalyticsFiltersBar = ({
               <span className="text-sm font-medium">Sexe</span>
               <Select
                 value={draftFilters.sex ?? ''}
-                onValueChange={(val) =>
-                  onChange({ ...draftFilters, sex: (val as any) || undefined })
-                }
+                onValueChange={(val) => {
+                  const sex = SEX_VALUES.includes(
+                    val as (typeof SEX_VALUES)[number],
+                  )
+                    ? (val as (typeof SEX_VALUES)[number])
+                    : undefined;
+                  onChange({ ...draftFilters, sex });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sexe" />
@@ -150,7 +165,10 @@ export const AnalyticsFiltersBar = ({
               <Select
                 value={draftFilters.age_band ?? 'all'}
                 onValueChange={(val) =>
-                  onChange({ ...draftFilters, age_band: val as any })
+                  onChange({
+                    ...draftFilters,
+                    age_band: val as (typeof AGE_BAND_VALUES)[number],
+                  })
                 }
               >
                 <SelectTrigger>
@@ -172,7 +190,10 @@ export const AnalyticsFiltersBar = ({
               <Select
                 value={draftFilters.eye_strategy ?? 'separate'}
                 onValueChange={(val) =>
-                  onChange({ ...draftFilters, eye_strategy: val as any })
+                  onChange({
+                    ...draftFilters,
+                    eye_strategy: val as (typeof EYE_STRATEGY_VALUES)[number],
+                  })
                 }
               >
                 <SelectTrigger>
@@ -194,7 +215,10 @@ export const AnalyticsFiltersBar = ({
               <Select
                 value={draftFilters.exam_scope ?? 'all'}
                 onValueChange={(val) =>
-                  onChange({ ...draftFilters, exam_scope: val as any })
+                  onChange({
+                    ...draftFilters,
+                    exam_scope: val as (typeof EXAM_SCOPE_VALUES)[number],
+                  })
                 }
               >
                 <SelectTrigger>
@@ -208,6 +232,27 @@ export const AnalyticsFiltersBar = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Conducteurs seulement */}
+            <div className="flex items-center gap-2 self-end pb-1">
+              <Switch
+                id="driver-only-toggle"
+                checked={draftFilters.driver_only ?? false}
+                onCheckedChange={(checked) =>
+                  onChange({
+                    ...draftFilters,
+                    driver_only: checked || undefined,
+                  })
+                }
+                disabled={lockDriverOnly}
+              />
+              <label
+                htmlFor="driver-only-toggle"
+                className={`cursor-pointer select-none text-sm font-medium ${lockDriverOnly ? 'cursor-not-allowed opacity-60' : ''}`}
+              >
+                Conducteurs seulement
+              </label>
             </div>
 
             <div className="ml-auto flex h-10 items-center gap-2">

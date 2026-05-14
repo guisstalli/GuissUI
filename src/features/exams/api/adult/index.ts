@@ -17,6 +17,17 @@ export {
   useAdultExamStatus,
 } from './get-adult-exams';
 
+// Driver Experience
+export {
+  DriverExperienceSchema,
+  getDriverExperience,
+  getDriverExperienceQueryOptions,
+  useDriverExperience,
+  upsertDriverExperience,
+  useUpsertDriverExperience,
+} from './driver-experience';
+export type { DriverExperience, DriverExperienceInput } from './driver-experience';
+
 // Mutations
 export {
   createAdultExam,

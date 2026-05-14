@@ -6,17 +6,6 @@ import { INTERNAL_APP_ROLES, ROLES } from '@/lib/authorization';
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    const { pathname } = req.nextUrl;
-
-    if (
-      pathname.startsWith('/api/auth') ||
-      pathname.startsWith('/_next') ||
-      pathname.startsWith('/unauthorized') ||
-      pathname.startsWith('/auth') ||
-      pathname.includes('.')
-    ) {
-      return NextResponse.next();
-    }
 
     if (!token) {
       return NextResponse.next();
@@ -25,7 +14,9 @@ export default withAuth(
     const userRole = token.role as string | undefined;
     const hasInternalRole =
       userRole !== undefined &&
-      INTERNAL_APP_ROLES.includes(userRole as (typeof ROLES)[keyof typeof ROLES]);
+      INTERNAL_APP_ROLES.includes(
+        userRole as (typeof ROLES)[keyof typeof ROLES],
+      );
 
     if (!hasInternalRole) {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
@@ -34,6 +25,9 @@ export default withAuth(
     return NextResponse.next();
   },
   {
+    pages: {
+      signIn: '/auth/login',
+    },
     callbacks: {
       authorized: ({ token }) => !!token,
     },
@@ -41,5 +35,7 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
+  matcher: [
+    '/((?!api/auth|auth|unauthorized|evenements|rendez-vous|_next/static|_next/image|favicon.ico|.*\\..*).*)',
+  ],
 };

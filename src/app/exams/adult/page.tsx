@@ -10,7 +10,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

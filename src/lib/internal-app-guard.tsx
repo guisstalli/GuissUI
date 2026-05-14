@@ -1,12 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { type ReactNode, useEffect } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 import { canAccessInternalApp } from '@/lib/authorization';
+
+function isPublicPath(pathname: string): boolean {
+  return pathname.startsWith('/auth') || pathname.startsWith('/unauthorized');
+}
 
 interface InternalAppGuardProps {
   children: ReactNode;
@@ -18,9 +22,11 @@ interface InternalAppGuardProps {
  * Redirige vers /unauthorized si l'utilisateur est ADMIN ou n'a pas de rôle autorisé
  */
 export function InternalAppGuard({ children }: InternalAppGuardProps) {
+  const pathname = usePathname();
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const isPublic = isPublicPath(pathname);
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
 
@@ -36,24 +42,26 @@ export function InternalAppGuard({ children }: InternalAppGuardProps) {
   const hasAccess = canAccessInternalApp(user);
 
   useEffect(() => {
-    // Attendre la fin du chargement
-    if (isLoading) return;
-
-    // Si non authentifié, laisser le middleware gérer la redirection
-    if (!isAuthenticated) return;
-
-    // Si l'utilisateur n'a pas accès à l'application interne
+    if (isPublic || isLoading || !isAuthenticated) return;
     if (!hasAccess) {
       router.replace(paths.unauthorized.getHref());
     }
-  }, [isLoading, isAuthenticated, hasAccess, router]);
+  }, [isPublic, isLoading, isAuthenticated, hasAccess, router]);
+
+  // Radix UI Dialog leaves pointer-events:none on body when unmounted during navigation.
+  // Clean up on every route change.
+  useEffect(() => {
+    document.body.style.removeProperty('pointer-events');
+  }, [pathname]);
+
+  if (isPublic) return <>{children}</>;
 
   // Afficher un spinner pendant le chargement
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Spinner size="lg" />
+          <Spinner size="lg" className="justify-self-center" />
           <p className="mt-4 text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -65,7 +73,7 @@ export function InternalAppGuard({ children }: InternalAppGuardProps) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Spinner size="lg" />
+          <Spinner size="lg" className="justify-self-center" />
           <p className="mt-4 text-sm text-muted-foreground">
             Redirection vers la connexion...
           </p>
@@ -79,7 +87,7 @@ export function InternalAppGuard({ children }: InternalAppGuardProps) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Spinner size="lg" />
+          <Spinner size="lg" className="justify-self-center" />
           <p className="mt-4 text-sm text-muted-foreground">
             Vérification des permissions...
           </p>

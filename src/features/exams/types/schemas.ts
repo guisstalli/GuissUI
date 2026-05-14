@@ -744,6 +744,22 @@ export const MedicalHistorySchema = z.object({
 });
 
 /** Périmétrie */
+export const ExamenAdditionelTypeEnum = z.enum([
+  'text',
+  'number',
+  'boolean',
+  'select',
+]);
+
+export const ExamenAdditionelSchema = z.object({
+  titre: z.string().min(1, 'Le titre est requis'),
+  type_valeur: ExamenAdditionelTypeEnum,
+  value: z.union([z.string(), z.number(), z.boolean()]),
+  options: z.array(z.string()).optional(),
+});
+
+export type ExamenAdditionel = z.infer<typeof ExamenAdditionelSchema>;
+
 export const PerimetrySchema = z.object({
   id: z.number().optional(),
   pbo: z.array(PboEnum).min(1, 'Veuillez sélectionner au moins un élément'),
@@ -763,8 +779,15 @@ export const PerimetrySchema = z.object({
     .nullable(),
   etendue_horizontal: z.coerce.number().min(0).max(180).optional().nullable(),
   score_esternmen: z.coerce.number().min(0).max(100).optional().nullable(),
-  image: z.any().optional().nullable(),
-  images: z.any().optional().nullable(),
+  examens_additionnels: z.array(ExamenAdditionelSchema).optional().default([]),
+  image: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  images: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
   created: z.string().datetime().optional(),
   modified: z.string().datetime().optional(),
 });
@@ -890,9 +913,18 @@ export const BiomicroscopyPosteriorSchema = z
 
 /** Images BpSup */
 export const BpSupSchema = z.object({
-  retinographie: z.any().optional().nullable(),
-  oct: z.any().optional().nullable(),
-  autres: z.any().optional().nullable(),
+  retinographie: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  oct: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  autres: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
 });
 
 /** Conclusion */

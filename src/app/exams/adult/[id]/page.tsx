@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   ArrowLeft,
-  BarChart3,
+  Car,
   Check,
   Circle,
   Eye,
@@ -24,12 +24,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import {
-  Header,
-  Sidebar,
-  SidebarProvider,
-  useSidebar,
-} from '@/components/layouts';
+import { AppSidebar, Header } from '@/components/layouts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +39,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/dialog';
 import { Input, Label, Textarea } from '@/components/ui/form';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExamAnalyticsContext } from '@/features/analytics';
 import {
   useAdultExam,
   useAddTechnicalData,
@@ -57,9 +52,15 @@ import {
   downloadAttachment,
 } from '@/features/exams/api';
 import {
+  useDownloadAdultReport,
+  useDownloadAdultConclusion,
+} from '@/features/exams/api/adult/download-report';
+import {
   BiomicroscopyAnteriorForm,
   BiomicroscopyPosteriorForm,
   ConclusionForm,
+  DriverExperienceForm,
+  ExamensAdditionelsSection,
   OcularTensionForm,
   PachymetryForm,
   PerimetryForm,
@@ -105,7 +106,7 @@ import { cn } from '@/lib/utils';
  * - Affichage de l'état de complétion (is_completed)
  */
 
-type Section = 'technical' | 'clinical' | 'analytics' | 'conclusion';
+type Section = 'technical' | 'clinical' | 'analytics' | 'conclusion' | 'experience';
 type TechnicalSubsection = 'acuity' | 'refraction' | 'tension' | 'pachymetry';
 type ClinicalSubsection =
   | 'plaintes'
@@ -126,14 +127,12 @@ interface SectionStatus {
     perimetry: boolean;
     attachments: boolean;
   };
-  analytics: boolean;
   conclusion: boolean;
 }
 
-const sections = [
+const BASE_SECTIONS = [
   { id: 'technical' as const, title: 'Examen Technique', icon: Eye },
   { id: 'clinical' as const, title: 'Examen Clinique', icon: Stethoscope },
-  { id: 'analytics' as const, title: 'Analytiques', icon: BarChart3 },
   { id: 'conclusion' as const, title: 'Conclusion', icon: FileText },
 ];
 
@@ -187,7 +186,6 @@ export default function AdultExamPage() {
       perimetry: false,
       attachments: false,
     },
-    analytics: false,
     conclusion: false,
   });
 
@@ -266,6 +264,7 @@ export default function AdultExamPage() {
         age: examData.patient.age,
         sex: examData.patient.sex === 'H' ? 'Homme' : 'Femme',
         medicalRecordNumber: examData.patient.numero_identifiant,
+        hasDriver: examData.patient.has_driver ?? false,
       }
     : {
         id: '',
@@ -274,6 +273,7 @@ export default function AdultExamPage() {
         age: 0,
         sex: '',
         medicalRecordNumber: '',
+        hasDriver: false,
       };
 
   // =====================================================================
@@ -344,6 +344,7 @@ export default function AdultExamPage() {
         limite_temporale_gauche: null,
         etendue_horizontal: null,
         score_esternmen: null,
+        examens_additionnels: [],
       },
       od: {
         bp_sg_anterieur: { ...defaultBiomicroscopyAnterior },
@@ -386,7 +387,6 @@ export default function AdultExamPage() {
           perimetry: hasClinical,
           attachments: (attachmentsData?.length ?? 0) > 0,
         },
-        analytics: hasAnalyticsContext,
         conclusion: hasClinical,
       });
 
@@ -456,8 +456,7 @@ export default function AdultExamPage() {
     const apiData = mapTechnicalFormToApi(formData);
 
     addTechnical(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { id: numericExamId, data: apiData as any },
+      { id: numericExamId, data: apiData },
       {
         onSuccess: () => {
           refetchExam();
@@ -488,7 +487,7 @@ export default function AdultExamPage() {
     const apiData = mapClinicalFormToApi(data);
 
     addClinical(
-      { id: numericExamId, data: apiData as any },
+      { id: numericExamId, data: apiData },
       {
         onSuccess: () => {
           refetchExam();
@@ -550,7 +549,7 @@ export default function AdultExamPage() {
         {
           clinicalExamId,
           file,
-          description: fileDescription || undefined,
+          description: fileDescription.trim(),
         },
         {
           onSuccess: () => {
@@ -607,12 +606,12 @@ export default function AdultExamPage() {
   if (isLoadingExam && !isNewExam) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen bg-background">
-          <Sidebar />
-          <div className="flex flex-1 items-center justify-center pl-60">
+        <AppSidebar />
+        <SidebarInset>
+          <div className="flex flex-1 items-center justify-center">
             <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
-        </div>
+        </SidebarInset>
       </SidebarProvider>
     );
   }
@@ -620,9 +619,9 @@ export default function AdultExamPage() {
   if (isErrorExam && !isNewExam) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen bg-background">
-          <Sidebar />
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 pl-60">
+        <AppSidebar />
+        <SidebarInset>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
             <AlertCircle className="size-12 text-destructive" />
             <p className="text-destructive">
               Erreur lors du chargement de l&apos;examen
@@ -631,7 +630,7 @@ export default function AdultExamPage() {
               Retour
             </Button>
           </div>
-        </div>
+        </SidebarInset>
       </SidebarProvider>
     );
   }
@@ -701,6 +700,7 @@ interface AdultExamContentProps {
     age: number;
     sex: string;
     medicalRecordNumber: string;
+    hasDriver: boolean;
   };
   form: ReturnType<typeof useForm<AdultExamFormValues>>;
   activeSection: Section;
@@ -786,18 +786,23 @@ function AdultExamContent(props: AdultExamContentProps) {
     isDeleting,
     downloadingId,
   } = props;
-  const { isCollapsed } = useSidebar();
+
+  const { mutate: downloadReport, isPending: isDownloadingReport } =
+    useDownloadAdultReport();
+  const { mutate: downloadConclusion, isPending: isDownloadingConclusion } =
+    useDownloadAdultConclusion();
+
+  const sections = [
+    ...BASE_SECTIONS,
+    ...(patient.hasDriver
+      ? [{ id: 'experience' as const, title: 'Expérience conduite', icon: Car }]
+      : []),
+  ];
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-
-      <div
-        className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
-          isCollapsed ? 'pl-16' : 'pl-60',
-        )}
-      >
+    <>
+      <AppSidebar />
+      <SidebarInset>
         <Header
           title="Examen Adulte"
           patientName={`${patient.lastName}, ${patient.firstName}`}
@@ -805,7 +810,7 @@ function AdultExamContent(props: AdultExamContentProps) {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Left: Section Navigation */}
-          <aside className="w-64 shrink-0 border-r border-border bg-card p-4">
+          <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 md:block">
             <div className="mb-4">
               <h2 className="text-sm font-semibold text-foreground">
                 Sections
@@ -841,13 +846,8 @@ function AdultExamContent(props: AdultExamContentProps) {
                     if (sectionStatus.conclusion) {
                       statusIcon = <Check className="size-4 text-primary" />;
                     }
-                  } else if (section.id === 'analytics') {
-                    statusText = sectionStatus.analytics
-                      ? 'Disponible'
-                      : 'Indisponible';
-                    if (sectionStatus.analytics) {
-                      statusIcon = <Check className="size-4 text-primary" />;
-                    }
+                  } else if (section.id === 'experience') {
+                    statusText = '';
                   }
 
                   return (
@@ -893,6 +893,9 @@ function AdultExamContent(props: AdultExamContentProps) {
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-1">
                 <Badge variant="secondary">Adulte</Badge>
+                {patient.hasDriver && (
+                  <Badge variant="secondary">Conducteur</Badge>
+                )}
                 <Badge variant={isComplete ? 'default' : 'outline'}>
                   {isComplete ? 'Terminé' : 'En cours'}
                 </Badge>
@@ -917,10 +920,72 @@ function AdultExamContent(props: AdultExamContentProps) {
                 </p>
               )}
             </div>
+
+            {isComplete && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Rapports PDF
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={isDownloadingReport}
+                  onClick={() => downloadReport(Number(examId))}
+                >
+                  {isDownloadingReport ? (
+                    <Loader2
+                      className="mr-2 size-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Download className="mr-2 size-4" aria-hidden="true" />
+                  )}
+                  Rapport complet
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={isDownloadingConclusion}
+                  onClick={() => downloadConclusion(Number(examId))}
+                >
+                  {isDownloadingConclusion ? (
+                    <Loader2
+                      className="mr-2 size-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <FileText className="mr-2 size-4" aria-hidden="true" />
+                  )}
+                  Conclusion PDF
+                </Button>
+              </div>
+            )}
           </aside>
 
           {/* Right: Active Section Content */}
           <main className="flex-1 overflow-y-auto p-6">
+            {/* Mobile section nav — hidden on md+ */}
+            <div className="mb-4 flex overflow-x-auto rounded-lg border bg-card md:hidden">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => setActiveSection(section.id)}
+                  className={cn(
+                    'flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium',
+                    activeSection === section.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <section.icon className="size-4" aria-hidden="true" />
+                  {section.title}
+                </button>
+              ))}
+            </div>
+
             {/* Back Link */}
             <div className="mb-4">
               <Button variant="ghost" size="sm" asChild>
@@ -965,7 +1030,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                       setTechnicalSubsection(v as TechnicalSubsection)
                     }
                   >
-                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
+                    <TabsList className="w-full justify-start overflow-x-auto rounded-none border-b bg-transparent p-0">
                       <TabsTrigger
                         value="acuity"
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
@@ -1107,7 +1172,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                       setClinicalSubsection(v as ClinicalSubsection)
                     }
                   >
-                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
+                    <TabsList className="w-full justify-start overflow-x-auto rounded-none border-b bg-transparent p-0">
                       <TabsTrigger
                         value="plaintes"
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
@@ -1249,8 +1314,9 @@ function AdultExamContent(props: AdultExamContentProps) {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="perimetry" className="p-6">
+                    <TabsContent value="perimetry" className="space-y-6 p-6">
                       <PerimetryForm namePrefix="perimetry" />
+                      <ExamensAdditionelsSection namePrefix="perimetry" />
                       <div className="mt-6 flex justify-end border-t border-border pt-4">
                         <Button
                           type="button"
@@ -1342,7 +1408,8 @@ function AdultExamContent(props: AdultExamContentProps) {
 
                               <div className="space-y-2">
                                 <Label htmlFor="file-description">
-                                  Description (optionnel)
+                                  Titre du document{' '}
+                                  <span className="text-destructive">*</span>
                                 </Label>
                                 <Textarea
                                   id="file-description"
@@ -1350,7 +1417,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                                   onChange={(e) =>
                                     setFileDescription(e.target.value)
                                   }
-                                  placeholder="Décrivez les fichiers..."
+                                  placeholder="Ex: Résultat OCT, Fond d'œil OD..."
                                   rows={2}
                                 />
                               </div>
@@ -1359,7 +1426,9 @@ function AdultExamContent(props: AdultExamContentProps) {
                                 type="button"
                                 onClick={handleUploadFiles}
                                 disabled={
-                                  selectedFiles.length === 0 || isUploading
+                                  selectedFiles.length === 0 ||
+                                  isUploading ||
+                                  !fileDescription.trim()
                                 }
                               >
                                 {isUploading ? (
@@ -1511,18 +1580,28 @@ function AdultExamContent(props: AdultExamContentProps) {
                   </div>
                 </div>
               )}
-
-              {activeSection === 'analytics' && (
-                <ExamAnalyticsContext
-                  examId={numericExamId}
-                  examType="adult"
-                  examLabel="Adulte"
-                />
-              )}
             </FormProvider>
+
+            {/* Driver Experience Section — outside FormProvider, standalone form */}
+            {activeSection === 'experience' && patient.hasDriver && (
+              <div className="rounded-lg border border-border bg-card">
+                <div className="border-b border-border p-4">
+                  <h2 className="flex items-center gap-2 text-lg font-medium text-foreground">
+                    <Car className="size-5" aria-hidden="true" />
+                    Expérience conduite
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Suivi de l&apos;expérience de conduite pour cette visite
+                  </p>
+                </div>
+                <div className="p-6">
+                  <DriverExperienceForm examId={numericExamId} />
+                </div>
+              </div>
+            )}
           </main>
         </div>
-      </div>
+      </SidebarInset>
 
       {/* Finalize Confirmation Dialog */}
       <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
@@ -1547,6 +1626,6 @@ function AdultExamContent(props: AdultExamContentProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

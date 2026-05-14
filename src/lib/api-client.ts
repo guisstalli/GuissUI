@@ -63,7 +63,7 @@ async function getAccessToken(): Promise<string | null> {
   // Check if session has an error (e.g., RefreshAccessTokenError)
   if (session?.error === 'RefreshAccessTokenError') {
     // Token refresh failed, sign out the user and redirect to default signin
-    await signOut({ callbackUrl: '/api/auth/signin' });
+    await signOut({ callbackUrl: '/auth/login' });
     return null;
   }
 
@@ -71,8 +71,8 @@ async function getAccessToken(): Promise<string | null> {
 }
 
 // Create a separate function for getting server-side cookies that can be imported where needed
-export function getServerCookies() {
-  if (typeof window !== 'undefined') return '';
+export function getServerCookies(): Promise<string> {
+  if (typeof window !== 'undefined') return Promise.resolve('');
 
   // Dynamic import next/headers only on server-side
   return import('next/headers').then(({ cookies }) => {
@@ -89,7 +89,7 @@ export function getServerCookies() {
   });
 }
 
-// Handle 401 Unauthorized errors - redirect to Keycloak
+// Handle 401 Unauthorized — sign out and redirect to login
 async function handleUnauthorized() {
   if (typeof window !== 'undefined') {
     useNotifications.getState().addNotification({
@@ -98,7 +98,7 @@ async function handleUnauthorized() {
       message: 'Votre session a expiré. Veuillez vous reconnecter.',
     });
     // Sign out and redirect to default signin page
-    await signOut({ callbackUrl: '/api/auth/signin' });
+    await signOut({ callbackUrl: '/auth/login' });
   }
 }
 
@@ -170,11 +170,6 @@ async function fetchApi<T>(
   // Get access token for Authorization header
   const accessToken = providedToken ?? (await getAccessToken());
 
-  console.debug(
-    `[API Client] Request to ${url}, accessToken présent:`,
-    !!accessToken,
-  );
-
   const fullUrl = buildUrlWithParams(`${env.API_URL}${url}`, params);
 
   // Prepare headers - don't set Content-Type for FormData (browser will set it with boundary)
@@ -203,7 +198,7 @@ async function fetchApi<T>(
     next,
   });
 
-  // Handle 401 Unauthorized - redirect to Keycloak
+  // Handle 401 Unauthorized — sign out and redirect to login
   if (response.status === 401) {
     await handleUnauthorized();
     throw new Error('Unauthorized');
@@ -242,13 +237,13 @@ export const api = {
   get<T>(url: string, options?: RequestOptions): Promise<T> {
     return fetchApi<T>(url, { ...options, method: 'GET' });
   },
-  post<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {
+  post<T>(url: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return fetchApi<T>(url, { ...options, method: 'POST', body });
   },
-  put<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {
+  put<T>(url: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return fetchApi<T>(url, { ...options, method: 'PUT', body });
   },
-  patch<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {
+  patch<T>(url: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return fetchApi<T>(url, { ...options, method: 'PATCH', body });
   },
   delete<T>(url: string, options?: RequestOptions): Promise<T> {

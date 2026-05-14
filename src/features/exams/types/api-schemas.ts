@@ -23,6 +23,7 @@ export const PatientNestedApiSchema = z.object({
   age: z.number(),
   sex: z.enum(['H', 'F', 'A']),
   is_adult: z.boolean(),
+  has_driver: z.boolean().optional(),
   phone_number: z.string().nullable().optional(),
   created: z.string(),
 });
@@ -205,6 +206,7 @@ export const PerimetryApiSchema = z.object({
   limite_temporale_droit: z.string().nullable().optional(),
   limite_temporale_gauche: z.string().nullable().optional(),
   score_esternmen: z.string().nullable().optional(),
+  examens_additionnels: z.array(z.record(z.unknown())).optional().default([]),
   created: z.string().optional(),
   modified: z.string().optional(),
 });
@@ -254,6 +256,27 @@ export const ClinicalExamenApiSchema = z.object({
 });
 
 // =============================================================================
+// DRIVER EXPERIENCE API SCHEMA
+// =============================================================================
+
+export const DriverExperienceApiSchema = z.object({
+  id: z.number(),
+  visit_number: z.number(),
+  date_visite: z.string().nullable().optional(),
+  etat_conducteur: z.string().nullable().optional(),
+  deces_cause: z.string().nullable().optional(),
+  inactif_cause: z.string().nullable().optional(),
+  km_parcourus: z.string().nullable().optional(),
+  nombre_accidents: z.number().nullable().optional(),
+  tranche_horaire: z.string().nullable().optional(),
+  corporel_dommage: z.boolean().optional(),
+  corporel_dommage_type: z.string().nullable().optional(),
+  materiel_dommage: z.boolean().optional(),
+  materiel_dommage_type: z.string().nullable().optional(),
+  date_dernier_accident: z.string().nullable().optional(),
+});
+
+// =============================================================================
 // EXAMEN ADULTE API SCHEMAS
 // =============================================================================
 
@@ -264,6 +287,7 @@ export const ExamenAdultDetailApiSchema = z.object({
   patient: PatientNestedApiSchema,
   technical_examen: TechnicalExamenApiSchema.nullable().optional(),
   clinical_examen: ClinicalExamenApiSchema.nullable().optional(),
+  driver_experience: DriverExperienceApiSchema.nullable().optional(),
   is_completed: z.boolean(),
   completion_status: z.record(z.unknown()).optional(),
   created: z.string(),
@@ -315,6 +339,7 @@ export const ExamenChildDetailApiSchema = z.object({
 // =============================================================================
 
 export type PatientNestedApi = z.infer<typeof PatientNestedApiSchema>;
+export type DriverExperienceApi = z.infer<typeof DriverExperienceApiSchema>;
 export type VisualAcuityApi = z.infer<typeof VisualAcuityApiSchema>;
 export type RefractionApi = z.infer<typeof RefractionApiSchema>;
 export type OcularTensionApi = z.infer<typeof OcularTensionApiSchema>;

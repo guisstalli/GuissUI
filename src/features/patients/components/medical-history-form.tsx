@@ -1,12 +1,11 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, FileText, Loader2, Search, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertTriangle, FileText, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,63 +17,15 @@ import {
   FormMessage,
   Input,
 } from '@/components/ui/form';
+import { ICDSelector } from '@/components/ui/icd-selector/icd-selector';
 import { Switch } from '@/components/ui/switch';
 import { useAntecedent, useUpdateAntecedent } from '@/features/patients/api';
-import { FAMILIAL_LABELS } from '@/features/patients/types/schemas';
+import {
+  FAMILIAL_LABELS,
+  TYPE_ADDICTION_LABELS,
+  TypeAddictionEnum,
+} from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';
-
-// =============================================================================
-// TYPES
-// =============================================================================
-
-interface ICDSearchResult {
-  id: string;
-  code: string;
-  title: string;
-}
-
-interface ICDApiResponse {
-  destinationEntities?: Array<{
-    id: string;
-    title: string;
-    theCode?: string;
-  }>;
-}
-
-// =============================================================================
-// ICD-11 API SERVICE
-// =============================================================================
-
-/**
- * Recherche dans l'API ICD-11 de l'OMS via le proxy serveur
- */
-async function searchICD11(query: string): Promise<ICDSearchResult[]> {
-  if (!query || query.trim().length < 2) {
-    return [];
-  }
-
-  try {
-    const response = await fetch(
-      `/api/icd/search?q=${encodeURIComponent(query)}`,
-    );
-
-    if (!response.ok) {
-      console.error(`ICD-11 API error: ${response.status}`);
-      return [];
-    }
-
-    const data: ICDApiResponse = await response.json();
-
-    return (data.destinationEntities || []).map((entity) => ({
-      id: entity.id,
-      code: entity.theCode || entity.id?.split('/').pop() || '',
-      title: (entity.title || '').replace(/<[^>]*>/g, ''),
-    }));
-  } catch (error) {
-    console.error('ICD-11 search error:', error);
-    return [];
-  }
-}
 
 // =============================================================================
 // SCHEMA
@@ -99,6 +50,11 @@ const medicalHistorySchema = z
       .max(24)
       .nullable()
       .optional(),
+    // Addictions (conducteurs)
+    addiction: z.boolean().default(false),
+    type_addiction: z.array(TypeAddictionEnum),
+    autre_addiction_detail: z.string().max(255).nullable().optional(),
+    tabagisme_detail: z.string().max(50).nullable().optional(),
   })
   .refine(
     (data) => {
@@ -119,215 +75,18 @@ const medicalHistorySchema = z
 type MedicalHistoryFormValues = z.infer<typeof medicalHistorySchema>;
 
 // =============================================================================
-// ICD SELECTOR COMPONENT (Custom Implementation)
-// =============================================================================
-
-interface ICDSelectorProps {
-  label: string;
-  description?: string;
-  value: string[];
-  onChange: (value: string[]) => void;
-  error?: string;
-}
-
-function ICDSelector({
-  label,
-  description,
-  value,
-  onChange,
-  error,
-}: ICDSelectorProps) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<ICDSearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Debounced search
-  const handleSearch = useCallback((searchQuery: string) => {
-    setQuery(searchQuery);
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    if (searchQuery.trim().length < 2) {
-      setResults([]);
-      setIsOpen(false);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setIsLoading(true);
-      const searchResults = await searchICD11(searchQuery);
-      setResults(searchResults);
-      setIsOpen(searchResults.length > 0);
-      setIsLoading(false);
-    }, 300);
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
-
-  const handleSelect = (result: ICDSearchResult) => {
-    const diseaseString = `${result.code} - ${result.title}`;
-
-    if (!value.includes(diseaseString)) {
-      onChange([...value, diseaseString]);
-    }
-
-    setQuery('');
-    setResults([]);
-    setIsOpen(false);
-    inputRef.current?.focus();
-  };
-
-  const handleRemove = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  };
-
-  return (
-    <div className="space-y-3" ref={containerRef}>
-      <div>
-        <FormLabel className="text-sm font-medium">{label}</FormLabel>
-        {description && (
-          <FormDescription className="text-sm text-muted-foreground">
-            {description}
-          </FormDescription>
-        )}
-      </div>
-
-      {/* Selected items as tags */}
-      {value.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {value.map((item, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className="gap-1 py-1.5 pl-3 pr-1 text-xs"
-            >
-              <span className="max-w-[300px] truncate">{item}</span>
-              <button
-                type="button"
-                onClick={() => handleRemove(index)}
-                className="hover:bg-muted-foreground/20 ml-1 rounded-full p-0.5 transition-colors"
-                aria-label={`Supprimer ${item}`}
-              >
-                <X className="size-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      {/* Search input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          ref={inputRef}
-          type="text"
-          placeholder="Rechercher une pathologie (ICD-11)..."
-          className="px-9"
-          value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          onFocus={() => results.length > 0 && setIsOpen(true)}
-          onKeyDown={handleKeyDown}
-        />
-        {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-        )}
-
-        {/* Results dropdown */}
-        {isOpen && results.length > 0 && (
-          <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-popover shadow-lg">
-            <ul className="py-1">
-              {results.map((result) => {
-                const isSelected = value.includes(
-                  `${result.code} - ${result.title}`,
-                );
-                return (
-                  <li key={result.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(result)}
-                      disabled={isSelected}
-                      className={cn(
-                        'flex w-full items-start gap-3 px-3 py-2 text-left text-sm transition-colors',
-                        'hover:bg-muted focus:bg-muted focus:outline-none',
-                        isSelected && 'cursor-not-allowed opacity-50',
-                      )}
-                    >
-                      <span className="bg-primary/10 mt-0.5 shrink-0 rounded px-1.5 py-0.5 font-mono text-xs font-medium text-primary">
-                        {result.code}
-                      </span>
-                      <span className="flex-1 text-foreground">
-                        {result.title}
-                      </span>
-                      {isSelected && (
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          ✓
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-
-        {/* No results message */}
-        {isOpen && results.length === 0 && query.length >= 2 && !isLoading && (
-          <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover p-4 text-center text-sm text-muted-foreground shadow-lg">
-            Aucun résultat trouvé pour &quot;{query}&quot;
-          </div>
-        )}
-      </div>
-
-      {/* Error message */}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  );
-}
-
-// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
 interface MedicalHistoryFormProps {
   patientId: number;
+  hasDriver?: boolean;
 }
 
-export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
+export function MedicalHistoryForm({
+  patientId,
+  hasDriver = false,
+}: MedicalHistoryFormProps) {
   const { data: antecedent, isLoading } = useAntecedent({
     patientId,
     enabled: !!patientId,
@@ -350,6 +109,10 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
       autre_familial_detail: null,
       uses_screen: null,
       screen_time_hours_per_day: null,
+      addiction: false,
+      type_addiction: [],
+      autre_addiction_detail: null,
+      tabagisme_detail: null,
     },
   });
 
@@ -382,6 +145,10 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
         autre_familial_detail: antecedent.autre_familial_detail || null,
         uses_screen: antecedent.uses_screen ?? null,
         screen_time_hours_per_day: antecedent.screen_time_hours_per_day ?? null,
+        addiction: antecedent.addiction ?? false,
+        type_addiction: antecedent.type_addiction || [],
+        autre_addiction_detail: antecedent.autre_addiction_detail || null,
+        tabagisme_detail: antecedent.tabagisme_detail || null,
       });
 
       hasHydratedFromApi.current = true;
@@ -397,8 +164,12 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
   const watchScreenTime = form.watch('screen_time_hours_per_day');
   const watchHasMedicoChir = form.watch('has_antecedents_medico_chirurgicaux');
   const watchHasOphtalmo = form.watch('has_pathologie_ophtalmologique');
+  const watchAddiction = form.watch('addiction');
+  const watchTypeAddiction = form.watch('type_addiction');
 
   const showOtherFamilialDetail = watchFamilial?.includes('OTHER');
+  const showTabagismeDetail = watchTypeAddiction?.includes('TABAGISME');
+  const showAutreAddictionDetail = watchTypeAddiction?.includes('AUTRES');
 
   const buildApiPayload = useCallback(
     (data: MedicalHistoryFormValues) => {
@@ -413,6 +184,10 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
           autre_familial_detail: null,
           uses_screen: null,
           screen_time_hours_per_day: null,
+          addiction: false,
+          type_addiction: [],
+          autre_addiction_detail: null,
+          tabagisme_detail: null,
         };
       }
 
@@ -436,6 +211,16 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
         screen_time_hours_per_day: data.uses_screen
           ? data.screen_time_hours_per_day
           : null,
+        addiction: data.addiction,
+        type_addiction: data.addiction ? data.type_addiction : [],
+        autre_addiction_detail:
+          data.addiction && data.type_addiction.includes('AUTRES')
+            ? data.autre_addiction_detail
+            : null,
+        tabagisme_detail:
+          data.addiction && data.type_addiction.includes('TABAGISME')
+            ? data.tabagisme_detail
+            : null,
       };
     },
     [patientId],
@@ -451,6 +236,10 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
       form.setValue('autre_familial_detail', null);
       form.setValue('uses_screen', null);
       form.setValue('screen_time_hours_per_day', null);
+      form.setValue('addiction', false);
+      form.setValue('type_addiction', []);
+      form.setValue('autre_addiction_detail', null);
+      form.setValue('tabagisme_detail', null);
     }
   }, [hasAntecedents, form]);
 
@@ -858,6 +647,148 @@ export function MedicalHistoryForm({ patientId }: MedicalHistoryFormProps) {
                 />
               )}
             </section>
+
+            {/* Section 5: Addictions (conducteurs uniquement) */}
+            {hasDriver && (
+              <section className="space-y-4 rounded-lg border border-border p-6">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Addictions
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Habitudes susceptibles d&apos;impacter la conduite
+                    </p>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="addiction"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2">
+                        <FormLabel className="text-sm">
+                          {field.value ? 'Oui' : 'Non'}
+                        </FormLabel>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              if (!checked) {
+                                form.setValue('type_addiction', []);
+                                form.setValue('autre_addiction_detail', null);
+                                form.setValue('tabagisme_detail', null);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {watchAddiction && (
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="type_addiction"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type(s) d&apos;addiction</FormLabel>
+                          <div className="flex flex-wrap gap-3">
+                            {(
+                              Object.entries(
+                                TYPE_ADDICTION_LABELS,
+                              ) as [
+                                keyof typeof TYPE_ADDICTION_LABELS,
+                                string,
+                              ][]
+                            ).map(([key, labelText]) => (
+                              <label
+                                key={key}
+                                className={cn(
+                                  'flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 transition-colors',
+                                  field.value?.includes(key)
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border hover:bg-muted/50',
+                                )}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="sr-only"
+                                  checked={field.value?.includes(key)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      field.onChange([
+                                        ...(field.value || []),
+                                        key,
+                                      ]);
+                                    } else {
+                                      field.onChange(
+                                        field.value?.filter(
+                                          (v) => v !== key,
+                                        ) || [],
+                                      );
+                                    }
+                                  }}
+                                />
+                                <span className="text-sm font-medium">
+                                  {labelText}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {showTabagismeDetail && (
+                      <FormField
+                        control={form.control}
+                        name="tabagisme_detail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Préciser le tabagisme</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Ex: 20 paquets/an, fumeur actif..."
+                                value={field.value ?? ''}
+                                onChange={(e) =>
+                                  field.onChange(e.target.value || null)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {showAutreAddictionDetail && (
+                      <FormField
+                        control={form.control}
+                        name="autre_addiction_detail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Préciser l&apos;autre addiction</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Précisez..."
+                                value={field.value ?? ''}
+                                onChange={(e) =>
+                                  field.onChange(e.target.value || null)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Submit button */}
             <div className="flex justify-end gap-3">

@@ -85,6 +85,8 @@ export {
   // Clinical Schemas
   PlaintesSchema,
   PerimetrySchema,
+  ExamenAdditionelSchema,
+  ExamenAdditionelTypeEnum,
   BiomicroscopyAnteriorSchema,
   BiomicroscopyPosteriorSchema,
   BpSupSchema,
@@ -120,6 +122,7 @@ export {
   type TechnicalExamFormValues,
   type PlaintesFormValues,
   type PerimetryFormValues,
+  type ExamenAdditionel,
   type BiomicroscopyAnteriorFormValues,
   type BiomicroscopyPosteriorFormValues,
   type ConclusionFormValues,

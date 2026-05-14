@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Can } from '@/components/ui/can';
 import {
   useAnalyticsOverview,
@@ -14,6 +14,12 @@ import {
   useAnalyticsOcularTension,
   useAnalyticsPachymetry,
   useAnalyticsSymptoms,
+  useAnalyticsRiskFactors,
+  useAnalyticsSymptomsFull,
+  useAnalyticsBiomicroscopy,
+  useAnalyticsPediatric,
+  useAnalyticsVisualField,
+  useAnalyticsDriverExperience,
 } from '@/features/analytics/api';
 import {
   AnalyticsFiltersBar,
@@ -33,6 +39,12 @@ import {
   OcularTensionBarChart,
   PachymetryKpiCard,
   SymptomsGroupedBar,
+  RiskFactorsSection,
+  SymptomsFullChart,
+  BiomicroscopySection,
+  PediatricSection,
+  VisualFieldSection,
+  DriverExperienceSection,
 } from '@/features/analytics/components/charts';
 import {
   DEFAULT_ANALYTICS_FILTERS,
@@ -68,6 +80,12 @@ export default function AnalyticsPage() {
   const reqTension = useAnalyticsOcularTension({ filters: appliedFilters });
   const reqPachy = useAnalyticsPachymetry({ filters: appliedFilters });
   const reqSymptoms = useAnalyticsSymptoms({ filters: appliedFilters });
+  const reqRiskFactors = useAnalyticsRiskFactors({ filters: appliedFilters });
+  const reqSymptomsFull = useAnalyticsSymptomsFull({ filters: appliedFilters });
+  const reqBiomicroscopy = useAnalyticsBiomicroscopy({ filters: appliedFilters });
+  const reqPediatric = useAnalyticsPediatric({ filters: appliedFilters });
+  const reqVisualField = useAnalyticsVisualField({ filters: appliedFilters });
+  const reqDriverExperience = useAnalyticsDriverExperience({ filters: appliedFilters });
 
   const allQueries = [
     reqOverview,
@@ -79,6 +97,12 @@ export default function AnalyticsPage() {
     reqTension,
     reqPachy,
     reqSymptoms,
+    reqRiskFactors,
+    reqSymptomsFull,
+    reqBiomicroscopy,
+    reqPediatric,
+    reqVisualField,
+    reqDriverExperience,
   ];
 
   const isLoading = allQueries.some((q) => q.isLoading);
@@ -190,6 +214,28 @@ export default function AnalyticsPage() {
                 <SitesBarChart data={reqSites.data.sites} />
               </div>
             )}
+
+            {/* Nouvelles sections analytiques */}
+            <div className="grid grid-cols-1 gap-6">
+              {reqSymptomsFull.data && (
+                <SymptomsFullChart data={reqSymptomsFull.data} />
+              )}
+              {reqRiskFactors.data && (
+                <RiskFactorsSection data={reqRiskFactors.data} />
+              )}
+              {reqBiomicroscopy.data && (
+                <BiomicroscopySection data={reqBiomicroscopy.data} />
+              )}
+              {reqVisualField.data && (
+                <VisualFieldSection data={reqVisualField.data} />
+              )}
+              {reqPediatric.data && (
+                <PediatricSection data={reqPediatric.data} />
+              )}
+              {reqDriverExperience.data && (
+                <DriverExperienceSection data={reqDriverExperience.data} />
+              )}
+            </div>
           </div>
         )}
       </Shell>

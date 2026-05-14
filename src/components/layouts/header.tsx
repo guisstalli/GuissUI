@@ -1,35 +1,22 @@
 'use client';
 
-import { Moon, Plus, Sun, User } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown';
+import { Button } from '@/components/ui/button/button';
+import { Separator } from '@/components/ui/separator/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 interface AppHeaderProps {
   title: string;
   patientName?: string;
-  showCreateExam?: boolean;
-  onCreateExam?: () => void;
-  showCreatePatient?: boolean;
-  onCreatePatient?: () => void;
+  /** Slot for feature-level actions composed at the app/page level. */
+  actions?: ReactNode;
 }
 
-export function Header({
-  title,
-  patientName,
-  showCreateExam = false,
-  onCreateExam,
-  showCreatePatient = false,
-  onCreatePatient,
-}: AppHeaderProps) {
+export function Header({ title, patientName, actions }: AppHeaderProps) {
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -38,41 +25,24 @@ export function Header({
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background px-6">
-      {/* Left: Title and Context */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-2 h-4" />
+
+      <div className="flex items-center gap-2">
+        <h1 className="text-base font-semibold text-foreground">{title}</h1>
         {patientName && (
           <>
             <span className="text-muted-foreground" aria-hidden="true">
               /
             </span>
-            <span className="text-base text-muted-foreground">
-              {patientName}
-            </span>
+            <span className="text-sm text-muted-foreground">{patientName}</span>
           </>
         )}
       </div>
 
-      {/* Right: Actions */}
-      <div className="flex items-center gap-3">
-        {/* Create Patient Button */}
-        {showCreatePatient && (
-          <Button size="sm" onClick={onCreatePatient}>
-            <Plus className="mr-1.5 size-4" aria-hidden="true" />
-            Nouveau patient
-          </Button>
-        )}
-
-        {/* Create Exam Button */}
-        {showCreateExam && (
-          <Button size="sm" onClick={onCreateExam}>
-            <Plus className="mr-1.5 size-4" aria-hidden="true" />
-            Nouvel examen
-          </Button>
-        )}
-
-        {/* Theme Toggle */}
+      <div className="ml-auto flex items-center gap-2">
+        {actions}
         {mounted && (
           <Button
             variant="ghost"
@@ -83,8 +53,8 @@ export function Header({
             }
             aria-label={
               resolvedTheme === 'dark'
-                ? 'Switch to light mode'
-                : 'Switch to dark mode'
+                ? 'Passer en mode clair'
+                : 'Passer en mode sombre'
             }
           >
             {resolvedTheme === 'dark' ? (
@@ -94,25 +64,6 @@ export function Header({
             )}
           </Button>
         )}
-
-        {/* User Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-9"
-              aria-label="User menu"
-            >
-              <User className="size-4" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuSeparator />
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Deconnexion</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   );

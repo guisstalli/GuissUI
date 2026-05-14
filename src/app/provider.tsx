@@ -9,6 +9,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 import { MainErrorFallback } from '@/components/errors/main';
 import { Notifications } from '@/components/ui/notifications';
+import { TooltipProvider } from '@/components/ui/tooltip/tooltip';
 import { InternalAppGuard } from '@/lib/internal-app-guard';
 import { queryConfig } from '@/lib/react-query';
 
@@ -34,9 +35,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
           disableTransitionOnChange
         >
           <QueryClientProvider client={queryClient}>
-            {process.env.DEV && <ReactQueryDevtools />}
-            <Notifications />
-            <InternalAppGuard>{children}</InternalAppGuard>
+            <TooltipProvider>
+              {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+              <Notifications />
+              <InternalAppGuard>{children}</InternalAppGuard>
+            </TooltipProvider>
           </QueryClientProvider>
         </ThemeProvider>
       </SessionProvider>

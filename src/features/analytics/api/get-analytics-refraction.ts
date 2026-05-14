@@ -25,8 +25,8 @@ const buildRefractionUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/refraction/?${queryString}`
-    : '/api/v1/analytics/refraction/';
+    ? `/analytics/refraction/?${queryString}`
+    : '/analytics/refraction/';
 };
 
 export const getAnalyticsRefraction = (
