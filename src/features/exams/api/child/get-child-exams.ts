@@ -14,12 +14,9 @@ import type {
 export const getChildExams = (
   params?: ExamsQueryParams,
 ): Promise<PaginatedExamenChildList> => {
-  return api.get<PaginatedExamenChildList>(
-    '/api/v1/depistage/examens/enfants/',
-    {
-      params,
-    },
-  );
+  return api.get<PaginatedExamenChildList>('/depistage/examens/enfants/', {
+    params,
+  });
 };
 
 /**
@@ -54,9 +51,7 @@ export const useChildExams = ({
  * Récupère un examen enfant par son ID
  */
 export const getChildExam = (id: number): Promise<ExamenChildDetailApi> => {
-  return api.get<ExamenChildDetailApi>(
-    `/api/v1/depistage/examens/enfants/${id}/`,
-  );
+  return api.get<ExamenChildDetailApi>(`/depistage/examens/enfants/${id}/`);
 };
 
 /**
@@ -92,7 +87,7 @@ export const getChildExamsByPatient = (
   patientId: number,
 ): Promise<PaginatedExamenChildList> => {
   return api.get<PaginatedExamenChildList>(
-    `/api/v1/depistage/examens/enfants/by-patient/${patientId}/`,
+    `/depistage/examens/enfants/by-patient/${patientId}/`,
   );
 };
 
@@ -117,7 +112,7 @@ export const useChildExamsByPatient = (patientId: number, enabled = true) => {
 export const getIncompleteChildExams =
   (): Promise<PaginatedExamenChildList> => {
     return api.get<PaginatedExamenChildList>(
-      '/api/v1/depistage/examens/enfants/incomplete/',
+      '/depistage/examens/enfants/incomplete/',
     );
   };
 
@@ -142,7 +137,7 @@ export const getChildExamStatus = (
   id: number,
 ): Promise<ExamenChildDetailApi> => {
   return api.get<ExamenChildDetailApi>(
-    `/api/v1/depistage/examens/enfants/${id}/status/`,
+    `/depistage/examens/enfants/${id}/status/`,
   );
 };
 

@@ -19,10 +19,9 @@ const Dialog: React.FC<
 
       // Force cleanup of pointer-events on body when dialog closes
       if (!open) {
-        // Small delay to let Radix finish its cleanup
         setTimeout(() => {
-          document.body.style.pointerEvents = '';
-        }, 0);
+          document.body.style.removeProperty('pointer-events');
+        }, 300);
       }
     },
     [onOpenChange],

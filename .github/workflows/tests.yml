@@ -1,0 +1,129 @@
+name: Tests GuissUI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  frontend-unit:
+    name: Vitest Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run unit tests with coverage
+        run: yarn test run --coverage --reporter=verbose
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+
+  frontend-e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-unit]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: guiss
+          POSTGRES_PASSWORD: guiss
+          POSTGRES_DB: guiss_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgres://guiss:guiss@localhost:5432/guiss_test
+      DJANGO_SETTINGS_MODULE: backend.django.test
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: GuissUI
+
+      - name: Checkout GuissAPI
+        uses: actions/checkout@v4
+        with:
+          repository: Guiss/GuissAPI
+          path: GuissAPI
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        working-directory: GuissAPI
+        run: pip install -r requirements/base.txt -r requirements/local.txt
+
+      - name: Run migrations
+        working-directory: GuissAPI
+        run: python manage.py migrate --noinput
+
+      - name: Seed test data
+        working-directory: GuissAPI
+        run: python manage.py seed_full_dataset
+        continue-on-error: true
+
+      - name: Start Django server
+        working-directory: GuissAPI
+        run: python manage.py runserver 0.0.0.0:8000 &
+        env:
+          DJANGO_SETTINGS_MODULE: backend.django.base
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: GuissUI/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: GuissUI
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: GuissUI
+        run: yarn playwright install --with-deps chromium
+
+      - name: Start Next.js dev server
+        working-directory: GuissUI
+        run: yarn dev &
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+      - name: Wait for servers
+        run: npx wait-on http://localhost:8000/api/v1/health/ http://localhost:3000 --timeout 60000
+
+      - name: Run Playwright tests
+        working-directory: GuissUI
+        run: yarn playwright test --project=staff
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: GuissUI/playwright-report/

@@ -25,8 +25,8 @@ const buildGlaucomaUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/glaucoma/?${queryString}`
-    : '/api/v1/analytics/glaucoma/';
+    ? `/analytics/glaucoma/?${queryString}`
+    : '/analytics/glaucoma/';
 };
 
 export const getAnalyticsGlaucoma = (

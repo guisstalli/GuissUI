@@ -14,12 +14,9 @@ import type {
 export const getAdultExams = (
   params?: ExamsQueryParams,
 ): Promise<PaginatedExamenAdultList> => {
-  return api.get<PaginatedExamenAdultList>(
-    '/api/v1/depistage/examens/adultes/',
-    {
-      params,
-    },
-  );
+  return api.get<PaginatedExamenAdultList>('/depistage/examens/adultes/', {
+    params,
+  });
 };
 
 /**
@@ -54,9 +51,7 @@ export const useAdultExams = ({
  * Récupère un examen adulte par son ID
  */
 export const getAdultExam = (id: number): Promise<ExamenAdultDetailApi> => {
-  return api.get<ExamenAdultDetailApi>(
-    `/api/v1/depistage/examens/adultes/${id}/`,
-  );
+  return api.get<ExamenAdultDetailApi>(`/depistage/examens/adultes/${id}/`);
 };
 
 /**
@@ -92,7 +87,7 @@ export const getAdultExamsByPatient = (
   patientId: number,
 ): Promise<PaginatedExamenAdultList> => {
   return api.get<PaginatedExamenAdultList>(
-    `/api/v1/depistage/examens/adultes/by-patient/${patientId}/`,
+    `/depistage/examens/adultes/by-patient/${patientId}/`,
   );
 };
 
@@ -117,7 +112,7 @@ export const useAdultExamsByPatient = (patientId: number, enabled = true) => {
 export const getIncompleteAdultExams =
   (): Promise<PaginatedExamenAdultList> => {
     return api.get<PaginatedExamenAdultList>(
-      '/api/v1/depistage/examens/adultes/incomplete/',
+      '/depistage/examens/adultes/incomplete/',
     );
   };
 
@@ -142,7 +137,7 @@ export const getAdultExamStatus = (
   id: number,
 ): Promise<ExamenAdultDetailApi> => {
   return api.get<ExamenAdultDetailApi>(
-    `/api/v1/depistage/examens/adultes/${id}/status/`,
+    `/depistage/examens/adultes/${id}/status/`,
   );
 };
 

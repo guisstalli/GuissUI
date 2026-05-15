@@ -10,7 +10,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -144,7 +144,7 @@ export default function AdultExamsPage() {
       {!isLoading && !isError && (
         <>
           <div className="rounded-lg border border-border bg-card">
-            <Table>
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>N° Examen</TableHead>

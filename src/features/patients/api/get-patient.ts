@@ -8,7 +8,7 @@ import type { Patient } from '../types';
  * Récupère un patient par son ID
  */
 export const getPatient = (id: number): Promise<Patient> => {
-  return api.get<Patient>(`/api/v1/depistage/patients/${id}/`);
+  return api.get<Patient>(`/depistage/patients/${id}/`);
 };
 
 /**

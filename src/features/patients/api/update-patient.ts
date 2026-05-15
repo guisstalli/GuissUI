@@ -21,7 +21,7 @@ export const updatePatient = ({
   id,
   data,
 }: UpdatePatientParams): Promise<Patient> => {
-  return api.put<Patient>(`/api/v1/depistage/patients/${id}/edit/`, data);
+  return api.put<Patient>(`/depistage/patients/${id}/edit/`, data);
 };
 
 /**
@@ -31,7 +31,7 @@ export const patchPatient = ({
   id,
   data,
 }: UpdatePatientParams): Promise<Patient> => {
-  return api.patch<Patient>(`/api/v1/depistage/patients/${id}/edit/`, data);
+  return api.patch<Patient>(`/depistage/patients/${id}/edit/`, data);
 };
 
 type UseUpdatePatientOptions = {

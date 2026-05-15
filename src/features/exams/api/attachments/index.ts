@@ -32,7 +32,7 @@ export const getAttachments = ({
   ...params
 }: GetAttachmentsParams): Promise<ExamenSupplementaireList[]> => {
   return api.get<ExamenSupplementaireList[]>(
-    `/api/v1/depistage/clinical-examens/${clinicalExamId}/attachments/`,
+    `/depistage/clinical-examens/${clinicalExamId}/attachments/`,
     { params },
   );
 };
@@ -74,7 +74,7 @@ export const useAttachments = ({
  * Récupère une pièce jointe par son ID
  */
 export const getAttachment = (id: number): Promise<ExamenSupplementaire> => {
-  return api.get<ExamenSupplementaire>(`/api/v1/depistage/attachments/${id}/`);
+  return api.get<ExamenSupplementaire>(`/depistage/attachments/${id}/`);
 };
 
 export const getAttachmentQueryOptions = (id: number) => {
@@ -101,7 +101,7 @@ export const useAttachment = (id: number, enabled = true) => {
  */
 export const downloadAttachment = (id: number): Promise<{ url: string }> => {
   return api.get<{ url: string }>(
-    `/api/v1/depistage/examens-supplementaires/${id}/download/`,
+    `/depistage/examens-supplementaires/${id}/download/`,
   );
 };
 
@@ -130,7 +130,7 @@ export const uploadAttachment = async ({
   }
 
   return api.post<ExamenSupplementaire>(
-    `/api/v1/depistage/clinical-examens/${clinicalExamId}/attachments/`,
+    `/depistage/clinical-examens/${clinicalExamId}/attachments/`,
     formData,
     { isFormData: true },
   );
@@ -188,7 +188,7 @@ type DeleteAttachmentParams = {
 export const deleteAttachment = ({
   id,
 }: DeleteAttachmentParams): Promise<void> => {
-  return api.delete(`/api/v1/depistage/attachments/${id}/`);
+  return api.delete(`/depistage/attachments/${id}/`);
 };
 
 type UseDeleteAttachmentOptions = {

@@ -7,11 +7,13 @@ import { MutationConfig } from '@/lib/react-query';
 import type {
   ExamenAdultDetailApi,
   ExamenAdultCreate,
-  ExamenAdultAddTechnical,
-  ExamenAdultAddClinical,
   ExamenAdultProgressive,
   ExamenAdultComplete,
 } from '../../types';
+import type {
+  mapTechnicalFormToApi,
+  mapClinicalFormToApi,
+} from '../../utils/form-to-api-mappers';
 
 import {
   getAdultExamsQueryOptions,
@@ -30,7 +32,7 @@ export const createAdultExam = (
   data: ExamenAdultCreate,
 ): Promise<ExamenAdultDetailApi> => {
   return api.post<ExamenAdultDetailApi>(
-    '/api/v1/depistage/examens/adultes/create/',
+    '/depistage/examens/adultes/create/',
     data,
   );
 };
@@ -80,7 +82,7 @@ export const useCreateAdultExam = ({
 
 type AddTechnicalParams = {
   id: number;
-  data: ExamenAdultAddTechnical;
+  data: ReturnType<typeof mapTechnicalFormToApi>;
 };
 
 /**
@@ -91,7 +93,7 @@ export const addTechnicalData = ({
   data,
 }: AddTechnicalParams): Promise<ExamenAdultDetailApi> => {
   return api.post<ExamenAdultDetailApi>(
-    `/api/v1/depistage/examens/adultes/${id}/add-technical/`,
+    `/depistage/examens/adultes/${id}/add-technical/`,
     data,
   );
 };
@@ -141,7 +143,7 @@ export const useAddTechnicalData = ({
 
 type AddClinicalParams = {
   id: number;
-  data: ExamenAdultAddClinical;
+  data: ReturnType<typeof mapClinicalFormToApi>;
 };
 
 /**
@@ -152,7 +154,7 @@ export const addClinicalData = ({
   data,
 }: AddClinicalParams): Promise<ExamenAdultDetailApi> => {
   return api.post<ExamenAdultDetailApi>(
-    `/api/v1/depistage/examens/adultes/${id}/add-clinical/`,
+    `/depistage/examens/adultes/${id}/add-clinical/`,
     data,
   );
 };
@@ -213,7 +215,7 @@ export const updateSection = ({
   data,
 }: UpdateSectionParams): Promise<ExamenAdultDetailApi> => {
   return api.patch<ExamenAdultDetailApi>(
-    `/api/v1/depistage/examens/adultes/${id}/section/`,
+    `/depistage/examens/adultes/${id}/section/`,
     data,
   );
 };
@@ -271,7 +273,7 @@ export const completeAdultExam = ({
   data,
 }: CompleteExamParams): Promise<ExamenAdultDetailApi> => {
   return api.post<ExamenAdultDetailApi>(
-    `/api/v1/depistage/examens/adultes/${id}/complete/`,
+    `/depistage/examens/adultes/${id}/complete/`,
     data || { mark_completed: true },
   );
 };
@@ -326,7 +328,7 @@ export const useCompleteAdultExam = ({
  * Supprimer un examen adulte
  */
 export const deleteAdultExam = (id: number): Promise<void> => {
-  return api.delete(`/api/v1/depistage/examens/adultes/${id}/delete/`);
+  return api.delete(`/depistage/examens/adultes/${id}/delete/`);
 };
 
 type UseDeleteAdultExamOptions = {

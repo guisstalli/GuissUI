@@ -19,9 +19,6 @@ const clientEnvSchema = z.object({
  * These should NOT be accessed from client components
  */
 const serverEnvSchema = z.object({
-  KEYCLOAK_ISSUER: z.string(),
-  KEYCLOAK_CLIENT_ID: z.string(),
-  KEYCLOAK_CLIENT_SECRET: z.string().optional().default(''),
   NEXTAUTH_URL: z.string(),
   NEXTAUTH_SECRET: z.string(),
 });
@@ -53,18 +50,12 @@ const createServerEnv = () => {
   // Skip validation on client-side - these vars are not available in browser
   if (typeof window !== 'undefined') {
     return {
-      KEYCLOAK_ISSUER: '',
-      KEYCLOAK_CLIENT_ID: '',
-      KEYCLOAK_CLIENT_SECRET: '',
       NEXTAUTH_URL: '',
       NEXTAUTH_SECRET: '',
     };
   }
 
   const envVars = {
-    KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
-    KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
-    KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   };

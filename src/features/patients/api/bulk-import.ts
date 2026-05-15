@@ -12,17 +12,14 @@ import type { BulkPatientImport, TaskResponse, TaskStatus } from '../types';
 export const bulkImportPatients = (
   data: BulkPatientImport,
 ): Promise<TaskResponse> => {
-  return api.post<TaskResponse>(
-    '/api/v1/depistage/patients/bulk-import/',
-    data,
-  );
+  return api.post<TaskResponse>('/depistage/patients/bulk-import/', data);
 };
 
 /**
  * Récupère le statut d'une tâche Celery
  */
 export const getTaskStatus = (taskId: string): Promise<TaskStatus> => {
-  return api.get<TaskStatus>(`/api/v1/depistage/tasks/${taskId}/status/`);
+  return api.get<TaskStatus>(`/depistage/tasks/${taskId}/status/`);
 };
 
 /**

@@ -12,7 +12,7 @@ export const updateSite = ({
   siteId: number;
   data: Partial<Site>;
 }): Promise<Site> => {
-  return api.patch(`/api/v1/depistage/sites/${siteId}/`, data);
+  return api.patch(`/depistage/sites/${siteId}/`, data);
 };
 
 type UseUpdateSiteOptions = {

@@ -11,6 +11,7 @@ import type {
   VisionBinoculaireApi,
   MedicalHistoryApi,
 } from '../types/api-schemas';
+import type { ExamenAdditionel } from '../types/schemas';
 import type {
   VisualAcuity,
   Refraction,
@@ -82,12 +83,9 @@ export const mapVisualAcuityApiToForm = (
     avac_od: toNumber(data.avac_od),
     avac_og: toNumber(data.avac_og),
     avac_odg: toNumber(data.avac_odg),
-    avsc_od_avec_correction: toNumber(data.avsc_od_avec_correction),
-    avsc_og_avec_correction: toNumber(data.avsc_og_avec_correction),
-    avsc_odg_avec_correction: toNumber(data.avsc_odg_avec_correction),
-    avac_od_avec_correction: toNumber(data.avac_od_avec_correction),
-    avac_og_avec_correction: toNumber(data.avac_og_avec_correction),
-    avac_odg_avec_correction: toNumber(data.avac_odg_avec_correction),
+    avac_od_prescrite: toNumber(data.avac_od_prescrite),
+    avac_og_prescrite: toNumber(data.avac_og_prescrite),
+    avac_odg_prescrite: toNumber(data.avac_odg_prescrite),
   };
 };
 
@@ -290,6 +288,8 @@ export const mapPerimetryApiToForm = (
     limite_temporale_gauche: toNumber(data.limite_temporale_gauche),
     etendue_horizontal: toNumber(data.etendue_horizontal),
     score_esternmen: toNumber(data.score_esternmen),
+    examens_additionnels: (data.examens_additionnels ??
+      []) as ExamenAdditionel[],
     image: null,
     images: null,
   };

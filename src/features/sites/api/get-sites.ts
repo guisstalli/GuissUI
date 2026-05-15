@@ -13,7 +13,7 @@ export const getSites = ({
     offset?: number;
   };
 } = {}): Promise<SiteListResponse> => {
-  return api.get('/api/v1/depistage/sites/', { params });
+  return api.get('/depistage/sites/', { params });
 };
 
 export const getSitesQueryOptions = (params?: {

@@ -10,7 +10,7 @@ export const createSite = ({
 }: {
   data: Omit<Site, 'id'>;
 }): Promise<Site> => {
-  return api.post('/api/v1/depistage/sites/', data);
+  return api.post('/depistage/sites/', data);
 };
 
 type UseCreateSiteOptions = {

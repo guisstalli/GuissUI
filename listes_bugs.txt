@@ -1,0 +1,24 @@
+1. A chaque fois qu'une dialog est utilisé, l'ecran reste non cliquable tant qu'on ne recharge pas la page, un exemple simple lorsqu'on ajoute ou supprime un patient.
+2. Dans le deuxieme module au niveau de la barre de navigation, avoir le module patient qui va contenir
+(Listes + filtres fournis par le backend, Examen + filtres(Adulte/Enfant + complet/incomplet + spaciaux temporel) fournis par le backend)
+et j'ai demandé à ce qu'on enleve le stepper des examens pour enfant et qu'on utilise le meme UI et mise en forme qu'on a pour les adultes, 
+et pour les formulaires qui divergent on a les composant qu'on pourra ajouter mais la majorité se ressemble, ne pas oublier
+le corbeille + filtres fournis par le backend et normalement si un patient est ajouter dans le corbeille les personnes ayant
+l'abilitation de supprimer definitivement le patient doivent recevoir des notifications en interne et par email,
+dans les examens clinique - complementaires, n'oublie pas qu'on a ajouté ` examens_additionnels = models.JSONField(
+        _('Examens additionnels'),
+        default=list,
+        blank=True,
+        help_text=_('Liste d\'examens libres : [{titre, value, type_valeur, options?}]')
+    )` donc check le backend et implemente le bien, pour l'ajout des documents on doit avoir la possibilité d'ajouter le titre du document qu'on veut ajouter et verifie si il'est uploader
+si tu as des suggestions pour le design propose on en discute
+telechargement des rapports et conclusion
+3. Dans la bar de navigation on va ajouter les modules d'evenements (insipré de eventbrit) et rend-vous avec react big calendar,
+la specifité avec ces deux modules c'est qu'ils auront un espace public, pour que les gens puisse voir les crénau en ligne et prendre rendez-vous ou voir les prochaines evements de consultations gratuite.
+mais avant l'implementation de ces deux modules j'aimerais qu'on cause sur l'implementation et design car je veux un truc propore bien designer et implementer
+
+4 . conducteur aussi, facons c'est les meme composant que le patient adulte rien ne va changer juste le formulaire de modification et ajout
+
+4. module de facturation
+
+5. tableau de bord

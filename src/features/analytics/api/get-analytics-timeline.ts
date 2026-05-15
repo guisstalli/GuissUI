@@ -25,8 +25,8 @@ const buildTimelineUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/timeline/?${queryString}`
-    : '/api/v1/analytics/timeline/';
+    ? `/analytics/timeline/?${queryString}`
+    : '/analytics/timeline/';
 };
 
 export const getAnalyticsTimeline = (

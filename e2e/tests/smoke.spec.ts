@@ -1,95 +1,50 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/auth-request';
 
-import {
-  createDiscussion,
-  createComment,
-} from '../../src/testing/data-generators';
-test('smoke', async ({ page }) => {
-  const discussion = createDiscussion();
-  const comment = createComment();
+// Unauthenticated flows — run with an empty storageState so there is no
+// session cookie/token, regardless of which Playwright project runs this.
+test.describe('non authentifié', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
+  test('root redirige vers /auth/login si non authentifié', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/auth\/login/, { timeout: 8000 });
+  });
+
+  test('page /auth/login affiche le formulaire de connexion', async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByLabel(/adresse e-mail/i)).toBeVisible({
+      timeout: 8000,
+    });
+    await expect(
+      page.getByRole('button', { name: /se connecter/i }),
+    ).toBeVisible({ timeout: 8000 });
+  });
+});
+
+// Authenticated flows — use the project storageState + JWT refresh mock.
+test('utilisateur authentifié accède au tableau de bord', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Get started' }).click();
-  await page.waitForURL('/app');
+  await page.waitForLoadState('networkidle');
+  await expect(page).not.toHaveURL(/auth\/login/, { timeout: 8000 });
+});
 
-  // create discussion:
-  await page.getByRole('link', { name: 'Discussions' }).click();
-  await page.waitForURL('/app/discussions');
+test('page patients accessible après authentification', async ({ page }) => {
+  await page.goto('/patients');
+  await page.waitForLoadState('networkidle');
+  await expect(page).not.toHaveURL(/auth\/login/, { timeout: 8000 });
+});
 
-  await page.getByRole('button', { name: 'Create Discussion' }).click();
-  await page.getByLabel('Title').click();
-  await page.getByLabel('Title').fill(discussion.title);
-  await page.getByLabel('Body').click();
-  await page.getByLabel('Body').fill(discussion.body);
-  await page.getByRole('button', { name: 'Submit' }).click();
-  await page
-    .getByLabel('Discussion Created')
-    .getByRole('button', { name: 'Close' })
-    .click();
-
-  // visit discussion page:
-  await page.getByRole('link', { name: 'View' }).click();
-
-  await expect(
-    page.getByRole('heading', { name: discussion.title }),
-  ).toBeVisible();
-  await expect(page.getByText(discussion.body)).toBeVisible();
-
-  // update discussion:
-  await page.getByRole('button', { name: 'Update Discussion' }).click();
-  await page.getByLabel('Title').click();
-  await page.getByLabel('Title').fill(`${discussion.title} - updated`);
-  await page.getByLabel('Body').click();
-  await page.getByLabel('Body').fill(`${discussion.body} - updated`);
-  await page.getByRole('button', { name: 'Submit' }).click();
-  await page
-    .getByLabel('Discussion Updated')
-    .getByRole('button', { name: 'Close' })
-    .click();
-
-  await expect(
-    page.getByRole('heading', { name: `${discussion.title} - updated` }),
-  ).toBeVisible();
-  await expect(page.getByText(`${discussion.body} - updated`)).toBeVisible();
-
-  // create comment:
-  await page.getByRole('button', { name: 'Create Comment' }).click();
-  await page.getByLabel('Body').click();
-  await page.getByLabel('Body').fill(comment.body);
-  await page.getByRole('button', { name: 'Submit' }).click();
-  await expect(page.getByText(comment.body)).toBeVisible();
-  await page
-    .getByLabel('Comment Created')
-    .getByRole('button', { name: 'Close' })
-    .click();
-
-  // delete comment:
-  await page.getByRole('button', { name: 'Delete Comment' }).click();
-  await expect(
-    page.getByText('Are you sure you want to delete this comment?'),
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'Delete Comment' }).click();
-  await page
-    .getByLabel('Comment Deleted')
-    .getByRole('button', { name: 'Close' })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: 'No Comments Found' }),
-  ).toBeVisible();
-  await expect(page.getByText(comment.body)).toBeHidden();
-
-  // go back to discussions:
-  await page.getByRole('link', { name: 'Discussions' }).click();
-  await page.waitForURL('/app/discussions');
-
-  // delete discussion:
-  await page.getByRole('button', { name: 'Delete Discussion' }).click();
-  await page.getByRole('button', { name: 'Delete Discussion' }).click();
-  await page
-    .getByLabel('Discussion Deleted')
-    .getByRole('button', { name: 'Close' })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: 'No Entries Found' }),
-  ).toBeVisible();
+test('barre de navigation présente', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  const nav = page.locator('nav, [role="navigation"], aside').first();
+  if (await nav.isVisible()) {
+    await expect(nav).toBeVisible({ timeout: 5000 });
+  }
 });

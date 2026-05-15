@@ -197,6 +197,7 @@ export type ExamsQueryParams = {
   has_clinical?: boolean;
   has_technical?: boolean;
   is_completed?: boolean;
+  is_driver?: boolean;
   created_after?: string;
   created_before?: string;
 };

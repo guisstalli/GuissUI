@@ -306,54 +306,18 @@ export const VisualAcuitySchema = z
     avac_od: z.coerce.number().min(0).max(10).optional().nullable(),
     avac_og: z.coerce.number().min(0).max(10).optional().nullable(),
     avac_odg: z.coerce.number().min(0).max(10).optional().nullable(),
-    avsc_od_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avsc_og_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avsc_odg_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avac_od_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avac_og_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avac_odg_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
+    avac_od_prescrite: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_og_prescrite: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_odg_prescrite: z.coerce.number().min(0).max(10).optional().nullable(),
     created: z.string().datetime().optional(),
     modified: z.string().datetime().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.correction) {
       const requiredFields = [
-        'avsc_od_avec_correction',
-        'avsc_og_avec_correction',
-        'avsc_odg_avec_correction',
-        'avac_od_avec_correction',
-        'avac_og_avec_correction',
-        'avac_odg_avec_correction',
+        'avac_od_prescrite',
+        'avac_og_prescrite',
+        'avac_odg_prescrite',
       ] as const;
 
       requiredFields.forEach((field) => {
@@ -744,6 +708,22 @@ export const MedicalHistorySchema = z.object({
 });
 
 /** Périmétrie */
+export const ExamenAdditionelTypeEnum = z.enum([
+  'text',
+  'number',
+  'boolean',
+  'select',
+]);
+
+export const ExamenAdditionelSchema = z.object({
+  titre: z.string().min(1, 'Le titre est requis'),
+  type_valeur: ExamenAdditionelTypeEnum,
+  value: z.union([z.string(), z.number(), z.boolean()]),
+  options: z.array(z.string()).optional(),
+});
+
+export type ExamenAdditionel = z.infer<typeof ExamenAdditionelSchema>;
+
 export const PerimetrySchema = z.object({
   id: z.number().optional(),
   pbo: z.array(PboEnum).min(1, 'Veuillez sélectionner au moins un élément'),
@@ -763,8 +743,15 @@ export const PerimetrySchema = z.object({
     .nullable(),
   etendue_horizontal: z.coerce.number().min(0).max(180).optional().nullable(),
   score_esternmen: z.coerce.number().min(0).max(100).optional().nullable(),
-  image: z.any().optional().nullable(),
-  images: z.any().optional().nullable(),
+  examens_additionnels: z.array(ExamenAdditionelSchema).optional().default([]),
+  image: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  images: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
   created: z.string().datetime().optional(),
   modified: z.string().datetime().optional(),
 });
@@ -890,9 +877,18 @@ export const BiomicroscopyPosteriorSchema = z
 
 /** Images BpSup */
 export const BpSupSchema = z.object({
-  retinographie: z.any().optional().nullable(),
-  oct: z.any().optional().nullable(),
-  autres: z.any().optional().nullable(),
+  retinographie: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  oct: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  autres: z
+    .union([z.string().url(), z.instanceof(File)])
+    .optional()
+    .nullable(),
 });
 
 /** Conclusion */

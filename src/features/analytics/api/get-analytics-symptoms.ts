@@ -25,8 +25,8 @@ const buildSymptomsUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/symptoms-diagnostics/?${queryString}`
-    : '/api/v1/analytics/symptoms-diagnostics/';
+    ? `/analytics/symptoms-diagnostics/?${queryString}`
+    : '/analytics/symptoms-diagnostics/';
 };
 
 export const getAnalyticsSymptoms = (

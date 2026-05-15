@@ -1,6 +1,7 @@
 'use client';
 
 // eslint-disable-next-line import/no-duplicates
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 // eslint-disable-next-line import/no-duplicates
 import { fr } from 'date-fns/locale';
@@ -14,10 +15,12 @@ import {
   User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,17 +31,45 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PatientAnalyticsContext } from '@/features/analytics/components';
+//import { PatientAnalyticsContext } from '@/features/analytics/components';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
-import { usePatient, usePatientExams } from '@/features/patients/api';
+import {
+  usePatient,
+  usePatientExams,
+  usePatchPatient,
+} from '@/features/patients/api';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { SiteSelector } from '@/features/sites/components/site-selector';
 
+const editPatientSchema = z.object({
+  last_name: z.string().min(1, 'Le nom est requis'),
+  name: z.string().min(1, 'Le prénom est requis'),
+  date_de_naissance: z.string().min(1, 'La date de naissance est requise'),
+  sex: z.enum(['H', 'F', 'A']),
+  phone_number: z.string().nullable().optional(),
+});
+type EditPatientValues = z.infer<typeof editPatientSchema>;
+
 export default function PatientDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const patientId = Number(params.id);
 
@@ -57,6 +88,36 @@ export default function PatientDetailPage() {
     enabled: !!patientId,
   });
 
+  // Edit modal: open when ?edit=true is in URL
+  const [isEditModalOpen, setIsEditModalOpen] = useState(
+    searchParams.get('edit') === 'true',
+  );
+  const editForm = useForm<EditPatientValues>({
+    resolver: zodResolver(editPatientSchema),
+  });
+  useEffect(() => {
+    if (patient && isEditModalOpen) {
+      editForm.reset({
+        last_name: patient.last_name,
+        name: patient.name,
+        date_de_naissance: patient.date_de_naissance,
+        sex: patient.sex as 'H' | 'F' | 'A',
+        phone_number: patient.phone_number ?? '',
+      });
+    }
+  }, [patient, isEditModalOpen, editForm]);
+  const patchPatientMutation = usePatchPatient({
+    mutationConfig: {
+      onSuccess: () => {
+        setIsEditModalOpen(false);
+        router.replace(`/patients/${patientId}`);
+      },
+    },
+  });
+  const handleEditSubmit = (values: EditPatientValues) => {
+    patchPatientMutation.mutate({ id: patientId, data: values });
+  };
+
   // Modal State for Exam Creation + Site Selection
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
@@ -65,8 +126,9 @@ export default function PatientDetailPage() {
   const createAdultExamMutation = useCreateAdultExam({
     mutationConfig: {
       onSuccess: (data) => {
+        const examId = data.id;
         setIsExamModalOpen(false);
-        router.push(`/exams/adult/${data.id}`);
+        requestAnimationFrame(() => router.push(`/exams/adult/${examId}`));
       },
     },
   });
@@ -74,8 +136,9 @@ export default function PatientDetailPage() {
   const createChildExamMutation = useCreateChildExam({
     mutationConfig: {
       onSuccess: (data) => {
+        const examId = data.id;
         setIsExamModalOpen(false);
-        router.push(`/exams/child/${data.id}`);
+        requestAnimationFrame(() => router.push(`/exams/child/${examId}`));
       },
     },
   });
@@ -161,7 +224,7 @@ export default function PatientDetailPage() {
               <h2 className="text-lg font-semibold text-foreground">
                 {patient.full_name}
               </h2>
-              <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="mt-1 flex items-center gap-3 text-sm font-medium text-muted-foreground">
                 <span className="font-mono">{patient.numero_identifiant}</span>
                 <span aria-hidden="true">·</span>
                 <span>{patient.age} ans</span>
@@ -193,7 +256,7 @@ export default function PatientDetailPage() {
             value="information"
             className="rounded-none border-b-2 border-transparent px-4 pb-3 pt-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
           >
-            Informations
+            Etat civil & contact
           </TabsTrigger>
           <TabsTrigger
             value="medical-history"
@@ -207,12 +270,6 @@ export default function PatientDetailPage() {
           >
             Examens réalisés
           </TabsTrigger>
-          <TabsTrigger
-            value="analytics"
-            className="rounded-none border-b-2 border-transparent px-4 pb-3 pt-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
-          >
-            Analytiques
-          </TabsTrigger>
         </TabsList>
 
         {/* Information Tab */}
@@ -221,32 +278,28 @@ export default function PatientDetailPage() {
             {/* Informations personnelles */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-foreground">
-                Informations personnelles
+                Etat civil
               </h3>
               <div className="rounded-lg border border-border bg-card p-4">
                 <dl className="space-y-3">
                   <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">
-                      Numéro identifiant
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Nom
                     </dt>
-                    <dd className="font-mono text-sm font-medium text-foreground">
-                      {patient.numero_identifiant}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Nom</dt>
                     <dd className="text-sm font-medium text-foreground">
                       {patient.last_name}
                     </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Prénom</dt>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Prénom
+                    </dt>
                     <dd className="text-sm font-medium text-foreground">
                       {patient.name}
                     </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">
+                    <dt className="text-sm font-medium text-muted-foreground">
                       Date de naissance
                     </dt>
                     <dd className="text-sm font-medium text-foreground">
@@ -258,21 +311,19 @@ export default function PatientDetailPage() {
                     </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Âge</dt>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Âge
+                    </dt>
                     <dd className="text-sm font-medium text-foreground">
                       {patient.age} ans
                     </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Sexe</dt>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Sexe
+                    </dt>
                     <dd className="text-sm font-medium text-foreground">
                       {SEX_LABELS[patient.sex]}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Type</dt>
-                    <dd className="text-sm font-medium text-foreground">
-                      {patient.is_adult ? 'Adulte' : 'Enfant'}
                     </dd>
                   </div>
                 </dl>
@@ -285,7 +336,9 @@ export default function PatientDetailPage() {
               <div className="rounded-lg border border-border bg-card p-4">
                 <dl className="space-y-3">
                   <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Téléphone</dt>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Téléphone
+                    </dt>
                     <dd className="text-sm font-medium text-foreground">
                       {patient.phone_number || (
                         <span className="text-muted-foreground">
@@ -297,70 +350,15 @@ export default function PatientDetailPage() {
                 </dl>
               </div>
             </div>
-
-            {/* Statistiques examens */}
-            {patient.examens_count && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground">Examens</h3>
-                <div className="rounded-lg border border-border bg-card p-4">
-                  <dl className="space-y-3">
-                    <div className="flex justify-between">
-                      <dt className="text-sm text-muted-foreground">
-                        Examens adulte
-                      </dt>
-                      <dd className="text-sm font-medium text-foreground">
-                        {patient.examens_count.adult || 0}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-sm text-muted-foreground">
-                        Examens enfant
-                      </dt>
-                      <dd className="text-sm font-medium text-foreground">
-                        {patient.examens_count.child || 0}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            )}
-
-            {/* Métadonnées */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-foreground">
-                Métadonnées
-              </h3>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <dl className="space-y-3">
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">Créé le</dt>
-                    <dd className="text-sm font-medium text-foreground">
-                      {format(new Date(patient.created), 'dd/MM/yyyy à HH:mm', {
-                        locale: fr,
-                      })}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-muted-foreground">
-                      Dernière modification
-                    </dt>
-                    <dd className="text-sm font-medium text-foreground">
-                      {format(
-                        new Date(patient.modified),
-                        'dd/MM/yyyy à HH:mm',
-                        { locale: fr },
-                      )}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
           </div>
         </TabsContent>
 
         {/* Medical History Tab */}
         <TabsContent value="medical-history" className="mt-6">
-          <MedicalHistoryForm patientId={patientId} />
+          <MedicalHistoryForm
+            patientId={patientId}
+            hasDriver={patient.has_driver ?? false}
+          />
         </TabsContent>
 
         {/* Exams Tab */}
@@ -404,10 +402,10 @@ export default function PatientDetailPage() {
                             <td className="px-4 py-3 font-mono text-sm">
                               {exam.numero_examen}
                             </td>
-                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {exam.site_libelle || '—'}
                             </td>
-                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {format(new Date(exam.created), 'dd/MM/yyyy', {
                                 locale: fr,
                               })}
@@ -471,12 +469,15 @@ export default function PatientDetailPage() {
                         {patientExams.child.map((exam) => (
                           <tr key={exam.id} className="hover:bg-muted/30">
                             <td className="px-4 py-3 font-mono text-sm">
-                              {exam.numero_examen}
+                              <Link href={`/exams/child/${exam.id}`}>
+                                <ExternalLink className="mr-1.5 size-4" />
+                                {exam.numero_examen}
+                              </Link>
                             </td>
-                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {exam.site_libelle || '—'}
                             </td>
-                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {format(new Date(exam.created), 'dd/MM/yyyy', {
                                 locale: fr,
                               })}
@@ -508,7 +509,7 @@ export default function PatientDetailPage() {
                 (!patientExams?.child || patientExams.child.length === 0) && (
                   <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
                     <ClipboardList className="mb-3 size-10 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Aucun examen réalisé pour ce patient
                     </p>
                     <Button
@@ -525,14 +526,141 @@ export default function PatientDetailPage() {
             </div>
           )}
         </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <PatientAnalyticsContext
-            patientId={patientId}
-            patientName={patient.full_name}
-          />
-        </TabsContent>
       </Tabs>
+
+      {/* Edit Patient Dialog */}
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) router.replace(`/patients/${patientId}`);
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Modifier le patient</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de {patient.full_name}.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form
+              onSubmit={editForm.handleSubmit(handleEditSubmit)}
+              className="space-y-4 py-2"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prénom</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="date_de_naissance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date de naissance</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="sex"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sexe</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(SEX_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={editForm.control}
+                name="phone_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Téléphone</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="+221 XX XXX XX XX"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    router.replace(`/patients/${patientId}`);
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={patchPatientMutation.isPending}>
+                  {patchPatientMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    'Enregistrer'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Exam Creation Dialog */}
       <Dialog

@@ -41,7 +41,7 @@ export interface PatientExamsResponse {
 export const getPatientExams = async (
   patientId: number,
 ): Promise<PatientExamsResponse> => {
-  return api.get(`/api/v1/depistage/patients/${patientId}/examens/`);
+  return api.get(`/depistage/patients/${patientId}/examens/`);
 };
 
 // =============================================================================

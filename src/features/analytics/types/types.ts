@@ -12,6 +12,12 @@ import {
   AnalyticsOcularTensionSchema,
   AnalyticsPachymetrySchema,
   AnalyticsSymptomsSchema,
+  AnalyticsRiskFactorsSchema,
+  AnalyticsSymptomsFullSchema,
+  AnalyticsBiomicroscopySchema,
+  AnalyticsPediatricSchema,
+  AnalyticsVisualFieldSchema,
+  AnalyticsDriverExperienceSchema,
   AnalyticsScopeSchema,
   ExamScopeSchema,
   ExamTypeSchema,
@@ -45,3 +51,13 @@ export type AnalyticsOcularTension = z.infer<
 >;
 export type AnalyticsPachymetry = z.infer<typeof AnalyticsPachymetrySchema>;
 export type AnalyticsSymptoms = z.infer<typeof AnalyticsSymptomsSchema>;
+export type AnalyticsRiskFactors = z.infer<typeof AnalyticsRiskFactorsSchema>;
+export type AnalyticsSymptomsFull = z.infer<typeof AnalyticsSymptomsFullSchema>;
+export type AnalyticsBiomicroscopy = z.infer<
+  typeof AnalyticsBiomicroscopySchema
+>;
+export type AnalyticsPediatric = z.infer<typeof AnalyticsPediatricSchema>;
+export type AnalyticsVisualField = z.infer<typeof AnalyticsVisualFieldSchema>;
+export type AnalyticsDriverExperience = z.infer<
+  typeof AnalyticsDriverExperienceSchema
+>;

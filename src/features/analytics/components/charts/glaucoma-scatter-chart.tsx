@@ -54,11 +54,23 @@ export const GlaucomaScatterChart = ({ data }: GlaucomaScatterChartProps) => {
               Tension Oculaire (X) vs C/D Ratio (Y)
             </CardDescription>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Suspects</div>
-            <div className="text-lg font-bold text-orange-500">
-              {data.kpis?.glaucoma_suspect_count ?? 0}
+          <div className="flex gap-4 text-right">
+            <div>
+              <div className="text-xs text-muted-foreground">Suspects</div>
+              <div className="text-lg font-bold text-orange-500">
+                {data.kpis?.glaucoma_suspect_count ?? 0}
+              </div>
             </div>
+            {data.kpis?.pct_cd_above_06 != null && (
+              <div>
+                <div className="text-xs text-muted-foreground">
+                  C/D &gt; 0.6
+                </div>
+                <div className="text-lg font-bold text-red-500">
+                  {data.kpis.pct_cd_above_06.toFixed(1)}%
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>

@@ -1,25 +1,27 @@
 import { AuthUser } from './auth';
 
 // =============================================================================
-// ROLES
+// ROLES — must match GuissAPI UserRoles enum exactly
 // =============================================================================
 
 export const ROLES = {
   ADMIN: 'ADMIN',
-  DOCTOR: 'DOCTOR',
-  TECHNICIAN: 'TECHNICIAN',
+  STAFF: 'STAFF',
+  DOCTEUR: 'DOCTEUR',
+  TECHNICIEN: 'TECHNICIEN',
   DATA_ENTRY: 'DATA_ENTRY',
-  PARTNER_USER: 'PARTNER_USER',
+  SUPERUSER: 'SUPERUSER',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
-/** Rôles autorisés pour l'application interne (tous sauf ADMIN) */
+/** Rôles autorisés pour l'application interne (tout sauf ADMIN) */
 export const INTERNAL_APP_ROLES: Role[] = [
-  ROLES.DOCTOR,
-  ROLES.TECHNICIAN,
+  ROLES.STAFF,
+  ROLES.DOCTEUR,
+  ROLES.TECHNICIEN,
   ROLES.DATA_ENTRY,
-  ROLES.PARTNER_USER,
+  ROLES.SUPERUSER,
 ];
 
 // =============================================================================
@@ -92,6 +94,15 @@ export const PERMISSIONS = {
   'sites:create': 'Créer un site',
   'sites:edit': 'Modifier un site',
   'sites:delete': 'Supprimer un site',
+
+  // Conducteurs
+  'drivers:view': 'Voir les conducteurs',
+
+  // Facturation
+  'billing:view': 'Voir la facturation',
+
+  // Admin
+  'admin:users': 'Gérer les utilisateurs',
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -101,23 +112,21 @@ export type Permission = keyof typeof PERMISSIONS;
 // =============================================================================
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  // ADMIN n'a pas accès à l'application interne
-  ADMIN: [],
+  // ADMIN n'a pas accès à l'application interne — géré via interface admin dédiée
+  ADMIN: ['admin:users'],
 
-  // DOCTOR : accès complet aux données médicales
-  DOCTOR: [
-    // Patients
+  // SUPERUSER : toutes les permissions sans restriction (pour tests)
+  SUPERUSER: [
     'patients:view',
     'patients:create',
     'patients:edit',
     'patients:delete',
+    'patients:hard-delete',
     'patients:restore',
     'patients:view-deleted',
     'patients:bulk-import',
-    // Antécédents
     'antecedents:view',
     'antecedents:edit',
-    // Examens
     'exams:view',
     'exams:create',
     'exams:delete',
@@ -126,125 +135,161 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'exams:clinical:view',
     'exams:clinical:edit',
     'exams:complete',
-    // Pièces jointes
     'attachments:view',
     'attachments:upload',
     'attachments:delete',
-    // Consultations
     'consultations:view',
     'consultations:create',
     'consultations:edit',
     'consultations:cancel',
-    // Rendez-vous
     'appointments:view',
     'appointments:create',
     'appointments:edit',
     'appointments:cancel',
-    // Planning
     'planning:view',
-    // Analytics & Reports
     'analytics:view',
     'reports:view',
     'reports:export',
-    // Dossier Patient
     'patient-records:view',
-    // Sites
+    'drivers:view',
+    'billing:view',
     'sites:view',
     'sites:create',
     'sites:edit',
     'sites:delete',
+    'admin:users',
   ],
 
-  // TECHNICIAN : données techniques uniquement
-  TECHNICIAN: [
-    // Patients (lecture + création)
+  // STAFF : accès complet, gestion admin incluse
+  STAFF: [
     'patients:view',
     'patients:create',
     'patients:edit',
-    // Antécédents (lecture)
-    'antecedents:view',
-    // Examens (techniques uniquement)
-    'exams:view',
-    'exams:create',
-    'exams:technical:view',
-    'exams:technical:edit',
-    'exams:clinical:view', // Peut voir mais pas modifier
-    // Pièces jointes
-    'attachments:view',
-    'attachments:upload',
-    // Consultations (lecture)
-    'consultations:view',
-    // Rendez-vous
-    'appointments:view',
-    'appointments:create',
-    'appointments:edit',
-    // Planning
-    'planning:view',
-    // Dossier Patient
-    'patient-records:view',
-    // Sites
-    'sites:view',
-    'sites:create',
-    'sites:edit',
-  ],
-
-  // DATA_ENTRY : saisie de données
-  DATA_ENTRY: [
-    // Patients
-    'patients:view',
-    'patients:create',
-    'patients:edit',
+    'patients:delete',
+    'patients:hard-delete',
+    'patients:restore',
+    'patients:view-deleted',
     'patients:bulk-import',
-    // Antécédents
     'antecedents:view',
     'antecedents:edit',
-    // Examens (création et technique)
+    'exams:view',
+    'exams:create',
+    'exams:delete',
+    'exams:technical:view',
+    'exams:technical:edit',
+    'exams:clinical:view',
+    'exams:clinical:edit',
+    'exams:complete',
+    'attachments:view',
+    'attachments:upload',
+    'attachments:delete',
+    'consultations:view',
+    'consultations:create',
+    'consultations:edit',
+    'consultations:cancel',
+    'appointments:view',
+    'appointments:create',
+    'appointments:edit',
+    'appointments:cancel',
+    'planning:view',
+    'analytics:view',
+    'reports:view',
+    'reports:export',
+    'patient-records:view',
+    'drivers:view',
+    'billing:view',
+    'sites:view',
+    'sites:create',
+    'sites:edit',
+    'sites:delete',
+    'admin:users',
+  ],
+
+  // DOCTEUR : accès complet aux données médicales
+  DOCTEUR: [
+    'patients:view',
+    'patients:create',
+    'patients:edit',
+    'patients:delete',
+    'patients:restore',
+    'patients:view-deleted',
+    'patients:bulk-import',
+    'antecedents:view',
+    'antecedents:edit',
+    'exams:view',
+    'exams:create',
+    'exams:delete',
+    'exams:technical:view',
+    'exams:technical:edit',
+    'exams:clinical:view',
+    'exams:clinical:edit',
+    'exams:complete',
+    'attachments:view',
+    'attachments:upload',
+    'attachments:delete',
+    'consultations:view',
+    'consultations:create',
+    'consultations:edit',
+    'consultations:cancel',
+    'appointments:view',
+    'appointments:create',
+    'appointments:edit',
+    'appointments:cancel',
+    'planning:view',
+    'analytics:view',
+    'reports:view',
+    'reports:export',
+    'patient-records:view',
+    'drivers:view',
+    'billing:view',
+    'sites:view',
+  ],
+
+  // DATA_ENTRY : accès complet dépistage + analytics, pas de billing/RDV/sites/admin
+  DATA_ENTRY: [
+    'patients:view',
+    'patients:create',
+    'patients:edit',
+    'antecedents:view',
+    'antecedents:edit',
+    'exams:view',
+    'exams:create',
+    'exams:delete',
+    'exams:technical:view',
+    'exams:technical:edit',
+    'exams:clinical:view',
+    'exams:clinical:edit',
+    'exams:complete',
+    'attachments:view',
+    'attachments:upload',
+    'attachments:delete',
+    'analytics:view',
+    'reports:view',
+    'reports:export',
+    'patient-records:view',
+  ],
+
+  // TECHNICIEN : données techniques uniquement
+  TECHNICIEN: [
+    'patients:view',
+    'patients:create',
+    'patients:edit',
+    'antecedents:view',
     'exams:view',
     'exams:create',
     'exams:technical:view',
     'exams:technical:edit',
-    // Pièces jointes
+    'exams:clinical:view',
     'attachments:view',
     'attachments:upload',
-    // Consultations
     'consultations:view',
-    'consultations:create',
-    // Rendez-vous
     'appointments:view',
     'appointments:create',
     'appointments:edit',
-    // Planning
     'planning:view',
-    // Dossier Patient
     'patient-records:view',
-    // Sites
+    'drivers:view',
     'sites:view',
-    'sites:create',
-    'sites:edit',
-  ],
-
-  // PARTNER_USER : accès limité en lecture
-  PARTNER_USER: [
-    // Patients (lecture uniquement)
-    'patients:view',
-    // Antécédents (lecture)
-    'antecedents:view',
-    // Examens (lecture uniquement)
-    'exams:view',
-    'exams:technical:view',
-    'exams:clinical:view',
-    // Pièces jointes (lecture)
-    'attachments:view',
-    // Consultations (lecture)
-    'consultations:view',
-    // Rendez-vous (lecture)
-    'appointments:view',
-    // Planning
-    'planning:view',
-    // Reports
-    'reports:view',
-    // Dossier Patient
-    'patient-records:view',
   ],
 };
 
@@ -252,164 +297,100 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 // HELPER FUNCTIONS - ROLES
 // =============================================================================
 
-/**
- * Vérifie si l'utilisateur a un rôle spécifique
- */
 export const hasRole = (
   user: AuthUser | null | undefined,
   role: Role,
 ): boolean => {
-  return user?.roles?.includes(role) ?? false;
+  return user?.role === role;
 };
 
-/**
- * Vérifie si l'utilisateur a au moins un des rôles spécifiés
- */
 export const hasAnyRole = (
   user: AuthUser | null | undefined,
   roles: Role[],
 ): boolean => {
-  return roles.some((role) => user?.roles?.includes(role)) ?? false;
-};
-
-/**
- * Vérifie si l'utilisateur a tous les rôles spécifiés
- */
-export const hasAllRoles = (
-  user: AuthUser | null | undefined,
-  roles: Role[],
-): boolean => {
-  return roles.every((role) => user?.roles?.includes(role)) ?? false;
+  return roles.some((role) => user?.role === role);
 };
 
 // =============================================================================
 // HELPER FUNCTIONS - PERMISSIONS
 // =============================================================================
 
-/**
- * Récupère toutes les permissions d'un utilisateur basées sur ses rôles
- */
 export const getUserPermissions = (
   user: AuthUser | null | undefined,
 ): Permission[] => {
-  if (!user?.roles) return [];
+  if (!user?.role) return [];
 
-  const permissions = new Set<Permission>();
-
-  user.roles.forEach((role) => {
-    const rolePermissions = ROLE_PERMISSIONS[role as Role];
-    if (rolePermissions) {
-      rolePermissions.forEach((permission) => permissions.add(permission));
-    }
-  });
-
-  return Array.from(permissions);
+  const rolePermissions = ROLE_PERMISSIONS[user.role as Role];
+  return rolePermissions ?? [];
 };
 
-/**
- * Vérifie si l'utilisateur a une permission spécifique
- */
 export const hasPermission = (
   user: AuthUser | null | undefined,
   permission: Permission,
 ): boolean => {
-  const userPermissions = getUserPermissions(user);
-  return userPermissions.includes(permission);
+  return getUserPermissions(user).includes(permission);
 };
 
-/**
- * Vérifie si l'utilisateur a au moins une des permissions spécifiées
- */
 export const hasAnyPermission = (
   user: AuthUser | null | undefined,
   permissions: Permission[],
 ): boolean => {
   const userPermissions = getUserPermissions(user);
-  return permissions.some((permission) => userPermissions.includes(permission));
+  return permissions.some((p) => userPermissions.includes(p));
 };
 
-/**
- * Vérifie si l'utilisateur a toutes les permissions spécifiées
- */
 export const hasAllPermissions = (
   user: AuthUser | null | undefined,
   permissions: Permission[],
 ): boolean => {
   const userPermissions = getUserPermissions(user);
-  return permissions.every((permission) =>
-    userPermissions.includes(permission),
-  );
+  return permissions.every((p) => userPermissions.includes(p));
 };
 
 // =============================================================================
 // ACCESS CHECKS
 // =============================================================================
 
-/**
- * Vérifie si l'utilisateur a accès à l'application interne
- */
 export const canAccessInternalApp = (
   user: AuthUser | null | undefined,
 ): boolean => {
   return hasAnyRole(user, INTERNAL_APP_ROLES);
 };
 
-/**
- * Vérifie si l'utilisateur est un admin (pour le bloquer de l'app interne)
- */
-export const isAdmin = (user: AuthUser | null | undefined): boolean => {
-  return hasRole(user, ROLES.ADMIN);
-};
+export const isAdmin = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.ADMIN);
 
-/**
- * Vérifie si l'utilisateur est un médecin
- */
-export const isDoctor = (user: AuthUser | null | undefined): boolean => {
-  return hasRole(user, ROLES.DOCTOR);
-};
+export const isStaff = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.STAFF);
 
-/**
- * Vérifie si l'utilisateur est un technicien
- */
-export const isTechnician = (user: AuthUser | null | undefined): boolean => {
-  return hasRole(user, ROLES.TECHNICIAN);
-};
+export const isDocteur = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.DOCTEUR);
 
-/**
- * Vérifie si l'utilisateur est un opérateur de saisie
- */
-export const isDataEntry = (user: AuthUser | null | undefined): boolean => {
-  return hasRole(user, ROLES.DATA_ENTRY);
-};
+export const isTechnicien = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.TECHNICIEN);
 
-/**
- * Vérifie si l'utilisateur est un partenaire
- */
-export const isPartnerUser = (user: AuthUser | null | undefined): boolean => {
-  return hasRole(user, ROLES.PARTNER_USER);
-};
+export const isSuperuser = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.SUPERUSER);
+
+export const isDataEntry = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.DATA_ENTRY);
 
 // =============================================================================
 // LABELS
 // =============================================================================
 
-/**
- * Récupère le label d'un rôle
- */
 export const getRoleLabel = (role: Role): string => {
   const labels: Record<Role, string> = {
     ADMIN: 'Administrateur',
-    DOCTOR: 'Médecin',
-    TECHNICIAN: 'Technicien',
+    STAFF: 'Staff',
+    DOCTEUR: 'Médecin',
+    TECHNICIEN: 'Technicien',
     DATA_ENTRY: 'Saisie de données',
-    PARTNER_USER: 'Partenaire',
+    SUPERUSER: 'Superutilisateur',
   };
   return labels[role] || role;
 };
 
-/**
- * Récupère la description d'une permission
- */
 export const getPermissionLabel = (permission: Permission): string => {
   return PERMISSIONS[permission] || permission;
 };

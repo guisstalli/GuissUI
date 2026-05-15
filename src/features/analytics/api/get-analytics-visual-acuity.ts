@@ -25,8 +25,8 @@ const buildVisualAcuityUrl = (filters: AnalyticsFilters) => {
 
   const queryString = params.toString();
   return queryString
-    ? `/api/v1/analytics/visual-acuity/?${queryString}`
-    : '/api/v1/analytics/visual-acuity/';
+    ? `/analytics/visual-acuity/?${queryString}`
+    : '/analytics/visual-acuity/';
 };
 
 export const getAnalyticsVisualAcuity = (

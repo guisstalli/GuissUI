@@ -23,7 +23,7 @@ export const createChildExam = (
   data: ExamenChildCreate,
 ): Promise<ExamenChildDetailApi> => {
   return api.post<ExamenChildDetailApi>(
-    '/api/v1/depistage/examens/enfants/create/',
+    '/depistage/examens/enfants/create/',
     data,
   );
 };
@@ -78,7 +78,7 @@ export const createMinimalChildExam = (
   data: ExamenChildCreate,
 ): Promise<ExamenChildDetailApi> => {
   return api.post<ExamenChildDetailApi>(
-    '/api/v1/depistage/examens/enfants/create/minimal/',
+    '/depistage/examens/enfants/create/minimal/',
     data,
   );
 };
@@ -139,7 +139,7 @@ export const updateTechnicalData = ({
   data,
 }: UpdateTechnicalParams): Promise<ExamenChildDetailApi> => {
   return api.put<ExamenChildDetailApi>(
-    `/api/v1/depistage/examens/enfants/${id}/technical/`,
+    `/depistage/examens/enfants/${id}/technical/`,
     data,
   );
 };
@@ -152,7 +152,7 @@ export const patchTechnicalData = ({
   data,
 }: UpdateTechnicalParams): Promise<ExamenChildDetailApi> => {
   return api.patch<ExamenChildDetailApi>(
-    `/api/v1/depistage/examens/enfants/${id}/technical/`,
+    `/depistage/examens/enfants/${id}/technical/`,
     data,
   );
 };
@@ -213,7 +213,7 @@ export const updateClinicalData = ({
   data,
 }: UpdateClinicalParams): Promise<ExamenChildDetailApi> => {
   return api.put<ExamenChildDetailApi>(
-    `/api/v1/depistage/examens/enfants/${id}/clinical/`,
+    `/depistage/examens/enfants/${id}/clinical/`,
     data,
   );
 };
@@ -226,7 +226,7 @@ export const patchClinicalData = ({
   data,
 }: UpdateClinicalParams): Promise<ExamenChildDetailApi> => {
   return api.patch<ExamenChildDetailApi>(
-    `/api/v1/depistage/examens/enfants/${id}/clinical/`,
+    `/depistage/examens/enfants/${id}/clinical/`,
     data,
   );
 };
@@ -278,7 +278,7 @@ export const useUpdateClinicalData = ({
  * Supprimer un examen enfant
  */
 export const deleteChildExam = (id: number): Promise<void> => {
-  return api.delete(`/api/v1/depistage/examens/enfants/${id}/delete/`);
+  return api.delete(`/depistage/examens/enfants/${id}/delete/`);
 };
 
 type UseDeleteChildExamOptions = {

@@ -58,41 +58,14 @@ export const mapVisualAcuityFormToApi = (data: VisualAcuity) => {
     avac_od: toFixedDecimalString(data.avac_od),
     avac_og: toFixedDecimalString(data.avac_og),
     avac_odg: toFixedDecimalString(data.avac_odg),
-    avsc_od_avec_correction: toFixedDecimalString(
-      coalesceValue(
-        data.avsc_od_avec_correction,
-        correction ? data.avsc_od : null,
-      ),
+    avac_od_prescrite: toFixedDecimalString(
+      coalesceValue(data.avac_od_prescrite, correction ? data.avac_od : null),
     ),
-    avsc_og_avec_correction: toFixedDecimalString(
-      coalesceValue(
-        data.avsc_og_avec_correction,
-        correction ? data.avsc_og : null,
-      ),
+    avac_og_prescrite: toFixedDecimalString(
+      coalesceValue(data.avac_og_prescrite, correction ? data.avac_og : null),
     ),
-    avsc_odg_avec_correction: toFixedDecimalString(
-      coalesceValue(
-        data.avsc_odg_avec_correction,
-        correction ? data.avsc_odg : null,
-      ),
-    ),
-    avac_od_avec_correction: toFixedDecimalString(
-      coalesceValue(
-        data.avac_od_avec_correction,
-        correction ? data.avac_od : null,
-      ),
-    ),
-    avac_og_avec_correction: toFixedDecimalString(
-      coalesceValue(
-        data.avac_og_avec_correction,
-        correction ? data.avac_og : null,
-      ),
-    ),
-    avac_odg_avec_correction: toFixedDecimalString(
-      coalesceValue(
-        data.avac_odg_avec_correction,
-        correction ? data.avac_odg : null,
-      ),
+    avac_odg_prescrite: toFixedDecimalString(
+      coalesceValue(data.avac_odg_prescrite, correction ? data.avac_odg : null),
     ),
   };
 };
@@ -300,6 +273,7 @@ export const mapPerimetryFormToApi = (data: Perimetry) => {
     limite_temporale_droit: data.limite_temporale_droit?.toString() || null,
     limite_temporale_gauche: data.limite_temporale_gauche?.toString() || null,
     score_esternmen: data.score_esternmen?.toString() || null,
+    examens_additionnels: data.examens_additionnels ?? [],
   };
 };
 

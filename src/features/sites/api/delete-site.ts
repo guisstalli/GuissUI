@@ -4,7 +4,7 @@ import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
 export const deleteSite = ({ siteId }: { siteId: number }): Promise<void> => {
-  return api.delete(`/api/v1/depistage/sites/${siteId}/`);
+  return api.delete(`/depistage/sites/${siteId}/`);
 };
 
 type UseDeleteSiteOptions = {

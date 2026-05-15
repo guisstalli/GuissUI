@@ -3,49 +3,39 @@ import { withAuth } from 'next-auth/middleware';
 
 import { INTERNAL_APP_ROLES, ROLES } from '@/lib/authorization';
 
-const ALLOWED_ROLES = INTERNAL_APP_ROLES;
-
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    const { pathname } = req.nextUrl;
 
-    // Routes publiques et API Auth - laisser passer impérativement
-    if (
-      pathname.startsWith('/api/auth') ||
-      pathname.startsWith('/_next') ||
-      pathname.startsWith('/unauthorized') ||
-      pathname.includes('.')
-    ) {
-      return NextResponse.next();
-    }
-
-    // Si pas de token, withAuth redirigera vers la page signin (qui est Keycloak)
     if (!token) {
       return NextResponse.next();
     }
 
-    // Vérification des rôles
-    const userRoles = (token.roles as string[]) || [];
-    const hasInternalRole = userRoles.some((role) =>
-      ALLOWED_ROLES.includes(role as (typeof ROLES)[keyof typeof ROLES]),
-    );
-    const isOnlyAdmin = userRoles.includes(ROLES.ADMIN) && !hasInternalRole;
+    const userRole = token.role as string | undefined;
+    const hasInternalRole =
+      userRole !== undefined &&
+      INTERNAL_APP_ROLES.includes(
+        userRole as (typeof ROLES)[keyof typeof ROLES],
+      );
 
-    if (isOnlyAdmin || !hasInternalRole) {
+    if (!hasInternalRole) {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
 
     return NextResponse.next();
   },
   {
+    pages: {
+      signIn: '/auth/login',
+    },
     callbacks: {
-      // Laisser NextAuth gérer l'authentification par défaut
       authorized: ({ token }) => !!token,
     },
   },
 );
 
 export const config = {
-  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
+  matcher: [
+    '/((?!api/auth|auth|unauthorized|evenements|rendez-vous|_next/static|_next/image|favicon.ico|.*\\..*).*)',
+  ],
 };

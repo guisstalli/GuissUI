@@ -3,7 +3,7 @@
 import { AlertCircle, Clock, Loader2, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -175,7 +175,7 @@ export default function IncompleteExamsPage() {
 
           {/* Exams Table */}
           <div className="rounded-lg border border-border bg-card">
-            <Table>
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>N° Examen</TableHead>

@@ -3,7 +3,7 @@
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { Shell } from '@/components/layouts';
+import { AppShell as Shell } from '@/app/_shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/form';
 import { SiteFormModal } from '@/features/sites/components/site-form-modal';

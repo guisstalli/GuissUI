@@ -10,7 +10,7 @@ import type { PaginatedPatientsResponse, PatientsQueryParams } from '../types';
 export const getPatients = (
   params?: PatientsQueryParams,
 ): Promise<PaginatedPatientsResponse> => {
-  return api.get<PaginatedPatientsResponse>('/api/v1/depistage/patients/', {
+  return api.get<PaginatedPatientsResponse>('/depistage/patients/', {
     params,
   });
 };
@@ -47,9 +47,7 @@ export const usePatients = ({
  * Récupère les patients adultes uniquement
  */
 export const getAdultPatients = (): Promise<PaginatedPatientsResponse> => {
-  return api.get<PaginatedPatientsResponse>(
-    '/api/v1/depistage/patients/adults/',
-  );
+  return api.get<PaginatedPatientsResponse>('/depistage/patients/adults/');
 };
 
 export const getAdultPatientsQueryOptions = () => {
@@ -70,9 +68,7 @@ export const useAdultPatients = (enabled = true) => {
  * Récupère les patients enfants uniquement
  */
 export const getChildPatients = (): Promise<PaginatedPatientsResponse> => {
-  return api.get<PaginatedPatientsResponse>(
-    '/api/v1/depistage/patients/children/',
-  );
+  return api.get<PaginatedPatientsResponse>('/depistage/patients/children/');
 };
 
 export const getChildPatientsQueryOptions = () => {
@@ -93,9 +89,7 @@ export const useChildPatients = (enabled = true) => {
  * Récupère les patients supprimés (soft-deleted)
  */
 export const getDeletedPatients = (): Promise<PaginatedPatientsResponse> => {
-  return api.get<PaginatedPatientsResponse>(
-    '/api/v1/depistage/patients/deleted/',
-  );
+  return api.get<PaginatedPatientsResponse>('/depistage/patients/deleted/');
 };
 
 export const getDeletedPatientsQueryOptions = () => {

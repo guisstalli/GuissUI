@@ -15,21 +15,21 @@ import {
  * Soft-delete un patient (le marque comme supprimé)
  */
 export const deletePatient = (id: number): Promise<void> => {
-  return api.delete(`/api/v1/depistage/patients/${id}/delete/`);
+  return api.delete(`/depistage/patients/${id}/delete/`);
 };
 
 /**
  * Hard-delete un patient (suppression définitive)
  */
 export const hardDeletePatient = (id: number): Promise<void> => {
-  return api.delete(`/api/v1/depistage/patients/${id}/hard-delete/`);
+  return api.delete(`/depistage/patients/${id}/hard-delete/`);
 };
 
 /**
  * Restaurer un patient soft-deleted
  */
 export const restorePatient = (id: number): Promise<Patient> => {
-  return api.post<Patient>(`/api/v1/depistage/patients/${id}/restore/`);
+  return api.post<Patient>(`/depistage/patients/${id}/restore/`);
 };
 
 type UseDeletePatientOptions = {

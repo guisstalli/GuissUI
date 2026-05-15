@@ -1,11 +1,25 @@
-/**
- * Application paths configuration for GUISS Internal Platform
- * Medical application routes for patients and exams management
- * Authentication is handled by Keycloak via NextAuth
- */
 export const paths = {
   home: {
     getHref: () => '/',
+  },
+
+  // Authentication
+  auth: {
+    login: {
+      getHref: (returnTo?: string) =>
+        returnTo
+          ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}`
+          : '/auth/login',
+    },
+    forgotPassword: {
+      getHref: () => '/auth/forgot-password',
+    },
+    resetPassword: {
+      getHref: (token?: string) =>
+        token
+          ? `/auth/reset-password?token=${encodeURIComponent(token)}`
+          : '/auth/reset-password',
+    },
   },
 
   // Dashboard
@@ -33,6 +47,9 @@ export const paths = {
     children: {
       getHref: () => '/patients?type=child',
     },
+    trash: {
+      getHref: () => '/patients/corbeille',
+    },
   },
 
   // Patient Records (Dossier Patient)
@@ -42,8 +59,31 @@ export const paths = {
     },
   },
 
+  // Drivers (Conducteurs)
+  drivers: {
+    list: {
+      getHref: () => '/conducteurs',
+    },
+    detail: {
+      getHref: (id: number | string) => `/conducteurs/${id}`,
+    },
+    trash: {
+      getHref: () => '/conducteurs/corbeille',
+    },
+    exams: {
+      getHref: () => '/conducteurs/examens',
+    },
+    analytics: {
+      getHref: () => '/conducteurs/analytics',
+    },
+  },
+
   // Exams
   exams: {
+    // Unified list
+    list: {
+      getHref: () => '/exams',
+    },
     // Adult Exams
     adult: {
       list: {
@@ -84,63 +124,24 @@ export const paths = {
     },
   },
 
-  // Consultations
-  consultations: {
-    list: {
-      getHref: () => '/consultations',
-    },
-    detail: {
-      getHref: (id: number | string) => `/consultations/${id}`,
-    },
-    create: {
-      getHref: (patientId?: number | string) =>
-        patientId
-          ? `/consultations/new?patient=${patientId}`
-          : '/consultations/new',
-    },
-  },
-
-  // Appointments (Rendez-vous)
-  appointments: {
-    list: {
-      getHref: () => '/appointments',
-    },
-    detail: {
-      getHref: (id: number | string) => `/appointments/${id}`,
-    },
-    create: {
-      getHref: (patientId?: number | string) =>
-        patientId
-          ? `/appointments/new?patient=${patientId}`
-          : '/appointments/new',
-    },
-  },
-
-  // Planning / Agenda
-  planning: {
-    calendar: {
-      getHref: () => '/planning',
-    },
-    day: {
-      getHref: (date: string) => `/planning?view=day&date=${date}`,
-    },
-    week: {
-      getHref: (date: string) => `/planning?view=week&date=${date}`,
-    },
-  },
-
   // Analytics
   analytics: {
     getHref: () => '/analytics',
   },
 
-  // Reports
-  reports: {
+  // --- Pages non encore implémentées (à activer quand les pages seront créées) ---
+  // consultations: { list, detail, create }
+  // planning: { calendar, day, week }
+  // reports: { list, export }
+  // appointments: doublon de rdv.staff.agenda — utiliser paths.rdv à la place
+
+  // Billing (Facturation)
+  billing: {
     list: {
-      getHref: () => '/reports',
+      getHref: () => '/facturation',
     },
-    export: {
-      getHref: () => '/reports/export',
+    detail: {
+      getHref: (id: number | string) => `/facturation/${id}`,
     },
   },
 
@@ -160,6 +161,59 @@ export const paths = {
     },
   },
 
+  // Profile
+  profil: {
+    getHref: () => '/profil',
+  },
+
+  // Admin
+  admin: {
+    users: {
+      getHref: () => '/admin/utilisateurs',
+    },
+  },
+
+  // Events (public + staff)
+  events: {
+    publicList: {
+      getHref: () => '/evenements',
+    },
+    publicDetail: {
+      getHref: (slug: string) => `/evenements/${slug}`,
+    },
+    staff: {
+      list: { getHref: () => '/gestion/evenements' },
+      detail: { getHref: (id: number | string) => `/gestion/evenements/${id}` },
+      create: { getHref: () => '/gestion/evenements/nouveau' },
+    },
+  },
+
+  // Rendez-vous public + staff agenda
+  rdv: {
+    publicBooking: {
+      getHref: () => '/rendez-vous',
+    },
+    publicCancel: {
+      getHref: (token: string) => `/rendez-vous/annuler/${token}`,
+    },
+    staff: {
+      agenda: { getHref: () => '/gestion/rendez-vous' },
+      config: { getHref: () => '/gestion/rendez-vous/config' },
+    },
+  },
+
+  // Paramètres applicatifs
+  parametres: {
+    getHref: () => '/parametres',
+  },
+
+  // Configuration prestations
+  configuration: {
+    prestations: {
+      getHref: () => '/configuration/prestations',
+    },
+  },
+
   // Unauthorized page
   unauthorized: {
     getHref: () => '/unauthorized',
@@ -171,17 +225,21 @@ export const paths = {
   },
 } as const;
 
-// Active paths for the internal application
+// Active paths for the internal application (pages that exist in the App Router)
 export const activePaths = [
   '/',
   '/patients',
   '/exams',
-  '/consultations',
-  '/appointments',
-  '/planning',
+  '/conducteurs',
+  '/facturation',
+  '/gestion/rendez-vous',
+  '/gestion/evenements',
+  '/evenements',
   '/analytics',
-  '/reports',
   '/sites',
+  '/parametres',
+  '/configuration/prestations',
+  '/profil',
   '/unauthorized',
   '/maintenance',
 ] as const;

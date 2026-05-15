@@ -107,7 +107,7 @@ export function VisualAcuityForm({ namePrefix = '' }: VisualAcuityFormProps) {
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
-                <FormLabel>Surcorrection / Avec Correction</FormLabel>
+                <FormLabel>Avec Correction prescrite&nbsp;?</FormLabel>
                 <FormDescription>
                   Activer pour saisir les valeurs avec surcorrection
                 </FormDescription>
@@ -213,7 +213,7 @@ export function VisualAcuityForm({ namePrefix = '' }: VisualAcuityFormProps) {
       {/* Avec correction (AVAC) */}
       <div className="space-y-3">
         <Label className="text-xs font-medium text-muted-foreground">
-          Avec Correction (AVAC)
+          Avec Lunettes
         </Label>
         <div className="grid grid-cols-3 gap-4">
           <FormField
@@ -302,58 +302,17 @@ export function VisualAcuityForm({ namePrefix = '' }: VisualAcuityFormProps) {
         <div className="border-medical-info/20 bg-medical-info/5 space-y-6 rounded-lg border p-4">
           <div className="space-y-3">
             <Label className="text-xs font-semibold text-medical-info">
-              Sans Correction + Avec Surcorrection (AVSC avec correction)
+              Acuité avec correction prescrite (AVAC)
             </Label>
             <div className="grid grid-cols-3 gap-4">
               {['od', 'og', 'odg'].map((eye) => (
                 <FormField
-                  key={`avsc_${eye}_avec_correction`}
+                  key={`avac_${eye}_prescrite`}
                   control={form.control}
-                  name={`${prefix}avsc_${eye}_avec_correction`}
+                  name={`${prefix}avac_${eye}_prescrite`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs uppercase">
-                        {eye} + Corr
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.001"
-                          min="0"
-                          max="10"
-                          placeholder="0 - 10"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value ? Number(e.target.value) : null,
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-xs font-semibold text-medical-info">
-              Avec Correction + Avec Surcorrection (AVAC avec correction)
-            </Label>
-            <div className="grid grid-cols-3 gap-4">
-              {['od', 'og', 'odg'].map((eye) => (
-                <FormField
-                  key={`avac_${eye}_avec_correction`}
-                  control={form.control}
-                  name={`${prefix}avac_${eye}_avec_correction`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs uppercase">
-                        {eye} + Corr
-                      </FormLabel>
+                      <FormLabel className="text-xs uppercase">{eye}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

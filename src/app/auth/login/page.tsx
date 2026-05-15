@@ -1,0 +1,14 @@
+import { Suspense } from 'react';
+
+import { AuthShell } from '@/features/auth/components/auth-shell';
+import { LoginForm } from '@/features/auth/components/login-form';
+
+export default function LoginPage() {
+  return (
+    <AuthShell title="Bienvenue" subtitle="Connectez-vous à votre espace GUISS">
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+    </AuthShell>
+  );
+}
