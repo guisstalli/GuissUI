@@ -78,7 +78,10 @@ export const RiskFactorsSection = ({ data }: RiskFactorsSectionProps) => {
                 label: 'Pathologies ophtalmo.',
                 pct: data.medical_antecedents.has_ophthalmic_pct,
               },
-              { label: 'Ant. familiaux', pct: data.family_history.has_familial_pct },
+              {
+                label: 'Ant. familiaux',
+                pct: data.family_history.has_familial_pct,
+              },
               { label: 'Addictions', pct: data.addiction.has_addiction_pct },
             ].map(({ label, pct }) => (
               <div key={label} className="space-y-1">
@@ -123,10 +126,17 @@ export const RiskFactorsSection = ({ data }: RiskFactorsSectionProps) => {
                       fontSize={11}
                     />
                     <Tooltip
-                      formatter={(value: any) => [`${Number(value).toFixed(1)}%`]}
+                      formatter={(value: any) => [
+                        `${Number(value).toFixed(1)}%`,
+                      ]}
                       contentStyle={{ borderRadius: '8px' }}
                     />
-                    <Bar dataKey="pct" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={32} />
+                    <Bar
+                      dataKey="pct"
+                      fill="#f59e0b"
+                      radius={[4, 4, 0, 0]}
+                      barSize={32}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -154,10 +164,17 @@ export const RiskFactorsSection = ({ data }: RiskFactorsSectionProps) => {
                         fontSize={11}
                       />
                       <Tooltip
-                        formatter={(value: any) => [`${Number(value).toFixed(1)}%`]}
+                        formatter={(value: any) => [
+                          `${Number(value).toFixed(1)}%`,
+                        ]}
                         contentStyle={{ borderRadius: '8px' }}
                       />
-                      <Bar dataKey="pct" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={28} />
+                      <Bar
+                        dataKey="pct"
+                        fill="#ef4444"
+                        radius={[4, 4, 0, 0]}
+                        barSize={28}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

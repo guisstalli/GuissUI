@@ -114,7 +114,9 @@ export const DriverExperienceSection = ({
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: any) => [`${Number(value).toFixed(1)}%`]}
+                        formatter={(value: any) => [
+                          `${Number(value).toFixed(1)}%`,
+                        ]}
                         contentStyle={{ borderRadius: '8px' }}
                       />
                     </PieChart>
@@ -230,7 +232,9 @@ export const DriverExperienceSection = ({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Aucune corrélation.</p>
+              <p className="text-sm text-muted-foreground">
+                Aucune corrélation.
+              </p>
             )}
           </div>
         </div>

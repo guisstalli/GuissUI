@@ -19,12 +19,23 @@ export const PAIEMENT_MODE_VALUES = [
 
 // ─── Prestation ───────────────────────────────────────────────────────────────
 
+export const BillingPreferencesSchema = z.object({
+  prefixe_facture: z.string(),
+  prochain_numero: z.number(),
+  conditions_paiement: z.string(),
+  mention_legale: z.string(),
+  devise: z.string(),
+});
+
+export type BillingPreferences = z.infer<typeof BillingPreferencesSchema>;
+
 export const PrestationSchema = z.object({
   id: z.number(),
   libelle: z.string(),
   description: z.string(),
   prix: z.string(),
   prix_display: z.string(),
+  is_active: z.boolean(),
 });
 
 export type Prestation = z.infer<typeof PrestationSchema>;

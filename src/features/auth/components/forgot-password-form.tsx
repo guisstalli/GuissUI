@@ -17,7 +17,7 @@ import {
 } from '../types/schemas';
 
 const inputCx =
-  'h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] pl-10 pr-3 text-sm text-white placeholder:text-slate-500 transition-colors focus:border-cyan-400/60 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-cyan-400/30';
+  'h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-400/60 dark:focus:bg-white/[0.06] dark:focus:ring-cyan-400/30';
 
 export function ForgotPasswordForm() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -51,14 +51,14 @@ export function ForgotPasswordForm() {
       <div className="space-y-5">
         <div
           role="status"
-          className="rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-4 py-3 text-sm text-cyan-100"
+          className="rounded-lg border border-cyan-500/30 bg-cyan-50 px-4 py-3 text-sm text-cyan-700 dark:bg-cyan-400/5 dark:text-cyan-100"
         >
           Si un compte est associé à cette adresse, un e-mail contenant les
           instructions de réinitialisation vient d&apos;être envoyé.
         </div>
         <Link
           href={paths.auth.login.getHref()}
-          className="inline-flex items-center gap-2 text-sm text-cyan-400 transition-colors hover:text-cyan-300"
+          className="inline-flex items-center gap-2 text-sm text-cyan-600 transition-colors hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
         >
           <ArrowLeft className="size-4" />
           Retour à la connexion
@@ -72,7 +72,7 @@ export function ForgotPasswordForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="email"
-          className="block text-xs font-medium text-slate-300"
+          className="block text-xs font-medium text-slate-600 dark:text-slate-300"
         >
           Adresse e-mail
         </label>
@@ -92,7 +92,7 @@ export function ForgotPasswordForm() {
           />
         </div>
         {errors.email && (
-          <p className="text-xs text-red-400" role="alert">
+          <p className="text-xs text-red-600 dark:text-red-400" role="alert">
             {errors.email.message}
           </p>
         )}
@@ -101,7 +101,7 @@ export function ForgotPasswordForm() {
       {serverError && (
         <div
           role="alert"
-          className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+          className="rounded-md border border-red-500/30 bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-300"
         >
           {serverError}
         </div>
@@ -118,7 +118,7 @@ export function ForgotPasswordForm() {
       <div className="text-center">
         <Link
           href={paths.auth.login.getHref()}
-          className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-slate-200"
+          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
         >
           <ArrowLeft className="size-4" />
           Retour à la connexion

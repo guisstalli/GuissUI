@@ -30,7 +30,7 @@ const getNotifications = (
   }
 
   const qs = searchParams.toString();
-  const url = qs ? `/api/v1/notifications/?${qs}` : '/api/v1/notifications/';
+  const url = qs ? `/notifications/?${qs}` : '/notifications/';
 
   return api.get<PaginatedNotifications>(url);
 };

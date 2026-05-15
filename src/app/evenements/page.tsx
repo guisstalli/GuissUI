@@ -66,7 +66,7 @@ function CapacityBar({
   const inscrits = max - restants;
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs text-slate-500">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>{inscrits} inscrits</span>
         <span>{restants} places restantes</span>
       </div>
@@ -83,7 +83,7 @@ function EventCard({ event }: { event: EventPublic }) {
   return (
     <Link
       href={`/evenements/${event.slug}`}
-      className="group block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className="group block rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
       {/* Header */}
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -100,7 +100,7 @@ function EventCard({ event }: { event: EventPublic }) {
               )}
               {statut.label}
             </span>
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
               {typeLabel(event.type_examen)}
             </span>
             {event.pour_conducteurs && (
@@ -109,15 +109,15 @@ function EventCard({ event }: { event: EventPublic }) {
               </span>
             )}
           </div>
-          <h3 className="line-clamp-2 text-lg font-bold text-slate-900 transition-colors group-hover:text-blue-700">
+          <h3 className="line-clamp-2 text-lg font-bold text-foreground transition-colors group-hover:text-blue-700">
             {event.titre}
           </h3>
         </div>
-        <ChevronRight className="mt-1 size-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-blue-500" />
+        <ChevronRight className="text-muted-foreground/60 mt-1 size-5 shrink-0 transition-transform group-hover:translate-x-1 group-hover:text-blue-500" />
       </div>
 
       {/* Meta */}
-      <div className="mb-4 space-y-2 text-sm text-slate-600">
+      <div className="mb-4 space-y-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Calendar className="size-4 shrink-0 text-blue-500" />
           <span className="capitalize">{formatDate(event.date_event)}</span>
@@ -152,7 +152,7 @@ function EventCard({ event }: { event: EventPublic }) {
           </p>
         ) : (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-muted-foreground">
               {event.capacite_max === null
                 ? 'Places illimitées'
                 : `${event.places_restantes} places`}
@@ -169,7 +169,7 @@ function EventCard({ event }: { event: EventPublic }) {
 
 function EventCardSkeleton() {
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
+    <div className="space-y-4 rounded-2xl border border-border bg-card p-6">
       <div className="flex gap-2">
         <Skeleton className="h-5 w-16 rounded-full" />
         <Skeleton className="h-5 w-20 rounded-full" />
@@ -248,12 +248,12 @@ export default function EvenementsPublicPage() {
             {/* Search */}
             <div className="mx-auto flex max-w-lg gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <Search className="text-muted-foreground/60 absolute left-3 top-1/2 size-4 -translate-y-1/2" />
                 <Input
                   placeholder="Rechercher un événement ou un lieu..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-11 w-full rounded-xl border-0 bg-white pl-9 text-slate-900"
+                  className="h-11 w-full rounded-xl border-0 bg-card pl-9 text-foreground"
                 />
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function EvenementsPublicPage() {
         <div className="relative">
           <svg
             viewBox="0 0 1440 60"
-            className="w-full fill-slate-50"
+            className="w-full fill-background"
             preserveAspectRatio="none"
           >
             <path d="M0,60 C360,0 1080,60 1440,20 L1440,60 Z" />
@@ -273,16 +273,16 @@ export default function EvenementsPublicPage() {
       </div>
 
       {/* Content */}
-      <div className="bg-slate-50 pb-20">
+      <div className="bg-background pb-20">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3 py-6">
-            <div className="flex items-center gap-1.5 text-sm font-medium text-slate-500">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
               <Filter className="size-4" />
               Filtrer :
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-9 w-44 rounded-lg border-slate-200 bg-white">
+              <SelectTrigger className="h-9 w-44 rounded-lg border-border bg-card">
                 <SelectValue placeholder="Type d'examen" />
               </SelectTrigger>
               <SelectContent>
@@ -300,14 +300,14 @@ export default function EvenementsPublicPage() {
                 'h-9 rounded-lg border px-3.5 text-sm font-medium transition-colors',
                 includePast
                   ? 'border-blue-300 bg-blue-50 text-blue-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
+                  : 'border-border bg-card text-slate-600 hover:bg-slate-50',
               )}
             >
               {includePast ? '✓ ' : ''}Voir passés
             </button>
 
             {data && (
-              <span className="ml-auto text-sm text-slate-400">
+              <span className="text-muted-foreground/60 ml-auto text-sm">
                 {filtered.length} événement{filtered.length > 1 ? 's' : ''}
               </span>
             )}
@@ -347,7 +347,7 @@ export default function EvenementsPublicPage() {
           )}
 
           {/* Footer */}
-          <div className="mt-16 border-t border-slate-200 pt-8 text-center text-sm text-slate-400">
+          <div className="text-muted-foreground/60 mt-16 border-t border-border pt-8 text-center text-sm">
             <p>
               © {new Date().getFullYear()} GUISS — Service Ophtalmologie ·
               Université Iba Der Thiam

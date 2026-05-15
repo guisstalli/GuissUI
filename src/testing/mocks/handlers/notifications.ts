@@ -42,20 +42,20 @@ export const mockPaginatedNotifications: PaginatedNotifications = {
 };
 
 export const notificationsHandlers = [
-  http.get(`${env.API_URL}/api/v1/notifications/`, () =>
+  http.get(`${env.API_URL}/notifications/`, () =>
     HttpResponse.json(mockPaginatedNotifications),
   ),
 
-  http.get(`${env.API_URL}/api/v1/notifications/unread-count/`, () =>
+  http.get(`${env.API_URL}/notifications/unread-count/`, () =>
     HttpResponse.json({ count: 2 }),
   ),
 
-  http.post(`${env.API_URL}/api/v1/notifications/:id/read/`, ({ params }) => {
+  http.post(`${env.API_URL}/notifications/:id/read/`, ({ params }) => {
     const id = Number(params.id);
     return HttpResponse.json({ detail: `Notification ${id} marked as read.` });
   }),
 
-  http.post(`${env.API_URL}/api/v1/notifications/read-all/`, () =>
+  http.post(`${env.API_URL}/notifications/read-all/`, () =>
     HttpResponse.json({
       detail: 'All notifications marked as read.',
       count: 2,

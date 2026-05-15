@@ -177,7 +177,7 @@ export function UsersTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border">
+      <div className="rounded-lg border bg-card">
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
             <Spinner size="md" />
@@ -204,7 +204,7 @@ export function UsersTable() {
           </div>
         ) : (
           <>
-            <TableElement>
+            <TableElement className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12" />

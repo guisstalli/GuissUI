@@ -175,7 +175,7 @@ export default function IncompleteExamsPage() {
 
           {/* Exams Table */}
           <div className="rounded-lg border border-border bg-card">
-            <Table>
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>N° Examen</TableHead>

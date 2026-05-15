@@ -1,10 +1,11 @@
-import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { server } from '@/testing/mocks/server';
+
 import { useUpdateTechnicalData, useUpdateClinicalData } from '../mutations';
 
 // =============================================================================
@@ -72,9 +73,8 @@ describe('useUpdateTechnicalData', () => {
   describe('succès', () => {
     beforeEach(() => {
       server.use(
-        http.put(
-          `${API_URL}/depistage/examens/enfants/:id/technical/`,
-          () => HttpResponse.json(mockExamChildDetail, { status: 200 }),
+        http.put(`${API_URL}/depistage/examens/enfants/:id/technical/`, () =>
+          HttpResponse.json(mockExamChildDetail, { status: 200 }),
         ),
       );
     });
@@ -115,7 +115,9 @@ describe('useUpdateTechnicalData', () => {
       // Arrange
       const { wrapper, queryClient } = createWrapper();
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
-      const { result } = renderHook(() => useUpdateTechnicalData(), { wrapper });
+      const { result } = renderHook(() => useUpdateTechnicalData(), {
+        wrapper,
+      });
 
       // Act
       act(() => {
@@ -146,7 +148,9 @@ describe('useUpdateTechnicalData', () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(() => useUpdateTechnicalData(), { wrapper });
+      const { result } = renderHook(() => useUpdateTechnicalData(), {
+        wrapper,
+      });
 
       // Act
       act(() => {
@@ -164,13 +168,11 @@ describe('useUpdateTechnicalData', () => {
   describe('erreur 400', () => {
     beforeEach(() => {
       server.use(
-        http.put(
-          `${API_URL}/depistage/examens/enfants/:id/technical/`,
-          () =>
-            HttpResponse.json(
-              { detail: 'Données techniques invalides' },
-              { status: 400 },
-            ),
+        http.put(`${API_URL}/depistage/examens/enfants/:id/technical/`, () =>
+          HttpResponse.json(
+            { detail: 'Données techniques invalides' },
+            { status: 400 },
+          ),
         ),
       );
     });
@@ -178,7 +180,9 @@ describe('useUpdateTechnicalData', () => {
     it('met isError=true après une réponse 400', async () => {
       // Arrange
       const { wrapper } = createWrapper();
-      const { result } = renderHook(() => useUpdateTechnicalData(), { wrapper });
+      const { result } = renderHook(() => useUpdateTechnicalData(), {
+        wrapper,
+      });
 
       // Act
       act(() => {
@@ -195,9 +199,8 @@ describe('useUpdateTechnicalData', () => {
   describe('erreur réseau', () => {
     beforeEach(() => {
       server.use(
-        http.put(
-          `${API_URL}/depistage/examens/enfants/:id/technical/`,
-          () => HttpResponse.error(),
+        http.put(`${API_URL}/depistage/examens/enfants/:id/technical/`, () =>
+          HttpResponse.error(),
         ),
       );
     });
@@ -205,7 +208,9 @@ describe('useUpdateTechnicalData', () => {
     it('met isError=true en cas d erreur réseau', async () => {
       // Arrange
       const { wrapper } = createWrapper();
-      const { result } = renderHook(() => useUpdateTechnicalData(), { wrapper });
+      const { result } = renderHook(() => useUpdateTechnicalData(), {
+        wrapper,
+      });
 
       // Act
       act(() => {
@@ -230,13 +235,11 @@ describe('useUpdateClinicalData', () => {
   describe('succès', () => {
     beforeEach(() => {
       server.use(
-        http.put(
-          `${API_URL}/depistage/examens/enfants/:id/clinical/`,
-          () =>
-            HttpResponse.json(
-              { ...mockExamChildDetail, simplified_clinical_exam: true },
-              { status: 200 },
-            ),
+        http.put(`${API_URL}/depistage/examens/enfants/:id/clinical/`, () =>
+          HttpResponse.json(
+            { ...mockExamChildDetail, simplified_clinical_exam: true },
+            { status: 200 },
+          ),
         ),
       );
     });
@@ -352,13 +355,11 @@ describe('useUpdateClinicalData', () => {
   describe('erreur 400', () => {
     beforeEach(() => {
       server.use(
-        http.put(
-          `${API_URL}/depistage/examens/enfants/:id/clinical/`,
-          () =>
-            HttpResponse.json(
-              { detail: 'Données cliniques invalides' },
-              { status: 400 },
-            ),
+        http.put(`${API_URL}/depistage/examens/enfants/:id/clinical/`, () =>
+          HttpResponse.json(
+            { detail: 'Données cliniques invalides' },
+            { status: 400 },
+          ),
         ),
       );
     });
@@ -383,9 +384,8 @@ describe('useUpdateClinicalData', () => {
   describe('erreur réseau', () => {
     beforeEach(() => {
       server.use(
-        http.put(
-          `${API_URL}/depistage/examens/enfants/:id/clinical/`,
-          () => HttpResponse.error(),
+        http.put(`${API_URL}/depistage/examens/enfants/:id/clinical/`, () =>
+          HttpResponse.error(),
         ),
       );
     });

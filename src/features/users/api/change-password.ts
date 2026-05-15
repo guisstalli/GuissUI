@@ -4,9 +4,11 @@ import { api } from '@/lib/api-client';
 
 export const useChangePassword = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) =>
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) =>
   useMutation({
     mutationFn: (data: { current_password: string; new_password: string }) =>
       api.post('/users/password/change/', data),
     onSuccess,
+    onError,
   });

@@ -5,7 +5,7 @@ import { api } from '@/lib/api-client';
 import type { UnreadCount } from '../types/schemas';
 
 const getUnreadCount = (): Promise<UnreadCount> =>
-  api.get<UnreadCount>('/api/v1/notifications/unread-count/');
+  api.get<UnreadCount>('/notifications/unread-count/');
 
 export const getUnreadCountQueryOptions = () =>
   queryOptions({

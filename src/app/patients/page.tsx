@@ -361,7 +361,7 @@ export default function PatientsPage() {
       {!isLoading && !error && (
         <>
           <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <Table>
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead className="hidden sm:table-cell">

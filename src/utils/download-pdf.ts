@@ -13,7 +13,7 @@ export async function downloadPdf(
   const response = await fetch(`${env.API_URL}${apiPath}`, {
     method,
     headers: {
-      Accept: 'application/pdf',
+      Accept: 'application/pdf, */*',
       ...(session?.accessToken
         ? { Authorization: `Bearer ${session.accessToken}` }
         : {}),

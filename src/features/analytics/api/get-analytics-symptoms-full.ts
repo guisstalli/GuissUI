@@ -22,7 +22,9 @@ const buildUrl = (filters: AnalyticsFilters) => {
 export const getAnalyticsSymptomsFull = (
   filters: AnalyticsFilters,
 ): Promise<AnalyticsSymptomsFull> => {
-  return api.get<AnalyticsSymptomsFull>(buildUrl(normalizeAnalyticsFilters(filters)));
+  return api.get<AnalyticsSymptomsFull>(
+    buildUrl(normalizeAnalyticsFilters(filters)),
+  );
 };
 
 export const getAnalyticsSymptomsFullQueryOptions = (
@@ -44,5 +46,8 @@ export const useAnalyticsSymptomsFull = ({
   filters,
   enabled = true,
 }: UseAnalyticsSymptomsFullOptions) => {
-  return useQuery({ ...getAnalyticsSymptomsFullQueryOptions(filters), enabled });
+  return useQuery({
+    ...getAnalyticsSymptomsFullQueryOptions(filters),
+    enabled,
+  });
 };

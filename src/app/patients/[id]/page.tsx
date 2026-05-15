@@ -1,6 +1,7 @@
 'use client';
 
 // eslint-disable-next-line import/no-duplicates
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 // eslint-disable-next-line import/no-duplicates
 import { fr } from 'date-fns/locale';
@@ -14,8 +15,10 @@ import {
   User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
@@ -28,17 +31,45 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 //import { PatientAnalyticsContext } from '@/features/analytics/components';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
-import { usePatient, usePatientExams } from '@/features/patients/api';
+import {
+  usePatient,
+  usePatientExams,
+  usePatchPatient,
+} from '@/features/patients/api';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { SiteSelector } from '@/features/sites/components/site-selector';
 
+const editPatientSchema = z.object({
+  last_name: z.string().min(1, 'Le nom est requis'),
+  name: z.string().min(1, 'Le prénom est requis'),
+  date_de_naissance: z.string().min(1, 'La date de naissance est requise'),
+  sex: z.enum(['H', 'F', 'A']),
+  phone_number: z.string().nullable().optional(),
+});
+type EditPatientValues = z.infer<typeof editPatientSchema>;
+
 export default function PatientDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const patientId = Number(params.id);
 
@@ -56,6 +87,36 @@ export default function PatientDetailPage() {
     patientId,
     enabled: !!patientId,
   });
+
+  // Edit modal: open when ?edit=true is in URL
+  const [isEditModalOpen, setIsEditModalOpen] = useState(
+    searchParams.get('edit') === 'true',
+  );
+  const editForm = useForm<EditPatientValues>({
+    resolver: zodResolver(editPatientSchema),
+  });
+  useEffect(() => {
+    if (patient && isEditModalOpen) {
+      editForm.reset({
+        last_name: patient.last_name,
+        name: patient.name,
+        date_de_naissance: patient.date_de_naissance,
+        sex: patient.sex as 'H' | 'F' | 'A',
+        phone_number: patient.phone_number ?? '',
+      });
+    }
+  }, [patient, isEditModalOpen, editForm]);
+  const patchPatientMutation = usePatchPatient({
+    mutationConfig: {
+      onSuccess: () => {
+        setIsEditModalOpen(false);
+        router.replace(`/patients/${patientId}`);
+      },
+    },
+  });
+  const handleEditSubmit = (values: EditPatientValues) => {
+    patchPatientMutation.mutate({ id: patientId, data: values });
+  };
 
   // Modal State for Exam Creation + Site Selection
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
@@ -466,6 +527,140 @@ export default function PatientDetailPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit Patient Dialog */}
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) router.replace(`/patients/${patientId}`);
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Modifier le patient</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de {patient.full_name}.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form
+              onSubmit={editForm.handleSubmit(handleEditSubmit)}
+              className="space-y-4 py-2"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prénom</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="date_de_naissance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date de naissance</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="sex"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sexe</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(SEX_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={editForm.control}
+                name="phone_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Téléphone</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="+221 XX XXX XX XX"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    router.replace(`/patients/${patientId}`);
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={patchPatientMutation.isPending}>
+                  {patchPatientMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    'Enregistrer'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Exam Creation Dialog */}
       <Dialog

@@ -4,9 +4,11 @@ import { api } from '@/lib/api-client';
 
 export const useChangeEmailRequest = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) =>
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) =>
   useMutation({
     mutationFn: (data: { new_email: string }) =>
       api.post('/users/email/change/request/', data),
     onSuccess,
+    onError,
   });

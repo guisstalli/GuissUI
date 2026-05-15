@@ -11,6 +11,16 @@ type AppShellProps = React.ComponentProps<typeof Shell>;
  * Pages import from here instead of @/components/layouts so that the shared
  * Shell component stays free of feature imports.
  */
-export function AppShell(props: AppShellProps) {
-  return <Shell {...props} headerActions={<NotificationBell />} />;
+export function AppShell({ headerActions, ...props }: AppShellProps) {
+  return (
+    <Shell
+      {...props}
+      headerActions={
+        <>
+          {headerActions}
+          <NotificationBell />
+        </>
+      }
+    />
+  );
 }

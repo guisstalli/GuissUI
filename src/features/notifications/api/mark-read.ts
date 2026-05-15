@@ -7,7 +7,7 @@ type MarkReadResponse = {
 };
 
 const markRead = (id: number): Promise<MarkReadResponse> =>
-  api.post<MarkReadResponse>(`/api/v1/notifications/${id}/read/`);
+  api.post<MarkReadResponse>(`/notifications/${id}/read/`);
 
 export const useMarkRead = ({
   mutationConfig,

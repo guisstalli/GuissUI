@@ -1,14 +1,15 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, FormProvider } from 'react-hook-form';
 import React from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
 import { describe, it, expect, vi } from 'vitest';
 
 import {
   VisualAcuitySchema,
   type VisualAcuityFormValues,
 } from '@/features/exams/types/schemas';
+
 import { VisualAcuityForm } from '../visual-acuity-form';
 
 // =============================================================================
@@ -30,18 +31,18 @@ function VisualAcuityFormWrapper({
       avac_od: null,
       avac_og: null,
       avac_odg: null,
-      avsc_od_avec_correction: null,
-      avsc_og_avec_correction: null,
-      avsc_odg_avec_correction: null,
-      avac_od_avec_correction: null,
-      avac_og_avec_correction: null,
-      avac_odg_avec_correction: null,
+      avac_od_prescrite: null,
+      avac_og_prescrite: null,
+      avac_odg_prescrite: null,
     },
   });
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} data-testid="visual-acuity-form">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        data-testid="visual-acuity-form"
+      >
         <VisualAcuityForm />
         <button type="submit">Soumettre</button>
       </form>
@@ -54,7 +55,7 @@ describe('VisualAcuityForm', () => {
   // État initial
   // --------------------------------------------------------------------------
 
-  it("affiche les champs AVSC et AVAC de base au rendu initial", () => {
+  it('affiche les champs AVSC et AVAC de base au rendu initial', () => {
     // Arrange
     render(<VisualAcuityFormWrapper />);
 
@@ -81,14 +82,16 @@ describe('VisualAcuityForm', () => {
   // --------------------------------------------------------------------------
 
   describe('switch Correction activé', () => {
-    it("affiche les 6 champs avec correction quand le switch est activé", async () => {
+    it('affiche les 6 champs avec correction quand le switch est activé', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisualAcuityFormWrapper />);
 
       // Act
       await user.click(
-        screen.getByRole('switch', { name: /surcorrection \/ avec correction/i }),
+        screen.getByRole('switch', {
+          name: /surcorrection \/ avec correction/i,
+        }),
       );
 
       // Assert
@@ -102,7 +105,7 @@ describe('VisualAcuityForm', () => {
       expect(corrInputs.length).toBeGreaterThan(0);
     });
 
-    it("masque les 6 champs avec correction quand le switch est désactivé", async () => {
+    it('masque les 6 champs avec correction quand le switch est désactivé', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisualAcuityFormWrapper />);
@@ -129,7 +132,7 @@ describe('VisualAcuityForm', () => {
   // --------------------------------------------------------------------------
 
   describe('validation à la soumission', () => {
-    it("affiche 6 erreurs quand correction=true et tous les champs avec correction sont vides", async () => {
+    it('affiche 6 erreurs quand correction=true et tous les champs avec correction sont vides', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -137,7 +140,9 @@ describe('VisualAcuityForm', () => {
 
       // Act
       await user.click(
-        screen.getByRole('switch', { name: /surcorrection \/ avec correction/i }),
+        screen.getByRole('switch', {
+          name: /surcorrection \/ avec correction/i,
+        }),
       );
       await screen.findByText(/sans correction \+ avec surcorrection/i);
       await user.click(screen.getByRole('button', { name: /soumettre/i }));
@@ -152,7 +157,7 @@ describe('VisualAcuityForm', () => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it("appelle onSubmit avec correction=true et tous les champs renseignés", async () => {
+    it('appelle onSubmit avec correction=true et tous les champs renseignés', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -160,7 +165,9 @@ describe('VisualAcuityForm', () => {
 
       // Act
       await user.click(
-        screen.getByRole('switch', { name: /surcorrection \/ avec correction/i }),
+        screen.getByRole('switch', {
+          name: /surcorrection \/ avec correction/i,
+        }),
       );
       await screen.findByText(/sans correction \+ avec surcorrection/i);
 
@@ -182,15 +189,15 @@ describe('VisualAcuityForm', () => {
         expect(onSubmit).toHaveBeenCalledWith(
           expect.objectContaining({
             correction: true,
-            avsc_od_avec_correction: expect.any(Number),
-            avac_odg_avec_correction: expect.any(Number),
+            avac_od_prescrite: expect.any(Number),
+            avac_odg_prescrite: expect.any(Number),
           }),
           expect.anything(),
         );
       });
     });
 
-    it("passe la validation sans erreur quand correction=false", async () => {
+    it('passe la validation sans erreur quand correction=false', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();

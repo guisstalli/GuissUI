@@ -140,7 +140,10 @@ export const PediatricSection = ({ data }: PediatricSectionProps) => {
                   Vision de loin (VL)
                 </p>
                 {[
-                  { label: 'Orthotropie', val: data.cover_test_vl.orthotropie_pct },
+                  {
+                    label: 'Orthotropie',
+                    val: data.cover_test_vl.orthotropie_pct,
+                  },
                   { label: 'Tropie', val: data.cover_test_vl.tropie_pct },
                   { label: 'Phorie', val: data.cover_test_vl.phorie_pct },
                 ].map(({ label, val }) => (
@@ -155,7 +158,10 @@ export const PediatricSection = ({ data }: PediatricSectionProps) => {
                   Vision de près (VP)
                 </p>
                 {[
-                  { label: 'Orthotropie', val: data.cover_test_vp.orthotropie_pct },
+                  {
+                    label: 'Orthotropie',
+                    val: data.cover_test_vp.orthotropie_pct,
+                  },
                   { label: 'Tropie', val: data.cover_test_vp.tropie_pct },
                   { label: 'Phorie', val: data.cover_test_vp.phorie_pct },
                 ].map(({ label, val }) => (

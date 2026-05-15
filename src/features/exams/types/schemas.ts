@@ -306,54 +306,18 @@ export const VisualAcuitySchema = z
     avac_od: z.coerce.number().min(0).max(10).optional().nullable(),
     avac_og: z.coerce.number().min(0).max(10).optional().nullable(),
     avac_odg: z.coerce.number().min(0).max(10).optional().nullable(),
-    avsc_od_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avsc_og_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avsc_odg_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avac_od_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avac_og_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
-    avac_odg_avec_correction: z.coerce
-      .number()
-      .min(0)
-      .max(10)
-      .optional()
-      .nullable(),
+    avac_od_prescrite: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_og_prescrite: z.coerce.number().min(0).max(10).optional().nullable(),
+    avac_odg_prescrite: z.coerce.number().min(0).max(10).optional().nullable(),
     created: z.string().datetime().optional(),
     modified: z.string().datetime().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.correction) {
       const requiredFields = [
-        'avsc_od_avec_correction',
-        'avsc_og_avec_correction',
-        'avsc_odg_avec_correction',
-        'avac_od_avec_correction',
-        'avac_og_avec_correction',
-        'avac_odg_avec_correction',
+        'avac_od_prescrite',
+        'avac_og_prescrite',
+        'avac_odg_prescrite',
       ] as const;
 
       requiredFields.forEach((field) => {

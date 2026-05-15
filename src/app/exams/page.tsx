@@ -176,7 +176,7 @@ export default function ExamsPage() {
         </div>
 
         {/* Type toggle */}
-        <div className="flex w-fit gap-1 rounded-lg border p-1">
+        <div className="flex w-fit gap-1 rounded-lg border bg-card p-1">
           <button
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               examType === 'adult'
@@ -306,8 +306,8 @@ export default function ExamsPage() {
             )}
           </div>
         ) : (
-          <div className="rounded-lg border">
-            <Table>
+          <div className="rounded-lg border bg-card">
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>N° Examen</TableHead>

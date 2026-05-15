@@ -1,26 +1,30 @@
-import { clientEnv } from '@/config/env';
+import { getSession } from 'next-auth/react';
 
-/**
- * Fetches the PDF for a facture and triggers a browser download.
- * Uses fetch with the session token so auth cookies are forwarded.
- */
+import { env } from '@/config/env';
+
 export async function downloadFacturePdf(
   factureId: number,
   numero: string,
 ): Promise<void> {
-  const url = `${clientEnv.API_URL}/billing/factures/${factureId}/pdf/`;
+  const session = await getSession();
+  const token = session?.accessToken ?? null;
 
-  const response = await fetch(url, { credentials: 'include' });
+  const response = await fetch(
+    `${env.API_URL}/billing/factures/${factureId}/pdf/`,
+    {
+      headers: {
+        Accept: 'application/pdf',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    },
+  );
 
   if (!response.ok) {
-    throw new Error(
-      `Impossible de télécharger la facture (${response.status})`,
-    );
+    throw new Error(`Erreur téléchargement PDF : ${response.status}`);
   }
 
   const blob = await response.blob();
   const objectUrl = URL.createObjectURL(blob);
-
   const link = document.createElement('a');
   link.href = objectUrl;
   link.download = `facture-${numero}.pdf`;

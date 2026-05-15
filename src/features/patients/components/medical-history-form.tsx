@@ -329,7 +329,7 @@ export function MedicalHistoryForm({
           control={form.control}
           name="has_antecedents"
           render={({ field }) => (
-            <FormItem className="bg-muted/20 flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border bg-card p-4">
               <div className="space-y-0.5">
                 <FormLabel className="text-base font-semibold">
                   Le patient a-t-il des antécédents médicaux ?
@@ -352,7 +352,7 @@ export function MedicalHistoryForm({
         {hasAntecedents && (
           <>
             {/* Section 1: Antécédents médico-chirurgicaux */}
-            <section className="space-y-4 rounded-lg border border-border p-6">
+            <section className="space-y-4 rounded-lg border border-border bg-card p-6">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">
@@ -408,7 +408,7 @@ export function MedicalHistoryForm({
             </section>
 
             {/* Section 2: Pathologies ophtalmologiques */}
-            <section className="space-y-4 rounded-lg border border-border p-6">
+            <section className="space-y-4 rounded-lg border border-border bg-card p-6">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">
@@ -461,7 +461,7 @@ export function MedicalHistoryForm({
             </section>
 
             {/* Section 3: Antécédents familiaux */}
-            <section className="space-y-4 rounded-lg border border-border p-6">
+            <section className="space-y-4 rounded-lg border border-border bg-card p-6">
               <div className="border-b border-border pb-3">
                 <h3 className="text-base font-semibold text-foreground">
                   Antécédents familiaux
@@ -543,7 +543,7 @@ export function MedicalHistoryForm({
             </section>
 
             {/* Section 4: Habitudes visuelles */}
-            <section className="space-y-4 rounded-lg border border-border p-6">
+            <section className="space-y-4 rounded-lg border border-border bg-card p-6">
               <div className="border-b border-border pb-3">
                 <h3 className="text-base font-semibold text-foreground">
                   Habitudes visuelles
@@ -650,7 +650,7 @@ export function MedicalHistoryForm({
 
             {/* Section 5: Addictions (conducteurs uniquement) */}
             {hasDriver && (
-              <section className="space-y-4 rounded-lg border border-border p-6">
+              <section className="space-y-4 rounded-lg border border-border bg-card p-6">
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <div>
                     <h3 className="text-base font-semibold text-foreground">
@@ -696,9 +696,7 @@ export function MedicalHistoryForm({
                           <FormLabel>Type(s) d&apos;addiction</FormLabel>
                           <div className="flex flex-wrap gap-3">
                             {(
-                              Object.entries(
-                                TYPE_ADDICTION_LABELS,
-                              ) as [
+                              Object.entries(TYPE_ADDICTION_LABELS) as [
                                 keyof typeof TYPE_ADDICTION_LABELS,
                                 string,
                               ][]
@@ -724,9 +722,8 @@ export function MedicalHistoryForm({
                                       ]);
                                     } else {
                                       field.onChange(
-                                        field.value?.filter(
-                                          (v) => v !== key,
-                                        ) || [],
+                                        field.value?.filter((v) => v !== key) ||
+                                          [],
                                       );
                                     }
                                   }}
@@ -770,7 +767,9 @@ export function MedicalHistoryForm({
                         name="autre_addiction_detail"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Préciser l&apos;autre addiction</FormLabel>
+                            <FormLabel>
+                              Préciser l&apos;autre addiction
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Précisez..."

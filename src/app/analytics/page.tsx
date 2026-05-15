@@ -82,10 +82,14 @@ export default function AnalyticsPage() {
   const reqSymptoms = useAnalyticsSymptoms({ filters: appliedFilters });
   const reqRiskFactors = useAnalyticsRiskFactors({ filters: appliedFilters });
   const reqSymptomsFull = useAnalyticsSymptomsFull({ filters: appliedFilters });
-  const reqBiomicroscopy = useAnalyticsBiomicroscopy({ filters: appliedFilters });
+  const reqBiomicroscopy = useAnalyticsBiomicroscopy({
+    filters: appliedFilters,
+  });
   const reqPediatric = useAnalyticsPediatric({ filters: appliedFilters });
   const reqVisualField = useAnalyticsVisualField({ filters: appliedFilters });
-  const reqDriverExperience = useAnalyticsDriverExperience({ filters: appliedFilters });
+  const reqDriverExperience = useAnalyticsDriverExperience({
+    filters: appliedFilters,
+  });
 
   const allQueries = [
     reqOverview,

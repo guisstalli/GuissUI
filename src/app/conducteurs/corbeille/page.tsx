@@ -77,8 +77,8 @@ export default function CorbeilleDriverPage() {
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border">
-            <TableElement>
+          <div className="rounded-lg border bg-card">
+            <TableElement className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>Conducteur</TableHead>

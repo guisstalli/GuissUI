@@ -80,6 +80,9 @@ export const RdvConfigSchema = z.object({
   capacite_par_slot: z.number(),
   buffer_avance_heures: z.number(),
   reschedule_limit: z.number().optional(),
+  reschedule_token_ttl_minutes: z.number().optional(),
+  buffer_inter_slots: z.number().optional(),
+  max_rdv_par_jour: z.number().optional(),
   lundi: z.boolean(),
   mardi: z.boolean(),
   mercredi: z.boolean(),
@@ -90,6 +93,16 @@ export const RdvConfigSchema = z.object({
 });
 
 export type RdvConfig = z.infer<typeof RdvConfigSchema>;
+
+export const ReminderConfigSchema = z.object({
+  rappel_j1_actif: z.boolean(),
+  rappel_j1_heure: z.string(),
+  rappel_h2_actif: z.boolean(),
+  canal: z.enum(['in_app', 'email', 'both']),
+  message_template: z.string(),
+});
+
+export type ReminderConfig = z.infer<typeof ReminderConfigSchema>;
 
 export const JourFermeSchema = z.object({
   id: z.number(),

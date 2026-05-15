@@ -133,7 +133,9 @@ export const SymptomsFullChart = ({ data }: SymptomsFullChartProps) => {
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Aucune diplopie.</p>
+                <p className="text-sm text-muted-foreground">
+                  Aucune diplopie.
+                </p>
               )}
             </div>
 
@@ -166,7 +168,9 @@ export const SymptomsFullChart = ({ data }: SymptomsFullChartProps) => {
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Aucun strabisme.</p>
+                <p className="text-sm text-muted-foreground">
+                  Aucun strabisme.
+                </p>
               )}
             </div>
 

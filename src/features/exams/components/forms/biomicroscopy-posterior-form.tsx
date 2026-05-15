@@ -126,7 +126,7 @@ export function BiomicroscopyPosteriorForm({
       form.setValue(`${namePrefix}.retine_peripherique`, null);
       form.setValue(`${namePrefix}.retine_peripherique_autre`, null);
       form.setValue(`${namePrefix}.vaissaux_retinien`, null);
-      form.setValue(`${namePrefix}.cd`, null);
+
       form.setValue(`${namePrefix}.observation`, null);
     }
   }, [isNormal, form, namePrefix]);
@@ -428,34 +428,6 @@ export function BiomicroscopyPosteriorForm({
             />
           </div>
 
-          {/* C/D Ratio */}
-          <FormField
-            control={form.control}
-            name={`${namePrefix}.cd`}
-            render={({ field }) => (
-              <FormItem className="max-w-xs">
-                <FormLabel>Rapport C/D</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="1"
-                    placeholder="0.0 - 1.0"
-                    {...field}
-                    value={field.value ?? ''}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           {/* Observation */}
           <FormField
             control={form.control}
@@ -479,6 +451,35 @@ export function BiomicroscopyPosteriorForm({
           />
         </div>
       )}
+
+      {/* C/D Ratio — toujours visible, optionnel même en NORMAL */}
+      <FormField
+        control={form.control}
+        name={`${namePrefix}.cd`}
+        render={({ field }) => (
+          <FormItem className="max-w-xs">
+            <FormLabel>
+              Rapport C/D{' '}
+              <span className="text-xs text-muted-foreground">(optionnel)</span>
+            </FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="1"
+                placeholder="0.0 - 1.0"
+                {...field}
+                value={field.value ?? ''}
+                onChange={(e) =>
+                  field.onChange(e.target.value ? Number(e.target.value) : null)
+                }
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </section>
   );
 }

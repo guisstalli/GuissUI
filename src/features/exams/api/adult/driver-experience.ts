@@ -1,4 +1,9 @@
-import { queryOptions, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { useNotifications } from '@/components/ui/notifications';
@@ -38,7 +43,9 @@ export type DriverExperienceInput = Partial<
 // GET
 // =============================================================================
 
-export const getDriverExperience = (examId: number): Promise<DriverExperience> =>
+export const getDriverExperience = (
+  examId: number,
+): Promise<DriverExperience> =>
   api.get<DriverExperience>(`/drivers/exams/${examId}/driver-experience/`);
 
 export const getDriverExperienceQueryOptions = (examId: number) =>
@@ -53,7 +60,10 @@ type UseDriverExperienceOptions = {
   enabled?: boolean;
 };
 
-export const useDriverExperience = ({ examId, enabled = true }: UseDriverExperienceOptions) =>
+export const useDriverExperience = ({
+  examId,
+  enabled = true,
+}: UseDriverExperienceOptions) =>
   useQuery({
     ...getDriverExperienceQueryOptions(examId),
     enabled: enabled && !!examId,
@@ -72,7 +82,10 @@ export const upsertDriverExperience = ({
   examId,
   data,
 }: UpsertDriverExperienceParams): Promise<DriverExperience> =>
-  api.post<DriverExperience>(`/drivers/exams/${examId}/driver-experience/`, data);
+  api.post<DriverExperience>(
+    `/drivers/exams/${examId}/driver-experience/`,
+    data,
+  );
 
 type UseUpsertDriverExperienceOptions = {
   mutationConfig?: MutationConfig<typeof upsertDriverExperience>;

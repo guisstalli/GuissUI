@@ -6,8 +6,6 @@ import { MutationConfig } from '@/lib/react-query';
 
 import type { Patient, PatientCreate } from '../types';
 
-import { getPatientsQueryOptions } from './get-patients';
-
 /**
  * Créer un nouveau patient
  */

@@ -1,14 +1,15 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, FormProvider } from 'react-hook-form';
 import React from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
 import { describe, it, expect, vi } from 'vitest';
 
 import {
   VisionBinoculaireSchema,
   type VisionBinoculaireFormValues,
 } from '@/features/exams/types/schemas';
+
 import { VisionBinoculaireForm } from '../vision-binoculaire-form';
 
 // =============================================================================
@@ -59,10 +60,12 @@ describe('VisionBinoculaireForm', () => {
       // Vérifier l'absence du label "Détail *" spécifique
       const labels = screen.queryAllByText(/détail/i);
       // Aucun label "Détail *" visible
-      expect(labels.filter((el) => el.textContent?.includes('*'))).toHaveLength(0);
+      expect(labels.filter((el) => el.textContent?.includes('*'))).toHaveLength(
+        0,
+      );
     });
 
-    it("affiche le champ Détail quand hirschberg_type=esotropie sélectionné", async () => {
+    it('affiche le champ Détail quand hirschberg_type=esotropie sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisionBinoculaireFormWrapper />);
@@ -75,10 +78,12 @@ describe('VisionBinoculaireForm', () => {
       await user.click(screen.getByRole('option', { name: /ésotropie/i }));
 
       // Assert
-      await screen.findByRole('combobox', { name: /détail/i });
+      expect(
+        await screen.findByRole('combobox', { name: /détail/i }),
+      ).toBeInTheDocument();
     });
 
-    it("affiche le champ Détail quand hirschberg_type=exotropie sélectionné", async () => {
+    it('affiche le champ Détail quand hirschberg_type=exotropie sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisionBinoculaireFormWrapper />);
@@ -91,7 +96,9 @@ describe('VisionBinoculaireForm', () => {
       await user.click(screen.getByRole('option', { name: /exotropie/i }));
 
       // Assert
-      await screen.findByRole('combobox', { name: /détail/i });
+      expect(
+        await screen.findByRole('combobox', { name: /détail/i }),
+      ).toBeInTheDocument();
     });
 
     it("n'affiche pas le champ Détail quand hirschberg_type=orthotropie", async () => {
@@ -114,7 +121,7 @@ describe('VisionBinoculaireForm', () => {
       });
     });
 
-    it("affiche une erreur de validation si hirschberg_type=esotropie et Détail non renseigné", async () => {
+    it('affiche une erreur de validation si hirschberg_type=esotropie et Détail non renseigné', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -126,11 +133,13 @@ describe('VisionBinoculaireForm', () => {
       })[0];
       await user.click(hirschbergTypeSelect);
       await user.click(screen.getByRole('option', { name: /ésotropie/i }));
-      await screen.findByRole('combobox', { name: /détail/i });
+      expect(
+        await screen.findByRole('combobox', { name: /détail/i }),
+      ).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /soumettre/i }));
 
       // Assert
-      await screen.findByText(/détail requis/i);
+      expect(await screen.findByText(/détail requis/i)).toBeInTheDocument();
       expect(onSubmit).not.toHaveBeenCalled();
     });
   });
@@ -140,7 +149,7 @@ describe('VisionBinoculaireForm', () => {
   // --------------------------------------------------------------------------
 
   describe('pupillary_reflex_laterality conditionnel', () => {
-    it("affiche le champ Latéralité quand pupillary_reflex=leucocorie sélectionné", async () => {
+    it('affiche le champ Latéralité quand pupillary_reflex=leucocorie sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisionBinoculaireFormWrapper />);
@@ -151,10 +160,12 @@ describe('VisionBinoculaireForm', () => {
       await user.click(screen.getByRole('option', { name: /leucocorie/i }));
 
       // Assert
-      await screen.findByRole('combobox', { name: /latéralité/i });
+      expect(
+        await screen.findByRole('combobox', { name: /latéralité/i }),
+      ).toBeInTheDocument();
     });
 
-    it("affiche le champ Latéralité quand pupillary_reflex=anormal sélectionné", async () => {
+    it('affiche le champ Latéralité quand pupillary_reflex=anormal sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisionBinoculaireFormWrapper />);
@@ -165,7 +176,9 @@ describe('VisionBinoculaireForm', () => {
       await user.click(screen.getByRole('option', { name: /anormal/i }));
 
       // Assert
-      await screen.findByRole('combobox', { name: /latéralité/i });
+      expect(
+        await screen.findByRole('combobox', { name: /latéralité/i }),
+      ).toBeInTheDocument();
     });
 
     it("n'affiche pas le champ Latéralité quand pupillary_reflex=rouge (normal)", async () => {
@@ -186,7 +199,7 @@ describe('VisionBinoculaireForm', () => {
       });
     });
 
-    it("affiche une erreur si pupillary_reflex=leucocorie et latéralité non renseignée", async () => {
+    it('affiche une erreur si pupillary_reflex=leucocorie et latéralité non renseignée', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -196,11 +209,15 @@ describe('VisionBinoculaireForm', () => {
       const reflexeSelect = screen.getByRole('combobox', { name: /réflexe/i });
       await user.click(reflexeSelect);
       await user.click(screen.getByRole('option', { name: /leucocorie/i }));
-      await screen.findByRole('combobox', { name: /latéralité/i });
+      expect(
+        await screen.findByRole('combobox', { name: /latéralité/i }),
+      ).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /soumettre/i }));
 
       // Assert
-      await screen.findByText(/latéralité requise/i);
+      expect(
+        await screen.findByText(/latéralité requise/i),
+      ).toBeInTheDocument();
       expect(onSubmit).not.toHaveBeenCalled();
     });
   });
@@ -210,7 +227,7 @@ describe('VisionBinoculaireForm', () => {
   // --------------------------------------------------------------------------
 
   describe('cover_test_vl_direction conditionnel', () => {
-    it("affiche le champ Direction VL quand cover_test_vl_type=tropie sélectionné", async () => {
+    it('affiche le champ Direction VL quand cover_test_vl_type=tropie sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisionBinoculaireFormWrapper />);
@@ -231,7 +248,7 @@ describe('VisionBinoculaireForm', () => {
       expect(directionSelects.length).toBeGreaterThan(0);
     });
 
-    it("affiche une erreur si cover_test_vl_type=tropie et direction VL non renseignée", async () => {
+    it('affiche une erreur si cover_test_vl_type=tropie et direction VL non renseignée', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -246,7 +263,7 @@ describe('VisionBinoculaireForm', () => {
       await user.click(screen.getByRole('button', { name: /soumettre/i }));
 
       // Assert
-      await screen.findByText(/direction requise/i);
+      expect(await screen.findByText(/direction requise/i)).toBeInTheDocument();
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
@@ -277,7 +294,7 @@ describe('VisionBinoculaireForm', () => {
   // --------------------------------------------------------------------------
 
   describe('cover_test_vp_direction conditionnel', () => {
-    it("affiche le champ Direction VP quand cover_test_vp_type=phorie sélectionné", async () => {
+    it('affiche le champ Direction VP quand cover_test_vp_type=phorie sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisionBinoculaireFormWrapper />);
@@ -301,7 +318,7 @@ describe('VisionBinoculaireForm', () => {
   // --------------------------------------------------------------------------
 
   describe('soumission avec toutes les branches activées', () => {
-    it("valide et appelle onSubmit quand tous les champs conditionnels sont renseignés", async () => {
+    it('valide et appelle onSubmit quand tous les champs conditionnels sont renseignés', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -325,9 +342,7 @@ describe('VisionBinoculaireForm', () => {
         name: /latéralité/i,
       });
       await user.click(lateraliteSelect);
-      await user.click(
-        screen.getByRole('option', { name: /od \(droit\)/i }),
-      );
+      await user.click(screen.getByRole('option', { name: /od \(droit\)/i }));
 
       // Cover Test VL: tropie + direction
       const updatedTypeSelects = screen.getAllByRole('combobox', {

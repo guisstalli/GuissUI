@@ -44,3 +44,5 @@ mocked-db.json
 /.vite
 /.cache_backup
 tsconfig.tsbuildinfo
+
+*.txt

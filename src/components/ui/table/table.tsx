@@ -150,7 +150,7 @@ export const Table = <Entry extends BaseEntity>({
   }
   return (
     <>
-      <TableElement>
+      <TableElement className="bg-card">
         <TableHeader>
           <TableRow>
             {columns.map((column, index) => (

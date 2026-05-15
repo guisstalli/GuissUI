@@ -69,7 +69,7 @@ export const SitesTable = ({ search }: { search: string }) => {
   return (
     <>
       <div className="rounded-lg border border-border bg-card">
-        <Table>
+        <Table className="bg-card">
           <TableHeader>
             <TableRow>
               <TableHead>Libellé</TableHead>

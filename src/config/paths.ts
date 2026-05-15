@@ -124,65 +124,16 @@ export const paths = {
     },
   },
 
-  // Consultations
-  consultations: {
-    list: {
-      getHref: () => '/consultations',
-    },
-    detail: {
-      getHref: (id: number | string) => `/consultations/${id}`,
-    },
-    create: {
-      getHref: (patientId?: number | string) =>
-        patientId
-          ? `/consultations/new?patient=${patientId}`
-          : '/consultations/new',
-    },
-  },
-
-  // Appointments (Rendez-vous)
-  appointments: {
-    list: {
-      getHref: () => '/appointments',
-    },
-    detail: {
-      getHref: (id: number | string) => `/appointments/${id}`,
-    },
-    create: {
-      getHref: (patientId?: number | string) =>
-        patientId
-          ? `/appointments/new?patient=${patientId}`
-          : '/appointments/new',
-    },
-  },
-
-  // Planning / Agenda
-  planning: {
-    calendar: {
-      getHref: () => '/planning',
-    },
-    day: {
-      getHref: (date: string) => `/planning?view=day&date=${date}`,
-    },
-    week: {
-      getHref: (date: string) => `/planning?view=week&date=${date}`,
-    },
-  },
-
   // Analytics
   analytics: {
     getHref: () => '/analytics',
   },
 
-  // Reports
-  reports: {
-    list: {
-      getHref: () => '/reports',
-    },
-    export: {
-      getHref: () => '/reports/export',
-    },
-  },
+  // --- Pages non encore implémentées (à activer quand les pages seront créées) ---
+  // consultations: { list, detail, create }
+  // planning: { calendar, day, week }
+  // reports: { list, export }
+  // appointments: doublon de rdv.staff.agenda — utiliser paths.rdv à la place
 
   // Billing (Facturation)
   billing: {
@@ -251,6 +202,18 @@ export const paths = {
     },
   },
 
+  // Paramètres applicatifs
+  parametres: {
+    getHref: () => '/parametres',
+  },
+
+  // Configuration prestations
+  configuration: {
+    prestations: {
+      getHref: () => '/configuration/prestations',
+    },
+  },
+
   // Unauthorized page
   unauthorized: {
     getHref: () => '/unauthorized',
@@ -262,17 +225,21 @@ export const paths = {
   },
 } as const;
 
-// Active paths for the internal application
+// Active paths for the internal application (pages that exist in the App Router)
 export const activePaths = [
   '/',
   '/patients',
   '/exams',
-  '/consultations',
-  '/appointments',
-  '/planning',
+  '/conducteurs',
+  '/facturation',
+  '/gestion/rendez-vous',
+  '/gestion/evenements',
+  '/evenements',
   '/analytics',
-  '/reports',
   '/sites',
+  '/parametres',
+  '/configuration/prestations',
+  '/profil',
   '/unauthorized',
   '/maintenance',
 ] as const;

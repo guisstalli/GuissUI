@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 
+import { ThemeToggle } from '@/components/ui/theme-toggle/theme-toggle';
 import { cn } from '@/utils/cn';
 
 interface AuthShellProps {
@@ -20,12 +21,16 @@ function CornerOrnament({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
   return (
     <div
       aria-hidden
-      className={cn(base, placements[position], 'border-cyan-400/30')}
+      className={cn(
+        base,
+        placements[position],
+        'border-slate-300 dark:border-cyan-400/30',
+      )}
     >
-      <span className="absolute -left-1 -top-1 block size-2 rounded-full bg-cyan-400/80 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-      <span className="absolute -bottom-1 -right-1 block size-2 rounded-full bg-cyan-400/40" />
-      <span className="absolute left-3 top-3 block size-1 rounded-full bg-cyan-400/60" />
-      <span className="absolute bottom-3 right-3 block size-1 rounded-full bg-blue-400/60" />
+      <span className="absolute -left-1 -top-1 block size-2 rounded-full bg-slate-400/80 dark:bg-cyan-400/80 dark:shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+      <span className="absolute -bottom-1 -right-1 block size-2 rounded-full bg-slate-400/40 dark:bg-cyan-400/40" />
+      <span className="absolute left-3 top-3 block size-1 rounded-full bg-slate-400/60 dark:bg-cyan-400/60" />
+      <span className="absolute bottom-3 right-3 block size-1 rounded-full bg-slate-500/60 dark:bg-blue-400/60" />
     </div>
   );
 }
@@ -41,18 +46,18 @@ function GuissLogo() {
 
 export function AuthShell({ title, subtitle, children }: AuthShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0f] text-slate-100">
-      {/* Ambient gradient */}
+    <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-[#0a0a0f] dark:text-slate-100">
+      {/* Ambient gradient — visible in dark mode only */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.10),transparent_45%)]"
+        className="pointer-events-none absolute inset-0 dark:bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.10),transparent_45%)]"
       />
 
       {/* Grid pattern */}
       <div
         aria-hidden
         // eslint-disable-next-line tailwindcss/no-contradicting-classname
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.05)_1px,transparent_1px)] bg-[size:48px_48px]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.07)_1px,transparent_1px)] bg-[size:48px_48px] dark:bg-[linear-gradient(rgba(148,163,184,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.05)_1px,transparent_1px)]"
       />
 
       <CornerOrnament position="tl" />
@@ -60,17 +65,23 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       <CornerOrnament position="bl" />
       <CornerOrnament position="br" />
 
+      <div className="absolute right-4 top-4 z-20">
+        <ThemeToggle className="size-9 text-slate-500 hover:bg-black/10 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-100" />
+      </div>
+
       <main className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 shadow-[0_0_64px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+          <div className="rounded-2xl border border-black/10 bg-white p-8 shadow-xl dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_0_64px_rgba(34,211,238,0.08)] dark:backdrop-blur-xl">
             <div className="space-y-6">
               <div className="space-y-3 text-center">
                 <GuissLogo />
-                <h1 className="text-2xl font-bold tracking-tight text-white">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {title}
                 </h1>
                 {subtitle && (
-                  <p className="text-sm text-slate-400">{subtitle}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {subtitle}
+                  </p>
                 )}
               </div>
 

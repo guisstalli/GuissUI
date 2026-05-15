@@ -1,8 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, FormProvider } from 'react-hook-form';
 import React from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
 import { describe, it, expect, vi } from 'vitest';
 
 import {
@@ -10,13 +10,14 @@ import {
   type BiomicroscopyAnteriorFormValues,
   defaultBiomicroscopyAnterior,
 } from '@/features/exams/types/schemas';
+
 import { BiomicroscopyAnteriorForm } from '../biomicroscopy-anterior-form';
 
 // =============================================================================
 // Wrapper qui fournit react-hook-form + zod à BiomicroscopyAnteriorForm
 // =============================================================================
 
-function BiomicroscopyAnteriorFormWrapper({
+function _BiomicroscopyAnteriorFormWrapper({
   onSubmit = vi.fn(),
   namePrefix = 'od.bp_sg_anterieur',
 }: {
@@ -38,7 +39,10 @@ function BiomicroscopyAnteriorFormWrapper({
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit as never)} data-testid="bio-ant-form">
+      <form
+        onSubmit={form.handleSubmit(onSubmit as never)}
+        data-testid="bio-ant-form"
+      >
         <BiomicroscopyAnteriorForm
           namePrefix={namePrefix}
           eyeLabel="OD (Oeil Droit)"
@@ -50,7 +54,7 @@ function BiomicroscopyAnteriorFormWrapper({
 }
 
 // Wrapper simplifié avec champ à la racine pour les tests de validation
-function SimpleBioAntWrapper({
+function _SimpleBioAntWrapper({
   onSubmit = vi.fn(),
 }: {
   onSubmit?: (data: BiomicroscopyAnteriorFormValues) => void;
@@ -62,14 +66,8 @@ function SimpleBioAntWrapper({
 
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        data-testid="bio-ant-form"
-      >
-        <BiomicroscopyAnteriorForm
-          namePrefix=""
-          eyeLabel="OD (Oeil Droit)"
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} data-testid="bio-ant-form">
+        <BiomicroscopyAnteriorForm namePrefix="" eyeLabel="OD (Oeil Droit)" />
         <button type="submit">Soumettre</button>
       </form>
     </FormProvider>
@@ -78,7 +76,7 @@ function SimpleBioAntWrapper({
 
 // Note: namePrefix="" cause un trailing dot issue dans le form, on utilise un
 // namePrefix réel. Refactorisons pour utiliser un namePrefix simple.
-function BioAntWithPrefix({
+function _BioAntWithPrefix({
   onSubmit = vi.fn(),
   initialSegment = 'NORMAL' as const,
 }: {
@@ -144,10 +142,7 @@ function BioAntWrapper({
         onSubmit={form.handleSubmit((d) => onSubmit(d.bp))}
         data-testid="bio-ant-form"
       >
-        <BiomicroscopyAnteriorForm
-          namePrefix="bp"
-          eyeLabel="OD (Oeil Droit)"
-        />
+        <BiomicroscopyAnteriorForm namePrefix="bp" eyeLabel="OD (Oeil Droit)" />
         <button type="submit">Soumettre</button>
       </form>
     </FormProvider>
@@ -169,12 +164,14 @@ describe('BiomicroscopyAnteriorForm', () => {
       expect(screen.queryByText(/transparence/i)).not.toBeInTheDocument();
     });
 
-    it("affiche les boutons radio de statut du segment", () => {
+    it('affiche les boutons radio de statut du segment', () => {
       // Arrange
       render(<BioAntWrapper />);
 
       // Assert
-      expect(screen.getByRole('radio', { name: /normal/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('radio', { name: /normal/i }),
+      ).toBeInTheDocument();
       expect(
         screen.getByRole('radio', { name: /présence de lésion/i }),
       ).toBeInTheDocument();
@@ -189,28 +186,32 @@ describe('BiomicroscopyAnteriorForm', () => {
   // --------------------------------------------------------------------------
 
   describe('segment = PRESENCE_LESION', () => {
-    it("affiche le bloc de champs détaillés quand segment=PRESENCE_LESION", async () => {
+    it('affiche le bloc de champs détaillés quand segment=PRESENCE_LESION', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<BioAntWrapper />);
 
       // Act
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
 
       // Assert
-      await screen.findByText(/profondeur ca/i);
-      await screen.findByText(/transparence/i);
-      await screen.findByText(/cornée/i);
+      expect(await screen.findByText(/profondeur ca/i)).toBeInTheDocument();
+      expect(await screen.findByText(/transparence/i)).toBeInTheDocument();
+      expect(await screen.findByText(/cornée/i)).toBeInTheDocument();
     });
 
-    it("masque le bloc quand segment repasse à NORMAL", async () => {
+    it('masque le bloc quand segment repasse à NORMAL', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<BioAntWrapper />);
 
       // Act
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
-      await screen.findByText(/profondeur ca/i);
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
+      expect(await screen.findByText(/profondeur ca/i)).toBeInTheDocument();
       await user.click(screen.getByRole('radio', { name: /normal/i }));
 
       // Assert
@@ -229,8 +230,10 @@ describe('BiomicroscopyAnteriorForm', () => {
       render(<BioAntWrapper />);
 
       // Act - activer PRESENCE_LESION
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
-      await screen.findByText(/cornée/i);
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
+      expect(await screen.findByText(/cornée/i)).toBeInTheDocument();
 
       // Ouvrir le select cornée et choisir Autre
       const corneeSelect = await screen.findByRole('combobox', {
@@ -240,21 +243,23 @@ describe('BiomicroscopyAnteriorForm', () => {
       await user.click(screen.getByRole('option', { name: /autre/i }));
 
       // Assert — le label "Précisez" et le champ texte associé apparaissent
-      await screen.findByLabelText(/précisez/i);
+      expect(await screen.findByLabelText(/précisez/i)).toBeInTheDocument();
     });
 
     // ----------------------------------------------------------------------
     // iris = AUTRES
     // ----------------------------------------------------------------------
 
-    it("affiche le champ iris_autres quand iris=Autres est sélectionné", async () => {
+    it('affiche le champ iris_autres quand iris=Autres est sélectionné', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<BioAntWrapper />);
 
       // Act
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
-      await screen.findByText(/iris/i);
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
+      expect(await screen.findByText(/iris/i)).toBeInTheDocument();
 
       const irisSelect = screen.getByRole('combobox', { name: /^iris/i });
       await user.click(irisSelect);
@@ -269,14 +274,16 @@ describe('BiomicroscopyAnteriorForm', () => {
     // transparence = ANORMALE → sous-bloc anomalie
     // ----------------------------------------------------------------------
 
-    it("affiche le sous-bloc type_anomalie quand transparence=Anormale est sélectionnée", async () => {
+    it('affiche le sous-bloc type_anomalie quand transparence=Anormale est sélectionnée', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<BioAntWrapper />);
 
       // Act
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
-      await screen.findByText(/transparence/i);
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
+      expect(await screen.findByText(/transparence/i)).toBeInTheDocument();
 
       const transparenceSelect = screen.getByRole('combobox', {
         name: /transparence/i,
@@ -285,22 +292,24 @@ describe('BiomicroscopyAnteriorForm', () => {
       await user.click(screen.getByRole('option', { name: /anormale/i }));
 
       // Assert
-      await screen.findByText(/type d'anomalie/i);
-      await screen.findByText(/quantité/i);
+      expect(await screen.findByText(/type d'anomalie/i)).toBeInTheDocument();
+      expect(await screen.findByText(/quantité/i)).toBeInTheDocument();
     });
 
     // ----------------------------------------------------------------------
     // Chemin complet 3 niveaux : PRESENCE_LESION → transparence ANORMALE → type_anomalie AUTRE
     // ----------------------------------------------------------------------
 
-    it("affiche type_anomalie_autre quand transparence=ANORMALE et type_anomalie=AUTRE (chemin 3 niveaux)", async () => {
+    it('affiche type_anomalie_autre quand transparence=ANORMALE et type_anomalie=AUTRE (chemin 3 niveaux)', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<BioAntWrapper />);
 
       // Act - niveau 1: segment
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
-      await screen.findByText(/transparence/i);
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
+      expect(await screen.findByText(/transparence/i)).toBeInTheDocument();
 
       // Niveau 2: transparence
       const transparenceSelect = screen.getByRole('combobox', {
@@ -308,7 +317,7 @@ describe('BiomicroscopyAnteriorForm', () => {
       });
       await user.click(transparenceSelect);
       await user.click(screen.getByRole('option', { name: /anormale/i }));
-      await screen.findByText(/type d'anomalie/i);
+      expect(await screen.findByText(/type d'anomalie/i)).toBeInTheDocument();
 
       // Niveau 3: type_anomalie
       const typeAnomalieSelect = screen.getByRole('combobox', {
@@ -322,19 +331,21 @@ describe('BiomicroscopyAnteriorForm', () => {
       expect(preciseLabels.length).toBeGreaterThan(0);
     });
 
-    it("ne affiche plus le sous-bloc anomalie quand transparence repasse à NORMAL", async () => {
+    it('ne affiche plus le sous-bloc anomalie quand transparence repasse à NORMAL', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<BioAntWrapper />);
 
       // Act
-      await user.click(screen.getByRole('radio', { name: /présence de lésion/i }));
+      await user.click(
+        screen.getByRole('radio', { name: /présence de lésion/i }),
+      );
       const transparenceSelect = await screen.findByRole('combobox', {
         name: /transparence/i,
       });
       await user.click(transparenceSelect);
       await user.click(screen.getByRole('option', { name: /anormale/i }));
-      await screen.findByText(/type d'anomalie/i);
+      expect(await screen.findByText(/type d'anomalie/i)).toBeInTheDocument();
 
       // Repasser à normale
       await user.click(transparenceSelect);

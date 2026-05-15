@@ -8,7 +8,7 @@ type MarkAllReadResponse = {
 };
 
 const markAllRead = (): Promise<MarkAllReadResponse> =>
-  api.post<MarkAllReadResponse>('/api/v1/notifications/read-all/');
+  api.post<MarkAllReadResponse>('/notifications/read-all/');
 
 export const useMarkAllRead = ({
   mutationConfig,

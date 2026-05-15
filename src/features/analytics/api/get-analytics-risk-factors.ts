@@ -22,7 +22,9 @@ const buildUrl = (filters: AnalyticsFilters) => {
 export const getAnalyticsRiskFactors = (
   filters: AnalyticsFilters,
 ): Promise<AnalyticsRiskFactors> => {
-  return api.get<AnalyticsRiskFactors>(buildUrl(normalizeAnalyticsFilters(filters)));
+  return api.get<AnalyticsRiskFactors>(
+    buildUrl(normalizeAnalyticsFilters(filters)),
+  );
 };
 
 export const getAnalyticsRiskFactorsQueryOptions = (

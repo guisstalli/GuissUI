@@ -22,7 +22,9 @@ const buildUrl = (filters: AnalyticsFilters) => {
 export const getAnalyticsVisualField = (
   filters: AnalyticsFilters,
 ): Promise<AnalyticsVisualField> => {
-  return api.get<AnalyticsVisualField>(buildUrl(normalizeAnalyticsFilters(filters)));
+  return api.get<AnalyticsVisualField>(
+    buildUrl(normalizeAnalyticsFilters(filters)),
+  );
 };
 
 export const getAnalyticsVisualFieldQueryOptions = (

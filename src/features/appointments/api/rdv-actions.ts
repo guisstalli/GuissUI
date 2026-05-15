@@ -8,7 +8,7 @@ const invalidateAll = (qc: ReturnType<typeof useQueryClient>) => {
 
 export const useConfirmRdv = (
   rdvId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -17,12 +17,13 @@ export const useConfirmRdv = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useCancelRdvStaff = (
   rdvId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -31,12 +32,13 @@ export const useCancelRdvStaff = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useMarkPresent = (
   rdvId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -45,12 +47,13 @@ export const useMarkPresent = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useMarkAbsent = (
   rdvId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -59,12 +62,13 @@ export const useMarkAbsent = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useReplanifierRdvStaff = (
   rdvId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -74,5 +78,6 @@ export const useReplanifierRdvStaff = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };

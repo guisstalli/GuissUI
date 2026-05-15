@@ -23,12 +23,9 @@ describe('VisualAcuitySchema', () => {
   };
 
   const allCorrectionFields = {
-    avsc_od_avec_correction: 1.0,
-    avsc_og_avec_correction: 0.8,
-    avsc_odg_avec_correction: 0.9,
-    avac_od_avec_correction: 1.0,
-    avac_og_avec_correction: 0.8,
-    avac_odg_avec_correction: 0.9,
+    avac_od_prescrite: 1.0,
+    avac_og_prescrite: 0.8,
+    avac_odg_prescrite: 0.9,
   };
 
   it('passe avec des données valides sans correction', () => {
@@ -54,13 +51,13 @@ describe('VisualAcuitySchema', () => {
   });
 
   describe('correction conditionnelle', () => {
-    it('échoue si correction=true et avsc_od_avec_correction absent', () => {
+    it('échoue si correction=true et avac_od_prescrite absent', () => {
       // Arrange
       const data = {
         ...baseValid,
         correction: true,
         ...allCorrectionFields,
-        avsc_od_avec_correction: null,
+        avac_od_prescrite: null,
       };
 
       // Act
@@ -70,17 +67,17 @@ describe('VisualAcuitySchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const paths = result.error.issues.map((i) => i.path[0]);
-        expect(paths).toContain('avsc_od_avec_correction');
+        expect(paths).toContain('avac_od_prescrite');
       }
     });
 
-    it('échoue si correction=true et avac_odg_avec_correction absent', () => {
+    it('échoue si correction=true et avac_odg_prescrite absent', () => {
       // Arrange
       const data = {
         ...baseValid,
         correction: true,
         ...allCorrectionFields,
-        avac_odg_avec_correction: null,
+        avac_odg_prescrite: null,
       };
 
       // Act
@@ -90,7 +87,7 @@ describe('VisualAcuitySchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const paths = result.error.issues.map((i) => i.path[0]);
-        expect(paths).toContain('avac_odg_avec_correction');
+        expect(paths).toContain('avac_odg_prescrite');
       }
     });
 
@@ -104,7 +101,7 @@ describe('VisualAcuitySchema', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues).toHaveLength(6);
+        expect(result.error.issues).toHaveLength(3);
       }
     });
 
@@ -314,7 +311,7 @@ describe('VisionBinoculaireSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si hirschberg_type=orthotropie et hirschberg_detail absent (cas normal)", () => {
+    it('passe si hirschberg_type=orthotropie et hirschberg_detail absent (cas normal)', () => {
       // Arrange
       const data = { hirschberg_type: 'orthotropie', hirschberg_detail: null };
 
@@ -514,7 +511,10 @@ describe('ClinicalCheckChildSchema', () => {
 
   it('passe avec reflet_pupillaire=normal sans détail', () => {
     // Arrange
-    const data = { reflet_pupillaire: 'normal', reflet_pupillaire_detail: null };
+    const data = {
+      reflet_pupillaire: 'normal',
+      reflet_pupillaire_detail: null,
+    };
 
     // Act
     const result = ClinicalCheckChildSchema.safeParse(data);
@@ -586,7 +586,7 @@ describe('ClinicalCheckChildSchema', () => {
   });
 
   describe('fo_detail conditionnel', () => {
-    it("échoue si fond_oeil=anormal et fo_detail absent", () => {
+    it('échoue si fond_oeil=anormal et fo_detail absent', () => {
       // Arrange
       const data = { fond_oeil: 'anormal', fo_detail: null };
 
@@ -601,7 +601,7 @@ describe('ClinicalCheckChildSchema', () => {
       }
     });
 
-    it("passe si fond_oeil=anormal et fo_detail renseigné", () => {
+    it('passe si fond_oeil=anormal et fo_detail renseigné', () => {
       // Arrange
       const data = { fond_oeil: 'anormal', fo_detail: 'Anomalie détectée' };
 
@@ -612,7 +612,7 @@ describe('ClinicalCheckChildSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si fond_oeil=normal et fo_detail absent", () => {
+    it('passe si fond_oeil=normal et fo_detail absent', () => {
       // Arrange
       const data = { fond_oeil: 'normal', fo_detail: null };
 
@@ -661,7 +661,7 @@ describe('PlaintesSchema', () => {
   });
 
   describe('autre conditionnel (eye_symptom contient AUTRES)', () => {
-    it("échoue si eye_symptom inclut AUTRES et autre absent", () => {
+    it('échoue si eye_symptom inclut AUTRES et autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -680,7 +680,7 @@ describe('PlaintesSchema', () => {
       }
     });
 
-    it("passe si eye_symptom inclut AUTRES et autre renseigné", () => {
+    it('passe si eye_symptom inclut AUTRES et autre renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -929,7 +929,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
   });
 
   describe('cornee_autre conditionnel', () => {
-    it("échoue si cornee=AUTRE et cornee_autre absent", () => {
+    it('échoue si cornee=AUTRE et cornee_autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -948,7 +948,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
       }
     });
 
-    it("passe si cornee=AUTRE et cornee_autre renseigné", () => {
+    it('passe si cornee=AUTRE et cornee_autre renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -963,7 +963,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si cornee=NORMAL et cornee_autre absent", () => {
+    it('passe si cornee=NORMAL et cornee_autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -980,7 +980,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
   });
 
   describe('iris_autres conditionnel', () => {
-    it("échoue si iris=AUTRES et iris_autres absent", () => {
+    it('échoue si iris=AUTRES et iris_autres absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -999,7 +999,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
       }
     });
 
-    it("passe si iris=AUTRES et iris_autres renseigné", () => {
+    it('passe si iris=AUTRES et iris_autres renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1014,7 +1014,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si iris=NORMAL et iris_autres absent", () => {
+    it('passe si iris=NORMAL et iris_autres absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1031,7 +1031,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
   });
 
   describe('type_anomalie_autre conditionnel', () => {
-    it("échoue si type_anomalie_value=AUTRE et type_anomalie_autre absent", () => {
+    it('échoue si type_anomalie_value=AUTRE et type_anomalie_autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1050,7 +1050,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
       }
     });
 
-    it("passe si type_anomalie_value=AUTRE et type_anomalie_autre renseigné", () => {
+    it('passe si type_anomalie_value=AUTRE et type_anomalie_autre renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1065,7 +1065,7 @@ describe('BiomicroscopyAnteriorSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si type_anomalie_value=PIGMENTS et type_anomalie_autre absent", () => {
+    it('passe si type_anomalie_value=PIGMENTS et type_anomalie_autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1101,7 +1101,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
   });
 
   describe('vitre_autres conditionnel', () => {
-    it("échoue si vitre=AUTRES et vitre_autres absent", () => {
+    it('échoue si vitre=AUTRES et vitre_autres absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1120,7 +1120,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
       }
     });
 
-    it("passe si vitre=AUTRES et vitre_autres renseigné", () => {
+    it('passe si vitre=AUTRES et vitre_autres renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1135,7 +1135,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si vitre=NORMAL et vitre_autres absent", () => {
+    it('passe si vitre=NORMAL et vitre_autres absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1152,7 +1152,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
   });
 
   describe('papille_autres conditionnel', () => {
-    it("échoue si papille=AUTRES et papille_autres absent", () => {
+    it('échoue si papille=AUTRES et papille_autres absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1171,7 +1171,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
       }
     });
 
-    it("passe si papille=AUTRES et papille_autres renseigné", () => {
+    it('passe si papille=AUTRES et papille_autres renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1186,7 +1186,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si papille=NORMALE et papille_autres absent", () => {
+    it('passe si papille=NORMALE et papille_autres absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1203,7 +1203,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
   });
 
   describe('retine_peripherique_autre conditionnel', () => {
-    it("échoue si retine_peripherique=AUTRE et retine_peripherique_autre absent", () => {
+    it('échoue si retine_peripherique=AUTRE et retine_peripherique_autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1222,7 +1222,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
       }
     });
 
-    it("passe si retine_peripherique=AUTRE et retine_peripherique_autre renseigné", () => {
+    it('passe si retine_peripherique=AUTRE et retine_peripherique_autre renseigné', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1237,7 +1237,7 @@ describe('BiomicroscopyPosteriorSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it("passe si retine_peripherique=NORMAL et retine_peripherique_autre absent", () => {
+    it('passe si retine_peripherique=NORMAL et retine_peripherique_autre absent', () => {
       // Arrange
       const data = {
         ...baseValid,
@@ -1253,4 +1253,3 @@ describe('BiomicroscopyPosteriorSchema', () => {
     });
   });
 });
-

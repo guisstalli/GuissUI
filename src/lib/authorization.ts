@@ -9,6 +9,8 @@ export const ROLES = {
   STAFF: 'STAFF',
   DOCTEUR: 'DOCTEUR',
   TECHNICIEN: 'TECHNICIEN',
+  DATA_ENTRY: 'DATA_ENTRY',
+  SUPERUSER: 'SUPERUSER',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -18,6 +20,8 @@ export const INTERNAL_APP_ROLES: Role[] = [
   ROLES.STAFF,
   ROLES.DOCTEUR,
   ROLES.TECHNICIEN,
+  ROLES.DATA_ENTRY,
+  ROLES.SUPERUSER,
 ];
 
 // =============================================================================
@@ -105,6 +109,49 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   // ADMIN n'a pas accès à l'application interne — géré via interface admin dédiée
   ADMIN: ['admin:users'],
 
+  // SUPERUSER : toutes les permissions sans restriction (pour tests)
+  SUPERUSER: [
+    'patients:view',
+    'patients:create',
+    'patients:edit',
+    'patients:delete',
+    'patients:hard-delete',
+    'patients:restore',
+    'patients:view-deleted',
+    'patients:bulk-import',
+    'antecedents:view',
+    'antecedents:edit',
+    'exams:view',
+    'exams:create',
+    'exams:delete',
+    'exams:technical:view',
+    'exams:technical:edit',
+    'exams:clinical:view',
+    'exams:clinical:edit',
+    'exams:complete',
+    'attachments:view',
+    'attachments:upload',
+    'attachments:delete',
+    'consultations:view',
+    'consultations:create',
+    'consultations:edit',
+    'consultations:cancel',
+    'appointments:view',
+    'appointments:create',
+    'appointments:edit',
+    'appointments:cancel',
+    'planning:view',
+    'analytics:view',
+    'reports:view',
+    'reports:export',
+    'patient-records:view',
+    'sites:view',
+    'sites:create',
+    'sites:edit',
+    'sites:delete',
+    'admin:users',
+  ],
+
   // STAFF : accès complet, gestion admin incluse
   STAFF: [
     'patients:view',
@@ -184,6 +231,30 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:export',
     'patient-records:view',
     'sites:view',
+  ],
+
+  // DATA_ENTRY : accès complet dépistage + analytics, pas de billing/RDV/sites/admin
+  DATA_ENTRY: [
+    'patients:view',
+    'patients:create',
+    'patients:edit',
+    'antecedents:view',
+    'antecedents:edit',
+    'exams:view',
+    'exams:create',
+    'exams:delete',
+    'exams:technical:view',
+    'exams:technical:edit',
+    'exams:clinical:view',
+    'exams:clinical:edit',
+    'exams:complete',
+    'attachments:view',
+    'attachments:upload',
+    'attachments:delete',
+    'analytics:view',
+    'reports:view',
+    'reports:export',
+    'patient-records:view',
   ],
 
   // TECHNICIEN : données techniques uniquement
@@ -285,6 +356,12 @@ export const isDocteur = (user: AuthUser | null | undefined): boolean =>
 export const isTechnicien = (user: AuthUser | null | undefined): boolean =>
   hasRole(user, ROLES.TECHNICIEN);
 
+export const isSuperuser = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.SUPERUSER);
+
+export const isDataEntry = (user: AuthUser | null | undefined): boolean =>
+  hasRole(user, ROLES.DATA_ENTRY);
+
 // =============================================================================
 // LABELS
 // =============================================================================
@@ -295,6 +372,8 @@ export const getRoleLabel = (role: Role): string => {
     STAFF: 'Staff',
     DOCTEUR: 'Médecin',
     TECHNICIEN: 'Technicien',
+    DATA_ENTRY: 'Saisie de données',
+    SUPERUSER: 'Superutilisateur',
   };
   return labels[role] || role;
 };

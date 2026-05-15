@@ -14,7 +14,8 @@ const deleteJourFerme = (jourId: number): Promise<void> =>
 
 export const useCreateJourFerme = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createJourFerme,
@@ -22,12 +23,14 @@ export const useCreateJourFerme = ({
       qc.invalidateQueries({ queryKey: ['jours-fermes'] });
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useDeleteJourFerme = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteJourFerme,
@@ -35,5 +38,6 @@ export const useDeleteJourFerme = ({
       qc.invalidateQueries({ queryKey: ['jours-fermes'] });
       onSuccess?.();
     },
+    onError,
   });
 };

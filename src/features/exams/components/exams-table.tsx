@@ -56,7 +56,7 @@ export function ExamsTable({
   }
 
   return (
-    <Table>
+    <Table className="bg-card">
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>

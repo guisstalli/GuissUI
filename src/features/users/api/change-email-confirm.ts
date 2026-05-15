@@ -4,7 +4,8 @@ import { api } from '@/lib/api-client';
 
 export const useChangeEmailConfirm = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { otp: string }) =>
@@ -14,5 +15,6 @@ export const useChangeEmailConfirm = ({
       queryClient.invalidateQueries({ queryKey: ['auth-user'] });
       onSuccess?.();
     },
+    onError,
   });
 };

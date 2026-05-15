@@ -60,14 +60,14 @@ export default function ConducteursExamensPage() {
           </div>
         ) : exams.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-            <ClipboardList className="mb-3 size-10 text-muted-foreground/40" />
+            <ClipboardList className="text-muted-foreground/40 mb-3 size-10" />
             <p className="font-medium text-muted-foreground">
               Aucun examen de conducteur
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <Table>
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>N° Examen</TableHead>

@@ -8,7 +8,7 @@ const invalidateAll = (queryClient: ReturnType<typeof useQueryClient>) => {
 
 export const useStartEvent = (
   eventId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -17,12 +17,13 @@ export const useStartEvent = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useCloseEvent = (
   eventId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -31,12 +32,13 @@ export const useCloseEvent = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useCancelEvent = (
   eventId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -46,12 +48,13 @@ export const useCancelEvent = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };
 
 export const useDeleteEvent = (
   eventId: number,
-  { onSuccess }: { onSuccess?: () => void } = {},
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
 ) => {
   const qc = useQueryClient();
   return useMutation({
@@ -60,5 +63,6 @@ export const useDeleteEvent = (
       invalidateAll(qc);
       onSuccess?.();
     },
+    onError,
   });
 };

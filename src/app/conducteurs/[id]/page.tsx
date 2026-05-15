@@ -1,9 +1,22 @@
 'use client';
 
 import dayjs from 'dayjs';
-import { ArrowLeft, Calendar, Car, Edit, MapPin, User } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  Car,
+  CheckCircle2,
+  ClipboardList,
+  Edit,
+  FileText,
+  Loader2,
+  MapPin,
+  Plus,
+  User,
+} from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
@@ -18,10 +31,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs/tabs';
 import { useDriver } from '@/features/drivers/api/get-driver';
 import { useUpdateDriver } from '@/features/drivers/api/update-driver';
 import { DriverForm } from '@/features/drivers/components/driver-form';
 import type { DriverCreate } from '@/features/drivers/types/schemas';
+import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
+import { usePatientExams } from '@/features/patients/api/get-patient-exams';
+import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 
 const TYPE_PERMIS_LABELS: Record<string, string> = {
   Leger: 'Léger',
@@ -60,16 +82,109 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+function ExamsTab({ patientId }: { patientId: number }) {
+  const router = useRouter();
+  const { data: exams, isLoading } = usePatientExams({ patientId });
+
+  const createAdultMutation = useCreateAdultExam({
+    mutationConfig: {
+      onSuccess: (data) => router.push(`/exams/adult/${data.id}`),
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={() => createAdultMutation.mutate({ patient_id: patientId })}
+          disabled={createAdultMutation.isPending}
+        >
+          {createAdultMutation.isPending ? (
+            <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+          ) : (
+            <Plus className="mr-1.5 size-3.5" />
+          )}
+          Nouvel examen adulte
+        </Button>
+      </div>
+
+      {isLoading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {!isLoading && exams && (
+        <div className="space-y-4">
+          {/* Adult exams */}
+          {exams.adult.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Examens adultes ({exams.adult.length})
+              </h3>
+              <div className="space-y-2">
+                {exams.adult.map((exam) => (
+                  <Link
+                    key={exam.id}
+                    href={`/exams/adult/${exam.id}`}
+                    className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="size-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {exam.numero_examen}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {exam.site_libelle ?? 'Site inconnu'} ·{' '}
+                          {dayjs(exam.created).format('DD/MM/YYYY')}
+                        </p>
+                      </div>
+                    </div>
+                    {exam.is_completed ? (
+                      <CheckCircle2 className="size-4 text-emerald-500" />
+                    ) : (
+                      <AlertCircle className="size-4 text-amber-500" />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {exams.adult.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+              <ClipboardList className="mb-3 size-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Aucun examen pour ce patient
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DriverDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const driverId = Number(id);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(
+    searchParams.get('edit') === 'true',
+  );
 
   const { data: driver, isLoading } = useDriver(driverId);
 
   const updateMutation = useUpdateDriver({
-    mutationConfig: { onSuccess: () => setShowEditDialog(false) },
+    mutationConfig: {
+      onSuccess: () => {
+        setShowEditDialog(false);
+        router.replace(`/conducteurs/${driverId}`);
+      },
+    },
   });
 
   if (isLoading) {
@@ -128,148 +243,194 @@ export default function DriverDetailPage() {
               Retour
             </Link>
           </Button>
-          <Button size="sm" onClick={() => setShowEditDialog(true)}>
-            <Edit className="mr-1.5 size-3.5" />
-            Modifier
-          </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Patient */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User className="size-4" />
-                Informations patient
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              <InfoRow label="Nom complet" value={driver.patient.full_name} />
-              <InfoRow
-                label="N° identifiant"
-                value={driver.patient.numero_identifiant}
-              />
-              <InfoRow
-                label="Sexe"
-                value={SEX_LABELS[driver.patient.sex] ?? driver.patient.sex}
-              />
-              <InfoRow
-                label="Date de naissance"
-                value={dayjs(driver.patient.date_de_naissance).format(
-                  'DD/MM/YYYY',
-                )}
-              />
-              <InfoRow label="Téléphone" value={driver.patient.phone_number} />
-              <InfoRow
-                label="Statut"
-                value={
-                  driver.patient.at_risk ? (
-                    <Badge variant="destructive" className="text-xs">
-                      À risque
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">
-                      Normal
-                    </Badge>
-                  )
-                }
-              />
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="identite">
+          <TabsList className="mb-2">
+            <TabsTrigger value="identite">
+              <User className="mr-1.5 size-3.5" />
+              État civil
+            </TabsTrigger>
+            <TabsTrigger value="examens">
+              <ClipboardList className="mr-1.5 size-3.5" />
+              Examens
+            </TabsTrigger>
+            <TabsTrigger value="antecedents">
+              <FileText className="mr-1.5 size-3.5" />
+              Antécédents
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Permis */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Calendar className="size-4" />
-                Permis de conduire
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              <InfoRow label="N° de permis" value={driver.numero_permis} />
-              <InfoRow
-                label="Type"
-                value={
-                  TYPE_PERMIS_LABELS[driver.type_permis] ?? driver.type_permis
-                }
-              />
-              {driver.autre_type_permis && (
-                <InfoRow label="Précision" value={driver.autre_type_permis} />
-              )}
-              <InfoRow
-                label="Délivré le"
-                value={dayjs(driver.date_delivrance_permis).format(
-                  'DD/MM/YYYY',
-                )}
-              />
-              <InfoRow
-                label="Expire le"
-                value={dayjs(driver.date_peremption_permis).format(
-                  'DD/MM/YYYY',
-                )}
-              />
-            </CardContent>
-          </Card>
+          {/* Tab: État civil */}
+          <TabsContent value="identite" className="space-y-4">
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => setShowEditDialog(true)}>
+                <Edit className="mr-1.5 size-3.5" />
+                Modifier
+              </Button>
+            </div>
 
-          {/* Activité */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Car className="size-4" />
-                Activité professionnelle
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              <InfoRow
-                label="Transporteur professionnel"
-                value={driver.transporteur_professionnel ? 'Oui' : 'Non'}
-              />
-              <InfoRow
-                label="Secteur"
-                value={SERVICE_LABELS[driver.service] ?? driver.service}
-              />
-              <InfoRow
-                label="Années d'expérience"
-                value={driver.annees_experience}
-              />
-              <InfoRow
-                label="Type de véhicule"
-                value={
-                  VEHICULE_LABELS[driver.type_vehicule_conduit] ??
-                  driver.type_vehicule_conduit
-                }
-              />
-              <InfoRow label="Prise en charge" value={driver.prise_en_charge} />
-            </CardContent>
-          </Card>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Patient */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <User className="size-4" />
+                    Informations patient
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y">
+                  <InfoRow
+                    label="Nom complet"
+                    value={driver.patient.full_name}
+                  />
+                  <InfoRow
+                    label="N° identifiant"
+                    value={driver.patient.numero_identifiant}
+                  />
+                  <InfoRow
+                    label="Sexe"
+                    value={SEX_LABELS[driver.patient.sex] ?? driver.patient.sex}
+                  />
+                  <InfoRow
+                    label="Date de naissance"
+                    value={dayjs(driver.patient.date_de_naissance).format(
+                      'DD/MM/YYYY',
+                    )}
+                  />
+                  <InfoRow
+                    label="Téléphone"
+                    value={driver.patient.phone_number}
+                  />
+                  <InfoRow
+                    label="Statut"
+                    value={
+                      driver.patient.at_risk ? (
+                        <Badge variant="destructive" className="text-xs">
+                          À risque
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          Normal
+                        </Badge>
+                      )
+                    }
+                  />
+                </CardContent>
+              </Card>
 
-          {/* Profil */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MapPin className="size-4" />
-                Profil
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              <InfoRow
-                label="Type d'instruction"
-                value={driver.type_instruction_suivie}
-              />
-              <InfoRow
-                label="Niveau d'instruction"
-                value={
-                  NIVEAU_LABELS[driver.niveau_instruction] ??
-                  driver.niveau_instruction
-                }
-              />
-              <InfoRow
-                label="Zone de résidence"
-                value={driver.zone_de_residence}
-              />
-            </CardContent>
-          </Card>
-        </div>
+              {/* Permis */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Calendar className="size-4" />
+                    Permis de conduire
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y">
+                  <InfoRow label="N° de permis" value={driver.numero_permis} />
+                  <InfoRow
+                    label="Type"
+                    value={
+                      TYPE_PERMIS_LABELS[driver.type_permis] ??
+                      driver.type_permis
+                    }
+                  />
+                  {driver.autre_type_permis && (
+                    <InfoRow
+                      label="Précision"
+                      value={driver.autre_type_permis}
+                    />
+                  )}
+                  <InfoRow
+                    label="Délivré le"
+                    value={dayjs(driver.date_delivrance_permis).format(
+                      'DD/MM/YYYY',
+                    )}
+                  />
+                  <InfoRow
+                    label="Expire le"
+                    value={dayjs(driver.date_peremption_permis).format(
+                      'DD/MM/YYYY',
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Activité */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Car className="size-4" />
+                    Activité professionnelle
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y">
+                  <InfoRow
+                    label="Transporteur professionnel"
+                    value={driver.transporteur_professionnel ? 'Oui' : 'Non'}
+                  />
+                  <InfoRow
+                    label="Secteur"
+                    value={SERVICE_LABELS[driver.service] ?? driver.service}
+                  />
+                  <InfoRow
+                    label="Années d'expérience"
+                    value={driver.annees_experience}
+                  />
+                  <InfoRow
+                    label="Type de véhicule"
+                    value={
+                      VEHICULE_LABELS[driver.type_vehicule_conduit] ??
+                      driver.type_vehicule_conduit
+                    }
+                  />
+                  <InfoRow
+                    label="Prise en charge"
+                    value={driver.prise_en_charge}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Profil */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <MapPin className="size-4" />
+                    Profil
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y">
+                  <InfoRow
+                    label="Type d'instruction"
+                    value={driver.type_instruction_suivie}
+                  />
+                  <InfoRow
+                    label="Niveau d'instruction"
+                    value={
+                      NIVEAU_LABELS[driver.niveau_instruction] ??
+                      driver.niveau_instruction
+                    }
+                  />
+                  <InfoRow
+                    label="Zone de résidence"
+                    value={driver.zone_de_residence}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Examens */}
+          <TabsContent value="examens">
+            <ExamsTab patientId={driver.patient.id} />
+          </TabsContent>
+
+          {/* Tab: Antécédents */}
+          <TabsContent value="antecedents">
+            <MedicalHistoryForm patientId={driver.patient.id} hasDriver />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit dialog */}

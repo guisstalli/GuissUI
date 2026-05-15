@@ -36,7 +36,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/dialog';
 import { Input, Label } from '@/components/ui/form';
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Switch } from '@/components/ui/switch';
 import {
   useAttachments,
   useUploadAttachment,
@@ -181,6 +182,15 @@ export default function ChildExamPage() {
     enabled: !isNewExam && numericExamId > 0,
   });
 
+  const [simplifiedClinicalExam, setSimplifiedClinicalExam] = useState(false);
+
+  // Sync toggle from server data on load
+  useEffect(() => {
+    if (examData) {
+      setSimplifiedClinicalExam(examData.simplified_clinical_exam ?? false);
+    }
+  }, [examData]);
+
   const { mutate: saveTechnical, isPending: isSavingTechnical } =
     useUpdateTechnicalData();
   const { mutate: saveClinical, isPending: isSavingClinical } =
@@ -202,6 +212,30 @@ export default function ChildExamPage() {
   const { mutate: deleteAttachment, isPending: isDeleting } =
     useDeleteAttachment();
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  const handleToggleSimplifiedClinicalExam = useCallback(
+    (enabled: boolean) => {
+      setSimplifiedClinicalExam(enabled);
+      if (!enabled) {
+        // Immediately persist the OFF state so the backend clears the ClinicalExamen
+        saveClinical(
+          { id: numericExamId, data: { simplified_clinical_exam: false } },
+          {
+            onSuccess: () => {
+              refetchExam();
+              setSectionStatus((prev) => ({
+                ...prev,
+                complementary: false,
+                conclusion: false,
+              }));
+              setActiveSection('clinical');
+            },
+          },
+        );
+      }
+    },
+    [saveClinical, numericExamId, refetchExam],
+  );
 
   const patient = examData?.patient
     ? {
@@ -233,12 +267,9 @@ export default function ChildExamPage() {
         avac_od: null,
         avac_og: null,
         avac_odg: null,
-        avsc_od_avec_correction: null,
-        avsc_og_avec_correction: null,
-        avsc_odg_avec_correction: null,
-        avac_od_avec_correction: null,
-        avac_og_avec_correction: null,
-        avac_odg_avec_correction: null,
+        avac_od_prescrite: null,
+        avac_og_prescrite: null,
+        avac_odg_prescrite: null,
       },
       refraction: {
         od_sphere: null,
@@ -477,7 +508,7 @@ export default function ChildExamPage() {
             {
               id: numericExamId,
               data: {
-                simplified_clinical_exam: true,
+                simplified_clinical_exam: simplifiedClinicalExam,
                 reflet_pupillaire: values.clinicalCheck.reflet_pupillaire,
                 reflet_pupillaire_detail:
                   values.clinicalCheck.reflet_pupillaire_detail,
@@ -500,6 +531,7 @@ export default function ChildExamPage() {
     saveClinical,
     form,
     numericExamId,
+    simplifiedClinicalExam,
     buildVisionBinoculairePayload,
     refetchExam,
   ]);
@@ -626,12 +658,10 @@ export default function ChildExamPage() {
   if (isLoadingExam && !isNewExam) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen bg-background">
-          <AppSidebar />
-          <div className="flex flex-1 items-center justify-center pl-60">
-            <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          </div>
-        </div>
+        <AppSidebar />
+        <SidebarInset className="flex items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </SidebarInset>
       </SidebarProvider>
     );
   }
@@ -639,18 +669,16 @@ export default function ChildExamPage() {
   if (isErrorExam && !isNewExam) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen bg-background">
-          <AppSidebar />
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 pl-60">
-            <AlertCircle className="size-12 text-destructive" />
-            <p className="text-destructive">
-              Erreur lors du chargement de l&apos;examen
-            </p>
-            <Button variant="outline" onClick={() => router.back()}>
-              Retour
-            </Button>
-          </div>
-        </div>
+        <AppSidebar />
+        <SidebarInset className="flex flex-col items-center justify-center gap-4">
+          <AlertCircle className="size-12 text-destructive" />
+          <p className="text-destructive">
+            Erreur lors du chargement de l&apos;examen
+          </p>
+          <Button variant="outline" onClick={() => router.back()}>
+            Retour
+          </Button>
+        </SidebarInset>
       </SidebarProvider>
     );
   }
@@ -692,6 +720,8 @@ export default function ChildExamPage() {
         isUploading={isUploading}
         isDeleting={isDeleting}
         downloadingId={downloadingId}
+        simplifiedClinicalExam={simplifiedClinicalExam}
+        onToggleSimplifiedClinicalExam={handleToggleSimplifiedClinicalExam}
       />
     </SidebarProvider>
   );
@@ -752,6 +782,8 @@ interface ChildExamContentProps {
   isUploading: boolean;
   isDeleting: boolean;
   downloadingId: number | null;
+  simplifiedClinicalExam: boolean;
+  onToggleSimplifiedClinicalExam: (enabled: boolean) => void;
 }
 
 function ChildExamContent(props: ChildExamContentProps) {
@@ -788,10 +820,9 @@ function ChildExamContent(props: ChildExamContentProps) {
     isUploading,
     isDeleting,
     downloadingId,
+    simplifiedClinicalExam,
+    onToggleSimplifiedClinicalExam,
   } = props;
-
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
 
   const { mutate: downloadReport, isPending: isDownloadingReport } =
     useDownloadChildReport();
@@ -806,15 +837,10 @@ function ChildExamContent(props: ChildExamContentProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <>
       <AppSidebar />
 
-      <div
-        className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
-          isCollapsed ? 'pl-16' : 'pl-60',
-        )}
-      >
+      <SidebarInset>
         <Header
           title="Examen Enfant"
           patientName={`${patient.lastName}, ${patient.firstName}`}
@@ -834,39 +860,45 @@ function ChildExamContent(props: ChildExamContentProps) {
 
             <nav aria-label="Exam sections">
               <ul className="space-y-1">
-                {sections.map((section) => {
-                  const isActive = activeSection === section.id;
-                  const isDone = sectionStatus[section.id];
-                  return (
-                    <li key={section.id}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection(section.id)}
-                        className={cn(
-                          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                        )}
-                        aria-current={isActive ? 'true' : undefined}
-                      >
-                        <section.icon
-                          className="size-4 shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span className="flex-1 text-left">
-                          {section.title}
-                        </span>
-                        {isDone ? (
-                          <Check className="size-4 text-primary" />
-                        ) : (
-                          <Circle className="text-muted-foreground/50 size-4" />
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
+                {sections
+                  .filter(
+                    (s) =>
+                      simplifiedClinicalExam ||
+                      (s.id !== 'complementary' && s.id !== 'conclusion'),
+                  )
+                  .map((section) => {
+                    const isActive = activeSection === section.id;
+                    const isDone = sectionStatus[section.id];
+                    return (
+                      <li key={section.id}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection(section.id)}
+                          className={cn(
+                            'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                            isActive
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                          )}
+                          aria-current={isActive ? 'true' : undefined}
+                        >
+                          <section.icon
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="flex-1 text-left">
+                            {section.title}
+                          </span>
+                          {isDone ? (
+                            <Check className="size-4 text-primary" />
+                          ) : (
+                            <Circle className="text-muted-foreground/50 size-4" />
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
               </ul>
             </nav>
 
@@ -955,14 +987,14 @@ function ChildExamContent(props: ChildExamContentProps) {
             <main className="flex-1 overflow-y-auto p-6">
               {/* TECHNIQUE */}
               {activeSection === 'technical' && (
-                <div className="space-y-6">
+                <div className="rounded-lg border border-border bg-card p-4">
                   <div>
                     <h1 className="text-xl font-semibold">Examen Technique</h1>
                     <p className="text-sm text-muted-foreground">
                       Acuité visuelle, réfraction et tension oculaire
                     </p>
                   </div>
-                  <div className="flex w-fit gap-1 rounded-lg border p-1">
+                  <div className="my-2 flex w-fit gap-1 rounded-lg border bg-card p-1">
                     {(
                       [
                         ['acuity', 'Acuité Visuelle'],
@@ -989,20 +1021,44 @@ function ChildExamContent(props: ChildExamContentProps) {
                   </div>
                   {technicalSubsection === 'acuity' && <VisualAcuityForm />}
                   {technicalSubsection === 'refraction' && <RefractionForm />}
-                  {technicalSubsection === 'tension' && <OcularTensionForm />}
+                  {technicalSubsection === 'tension' && (
+                    <OcularTensionForm namePrefix="ocularTension" />
+                  )}
                 </div>
               )}
 
               {/* CLINIQUE */}
               {activeSection === 'clinical' && (
-                <div className="space-y-6">
-                  <div>
-                    <h1 className="text-xl font-semibold">Examen Clinique</h1>
-                    <p className="text-sm text-muted-foreground">
-                      Vision binoculaire et examen clinique simplifié
-                    </p>
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h1 className="text-xl font-semibold">Examen Clinique</h1>
+                      <p className="text-sm text-muted-foreground">
+                        Vision binoculaire et examen clinique simplifié
+                      </p>
+                    </div>
+                    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                    <label
+                      htmlFor="toggle-clinical-exam"
+                      className="bg-muted/30 flex cursor-pointer items-center gap-3 rounded-lg border border-border px-4 py-2"
+                    >
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          Examen clinique complet
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Active biomicroscopie, périmétrie et conclusion
+                        </p>
+                      </div>
+                      <Switch
+                        id="toggle-clinical-exam"
+                        checked={simplifiedClinicalExam}
+                        onCheckedChange={onToggleSimplifiedClinicalExam}
+                        disabled={isSaving || examId === 'new'}
+                      />
+                    </label>
                   </div>
-                  <div className="flex w-fit gap-1 rounded-lg border p-1">
+                  <div className="my-2 flex w-fit gap-1 rounded-lg border bg-card p-1">
                     {(
                       [
                         ['visionBinoculaire', 'Vision Binoculaire'],
@@ -1037,7 +1093,7 @@ function ChildExamContent(props: ChildExamContentProps) {
 
               {/* COMPLÉMENTAIRES */}
               {activeSection === 'complementary' && (
-                <div className="space-y-6">
+                <div className="rounded-lg border border-border bg-card p-4">
                   <div>
                     <h1 className="text-xl font-semibold">
                       Examens Complémentaires
@@ -1046,7 +1102,7 @@ function ChildExamContent(props: ChildExamContentProps) {
                       Plaintes, périmétrie, biomicroscopie et pièces jointes
                     </p>
                   </div>
-                  <div className="flex w-fit flex-wrap gap-1 rounded-lg border p-1">
+                  <div className="my-2 flex w-fit flex-wrap gap-1 rounded-lg border  p-1">
                     {(
                       [
                         ['plaintes', 'Plaintes'],
@@ -1077,13 +1133,13 @@ function ChildExamContent(props: ChildExamContentProps) {
 
                   {complementarySubsection === 'plaintes' && <PlaintesForm />}
                   {complementarySubsection === 'perimetry' && (
-                    <div className="space-y-6">
+                    <div className="rounded-lg border border-border bg-card p-4">
                       <PerimetryForm />
                       <ExamensAdditionelsSection namePrefix="perimetry" />
                     </div>
                   )}
                   {complementarySubsection === 'biomicroscopy' && (
-                    <div className="space-y-6">
+                    <div className="rounded-lg border border-border bg-card p-4">
                       <Card>
                         <CardHeader>
                           <CardTitle className="text-base">
@@ -1267,7 +1323,7 @@ function ChildExamContent(props: ChildExamContentProps) {
 
               {/* CONCLUSION */}
               {activeSection === 'conclusion' && (
-                <div className="space-y-6">
+                <div className="rounded-lg border border-border bg-card p-4">
                   <div>
                     <h1 className="text-xl font-semibold">Conclusion</h1>
                     <p className="text-sm text-muted-foreground">
@@ -1280,7 +1336,7 @@ function ChildExamContent(props: ChildExamContentProps) {
             </main>
           </FormProvider>
         </div>
-      </div>
+      </SidebarInset>
 
       {/* Conclusion save confirmation */}
       <AlertDialog
@@ -1305,6 +1361,6 @@ function ChildExamContent(props: ChildExamContentProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

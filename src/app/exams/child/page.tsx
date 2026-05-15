@@ -151,7 +151,7 @@ export default function ChildExamsPage() {
       {!isLoading && !isError && (
         <>
           <div className="rounded-lg border border-border bg-card">
-            <Table>
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>N° Examen</TableHead>

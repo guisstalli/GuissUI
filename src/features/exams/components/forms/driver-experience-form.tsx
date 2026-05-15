@@ -130,7 +130,7 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Visit info header */}
         {existing && (
-          <div className="rounded-md bg-muted/40 px-4 py-2 text-sm text-muted-foreground">
+          <div className="bg-muted/40 rounded-md px-4 py-2 text-sm text-muted-foreground">
             Visite n°{existing.visit_number}
           </div>
         )}
@@ -154,9 +154,7 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                     <Input
                       type="date"
                       value={field.value ?? ''}
-                      onChange={(e) =>
-                        field.onChange(e.target.value || null)
-                      }
+                      onChange={(e) => field.onChange(e.target.value || null)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -321,9 +319,7 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                     <Input
                       type="date"
                       value={field.value ?? ''}
-                      onChange={(e) =>
-                        field.onChange(e.target.value || null)
-                      }
+                      onChange={(e) => field.onChange(e.target.value || null)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -366,9 +362,7 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                     <FormControl>
                       <Input
                         value={field.value ?? ''}
-                        onChange={(e) =>
-                          field.onChange(e.target.value || null)
-                        }
+                        onChange={(e) => field.onChange(e.target.value || null)}
                         placeholder="Nature des dommages corporels..."
                       />
                     </FormControl>
@@ -406,9 +400,7 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                     <FormControl>
                       <Input
                         value={field.value ?? ''}
-                        onChange={(e) =>
-                          field.onChange(e.target.value || null)
-                        }
+                        onChange={(e) => field.onChange(e.target.value || null)}
                         placeholder="Nature des dommages matériels..."
                       />
                     </FormControl>

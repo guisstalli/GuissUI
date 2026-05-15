@@ -4,13 +4,17 @@ import dayjs from 'dayjs';
 import {
   ChevronLeft,
   ChevronRight,
+  ClipboardPlus,
   Filter,
+  MoreVertical,
+  Pencil,
   Search,
   Trash2,
   UserPlus,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
@@ -24,6 +28,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown/dropdown';
 import { Input } from '@/components/ui/form/input';
 import {
   Select,
@@ -51,6 +62,7 @@ import {
   TYPE_PERMIS_VALUES,
   type Driver,
 } from '@/features/drivers/types/schemas';
+import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 
 const ITEMS_PER_PAGE = 15;
@@ -67,6 +79,7 @@ const TYPE_PERMIS_LABELS: Record<string, string> = {
 };
 
 export default function ConducteursPage() {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -111,6 +124,12 @@ export default function ConducteursPage() {
 
   const deleteMutation = useDeleteDriver({
     mutationConfig: { onSuccess: () => setDriverToDelete(null) },
+  });
+
+  const createAdultExamMutation = useCreateAdultExam({
+    mutationConfig: {
+      onSuccess: (data) => router.push(`/exams/adult/${data.id}`),
+    },
   });
 
   const drivers = data?.results ?? [];
@@ -266,8 +285,8 @@ export default function ConducteursPage() {
             )}
           </div>
         ) : (
-          <div className="rounded-lg border">
-            <Table>
+          <div className="rounded-lg border bg-card">
+            <Table className="bg-card">
               <TableHeader>
                 <TableRow>
                   <TableHead>Conducteur</TableHead>
@@ -308,17 +327,50 @@ export default function ConducteursPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/conducteurs/${driver.id}`}>Ouvrir</Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setDriverToDelete(driver)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="size-4" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/conducteurs/${driver.id}`}>
+                                Voir
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/conducteurs/${driver.id}?edit=true`}
+                              >
+                                <Pencil className="mr-2 size-3.5" />
+                                Modifier
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                driver.patient?.id &&
+                                createAdultExamMutation.mutate({
+                                  patient_id: driver.patient.id,
+                                })
+                              }
+                              disabled={createAdultExamMutation.isPending}
+                            >
+                              <ClipboardPlus className="mr-2 size-3.5" />
+                              Nouvel examen adulte
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDriverToDelete(driver)}
+                            >
+                              <Trash2 className="mr-2 size-3.5" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>

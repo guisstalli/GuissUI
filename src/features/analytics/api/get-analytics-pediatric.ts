@@ -22,7 +22,9 @@ const buildUrl = (filters: AnalyticsFilters) => {
 export const getAnalyticsPediatric = (
   filters: AnalyticsFilters,
 ): Promise<AnalyticsPediatric> => {
-  return api.get<AnalyticsPediatric>(buildUrl(normalizeAnalyticsFilters(filters)));
+  return api.get<AnalyticsPediatric>(
+    buildUrl(normalizeAnalyticsFilters(filters)),
+  );
 };
 
 export const getAnalyticsPediatricQueryOptions = (

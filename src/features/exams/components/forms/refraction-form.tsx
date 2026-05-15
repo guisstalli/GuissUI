@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
@@ -42,6 +43,25 @@ export function RefractionForm({ namePrefix = '' }: RefractionFormProps) {
   const form = useFormContext();
   const prefix = namePrefix ? `${namePrefix}.` : '';
   const correction = form.watch(`${prefix}correction`);
+
+  useEffect(() => {
+    if (!correction) {
+      const fieldsToReset = [
+        'od_sphere_avec_correction',
+        'od_cylinder_avec_correction',
+        'od_axis_avec_correction',
+        'od_visual_acuity_avec_correction',
+        'og_sphere_avec_correction',
+        'og_cylinder_avec_correction',
+        'og_axis_avec_correction',
+        'og_visual_acuity_avec_correction',
+        'odg_visual_acuity_avec_correction',
+      ];
+      fieldsToReset.forEach((field) =>
+        form.setValue(`${prefix}${field}`, null),
+      );
+    }
+  }, [correction, prefix, form]);
 
   const EyeRefractionFields = ({
     eye,

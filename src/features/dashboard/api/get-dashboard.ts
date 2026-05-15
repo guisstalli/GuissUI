@@ -4,7 +4,7 @@ import { api } from '@/lib/api-client';
 
 import type { Dashboard } from '../types/schemas';
 
-const getDashboard = (): Promise<Dashboard> => api.get('/api/v1/dashboard/');
+const getDashboard = (): Promise<Dashboard> => api.get('/dashboard/');
 
 export const getDashboardQueryOptions = () =>
   queryOptions({

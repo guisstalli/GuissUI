@@ -514,8 +514,10 @@ export function DriverForm({
                 <FormItem>
                   <FormLabel>Prise en charge</FormLabel>
                   <Select
-                    value={field.value ?? ''}
-                    onValueChange={(v) => field.onChange(v || null)}
+                    value={field.value ?? '__none__'}
+                    onValueChange={(v) =>
+                      field.onChange(v === '__none__' ? null : v)
+                    }
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -523,7 +525,7 @@ export function DriverForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">—</SelectItem>
+                      <SelectItem value="__none__">—</SelectItem>
                       {PRISE_EN_CHARGE_VALUES.map((v) => (
                         <SelectItem key={v} value={v}>
                           {PRISE_EN_CHARGE_LABELS[v]}

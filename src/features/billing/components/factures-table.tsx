@@ -24,8 +24,8 @@ interface FacturesTableProps {
 
 export function FacturesTable({ factures }: FacturesTableProps) {
   return (
-    <div className="rounded-lg border">
-      <TableElement>
+    <div className="rounded-lg border bg-card">
+      <TableElement className="bg-card">
         <TableHeader>
           <TableRow>
             <TableHead>Numéro</TableHead>

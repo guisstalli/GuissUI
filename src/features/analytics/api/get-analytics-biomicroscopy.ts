@@ -22,7 +22,9 @@ const buildUrl = (filters: AnalyticsFilters) => {
 export const getAnalyticsBiomicroscopy = (
   filters: AnalyticsFilters,
 ): Promise<AnalyticsBiomicroscopy> => {
-  return api.get<AnalyticsBiomicroscopy>(buildUrl(normalizeAnalyticsFilters(filters)));
+  return api.get<AnalyticsBiomicroscopy>(
+    buildUrl(normalizeAnalyticsFilters(filters)),
+  );
 };
 
 export const getAnalyticsBiomicroscopyQueryOptions = (
@@ -44,5 +46,8 @@ export const useAnalyticsBiomicroscopy = ({
   filters,
   enabled = true,
 }: UseAnalyticsBiomicroscopyOptions) => {
-  return useQuery({ ...getAnalyticsBiomicroscopyQueryOptions(filters), enabled });
+  return useQuery({
+    ...getAnalyticsBiomicroscopyQueryOptions(filters),
+    enabled,
+  });
 };

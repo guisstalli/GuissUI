@@ -106,7 +106,12 @@ import { cn } from '@/lib/utils';
  * - Affichage de l'état de complétion (is_completed)
  */
 
-type Section = 'technical' | 'clinical' | 'analytics' | 'conclusion' | 'experience';
+type Section =
+  | 'technical'
+  | 'clinical'
+  | 'analytics'
+  | 'conclusion'
+  | 'experience';
 type TechnicalSubsection = 'acuity' | 'refraction' | 'tension' | 'pachymetry';
 type ClinicalSubsection =
   | 'plaintes'
@@ -292,12 +297,9 @@ export default function AdultExamPage() {
         avac_od: null,
         avac_og: null,
         avac_odg: null,
-        avsc_od_avec_correction: null,
-        avsc_og_avec_correction: null,
-        avsc_odg_avec_correction: null,
-        avac_od_avec_correction: null,
-        avac_og_avec_correction: null,
-        avac_odg_avec_correction: null,
+        avac_od_prescrite: null,
+        avac_og_prescrite: null,
+        avac_odg_prescrite: null,
       },
       refraction: {
         od_sphere: null,

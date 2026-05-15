@@ -155,9 +155,7 @@ export const AnalyticsRiskFactorsSchema = z.object({
   medical_antecedents: z.object({
     has_medical_pct: z.number(),
     has_ophthalmic_pct: z.number(),
-    top_ophthalmic: z.array(
-      z.object({ name: z.string(), count: z.number() }),
-    ),
+    top_ophthalmic: z.array(z.object({ name: z.string(), count: z.number() })),
   }),
   addiction: z.object({
     has_addiction_pct: z.number(),
@@ -286,9 +284,7 @@ export const AnalyticsVisualFieldSchema = z.object({
 export const AnalyticsDriverExperienceSchema = z.object({
   filters: AnalyticsFiltersSchema,
   sample_size: z.number(),
-  etat_conducteur: z.record(
-    z.object({ count: z.number(), pct: z.number() }),
-  ),
+  etat_conducteur: z.record(z.object({ count: z.number(), pct: z.number() })),
   accidents: z.object({
     mean_accidents_per_driver: z.number().nullable(),
     drivers_with_accident_pct: z.number(),

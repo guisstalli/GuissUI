@@ -14,7 +14,7 @@ import { useConfirmPasswordReset } from '../api/confirm-password-reset';
 import { ResetPasswordSchema, type ResetPasswordInput } from '../types/schemas';
 
 const inputCx =
-  'h-11 w-full rounded-lg border border-white/10 bg-white/[0.04] pl-10 pr-10 text-sm text-white placeholder:text-slate-500 transition-colors focus:border-cyan-400/60 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-cyan-400/30';
+  'h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-400/60 dark:focus:bg-white/[0.06] dark:focus:ring-cyan-400/30';
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -58,7 +58,7 @@ export function ResetPasswordForm() {
     return (
       <div
         role="alert"
-        className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+        className="rounded-lg border border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-300"
       >
         Lien de réinitialisation invalide. Veuillez recommencer la procédure.
       </div>
@@ -72,7 +72,7 @@ export function ResetPasswordForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="password"
-          className="block text-xs font-medium text-slate-300"
+          className="block text-xs font-medium text-slate-600 dark:text-slate-300"
         >
           Nouveau mot de passe
         </label>
@@ -98,7 +98,7 @@ export function ResetPasswordForm() {
                 ? 'Masquer le mot de passe'
                 : 'Afficher le mot de passe'
             }
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
           >
             {showPassword ? (
               <EyeOff className="size-4" />
@@ -108,7 +108,7 @@ export function ResetPasswordForm() {
           </button>
         </div>
         {errors.password && (
-          <p className="text-xs text-red-400" role="alert">
+          <p className="text-xs text-red-600 dark:text-red-400" role="alert">
             {errors.password.message}
           </p>
         )}
@@ -117,7 +117,7 @@ export function ResetPasswordForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="confirmPassword"
-          className="block text-xs font-medium text-slate-300"
+          className="block text-xs font-medium text-slate-600 dark:text-slate-300"
         >
           Confirmer le mot de passe
         </label>
@@ -146,7 +146,7 @@ export function ResetPasswordForm() {
                 ? 'Masquer la confirmation'
                 : 'Afficher la confirmation'
             }
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
           >
             {showConfirm ? (
               <EyeOff className="size-4" />
@@ -156,7 +156,7 @@ export function ResetPasswordForm() {
           </button>
         </div>
         {errors.confirmPassword && (
-          <p className="text-xs text-red-400" role="alert">
+          <p className="text-xs text-red-600 dark:text-red-400" role="alert">
             {errors.confirmPassword.message}
           </p>
         )}
@@ -165,7 +165,7 @@ export function ResetPasswordForm() {
       {serverError && (
         <div
           role="alert"
-          className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+          className="rounded-md border border-red-500/30 bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-300"
         >
           {serverError}
         </div>

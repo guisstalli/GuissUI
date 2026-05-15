@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog/dialog';
+import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
 import {
   TableBody,
@@ -72,6 +73,7 @@ export default function FactureDetailPage() {
   const [showAnnulerDialog, setShowAnnulerDialog] = useState(false);
   const [showPaiementDialog, setShowPaiementDialog] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const { addNotification } = useNotifications();
 
   useDialogCleanup([showEmettreDialog, showAnnulerDialog, showPaiementDialog]);
 
@@ -94,6 +96,12 @@ export default function FactureDetailPage() {
     setIsDownloading(true);
     try {
       await downloadFacturePdf(facture.id, facture.numero);
+    } catch {
+      addNotification({
+        type: 'error',
+        title: 'Erreur',
+        message: 'Impossible de télécharger la facture.',
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -277,7 +285,7 @@ export default function FactureDetailPage() {
                 Aucune ligne.
               </p>
             ) : (
-              <TableElement>
+              <TableElement className="bg-card">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Description</TableHead>
@@ -363,7 +371,7 @@ export default function FactureDetailPage() {
                 Aucun paiement enregistré.
               </p>
             ) : (
-              <TableElement>
+              <TableElement className="bg-card">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>

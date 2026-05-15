@@ -1,10 +1,11 @@
-import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { server } from '@/testing/mocks/server';
+
 import { useAddTechnicalData, useAddClinicalData } from '../mutations';
 
 // =============================================================================
@@ -133,10 +134,7 @@ describe('useAddTechnicalData', () => {
         http.post(
           `${API_URL}/depistage/examens/adultes/:id/add-technical/`,
           () =>
-            HttpResponse.json(
-              { detail: 'Données invalides' },
-              { status: 400 },
-            ),
+            HttpResponse.json({ detail: 'Données invalides' }, { status: 400 }),
         ),
       );
     });

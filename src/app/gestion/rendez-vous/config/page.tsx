@@ -56,6 +56,9 @@ const ConfigSchema = z.object({
   capacite_par_slot: z.coerce.number().min(1),
   buffer_avance_heures: z.coerce.number().min(0),
   reschedule_limit: z.coerce.number().min(0),
+  reschedule_token_ttl_minutes: z.coerce.number().min(1).max(1440),
+  buffer_inter_slots: z.coerce.number().min(0).max(60),
+  max_rdv_par_jour: z.coerce.number().min(0),
   lundi: z.boolean(),
   mardi: z.boolean(),
   mercredi: z.boolean(),
@@ -84,7 +87,13 @@ function ConfigForm({ config }: { config: RdvConfig }) {
 
   const form = useForm<RdvConfig>({
     resolver: zodResolver(ConfigSchema),
-    defaultValues: { reschedule_limit: 0, ...config },
+    defaultValues: {
+      reschedule_limit: 0,
+      reschedule_token_ttl_minutes: 5,
+      buffer_inter_slots: 0,
+      max_rdv_par_jour: 0,
+      ...config,
+    },
   });
 
   const jours = form.watch(JOURS.map((j) => j.key) as JourKey[]);
@@ -192,6 +201,61 @@ function ConfigForm({ config }: { config: RdvConfig }) {
               </FormItem>
             )}
           />
+        </div>
+
+        {/* Règles avancées */}
+        <div>
+          <p className="mb-3 text-sm font-medium">Règles avancées</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="reschedule_token_ttl_minutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>TTL lien reprogrammation (min)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={1} max={1440} {...field} />
+                  </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Durée de validité du lien de replanification
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="buffer_inter_slots"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Buffer inter-créneaux (min)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} max={60} {...field} />
+                  </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Temps tampon entre deux créneaux
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="max_rdv_par_jour"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Limite RDV par jour</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} {...field} />
+                  </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    0 = illimité
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {/* Jours ouvrés */}
@@ -321,7 +385,7 @@ function JoursFermesSection() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8 text-destructive hover:bg-destructive/10"
+                className="hover:bg-destructive/10 size-8 text-destructive"
                 onClick={() => del(jour.id)}
               >
                 <Trash2 className="size-4" />

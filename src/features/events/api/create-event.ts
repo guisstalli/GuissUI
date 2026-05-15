@@ -9,7 +9,8 @@ export const createEvent = (data: EventCreateInput) =>
 
 export const useCreateEvent = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createEvent,
@@ -17,5 +18,6 @@ export const useCreateEvent = ({
       queryClient.invalidateQueries({ queryKey: ['events'] });
       onSuccess?.();
     },
+    onError,
   });
 };

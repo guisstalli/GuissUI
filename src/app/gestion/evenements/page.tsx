@@ -84,7 +84,7 @@ function statutBadge(s: string) {
       );
     case 'termine':
       return (
-        <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100">
+        <Badge className="bg-muted text-muted-foreground hover:bg-muted">
           Terminé
         </Badge>
       );
@@ -394,8 +394,8 @@ export default function GestionEvenementsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Événements</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-bold text-foreground">Événements</h1>
+            <p className="text-sm text-muted-foreground">
               Gérez les dépistages ophtalmologiques
             </p>
           </div>
@@ -411,7 +411,7 @@ export default function GestionEvenementsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+        <div className="flex gap-1 overflow-x-auto rounded-xl bg-muted p-1">
           {TABS.map((tab) => (
             <button
               type="button"
@@ -420,8 +420,8 @@ export default function GestionEvenementsPage() {
               className={cn(
                 'shrink-0 flex-1 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors',
                 statutFilter === tab.value
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700',
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {tab.label}
@@ -437,10 +437,12 @@ export default function GestionEvenementsPage() {
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-200 py-16 text-center">
-            <Calendar className="mx-auto mb-3 size-10 text-slate-300" />
-            <p className="font-semibold text-slate-500">Aucun événement</p>
-            <p className="mt-1 text-sm text-slate-400">
+          <div className="rounded-xl border-2 border-dashed border-border py-16 text-center">
+            <Calendar className="text-muted-foreground/40 mx-auto mb-3 size-10" />
+            <p className="font-semibold text-muted-foreground">
+              Aucun événement
+            </p>
+            <p className="text-muted-foreground/70 mt-1 text-sm">
               Créez votre premier événement de dépistage.
             </p>
           </div>
@@ -449,21 +451,21 @@ export default function GestionEvenementsPage() {
             {events.map((event) => (
               <div
                 key={event.slug}
-                className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm"
+                className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm"
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
                     {statutBadge(event.statut)}
                     {event.pour_conducteurs && (
-                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                      <span className="bg-primary/10 rounded-full px-2 py-0.5 text-xs font-medium text-primary">
                         Conducteurs
                       </span>
                     )}
                   </div>
-                  <p className="truncate font-semibold text-slate-900">
+                  <p className="truncate font-semibold text-foreground">
                     {event.titre}
                   </p>
-                  <div className="mt-1 flex flex-wrap gap-4 text-xs text-slate-500">
+                  <div className="mt-1 flex flex-wrap gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="size-3.5" />
                       {formatDate(event.date_event)}
