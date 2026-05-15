@@ -95,6 +95,12 @@ export const PERMISSIONS = {
   'sites:edit': 'Modifier un site',
   'sites:delete': 'Supprimer un site',
 
+  // Conducteurs
+  'drivers:view': 'Voir les conducteurs',
+
+  // Facturation
+  'billing:view': 'Voir la facturation',
+
   // Admin
   'admin:users': 'Gérer les utilisateurs',
 } as const;
@@ -145,6 +151,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'drivers:view',
+    'billing:view',
     'sites:view',
     'sites:create',
     'sites:edit',
@@ -188,6 +196,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'drivers:view',
+    'billing:view',
     'sites:view',
     'sites:create',
     'sites:edit',
@@ -230,6 +240,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'drivers:view',
+    'billing:view',
     'sites:view',
   ],
 
@@ -276,6 +288,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'appointments:edit',
     'planning:view',
     'patient-records:view',
+    'drivers:view',
     'sites:view',
   ],
 };

@@ -128,13 +128,13 @@ const navGroups: NavGroup[] = [
         title: 'Événements',
         url: paths.events.staff.list.getHref(),
         icon: CalendarRange,
-        permission: null,
+        permission: 'appointments:view',
       },
       {
         title: 'Agenda',
         url: paths.rdv.staff.agenda.getHref(),
         icon: CalendarDays,
-        permission: null,
+        permission: 'appointments:view',
         children: [
           {
             title: 'Rendez-vous',
@@ -168,7 +168,7 @@ const navGroups: NavGroup[] = [
         title: 'Conducteurs',
         url: paths.drivers.list.getHref(),
         icon: Truck,
-        permission: 'patients:view',
+        permission: 'drivers:view',
         children: [
           {
             title: 'Liste des conducteurs',
@@ -211,19 +211,19 @@ const navGroups: NavGroup[] = [
         title: 'Facturation',
         url: paths.billing.list.getHref(),
         icon: Receipt,
-        permission: null,
+        permission: 'billing:view',
       },
       {
         title: 'Prestations',
         url: paths.configuration.prestations.getHref(),
         icon: Package,
-        permission: null,
+        permission: 'sites:view',
       },
       {
         title: 'Paramètres',
         url: paths.parametres.getHref(),
         icon: Sliders,
-        permission: null,
+        permission: 'sites:view',
       },
     ],
   },
