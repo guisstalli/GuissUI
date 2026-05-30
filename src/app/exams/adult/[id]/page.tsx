@@ -12,6 +12,7 @@ import {
   FileText,
   Loader2,
   Paperclip,
+  RotateCcw,
   Save,
   Stethoscope,
   Trash2,
@@ -46,6 +47,7 @@ import {
   useAddTechnicalData,
   useAddClinicalData,
   useCompleteAdultExam,
+  useUncompleteAdultExam,
   useAttachments,
   useUploadAttachment,
   useDeleteAttachment,
@@ -55,6 +57,11 @@ import {
   useDownloadAdultReport,
   useDownloadAdultConclusion,
 } from '@/features/exams/api/adult/download-report';
+import {
+  findOrdonnance,
+  useDownloadOrdonnance,
+  useExamOrdonnances,
+} from '@/features/exams/api/ordonnances';
 import {
   BiomicroscopyAnteriorForm,
   BiomicroscopyPosteriorForm,
@@ -68,6 +75,7 @@ import {
   RefractionForm,
   VisualAcuityForm,
 } from '@/features/exams/components/forms';
+import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
 import {
   BiomicroscopyAnteriorSchema,
   BiomicroscopyPosteriorSchema,
@@ -94,6 +102,7 @@ import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
 } from '@/features/exams/utils';
+import { useUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 /**
@@ -218,6 +227,8 @@ export default function AdultExamPage() {
     useAddClinicalData();
   const { mutate: completeExam, isPending: isCompleting } =
     useCompleteAdultExam();
+  const { mutate: uncompleteExam, isPending: isUncompleting } =
+    useUncompleteAdultExam();
 
   // Pièces jointes - utiliser l'ID de l'examen clinique (clinical_examen.id)
   const clinicalExamId = examData?.clinical_examen?.id;
@@ -270,6 +281,7 @@ export default function AdultExamPage() {
         sex: examData.patient.sex === 'H' ? 'Homme' : 'Femme',
         medicalRecordNumber: examData.patient.numero_identifiant,
         hasDriver: examData.patient.has_driver ?? false,
+        driverId: examData.patient.driver_id ?? null,
       }
     : {
         id: '',
@@ -279,6 +291,7 @@ export default function AdultExamPage() {
         sex: '',
         medicalRecordNumber: '',
         hasDriver: false,
+        driverId: null,
       };
 
   // =====================================================================
@@ -527,11 +540,26 @@ export default function AdultExamPage() {
       },
       {
         onSuccess: () => {
-          router.push(`/patients/${patient.id}`);
+          if (patient.hasDriver && patient.driverId) {
+            router.push(`/conducteurs/${patient.driverId}`);
+          } else {
+            router.push(`/patients/${patient.id}`);
+          }
         },
       },
     );
-  }, [completeExam, numericExamId, patient.id, router]);
+  }, [
+    completeExam,
+    numericExamId,
+    patient.id,
+    patient.hasDriver,
+    patient.driverId,
+    router,
+  ]);
+
+  const handleUncompleteExam = useCallback(() => {
+    uncompleteExam({ id: numericExamId });
+  }, [uncompleteExam, numericExamId]);
 
   // Gestion des fichiers joints
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -660,6 +688,7 @@ export default function AdultExamPage() {
         sectionStatus={sectionStatus}
         handleSaveSection={handleSaveSection}
         handleFinalizeExam={handleFinalizeExam}
+        handleUncompleteExam={handleUncompleteExam}
         technicalCompleted={technicalCompleted}
         clinicalCompleted={clinicalCompleted}
         totalTechnical={totalTechnical}
@@ -667,6 +696,7 @@ export default function AdultExamPage() {
         isComplete={isComplete}
         isSaving={isSaving}
         isCompleting={isCompleting}
+        isUncompleting={isUncompleting}
         // Attachments props
         clinicalExamId={clinicalExamId}
         attachments={attachmentsData ?? []}
@@ -703,6 +733,7 @@ interface AdultExamContentProps {
     sex: string;
     medicalRecordNumber: string;
     hasDriver: boolean;
+    driverId: number | null;
   };
   form: ReturnType<typeof useForm<AdultExamFormValues>>;
   activeSection: Section;
@@ -716,6 +747,7 @@ interface AdultExamContentProps {
   sectionStatus: SectionStatus;
   handleSaveSection: (section: Section) => void;
   handleFinalizeExam: () => void;
+  handleUncompleteExam: () => void;
   technicalCompleted: number;
   clinicalCompleted: number;
   totalTechnical: number;
@@ -723,6 +755,7 @@ interface AdultExamContentProps {
   isComplete: boolean;
   isSaving: boolean;
   isCompleting: boolean;
+  isUncompleting: boolean;
   // Attachments
   clinicalExamId?: number;
   attachments: Array<{
@@ -767,6 +800,7 @@ function AdultExamContent(props: AdultExamContentProps) {
     sectionStatus,
     handleSaveSection,
     handleFinalizeExam,
+    handleUncompleteExam,
     technicalCompleted,
     clinicalCompleted,
     totalTechnical,
@@ -774,6 +808,7 @@ function AdultExamContent(props: AdultExamContentProps) {
     isComplete,
     isSaving,
     isCompleting,
+    isUncompleting,
     clinicalExamId,
     attachments,
     isLoadingAttachments,
@@ -793,6 +828,23 @@ function AdultExamContent(props: AdultExamContentProps) {
     useDownloadAdultReport();
   const { mutate: downloadConclusion, isPending: isDownloadingConclusion } =
     useDownloadAdultConclusion();
+
+  const { data: ordonnancesList } = useExamOrdonnances('adult', numericExamId);
+  const medicamentOrdonnance = findOrdonnance(
+    ordonnancesList,
+    'MEDICAMENTEUSE',
+  );
+  const optiqueOrdonnance = findOrdonnance(ordonnancesList, 'OPTIQUE');
+  const { mutate: downloadOrdonnance } = useDownloadOrdonnance();
+
+  const { user: currentUser } = useUser();
+  const canGenerateOrdonnance =
+    currentUser?.role === 'DOCTEUR' ||
+    currentUser?.role === 'ADMIN' ||
+    currentUser?.role === 'SUPERUSER';
+
+  const [medicamentDialogOpen, setMedicamentDialogOpen] = useState(false);
+  const [optiqueDialogOpen, setOptiqueDialogOpen] = useState(false);
 
   const sections = [
     ...BASE_SECTIONS,
@@ -904,18 +956,34 @@ function AdultExamContent(props: AdultExamContentProps) {
               </div>
             </div>
 
-            {/* Finalize Button */}
+            {/* Finalize / Reopen Button */}
             <div className="mt-6">
-              <Button
-                className="w-full"
-                onClick={() => setShowSaveDialog(true)}
-                disabled={isComplete || isCompleting}
-              >
-                {isCompleting && (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                )}
-                {isComplete ? 'Examen terminé' : "Finaliser l'examen"}
-              </Button>
+              {isComplete ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleUncompleteExam}
+                  disabled={isUncompleting}
+                >
+                  {isUncompleting ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="mr-2 size-4" />
+                  )}
+                  Rouvrir l&apos;examen
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  onClick={() => setShowSaveDialog(true)}
+                  disabled={isCompleting}
+                >
+                  {isCompleting && (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  )}
+                  Finaliser l&apos;examen
+                </Button>
+              )}
               {!isComplete && (
                 <p className="mt-2 text-center text-xs text-muted-foreground">
                   Complétez toutes les sections
@@ -923,7 +991,7 @@ function AdultExamContent(props: AdultExamContentProps) {
               )}
             </div>
 
-            {isComplete && (
+            {examId !== 'new' && (
               <div className="mt-4 space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Rapports PDF
@@ -964,7 +1032,111 @@ function AdultExamContent(props: AdultExamContentProps) {
                 </Button>
               </div>
             )}
+
+            {examId !== 'new' &&
+              (canGenerateOrdonnance ||
+                medicamentOrdonnance ||
+                optiqueOrdonnance) && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Ordonnances
+                  </p>
+
+                  {/* Ligne 1 : Ordonnance médicamenteuse */}
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold text-foreground">
+                      Médicamenteuse
+                    </p>
+                    {canGenerateOrdonnance && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setMedicamentDialogOpen(true)}
+                      >
+                        <FileText className="mr-2 size-4" aria-hidden="true" />
+                        {medicamentOrdonnance ? 'Modifier' : 'Rédiger'}
+                      </Button>
+                    )}
+                    {medicamentOrdonnance && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() =>
+                          downloadOrdonnance({
+                            ordonnanceId: medicamentOrdonnance.id,
+                            typeOrdonnance: 'MEDICAMENTEUSE',
+                          })
+                        }
+                      >
+                        <Download className="mr-2 size-3" aria-hidden="true" />
+                        Télécharger
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Ligne 2 : Ordonnance de correction optique */}
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold text-foreground">
+                      Correction optique
+                    </p>
+                    {canGenerateOrdonnance && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setOptiqueDialogOpen(true)}
+                      >
+                        <FileText className="mr-2 size-4" aria-hidden="true" />
+                        {optiqueOrdonnance ? 'Modifier' : 'Rédiger'}
+                      </Button>
+                    )}
+                    {optiqueOrdonnance && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() =>
+                          downloadOrdonnance({
+                            ordonnanceId: optiqueOrdonnance.id,
+                            typeOrdonnance: 'OPTIQUE',
+                          })
+                        }
+                      >
+                        <Download className="mr-2 size-3" aria-hidden="true" />
+                        Télécharger
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
           </aside>
+
+          <OrdonnanceFormDialog
+            examId={numericExamId}
+            examType="adult"
+            mode="medicamenteuse"
+            open={medicamentDialogOpen}
+            onClose={() => setMedicamentDialogOpen(false)}
+            initialData={
+              (medicamentOrdonnance?.prescription_data as Parameters<
+                typeof OrdonnanceFormDialog
+              >[0]['initialData']) ?? null
+            }
+          />
+          <OrdonnanceFormDialog
+            examId={numericExamId}
+            examType="adult"
+            mode="optique"
+            open={optiqueDialogOpen}
+            onClose={() => setOptiqueDialogOpen(false)}
+            initialData={
+              (optiqueOrdonnance?.prescription_data as Parameters<
+                typeof OrdonnanceFormDialog
+              >[0]['initialData']) ?? null
+            }
+          />
 
           {/* Right: Active Section Content */}
           <main className="flex-1 overflow-y-auto p-6">
@@ -991,9 +1163,17 @@ function AdultExamContent(props: AdultExamContentProps) {
             {/* Back Link */}
             <div className="mb-4">
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/patients/${patient.id}`}>
+                <Link
+                  href={
+                    patient.hasDriver && patient.driverId
+                      ? `/conducteurs/${patient.driverId}`
+                      : `/patients/${patient.id}`
+                  }
+                >
                   <ArrowLeft className="mr-1.5 size-4" aria-hidden="true" />
-                  Retour au patient
+                  {patient.hasDriver
+                    ? 'Retour au conducteur'
+                    : 'Retour au patient'}
                 </Link>
               </Button>
             </div>

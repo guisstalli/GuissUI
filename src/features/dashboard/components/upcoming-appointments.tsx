@@ -30,15 +30,10 @@ const STATUT_VARIANT: Record<
   ABSENT: 'destructive',
 };
 
-function formatTime(isoString: string): string {
-  try {
-    return new Date(isoString).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return isoString;
-  }
+function formatTime(timeString: string | null | undefined): string {
+  if (!timeString) return '--:--';
+  if (/^\d{2}:\d{2}/.test(timeString)) return timeString.slice(0, 5);
+  return '--:--';
 }
 
 export function UpcomingAppointments({
@@ -79,7 +74,7 @@ export function UpcomingAppointments({
                       {appt.patient_nom} {appt.patient_prenom}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatTime(appt.heure_debut)}
+                      {formatTime(appt.heure_debut ?? undefined)}
                     </p>
                   </div>
                 </div>

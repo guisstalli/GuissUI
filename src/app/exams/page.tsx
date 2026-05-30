@@ -19,6 +19,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/form/input';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -29,9 +36,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { KpiCard } from '@/features/dashboard/components/kpi-card';
 import { useAdultExams } from '@/features/exams/api/adult/get-adult-exams';
 import { useChildExams } from '@/features/exams/api/child/get-child-exams';
 import type { ExamenAdult, ExamenChild } from '@/features/exams/types';
+import { useSites } from '@/features/sites/api/get-sites';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -72,8 +81,11 @@ export default function ExamsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [createdAfter, setCreatedAfter] = useState('');
   const [createdBefore, setCreatedBefore] = useState('');
+  const [siteId, setSiteId] = useState<number | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { data: sitesData } = useSites({ params: { limit: 100 } });
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -96,6 +108,7 @@ export default function ExamsPage() {
     is_completed: completion === 'all' ? undefined : completion === 'complete',
     created_after: createdAfter || undefined,
     created_before: createdBefore || undefined,
+    site: siteId,
     limit: ITEMS_PER_PAGE,
     offset: (currentPage - 1) * ITEMS_PER_PAGE,
   };
@@ -110,6 +123,13 @@ export default function ExamsPage() {
     enabled: examType === 'child',
   });
 
+  // KPI counts — independent of current filters
+  const { data: kpiAdult } = useAdultExams({ params: { limit: 1, offset: 0 } });
+  const { data: kpiChild } = useChildExams({ params: { limit: 1, offset: 0 } });
+  const { data: kpiIncomplete } = useAdultExams({
+    params: { limit: 1, offset: 0, is_completed: false },
+  });
+
   const activeQuery = examType === 'adult' ? adultQuery : childQuery;
   const { data, isLoading } = activeQuery;
 
@@ -122,11 +142,16 @@ export default function ExamsPage() {
   const totalCount = data?.count ?? 0;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
+  const totalAdult = kpiAdult?.count ?? 0;
+  const totalChild = kpiChild?.count ?? 0;
+  const totalIncomplete = kpiIncomplete?.count ?? 0;
+
   const hasActiveFilters =
     completion !== 'all' ||
     !!createdAfter ||
     !!createdBefore ||
-    !!debouncedSearch;
+    !!debouncedSearch ||
+    siteId !== undefined;
 
   const clearFilters = () => {
     setCompletion('all');
@@ -134,6 +159,7 @@ export default function ExamsPage() {
     setCreatedBefore('');
     setSearchInput('');
     setDebouncedSearch('');
+    setSiteId(undefined);
     setCurrentPage(1);
   };
 
@@ -150,6 +176,30 @@ export default function ExamsPage() {
 
   return (
     <Shell title="Examens">
+      {/* KPI Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiCard
+          title="Examens adultes"
+          value={totalAdult}
+          subtitle="examens adultes enregistrés"
+          icon={User}
+        />
+        <KpiCard
+          title="Examens enfants"
+          value={totalChild}
+          subtitle="examens enfants enregistrés"
+          icon={Baby}
+          className="border-cyan-200 dark:border-cyan-900/40"
+        />
+        <KpiCard
+          title="En cours"
+          value={totalIncomplete}
+          subtitle="adultes non finalisés"
+          icon={Clock}
+          className="border-amber-200 dark:border-amber-900/40"
+        />
+      </div>
+
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -241,6 +291,27 @@ export default function ExamsPage() {
                   ))}
                 </div>
               )}
+
+              {/* Site */}
+              <Select
+                value={siteId !== undefined ? String(siteId) : 'all'}
+                onValueChange={(v) => {
+                  setSiteId(v === 'all' ? undefined : Number(v));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tous les sites" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les sites</SelectItem>
+                  {(sitesData?.results ?? []).map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.libelle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Date after */}
               <div className="relative">

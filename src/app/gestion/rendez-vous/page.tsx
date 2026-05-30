@@ -16,6 +16,7 @@ import {
   User,
   X,
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Calendar,
@@ -356,11 +357,11 @@ function CustomToolbar({
         >
           <ChevronRight className="size-4" />
         </Button>
-        <h2 className="ml-2 text-base font-semibold capitalize text-slate-900">
+        <h2 className="ml-2 text-base font-semibold capitalize text-foreground">
           {label}
         </h2>
       </div>
-      <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+      <div className="flex gap-1 rounded-lg bg-muted p-1">
         {(['week', 'day', 'agenda'] as View[]).map((v) => (
           <button
             type="button"
@@ -369,8 +370,8 @@ function CustomToolbar({
             className={cn(
               'rounded-md px-3 py-1 text-sm font-medium transition-colors',
               view === v
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700',
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {v === 'week' ? 'Semaine' : v === 'day' ? 'Jour' : 'Agenda'}
@@ -381,10 +382,24 @@ function CustomToolbar({
   );
 }
 
+const STATUT_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'Tous' },
+  { value: 'en_attente', label: 'En attente' },
+  { value: 'confirme', label: 'Confirmés' },
+  { value: 'present', label: 'Présents' },
+  { value: 'absent', label: 'Absents' },
+  { value: 'annule', label: 'Annulés' },
+];
+
 export default function GestionRendezVousPage() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'liste' ? 'liste' : 'agenda';
+  const initialStatut = searchParams.get('statut') ?? 'all';
+
   const [selectedRdv, setSelectedRdv] = useState<RendezVous | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<View>('week');
+  const [listStatut, setListStatut] = useState<string>(initialStatut);
 
   const { data: statsData } = useRdvStats();
 
@@ -399,6 +414,12 @@ export default function GestionRendezVousPage() {
       'yyyy-MM-dd',
     ),
   });
+
+  const { data: listData, isLoading: isListLoading } = useRdvList({
+    limit: 100,
+    statut: listStatut !== 'all' ? listStatut : undefined,
+  });
+  const listRdv: RendezVous[] = listData?.results ?? [];
 
   const rdvList: RendezVous[] = data?.results ?? [];
 
@@ -469,11 +490,11 @@ export default function GestionRendezVousPage() {
 
   return (
     <Shell title="Agenda">
-      <Tabs defaultValue="agenda" className="flex flex-1 flex-col gap-4">
+      <Tabs defaultValue={initialTab} className="flex flex-1 flex-col gap-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Agenda</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+            <p className="text-sm text-muted-foreground">
               Gérez les rendez-vous de la consultation
             </p>
           </div>
@@ -483,7 +504,7 @@ export default function GestionRendezVousPage() {
               {Object.entries(STATUT_LABELS).map(([key, label]) => (
                 <div
                   key={key}
-                  className="flex items-center gap-1.5 text-xs text-slate-600"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
                 >
                   <span
                     className={cn(
@@ -497,6 +518,7 @@ export default function GestionRendezVousPage() {
             </div>
             <TabsList>
               <TabsTrigger value="agenda">Agenda</TabsTrigger>
+              <TabsTrigger value="liste">Liste</TabsTrigger>
               <TabsTrigger value="stats">Statistiques</TabsTrigger>
             </TabsList>
           </div>
@@ -508,7 +530,50 @@ export default function GestionRendezVousPage() {
             <Skeleton className="h-[600px] rounded-xl" />
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[600px] rounded-xl border border-slate-200 bg-white p-4 [&_.rbc-calendar]:font-sans [&_.rbc-event]:border-0 [&_.rbc-header]:py-2 [&_.rbc-header]:text-sm [&_.rbc-header]:font-medium [&_.rbc-header]:text-slate-600 [&_.rbc-off-range-bg]:bg-slate-50/50 [&_.rbc-time-slot]:border-slate-100 [&_.rbc-timeslot-group]:border-slate-100 [&_.rbc-today]:bg-blue-50/40">
+              <div
+                className={cn(
+                  'min-w-[600px] rounded-xl border border-border bg-card p-4',
+                  // Base react-big-calendar tweaks
+                  '[&_.rbc-calendar]:font-sans',
+                  '[&_.rbc-event]:border-0',
+                  '[&_.rbc-header]:py-2 [&_.rbc-header]:text-sm [&_.rbc-header]:font-medium',
+                  // Light mode colors
+                  '[&_.rbc-header]:text-slate-600',
+                  '[&_.rbc-off-range-bg]:bg-slate-50/50',
+                  '[&_.rbc-time-slot]:border-slate-100',
+                  '[&_.rbc-timeslot-group]:border-slate-100',
+                  '[&_.rbc-today]:bg-blue-50/40',
+                  '[&_.rbc-time-view]:border-slate-200',
+                  '[&_.rbc-time-content]:border-slate-200',
+                  '[&_.rbc-time-header]:border-slate-200',
+                  '[&_.rbc-time-header-content]:border-slate-200',
+                  '[&_.rbc-day-slot_.rbc-time-slot]:border-slate-100',
+                  '[&_.rbc-time-gutter]:text-slate-500',
+                  '[&_.rbc-label]:text-slate-500',
+                  // Dark mode overrides
+                  'dark:[&_.rbc-header]:text-slate-300',
+                  'dark:[&_.rbc-header]:border-white/10',
+                  'dark:[&_.rbc-off-range-bg]:bg-white/[0.02]',
+                  'dark:[&_.rbc-time-slot]:border-white/[0.06]',
+                  'dark:[&_.rbc-timeslot-group]:border-white/[0.08]',
+                  'dark:[&_.rbc-today]:bg-blue-500/10',
+                  'dark:[&_.rbc-time-view]:border-white/10',
+                  'dark:[&_.rbc-time-content]:border-white/10',
+                  'dark:[&_.rbc-time-header]:border-white/10',
+                  'dark:[&_.rbc-time-header-content]:border-white/10',
+                  'dark:[&_.rbc-day-slot_.rbc-time-slot]:border-white/[0.06]',
+                  'dark:[&_.rbc-time-gutter]:text-slate-400',
+                  'dark:[&_.rbc-label]:text-slate-400',
+                  'dark:[&_.rbc-day-bg]:border-white/[0.06]',
+                  'dark:[&_.rbc-month-view]:border-white/10',
+                  'dark:[&_.rbc-month-row]:border-white/[0.06]',
+                  'dark:[&_.rbc-date-cell]:text-slate-300',
+                  'dark:[&_.rbc-off-range]:text-slate-600',
+                  'dark:[&_.rbc-agenda-view_table]:text-slate-300',
+                  'dark:[&_.rbc-agenda-view_table.rbc-agenda-table_thead_>_tr_>_th]:border-white/10',
+                  'dark:[&_.rbc-agenda-view_table.rbc-agenda-table_tbody_>_tr_>_td]:border-white/[0.06]',
+                )}
+              >
                 <Calendar
                   localizer={localizer}
                   events={events}
@@ -551,6 +616,109 @@ export default function GestionRendezVousPage() {
                   }}
                 />
               </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Liste tab */}
+        <TabsContent value="liste" className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
+            <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Filtrer&nbsp;:
+            </span>
+            {STATUT_FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setListStatut(opt.value)}
+                className={cn(
+                  'rounded-md px-3 py-1 text-sm font-medium transition-colors',
+                  listStatut === opt.value
+                    ? 'bg-foreground text-background'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {isListLoading ? (
+            <Skeleton className="h-[400px] rounded-xl" />
+          ) : listRdv.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                Aucun rendez-vous correspondant à ce filtre.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Patient
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Téléphone
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold">Date</th>
+                    <th className="px-4 py-2 text-left font-semibold">Heure</th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Statut
+                    </th>
+                    <th className="px-4 py-2 text-right font-semibold">
+                      Numéro
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {listRdv.map((rdv) => {
+                    const styles =
+                      STATUT_STYLES[rdv.statut] ?? STATUT_STYLES.en_attente;
+                    return (
+                      <tr
+                        key={rdv.id}
+                        onClick={() => setSelectedRdv(rdv)}
+                        className="cursor-pointer transition-colors hover:bg-muted/50"
+                      >
+                        <td className="px-4 py-3 font-medium text-foreground">
+                          {rdv.patient_prenom} {rdv.patient_nom}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {rdv.patient_phone}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(rdv.date).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {rdv.heure_debut.slice(0, 5)} –{' '}
+                          {rdv.heure_fin.slice(0, 5)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold',
+                              styles.bg,
+                              styles.text,
+                              styles.border,
+                            )}
+                          >
+                            {STATUT_LABELS[rdv.statut] ?? rdv.statut}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-xs text-muted-foreground">
+                          {rdv.numero_rdv}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </TabsContent>

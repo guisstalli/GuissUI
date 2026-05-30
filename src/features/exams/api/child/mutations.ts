@@ -277,6 +277,124 @@ export const useUpdateClinicalData = ({
 /**
  * Supprimer un examen enfant
  */
+// =============================================================================
+// COMPLETE (FINALIZE) EXAM
+// =============================================================================
+
+export const completeChildExam = ({
+  id,
+}: {
+  id: number;
+}): Promise<ExamenChildDetailApi> => {
+  return api.post<ExamenChildDetailApi>(
+    `/depistage/examens/enfants/${id}/complete/`,
+    { mark_completed: true },
+  );
+};
+
+type UseCompleteChildExamOptions = {
+  mutationConfig?: MutationConfig<typeof completeChildExam>;
+};
+
+export const useCompleteChildExam = ({
+  mutationConfig = {},
+}: UseCompleteChildExamOptions = {}) => {
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotifications();
+
+  const { onSuccess, ...restConfig } = mutationConfig;
+
+  return useMutation({
+    mutationFn: completeChildExam,
+    onSuccess: (data, variables, ...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getChildExamQueryOptions(variables.id).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: getChildExamsQueryOptions().queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: getIncompleteChildExamsQueryOptions().queryKey,
+      });
+      addNotification({
+        type: 'success',
+        title: 'Examen finalisé',
+        message: `L'examen ${data.numero_examen} a été marqué comme complet.`,
+      });
+      onSuccess?.(data, variables, ...args);
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: 'Erreur',
+        message: "Impossible de finaliser l'examen.",
+      });
+    },
+    ...restConfig,
+  });
+};
+
+// =============================================================================
+// UNCOMPLETE EXAM
+// =============================================================================
+
+export const uncompleteChildExam = ({
+  id,
+}: {
+  id: number;
+}): Promise<ExamenChildDetailApi> => {
+  return api.post<ExamenChildDetailApi>(
+    `/depistage/examens/enfants/${id}/uncomplete/`,
+    {},
+  );
+};
+
+type UseUncompleteChildExamOptions = {
+  mutationConfig?: MutationConfig<typeof uncompleteChildExam>;
+};
+
+export const useUncompleteChildExam = ({
+  mutationConfig = {},
+}: UseUncompleteChildExamOptions = {}) => {
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotifications();
+
+  const { onSuccess, ...restConfig } = mutationConfig;
+
+  return useMutation({
+    mutationFn: uncompleteChildExam,
+    onSuccess: (data, variables, ...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getChildExamQueryOptions(variables.id).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: getChildExamsQueryOptions().queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: getIncompleteChildExamsQueryOptions().queryKey,
+      });
+      addNotification({
+        type: 'success',
+        title: 'Examen rouvert',
+        message: `L'examen ${data.numero_examen} a été marqué comme en cours.`,
+      });
+      onSuccess?.(data, variables, ...args);
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: 'Erreur',
+        message: "Impossible de rouvrir l'examen.",
+      });
+    },
+    ...restConfig,
+  });
+};
+
+// =============================================================================
+// DELETE EXAM
+// =============================================================================
+
 export const deleteChildExam = (id: number): Promise<void> => {
   return api.delete(`/depistage/examens/enfants/${id}/delete/`);
 };

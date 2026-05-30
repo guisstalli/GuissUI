@@ -115,8 +115,8 @@ export function DriverForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Section Identité patient */}
         {!isEdit && (
-          <div className="space-y-4">
-            <h3 className="border-b pb-2 text-sm font-semibold">
+          <div className="space-y-4 mt-2">
+            <h3 className="border-b pb-2 text-lg font-semibold">
               Identité du patient
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -198,9 +198,7 @@ export function DriverForm({
                 name="patient.phone_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Téléphone <span className="text-destructive">*</span>
-                    </FormLabel>
+                    <FormLabel>Téléphone</FormLabel>
                     <FormControl>
                       <Input placeholder="+221 XX XXX XX XX" {...field} />
                     </FormControl>
@@ -213,8 +211,8 @@ export function DriverForm({
         )}
 
         {/* Section Permis */}
-        <div className="space-y-4">
-          <h3 className="border-b pb-2 text-sm font-semibold">
+        <div className="space-y-4 mt-2">
+          <h3 className="border-b pb-2 text-lg font-semibold">
             Permis de conduire
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -316,8 +314,8 @@ export function DriverForm({
         </div>
 
         {/* Section Activité */}
-        <div className="space-y-4">
-          <h3 className="border-b pb-2 text-sm font-semibold">
+        <div className="space-y-4 mt-2">
+          <h3 className="border-b pb-2 text-lg font-semibold">
             Activité professionnelle
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -423,8 +421,8 @@ export function DriverForm({
         </div>
 
         {/* Section Profil */}
-        <div className="space-y-4">
-          <h3 className="border-b pb-2 text-sm font-semibold">Profil</h3>
+        <div className="space-y-4 mt-2">
+          <h3 className="border-b pb-2 text-lg font-semibold">Profil</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}

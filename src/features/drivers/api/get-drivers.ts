@@ -12,6 +12,8 @@ export type DriversQueryParams = {
   zone_de_residence?: string;
   type_permis?: string;
   transporteur_professionnel?: boolean;
+  date_start?: string;
+  date_end?: string;
 };
 
 const getDrivers = (params?: DriversQueryParams): Promise<PaginatedDrivers> =>

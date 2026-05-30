@@ -97,6 +97,13 @@ export const PERMISSIONS = {
 
   // Conducteurs
   'drivers:view': 'Voir les conducteurs',
+  'drivers:create': 'Créer un conducteur',
+  'drivers:edit': 'Modifier un conducteur',
+  'drivers:delete': 'Supprimer un conducteur (soft-delete)',
+  'drivers:hard-delete': 'Supprimer définitivement un conducteur',
+  'drivers:restore': 'Restaurer un conducteur supprimé',
+  'drivers:view-deleted': 'Voir les conducteurs supprimés',
+  'drivers:bulk-import': 'Importer des conducteurs en masse',
 
   // Facturation
   'billing:view': 'Voir la facturation',
@@ -158,6 +165,13 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sites:edit',
     'sites:delete',
     'admin:users',
+    'drivers:create',
+    'drivers:edit',
+    'drivers:delete',
+    'drivers:hard-delete',
+    'drivers:restore',
+    'drivers:view-deleted',
+    'drivers:bulk-import',
   ],
 
   // STAFF : accès complet, gestion admin incluse
@@ -192,9 +206,6 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'appointments:edit',
     'appointments:cancel',
     'planning:view',
-    'analytics:view',
-    'reports:view',
-    'reports:export',
     'patient-records:view',
     'drivers:view',
     'billing:view',
@@ -263,33 +274,27 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'attachments:view',
     'attachments:upload',
     'attachments:delete',
-    'analytics:view',
-    'reports:view',
-    'reports:export',
     'patient-records:view',
+    'drivers:create',
+    'drivers:edit',
+    'drivers:delete',
+    'drivers:hard-delete',
+    'drivers:restore',
+    'drivers:view-deleted',
+    'drivers:bulk-import',
   ],
 
   // TECHNICIEN : données techniques uniquement
   TECHNICIEN: [
     'patients:view',
-    'patients:create',
-    'patients:edit',
     'antecedents:view',
     'exams:view',
-    'exams:create',
     'exams:technical:view',
     'exams:technical:edit',
     'exams:clinical:view',
-    'attachments:view',
-    'attachments:upload',
     'consultations:view',
-    'appointments:view',
-    'appointments:create',
-    'appointments:edit',
-    'planning:view',
     'patient-records:view',
     'drivers:view',
-    'sites:view',
   ],
 };
 

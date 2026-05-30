@@ -7,7 +7,6 @@ import {
   ChevronRight,
   ChevronUp,
   ClipboardList,
-  Eye,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -38,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown/dropdown';
+import { GuissIcon } from '@/components/ui/logo/guiss-logo';
 import {
   Sidebar,
   SidebarContent,
@@ -54,8 +54,12 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { paths } from '@/config/paths';
-import { signOut, useUser } from '@/lib/auth';
-import { getRoleLabel, type Permission } from '@/lib/authorization';
+import { type AuthUser, signOut, useUser } from '@/lib/auth';
+import {
+  getRoleLabel,
+  hasPermission,
+  type Permission,
+} from '@/lib/authorization';
 import { cn } from '@/lib/utils';
 
 type SubNavItem = {
@@ -319,6 +323,26 @@ function CollapsibleNavItem({
   );
 }
 
+/**
+ * Détermine si un item de navigation est visible pour l'utilisateur courant.
+ * Pour un item avec ``children``, on considère qu'il est visible dès que :
+ *   - sa propre permission est satisfaite (ou absente), ET
+ *   - au moins un de ses enfants l'est aussi (si la liste n'est pas vide).
+ * Cela évite d'afficher un parent collapsible vide.
+ */
+function isNavItemVisible(
+  item: NavItem,
+  user: AuthUser | null | undefined,
+): boolean {
+  const selfVisible =
+    item.permission === null || hasPermission(user, item.permission);
+  if (!selfVisible) return false;
+  if (!item.children || item.children.length === 0) return true;
+  return item.children.some(
+    (child) => !child.permission || hasPermission(user, child.permission),
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -328,6 +352,20 @@ export function AppSidebar() {
     if (url === '/') return pathname === '/';
     return pathname === url || pathname.startsWith(url + '/');
   };
+
+  // Filtre les groupes : on ne rend ni le label ni le bloc si AUCUN item du
+  // groupe n'est visible pour le rôle courant. Évite les labels orphelins
+  // (ex. « Analyse » seul quand l'utilisateur n'a pas 'analytics:view').
+  const visibleGroups = React.useMemo(
+    () =>
+      navGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => isNavItemVisible(item, user)),
+        }))
+        .filter((group) => group.items.length > 0),
+    [user],
+  );
 
   const initials = user ? getInitials(user.name ?? '', user.email ?? '') : 'U';
   const avatarBg = roleColors[user?.role ?? ''] ?? 'bg-muted';
@@ -343,15 +381,14 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-                  <Eye
-                    className="size-4 text-primary-foreground"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">GUISS</span>
-                  <span className="text-xs text-muted-foreground">v1.0</span>
+                <GuissIcon className="size-8 shrink-0" />
+                <div className="flex flex-col gap-0 leading-none">
+                  <span className="text-sm font-bold tracking-wider">
+                    GUISS
+                  </span>
+                  <span className="text-[10px] font-medium tracking-widest text-cyan-500">
+                    TALLI
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -361,7 +398,7 @@ export function AppSidebar() {
 
       {/* Main navigation */}
       <SidebarContent>
-        {navGroups.map((group, i) => (
+        {visibleGroups.map((group, i) => (
           <SidebarGroup key={i}>
             {group.label && (
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>

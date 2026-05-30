@@ -43,6 +43,17 @@ export {
   useUpdateSection,
   completeAdultExam,
   useCompleteAdultExam,
+  uncompleteAdultExam,
+  useUncompleteAdultExam,
   deleteAdultExam,
   useDeleteAdultExam,
 } from './mutations';
+
+// Ordonnance
+export {
+  getAdultOrdonnanceStatusQueryOptions,
+  useAdultOrdonnanceStatus,
+  useGenerateAdultOrdonnance,
+  useDownloadAdultOrdonnance,
+} from './ordonnance';
+export type { OrdonnanceStatus } from './ordonnance';

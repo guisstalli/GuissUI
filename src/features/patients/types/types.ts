@@ -76,6 +76,7 @@ export type PatientsQueryParams = {
   ordering?: string;
   search?: string;
   is_adult?: boolean;
+  is_driver?: boolean;
   sex?: Sex;
   created_after?: string;
 };

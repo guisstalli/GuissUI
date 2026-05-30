@@ -84,7 +84,11 @@ const PatientCreateSchema = z.object({
   last_name: z.string().min(1, 'Le nom est requis'),
   date_de_naissance: z.string().min(1, 'La date de naissance est requise'),
   sex: z.enum(['H', 'F', 'A']),
-  phone_number: z.string().min(8, 'Numéro invalide'),
+  phone_number: z
+    .string()
+    .min(8, 'Numéro invalide')
+    .optional()
+    .or(z.literal('')),
 });
 
 export const DriverCreateSchema = z

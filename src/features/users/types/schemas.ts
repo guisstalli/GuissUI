@@ -5,8 +5,9 @@ export const UserProfileSchema = z.object({
   last_name: z.string(),
   title: z.enum(['MR', 'MME', 'MLLE', '']),
   avatar: z.string().nullable(),
-  birthdate: z.string().nullable(),
-  mobile: z.string(),
+  birthdate: z.string().nullable().optional(),
+  mobile: z.string().optional(),
+  numero_ordre: z.string().nullable().optional().default(''),
 });
 
 export const UserSchema = z.object({
@@ -25,6 +26,11 @@ export const UpdateMeSchema = z.object({
   first_name: z.string().min(1, 'Requis').optional(),
   last_name: z.string().min(1, 'Requis').optional(),
   title: z.enum(['MR', 'MME', 'MLLE', '']).optional(),
+  numero_ordre: z
+    .string()
+    .max(50, 'Maximum 50 caractères')
+    .optional()
+    .or(z.literal('')),
 });
 
 export const ChangePasswordSchema = z

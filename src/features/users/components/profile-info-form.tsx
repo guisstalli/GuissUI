@@ -38,8 +38,11 @@ export function ProfileInfoForm({ user }: ProfileInfoFormProps) {
       first_name: user.profile?.first_name ?? '',
       last_name: user.profile?.last_name ?? '',
       title: user.profile?.title ?? '',
+      numero_ordre: user.profile?.numero_ordre ?? '',
     },
   });
+
+  const isDoctor = user.role === 'DOCTEUR';
 
   const { mutate, isPending } = useUpdateMe({
     onSuccess: () =>
@@ -145,6 +148,33 @@ export function ProfileInfoForm({ user }: ProfileInfoFormProps) {
               )}
             />
           </div>
+
+          {isDoctor && (
+            <FormField
+              control={form.control}
+              name="numero_ordre"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>N° d&apos;ordre (optionnel)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="OM-2025-XXXX"
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Numéro d&apos;inscription à l&apos;Ordre des Médecins.
+                    Affiché sur vos ordonnances.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <Button type="submit" disabled={isPending}>
             {isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </Button>

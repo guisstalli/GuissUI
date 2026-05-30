@@ -4,7 +4,14 @@ export const UserListItemSchema = z.object({
   id: z.number(),
   email: z.string(),
   phone_number: z.string(),
-  role: z.enum(['ADMIN', 'STAFF', 'DOCTEUR', 'TECHNICIEN']),
+  role: z.enum([
+    'ADMIN',
+    'STAFF',
+    'DOCTEUR',
+    'TECHNICIEN',
+    'DATA_ENTRY',
+    'SUPERUSER',
+  ]),
   is_active: z.boolean(),
   is_verified: z.boolean(),
   is_admin: z.boolean(),
@@ -29,9 +36,12 @@ export const PaginatedUsersSchema = z.object({
 export const CreateUserSchema = z.object({
   email: z.string().email('Email invalide'),
   phone_number: z.string().min(8, 'Minimum 8 chiffres'),
-  role: z.enum(['STAFF', 'DOCTEUR', 'TECHNICIEN'], {
-    errorMap: () => ({ message: 'Rôle requis' }),
-  }),
+  role: z.enum(
+    ['ADMIN', 'STAFF', 'DOCTEUR', 'TECHNICIEN', 'DATA_ENTRY', 'SUPERUSER'],
+    {
+      errorMap: () => ({ message: 'Rôle requis' }),
+    },
+  ),
   first_name: z.string().min(1, 'Requis'),
   last_name: z.string().min(1, 'Requis'),
   title: z.enum(['MR', 'MRS', '']).optional(),

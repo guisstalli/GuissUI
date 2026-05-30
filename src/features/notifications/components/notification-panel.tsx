@@ -2,7 +2,8 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge/badge';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,36 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
   );
 }
 
+function NotificationPermissionPrompt() {
+  const [permission, setPermission] = useState<NotificationPermission | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    setPermission(Notification.permission);
+  }, []);
+
+  if (permission !== 'default') return null;
+
+  const request = async () => {
+    const result = await Notification.requestPermission();
+    setPermission(result);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={request}
+      className="flex w-full items-center gap-2 border-b bg-amber-50 px-4 py-2 text-left text-xs text-amber-800 transition-colors hover:bg-amber-100 dark:bg-amber-400/[0.06] dark:text-amber-300 dark:hover:bg-amber-400/[0.10]"
+    >
+      <Bell className="size-3.5 shrink-0" />
+      <span className="flex-1">Activer les notifications du navigateur</span>
+      <span className="font-semibold">Autoriser →</span>
+    </button>
+  );
+}
+
 export function NotificationPanel() {
   const { data, isLoading } = useNotifications({
     params: { limit: 10 },
@@ -95,6 +126,7 @@ export function NotificationPanel() {
           </Button>
         )}
       </div>
+      <NotificationPermissionPrompt />
 
       {/* Content */}
       <div className="max-h-96 overflow-y-auto">

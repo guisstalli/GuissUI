@@ -33,15 +33,17 @@ const rendezVousTodaySchema = z.object({
 
 const prochainsRendezVousSchema = z.object({
   id: z.number(),
-  heure_debut: z.string(),
+  heure_debut: z.string().nullable().optional(),
   patient_nom: z.string(),
   patient_prenom: z.string(),
   statut: z.string(),
+  numero_rdv: z.string().optional(),
 });
 
 const rendezVousSchema = z.object({
   today: rendezVousTodaySchema,
   prochains: z.array(prochainsRendezVousSchema),
+  pending_count: z.number().default(0),
 });
 
 const evenementEnCoursSchema = z.object({
@@ -64,6 +66,7 @@ const evenementsSchema = z.object({
   en_cours: z.array(evenementEnCoursSchema),
   planifies_7j: z.array(evenementPlanifieSchema),
   inscriptions_aujourd_hui: z.number(),
+  pending_count: z.number().default(0),
 });
 
 export const dashboardSchema = z.object({

@@ -11,6 +11,7 @@ import {
   FileText,
   Loader2,
   Paperclip,
+  RotateCcw,
   Stethoscope,
   Trash2,
   Upload,
@@ -36,6 +37,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/dialog';
 import { Input, Label } from '@/components/ui/form';
+import { Progress } from '@/components/ui/progress/progress';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -48,11 +50,18 @@ import {
   useChildExam,
   useUpdateTechnicalData,
   useUpdateClinicalData,
+  useCompleteChildExam,
+  useUncompleteChildExam,
 } from '@/features/exams/api/child';
 import {
   useDownloadChildReport,
   useDownloadChildConclusion,
 } from '@/features/exams/api/child/download-report';
+import {
+  findOrdonnance,
+  useDownloadOrdonnance,
+  useExamOrdonnances,
+} from '@/features/exams/api/ordonnances';
 import {
   BiomicroscopyAnteriorForm,
   BiomicroscopyPosteriorForm,
@@ -66,6 +75,7 @@ import {
   VisionBinoculaireForm,
   VisualAcuityForm,
 } from '@/features/exams/components/forms';
+import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
 import {
   BiomicroscopyAnteriorSchema,
   BiomicroscopyPosteriorSchema,
@@ -100,6 +110,7 @@ import {
   mapVisualAcuityFormToApi,
   mapVisionBinoculaireApiToForm,
 } from '@/features/exams/utils';
+import { useUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 type Section = 'technical' | 'clinical' | 'complementary' | 'conclusion';
@@ -195,6 +206,27 @@ export default function ChildExamPage() {
     useUpdateTechnicalData();
   const { mutate: saveClinical, isPending: isSavingClinical } =
     useUpdateClinicalData();
+
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
+  const isComplete = examData?.is_completed ?? false;
+
+  const { mutate: finalizeExam, isPending: isCompleting } =
+    useCompleteChildExam({
+      mutationConfig: {
+        onSuccess: () => setShowFinalizeDialog(false),
+      },
+    });
+
+  const { mutate: uncompleteExam, isPending: isUncompleting } =
+    useUncompleteChildExam();
+
+  const handleFinalizeExam = useCallback(() => {
+    if (numericExamId > 0) finalizeExam({ id: numericExamId });
+  }, [finalizeExam, numericExamId]);
+
+  const handleUncompleteExam = useCallback(() => {
+    if (numericExamId > 0) uncompleteExam({ id: numericExamId });
+  }, [uncompleteExam, numericExamId]);
 
   const clinicalExamId = examData?.clinical_examen?.id;
 
@@ -492,7 +524,7 @@ export default function ChildExamPage() {
 
   const handleSaveClinical = useCallback(() => {
     const values = form.getValues();
-    // Save VB to technical endpoint, clinical check to clinical endpoint
+    // Save VB + reflet/FO fields to technical endpoint, simplified flag to clinical endpoint
     saveTechnical(
       {
         id: numericExamId,
@@ -500,6 +532,11 @@ export default function ChildExamPage() {
           vision_binoculaire: buildVisionBinoculairePayload(
             values.visionBinoculaire,
           ),
+          reflet_pupillaire: values.clinicalCheck.reflet_pupillaire,
+          reflet_pupillaire_detail:
+            values.clinicalCheck.reflet_pupillaire_detail,
+          fo: values.clinicalCheck.fond_oeil,
+          fo_detail: values.clinicalCheck.fo_detail,
         },
       },
       {
@@ -509,11 +546,6 @@ export default function ChildExamPage() {
               id: numericExamId,
               data: {
                 simplified_clinical_exam: simplifiedClinicalExam,
-                reflet_pupillaire: values.clinicalCheck.reflet_pupillaire,
-                reflet_pupillaire_detail:
-                  values.clinicalCheck.reflet_pupillaire_detail,
-                fo: values.clinicalCheck.fond_oeil,
-                fo_detail: values.clinicalCheck.fo_detail,
               },
             },
             {
@@ -543,26 +575,20 @@ export default function ChildExamPage() {
         id: numericExamId,
         data: {
           simplified_clinical_exam: true,
-          clinical_examen: {
-            plaintes: mapPlaintesFormToApi(values.plaintes),
-            perimetry: mapPerimetryFormToApi(values.perimetry),
-            od: {
-              bp_sg_anterieur: mapBiomicroscopyAnteriorFormToApi(
-                values.od.bp_sg_anterieur,
-              ),
-              bp_sg_posterieur: mapBiomicroscopyPosteriorFormToApi(
-                values.od.bp_sg_posterieur,
-              ),
-            },
-            og: {
-              bp_sg_anterieur: mapBiomicroscopyAnteriorFormToApi(
-                values.og.bp_sg_anterieur,
-              ),
-              bp_sg_posterieur: mapBiomicroscopyPosteriorFormToApi(
-                values.og.bp_sg_posterieur,
-              ),
-            },
-          },
+          plaintes: mapPlaintesFormToApi(values.plaintes),
+          perimetry: mapPerimetryFormToApi(values.perimetry),
+          biomicro_ant_od: mapBiomicroscopyAnteriorFormToApi(
+            values.od.bp_sg_anterieur,
+          ),
+          biomicro_post_od: mapBiomicroscopyPosteriorFormToApi(
+            values.od.bp_sg_posterieur,
+          ),
+          biomicro_ant_og: mapBiomicroscopyAnteriorFormToApi(
+            values.og.bp_sg_anterieur,
+          ),
+          biomicro_post_og: mapBiomicroscopyPosteriorFormToApi(
+            values.og.bp_sg_posterieur,
+          ),
         },
       },
       {
@@ -581,9 +607,7 @@ export default function ChildExamPage() {
         id: numericExamId,
         data: {
           simplified_clinical_exam: true,
-          clinical_examen: {
-            conclusion: mapConclusionFormToApi(values.conclusion),
-          },
+          conclusion: mapConclusionFormToApi(values.conclusion),
         },
       },
       {
@@ -722,6 +746,13 @@ export default function ChildExamPage() {
         downloadingId={downloadingId}
         simplifiedClinicalExam={simplifiedClinicalExam}
         onToggleSimplifiedClinicalExam={handleToggleSimplifiedClinicalExam}
+        isComplete={isComplete}
+        isCompleting={isCompleting}
+        isUncompleting={isUncompleting}
+        showFinalizeDialog={showFinalizeDialog}
+        setShowFinalizeDialog={setShowFinalizeDialog}
+        handleFinalizeExam={handleFinalizeExam}
+        handleUncompleteExam={handleUncompleteExam}
       />
     </SidebarProvider>
   );
@@ -784,11 +815,19 @@ interface ChildExamContentProps {
   downloadingId: number | null;
   simplifiedClinicalExam: boolean;
   onToggleSimplifiedClinicalExam: (enabled: boolean) => void;
+  isComplete: boolean;
+  isCompleting: boolean;
+  isUncompleting: boolean;
+  showFinalizeDialog: boolean;
+  setShowFinalizeDialog: (b: boolean) => void;
+  handleFinalizeExam: () => void;
+  handleUncompleteExam: () => void;
 }
 
 function ChildExamContent(props: ChildExamContentProps) {
   const {
     examId,
+    numericExamId,
     patient,
     form,
     activeSection,
@@ -822,12 +861,46 @@ function ChildExamContent(props: ChildExamContentProps) {
     downloadingId,
     simplifiedClinicalExam,
     onToggleSimplifiedClinicalExam,
+    isComplete,
+    isCompleting,
+    isUncompleting,
+    showFinalizeDialog,
+    setShowFinalizeDialog,
+    handleFinalizeExam,
+    handleUncompleteExam,
   } = props;
+
+  const visibleSections = sections.filter(
+    (s) =>
+      simplifiedClinicalExam ||
+      (s.id !== 'complementary' && s.id !== 'conclusion'),
+  );
+  const completedCount = visibleSections.filter(
+    (s) => sectionStatus[s.id],
+  ).length;
+  const totalCount = visibleSections.length;
 
   const { mutate: downloadReport, isPending: isDownloadingReport } =
     useDownloadChildReport();
   const { mutate: downloadConclusion, isPending: isDownloadingConclusion } =
     useDownloadChildConclusion();
+
+  const { data: ordonnancesList } = useExamOrdonnances('child', numericExamId);
+  const medicamentOrdonnance = findOrdonnance(
+    ordonnancesList,
+    'MEDICAMENTEUSE',
+  );
+  const optiqueOrdonnance = findOrdonnance(ordonnancesList, 'OPTIQUE');
+  const { mutate: downloadOrdonnance } = useDownloadOrdonnance();
+
+  const { user: currentUser } = useUser();
+  const canGenerateOrdonnance =
+    currentUser?.role === 'DOCTEUR' ||
+    currentUser?.role === 'ADMIN' ||
+    currentUser?.role === 'SUPERUSER';
+
+  const [medicamentDialogOpen, setMedicamentDialogOpen] = useState(false);
+  const [optiqueDialogOpen, setOptiqueDialogOpen] = useState(false);
 
   const handleSaveSection = () => {
     if (activeSection === 'technical') handleSaveTechnical();
@@ -850,55 +923,60 @@ function ChildExamContent(props: ChildExamContentProps) {
           {/* Section Navigation */}
           <aside className="w-64 shrink-0 border-r border-border bg-card p-4">
             <div className="mb-4">
-              <h2 className="text-sm font-semibold text-foreground">
-                Sections
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Progression de l&apos;examen
-              </p>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground">
+                  Sections
+                </h2>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {completedCount}/{totalCount}
+                </span>
+              </div>
+              <Progress
+                value={totalCount > 0 ? (completedCount / totalCount) * 100 : 0}
+                className={cn(
+                  'mt-2 h-1.5',
+                  completedCount === totalCount && totalCount > 0
+                    ? '[&>div]:bg-emerald-500'
+                    : '',
+                )}
+              />
             </div>
 
             <nav aria-label="Exam sections">
               <ul className="space-y-1">
-                {sections
-                  .filter(
-                    (s) =>
-                      simplifiedClinicalExam ||
-                      (s.id !== 'complementary' && s.id !== 'conclusion'),
-                  )
-                  .map((section) => {
-                    const isActive = activeSection === section.id;
-                    const isDone = sectionStatus[section.id];
-                    return (
-                      <li key={section.id}>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSection(section.id)}
-                          className={cn(
-                            'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                            isActive
-                              ? 'bg-primary/10 text-primary'
-                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                          )}
-                          aria-current={isActive ? 'true' : undefined}
-                        >
-                          <section.icon
-                            className="size-4 shrink-0"
-                            aria-hidden="true"
-                          />
-                          <span className="flex-1 text-left">
-                            {section.title}
-                          </span>
-                          {isDone ? (
-                            <Check className="size-4 text-primary" />
-                          ) : (
-                            <Circle className="text-muted-foreground/50 size-4" />
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
+                {visibleSections.map((section) => {
+                  const isActive = activeSection === section.id;
+                  const isDone = sectionStatus[section.id];
+                  return (
+                    <li key={section.id}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection(section.id)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          isActive
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                        )}
+                        aria-current={isActive ? 'true' : undefined}
+                      >
+                        <section.icon
+                          className="size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="flex-1 text-left">
+                          {section.title}
+                        </span>
+                        {isDone ? (
+                          <Check className="size-4 text-primary" />
+                        ) : (
+                          <Circle className="text-muted-foreground/50 size-4" />
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
 
@@ -937,6 +1015,37 @@ function ChildExamContent(props: ChildExamContentProps) {
                   ← Retour patient
                 </Link>
               </Button>
+              {examId !== 'new' &&
+                (isComplete ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={isUncompleting}
+                    onClick={handleUncompleteExam}
+                  >
+                    {isUncompleting ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="mr-2 size-4" />
+                    )}
+                    Rouvrir l&apos;examen
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+                    disabled={isCompleting}
+                    onClick={() => setShowFinalizeDialog(true)}
+                  >
+                    {isCompleting ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 size-4" />
+                    )}
+                    Finaliser l&apos;examen
+                  </Button>
+                ))}
             </div>
 
             {examId !== 'new' && (
@@ -980,7 +1089,109 @@ function ChildExamContent(props: ChildExamContentProps) {
                 </Button>
               </div>
             )}
+
+            {examId !== 'new' &&
+              (canGenerateOrdonnance ||
+                medicamentOrdonnance ||
+                optiqueOrdonnance) && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Ordonnances
+                  </p>
+
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold text-foreground">
+                      Médicamenteuse
+                    </p>
+                    {canGenerateOrdonnance && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setMedicamentDialogOpen(true)}
+                      >
+                        <FileText className="mr-2 size-4" aria-hidden="true" />
+                        {medicamentOrdonnance ? 'Modifier' : 'Rédiger'}
+                      </Button>
+                    )}
+                    {medicamentOrdonnance && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() =>
+                          downloadOrdonnance({
+                            ordonnanceId: medicamentOrdonnance.id,
+                            typeOrdonnance: 'MEDICAMENTEUSE',
+                          })
+                        }
+                      >
+                        <Download className="mr-2 size-3" aria-hidden="true" />
+                        Télécharger
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold text-foreground">
+                      Correction optique
+                    </p>
+                    {canGenerateOrdonnance && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setOptiqueDialogOpen(true)}
+                      >
+                        <FileText className="mr-2 size-4" aria-hidden="true" />
+                        {optiqueOrdonnance ? 'Modifier' : 'Rédiger'}
+                      </Button>
+                    )}
+                    {optiqueOrdonnance && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() =>
+                          downloadOrdonnance({
+                            ordonnanceId: optiqueOrdonnance.id,
+                            typeOrdonnance: 'OPTIQUE',
+                          })
+                        }
+                      >
+                        <Download className="mr-2 size-3" aria-hidden="true" />
+                        Télécharger
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
           </aside>
+
+          <OrdonnanceFormDialog
+            examId={numericExamId}
+            examType="child"
+            mode="medicamenteuse"
+            open={medicamentDialogOpen}
+            onClose={() => setMedicamentDialogOpen(false)}
+            initialData={
+              (medicamentOrdonnance?.prescription_data as Parameters<
+                typeof OrdonnanceFormDialog
+              >[0]['initialData']) ?? null
+            }
+          />
+          <OrdonnanceFormDialog
+            examId={numericExamId}
+            examType="child"
+            mode="optique"
+            open={optiqueDialogOpen}
+            onClose={() => setOptiqueDialogOpen(false)}
+            initialData={
+              (optiqueOrdonnance?.prescription_data as Parameters<
+                typeof OrdonnanceFormDialog
+              >[0]['initialData']) ?? null
+            }
+          />
 
           {/* Main Content */}
           <FormProvider {...form}>
@@ -1019,11 +1230,29 @@ function ChildExamContent(props: ChildExamContentProps) {
                       </button>
                     ))}
                   </div>
-                  {technicalSubsection === 'acuity' && <VisualAcuityForm />}
-                  {technicalSubsection === 'refraction' && <RefractionForm />}
+                  {technicalSubsection === 'acuity' && (
+                    <VisualAcuityForm namePrefix="visualAcuity" />
+                  )}
+                  {technicalSubsection === 'refraction' && (
+                    <RefractionForm namePrefix="refraction" />
+                  )}
                   {technicalSubsection === 'tension' && (
                     <OcularTensionForm namePrefix="ocularTension" />
                   )}
+                  <div className="mt-6 flex justify-end border-t border-border pt-4">
+                    <Button
+                      type="button"
+                      onClick={handleSaveTechnical}
+                      disabled={isSaving || examId === 'new'}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-2 size-4" />
+                      )}
+                      Sauvegarder
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -1083,11 +1312,25 @@ function ChildExamContent(props: ChildExamContentProps) {
                     ))}
                   </div>
                   {clinicalSubsection === 'visionBinoculaire' && (
-                    <VisionBinoculaireForm />
+                    <VisionBinoculaireForm namePrefix="visionBinoculaire" />
                   )}
                   {clinicalSubsection === 'clinicalCheck' && (
-                    <ClinicalCheckChildForm />
+                    <ClinicalCheckChildForm namePrefix="clinicalCheck" />
                   )}
+                  <div className="mt-6 flex justify-end border-t border-border pt-4">
+                    <Button
+                      type="button"
+                      onClick={handleSaveClinical}
+                      disabled={isSaving || examId === 'new'}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-2 size-4" />
+                      )}
+                      Sauvegarder
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -1131,10 +1374,12 @@ function ChildExamContent(props: ChildExamContentProps) {
                     ))}
                   </div>
 
-                  {complementarySubsection === 'plaintes' && <PlaintesForm />}
+                  {complementarySubsection === 'plaintes' && (
+                    <PlaintesForm namePrefix="plaintes" />
+                  )}
                   {complementarySubsection === 'perimetry' && (
                     <div className="rounded-lg border border-border bg-card p-4">
-                      <PerimetryForm />
+                      <PerimetryForm namePrefix="perimetry" />
                       <ExamensAdditionelsSection namePrefix="perimetry" />
                     </div>
                   )}
@@ -1174,6 +1419,22 @@ function ChildExamContent(props: ChildExamContentProps) {
                           />
                         </CardContent>
                       </Card>
+                    </div>
+                  )}
+                  {complementarySubsection !== 'attachments' && (
+                    <div className="mt-6 flex justify-end border-t border-border pt-4">
+                      <Button
+                        type="button"
+                        onClick={handleSaveComplementary}
+                        disabled={isSaving || examId === 'new'}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <Check className="mr-2 size-4" />
+                        )}
+                        Sauvegarder
+                      </Button>
                     </div>
                   )}
                   {complementarySubsection === 'attachments' && (
@@ -1330,7 +1591,21 @@ function ChildExamContent(props: ChildExamContentProps) {
                       Vision, CAT, traitement et diagnostic
                     </p>
                   </div>
-                  <ConclusionForm />
+                  <ConclusionForm namePrefix="conclusion" />
+                  <div className="mt-6 flex justify-end border-t border-border pt-4">
+                    <Button
+                      type="button"
+                      onClick={() => setShowSaveDialog(true)}
+                      disabled={isSaving || examId === 'new'}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-2 size-4" />
+                      )}
+                      Sauvegarder
+                    </Button>
+                  </div>
                 </div>
               )}
             </main>
@@ -1357,6 +1632,37 @@ function ChildExamContent(props: ChildExamContentProps) {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleSaveConclusion}>
               Enregistrer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Finalize exam confirmation */}
+      <AlertDialog
+        open={showFinalizeDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowFinalizeDialog(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finaliser l&apos;examen</AlertDialogTitle>
+            <AlertDialogDescription>
+              L&apos;examen sera marqué comme terminé. Cette action peut être
+              nécessaire pour générer les rapports PDF. Vous pourrez toujours
+              modifier les sections individuellement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleFinalizeExam}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isCompleting ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : null}
+              Finaliser
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

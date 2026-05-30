@@ -194,6 +194,7 @@ export type ExamsQueryParams = {
   ordering?: string;
   search?: string;
   patient?: number;
+  site?: number;
   has_clinical?: boolean;
   has_technical?: boolean;
   is_completed?: boolean;
