@@ -2,20 +2,20 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import {
   ArrowLeft,
-  ArrowRight,
   Calendar,
   CheckCircle2,
   Clock,
-  Eye,
   Phone,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
+import { PublicShell } from '@/components/public/public-shell';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { useBookAppointment } from '@/features/appointments/api/book-appointment';
 import { useDisponibilites } from '@/features/appointments/api/get-disponibilites';
 import type {
@@ -36,60 +37,82 @@ import type {
 import { ReservationInputSchema } from '@/features/appointments/types/schemas';
 import { cn } from '@/lib/utils';
 
-type Step = 'date' | 'slot' | 'info' | 'confirm';
+/* ─── helpers ─────────────────────────────────────────────────────────────── */
 
-const STEPS: {
-  id: Step;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}[] = [
-  { id: 'date', label: 'Date', icon: Calendar },
-  { id: 'slot', label: 'Créneau', icon: Clock },
-  { id: 'info', label: 'Informations', icon: User },
-  { id: 'confirm', label: 'Confirmation', icon: CheckCircle2 },
+type Step = 'date' | 'slot' | 'info';
+
+const STEPS: { id: Step; label: string }[] = [
+  { id: 'date', label: 'Date' },
+  { id: 'slot', label: 'Créneau' },
+  { id: 'info', label: 'Informations' },
 ];
+
+function formatSlot(slot: string) {
+  return slot.slice(0, 5);
+}
+
+function formatDateFr(dateStr: string) {
+  try {
+    return format(new Date(dateStr), 'EEEE d MMMM yyyy', { locale: fr });
+  } catch {
+    return dateStr;
+  }
+}
+
+/* ─── step indicator ──────────────────────────────────────────────────────── */
 
 function StepIndicator({ current }: { current: Step }) {
   const currentIdx = STEPS.findIndex((s) => s.id === current);
+
   return (
-    <div className="flex items-center justify-center gap-0">
+    <div className="flex items-center justify-center">
       {STEPS.map((step, i) => {
         const done = i < currentIdx;
-        const active = i === currentIdx;
-        const Icon = step.icon;
+        const active = step.id === current;
+
         return (
           <div key={step.id} className="flex items-center">
-            <div
-              className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors',
-                done && 'bg-blue-600 text-white',
-                active && 'bg-blue-600 text-white ring-4 ring-blue-100',
-                !done && !active && 'bg-slate-100 text-slate-400',
-              )}
-            >
-              {done ? (
-                <CheckCircle2 className="size-5" />
-              ) : (
-                <Icon className="size-4" />
-              )}
+            {/* circle */}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={cn(
+                  'flex size-9 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300',
+                  done &&
+                    'border-emerald-500/50 bg-emerald-50 text-emerald-600 dark:border-emerald-400/50 dark:bg-emerald-400/[0.12] dark:text-emerald-400',
+                  active &&
+                    'border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400/60 dark:bg-cyan-400/[0.15] dark:text-cyan-300',
+                  !done &&
+                    !active &&
+                    'border-border bg-transparent text-muted-foreground',
+                )}
+                style={
+                  active
+                    ? { boxShadow: '0 0 18px rgba(34,211,238,0.15)' }
+                    : undefined
+                }
+              >
+                {done ? <CheckCircle2 className="size-4" /> : i + 1}
+              </div>
+              <span
+                className={cn(
+                  'hidden text-xs font-medium sm:block',
+                  active
+                    ? 'text-cyan-600 dark:text-cyan-400'
+                    : done
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground',
+                )}
+              >
+                {step.label}
+              </span>
             </div>
-            <p
-              className={cn(
-                'ml-2 hidden text-sm font-medium sm:block',
-                active
-                  ? 'text-blue-700'
-                  : done
-                    ? 'text-slate-700'
-                    : 'text-slate-400',
-              )}
-            >
-              {step.label}
-            </p>
+
+            {/* connector */}
             {i < STEPS.length - 1 && (
               <div
                 className={cn(
-                  'mx-3 h-0.5 w-8 sm:w-12 rounded-full transition-colors',
-                  done ? 'bg-blue-600' : 'bg-slate-200',
+                  'mx-3 mb-5 h-px w-12 rounded-full transition-all duration-300 sm:w-20',
+                  done ? 'bg-emerald-400/50' : 'bg-border dark:bg-white/[0.08]',
                 )}
               />
             )}
@@ -100,109 +123,418 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
+/* ─── date step ───────────────────────────────────────────────────────────── */
+
+function DateStep({
+  selectedDate,
+  onSelect,
+}: {
+  selectedDate: string;
+  onSelect: (d: string) => void;
+}) {
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  return (
+    <div>
+      <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-foreground">
+        <Calendar className="size-5 text-cyan-500 dark:text-cyan-400" />
+        Choisissez une date
+      </h2>
+      <p className="mb-8 text-sm text-muted-foreground">
+        Sélectionnez le jour souhaité pour votre consultation.
+      </p>
+
+      <div className="mx-auto max-w-xs">
+        <label
+          htmlFor="date-input"
+          className="mb-2 block text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+        >
+          Date souhaitée
+        </label>
+        <input
+          id="date-input"
+          type="date"
+          min={today}
+          value={selectedDate}
+          onChange={(e) => onSelect(e.target.value)}
+          className="h-12 w-full rounded-xl border border-input bg-background px-4 text-base font-medium text-foreground transition-all focus:border-cyan-500/50 focus:bg-background focus:outline-none focus:ring-0"
+        />
+        {selectedDate && (
+          <p className="mt-3 text-center text-sm font-medium capitalize text-cyan-600 dark:text-cyan-400">
+            {formatDateFr(selectedDate)}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── slot step ───────────────────────────────────────────────────────────── */
+
+function SlotStep({
+  selectedDate,
+  selectedSlot,
+  onSelect,
+}: {
+  selectedDate: string;
+  selectedSlot: string | null;
+  onSelect: (s: string) => void;
+}) {
+  const { data: dispos, isLoading } = useDisponibilites(selectedDate);
+
+  const morning = (dispos?.slots ?? []).filter(
+    (s) => parseInt(s.split(':')[0]) < 12,
+  );
+  const afternoon = (dispos?.slots ?? []).filter(
+    (s) => parseInt(s.split(':')[0]) >= 12,
+  );
+
+  function SlotGrid({ slots }: { slots: string[] }) {
+    return (
+      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+        {slots.map((slot) => (
+          <button
+            type="button"
+            key={slot}
+            onClick={() => onSelect(slot)}
+            className={cn(
+              'rounded-xl border-2 py-3 text-sm font-semibold transition-all duration-150',
+              selectedSlot === slot
+                ? 'border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400/60 dark:bg-cyan-400/[0.15] dark:text-cyan-300'
+                : 'border-border bg-background text-muted-foreground hover:border-border/60 hover:bg-muted/50 hover:text-foreground dark:border-white/[0.10] dark:bg-white/[0.03] dark:hover:border-white/[0.25] dark:hover:bg-white/[0.07]',
+            )}
+            style={
+              selectedSlot === slot
+                ? { boxShadow: '0 0 14px rgba(34,211,238,0.1)' }
+                : undefined
+            }
+          >
+            {formatSlot(slot)}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-foreground">
+        <Clock className="size-5 text-cyan-500 dark:text-cyan-400" />
+        Choisissez un créneau
+      </h2>
+      <p className="mb-6 text-sm capitalize text-muted-foreground">
+        {formatDateFr(selectedDate)}
+      </p>
+
+      {isLoading ? (
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-11 rounded-xl" />
+          ))}
+        </div>
+      ) : !dispos?.slots?.length ? (
+        <div className="rounded-xl border border-amber-400/20 bg-amber-50 p-6 text-center dark:bg-amber-400/[0.06]">
+          <p className="font-semibold text-amber-600 dark:text-amber-400">
+            Aucun créneau disponible
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Essayez une autre date.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {morning.length > 0 && (
+            <div>
+              {morning.length > 0 && afternoon.length > 0 && (
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  ☀︎ Matin
+                </p>
+              )}
+              <SlotGrid slots={morning} />
+            </div>
+          )}
+          {afternoon.length > 0 && (
+            <div>
+              {morning.length > 0 && afternoon.length > 0 && (
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  ◑ Après-midi
+                </p>
+              )}
+              <SlotGrid slots={afternoon} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── info step ───────────────────────────────────────────────────────────── */
+
+function InfoStep({
+  form,
+  selectedDate,
+  selectedSlot,
+}: {
+  form: ReturnType<typeof useForm<ReservationInput>>;
+  selectedDate: string;
+  selectedSlot: string;
+}) {
+  return (
+    <div>
+      <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-foreground">
+        <User className="size-5 text-cyan-500 dark:text-cyan-400" />
+        Vos informations
+      </h2>
+      <p className="mb-6 text-sm text-muted-foreground">
+        Renseignez vos coordonnées pour confirmer votre rendez-vous.
+      </p>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="patient_prenom"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-muted-foreground">
+                  Prénom *
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Fatou" {...field} />
+                </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="patient_nom"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-muted-foreground">
+                  Nom *
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Diallo" {...field} />
+                </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="patient_phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-muted-foreground">
+                Téléphone *
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="+221 77 000 00 00" {...field} />
+              </FormControl>
+              <FormMessage className="text-xs" />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="patient_email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-muted-foreground">
+                Email (optionnel)
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="fatou@example.com"
+                  {...field}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="motif"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-muted-foreground">
+                Motif (optionnel)
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Ex: bilan visuel, renouvellement…"
+                  {...field}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {/* want_reminder toggle */}
+        <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 p-4">
+          <div className="flex items-start gap-3">
+            <Phone className="mt-0.5 size-4 shrink-0 text-cyan-500/70 dark:text-cyan-400/70" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Rappel SMS</p>
+              <p className="text-xs text-muted-foreground">
+                Recevez un rappel avant votre rendez-vous
+              </p>
+            </div>
+          </div>
+          <Controller
+            name="want_reminder"
+            control={form.control}
+            render={({ field }) => (
+              <Switch checked={field.value} onCheckedChange={field.onChange} />
+            )}
+          />
+        </div>
+
+        {/* summary */}
+        <div className="rounded-xl border border-cyan-500/20 bg-cyan-50/60 p-4 dark:border-cyan-400/15 dark:bg-cyan-400/[0.04]">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Récapitulatif
+          </p>
+          <div className="grid grid-cols-2 gap-y-1.5 text-sm">
+            <span className="text-muted-foreground">Date</span>
+            <span className="font-medium capitalize text-foreground">
+              {formatDateFr(selectedDate)}
+            </span>
+            <span className="text-muted-foreground">Heure</span>
+            <span className="font-medium text-cyan-600 dark:text-cyan-400">
+              {formatSlot(selectedSlot)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── confirmation page ───────────────────────────────────────────────────── */
+
 function ConfirmationPage({
   confirmation,
 }: {
   confirmation: RendezVousConfirmation;
 }) {
   return (
-    <div className="mx-auto max-w-md text-center">
-      <div className="mb-8 flex justify-center">
-        <div className="flex size-20 items-center justify-center rounded-full bg-emerald-100">
-          <CheckCircle2 className="size-10 text-emerald-600" />
-        </div>
-      </div>
-      <h2 className="mb-3 text-2xl font-bold text-slate-900">
-        Rendez-vous confirmé !
-      </h2>
-      <p className="mb-8 text-slate-500">
-        Bonjour{' '}
-        <strong>
-          {confirmation.patient_prenom} {confirmation.patient_nom}
-        </strong>
-        , votre rendez-vous a bien été enregistré.
-      </p>
-
-      <div className="mb-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50">
-            <Calendar className="size-4 text-blue-600" />
+    <PublicShell>
+      <div className="flex min-h-[calc(100vh-72px)] items-center justify-center px-4 py-12">
+        <div className="mx-auto w-full max-w-md text-center">
+          {/* animated checkmark */}
+          <div
+            className="mx-auto mb-8 flex size-24 items-center justify-center rounded-full border-2 border-emerald-500/30 bg-emerald-50 dark:border-emerald-400/30 dark:bg-emerald-400/[0.08]"
+            style={{
+              animation: 'popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both',
+            }}
+          >
+            <CheckCircle2 className="size-12 text-emerald-500 dark:text-emerald-400" />
           </div>
-          <div>
-            <p className="text-xs text-slate-400">Date</p>
-            <p className="font-semibold text-slate-900">
-              {new Date(confirmation.date).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-              })}
+
+          <h2 className="mb-3 text-3xl font-bold text-foreground">
+            Rendez-vous confirmé !
+          </h2>
+          <p className="mb-8 text-muted-foreground">
+            Bonjour{' '}
+            <span className="font-semibold text-foreground">
+              {confirmation.patient_prenom} {confirmation.patient_nom}
+            </span>
+            , votre consultation a bien été enregistrée.
+          </p>
+
+          {/* details card */}
+          <div className="mb-6 space-y-3 rounded-2xl border border-border bg-card p-6 text-left">
+            {[
+              {
+                icon: Calendar,
+                label: 'Date',
+                value: (
+                  <span className="capitalize">
+                    {formatDateFr(confirmation.date)}
+                  </span>
+                ),
+              },
+              {
+                icon: Clock,
+                label: 'Horaire',
+                value: `${formatSlot(confirmation.heure_debut)} – ${formatSlot(confirmation.heure_fin)}`,
+              },
+              {
+                icon: Phone,
+                label: 'Téléphone',
+                value: confirmation.patient_phone,
+              },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center gap-3">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-cyan-500/15 bg-cyan-50 dark:border-cyan-400/15 dark:bg-cyan-400/[0.08]">
+                  <Icon className="size-3.5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div className="flex flex-1 justify-between">
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {value}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* RDV number */}
+          <div
+            className="mb-4 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.06] px-6 py-4"
+            style={{ boxShadow: '0 0 32px rgba(34,211,238,0.06)' }}
+          >
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Numéro de rendez-vous
+            </p>
+            <p
+              className="font-mono text-3xl font-bold tracking-[0.15em] text-cyan-600 dark:text-cyan-400"
+              style={{ textShadow: '0 0 24px rgba(34,211,238,0.3)' }}
+            >
+              {confirmation.numero_rdv}
             </p>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50">
-            <Clock className="size-4 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400">Horaire</p>
-            <p className="font-semibold text-slate-900">
-              {confirmation.heure_debut.slice(0, 5)} –{' '}
-              {confirmation.heure_fin.slice(0, 5)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50">
-            <Phone className="size-4 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400">Téléphone</p>
-            <p className="font-semibold text-slate-900">
-              {confirmation.patient_phone}
-            </p>
-          </div>
+
+          <p className="mb-8 text-sm text-muted-foreground">
+            💬 Un rappel SMS vous sera envoyé avant votre rendez-vous.
+          </p>
+
+          <Link
+            href="/evenements"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-border/60 hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Voir les événements de dépistage
+          </Link>
         </div>
       </div>
 
-      <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-800">
-        <p className="mb-1 font-semibold">
-          Numéro de RDV : {confirmation.numero_rdv}
-        </p>
-        <p>Un rappel SMS vous sera envoyé avant votre rendez-vous.</p>
-      </div>
-
-      <p className="mt-4 text-xs text-slate-400">
-        Pour annuler :{' '}
-        <Link
-          href={`/rendez-vous/annuler/${confirmation.token_annulation}`}
-          className="text-red-500 hover:underline"
-        >
-          cliquer ici
-        </Link>
-      </p>
-
-      <Link
-        href="/evenements"
-        className="mt-8 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        Voir les événements de dépistage
-      </Link>
-    </div>
+      <style>{`
+        @keyframes popIn {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+    </PublicShell>
   );
 }
 
-export default function RendezVousPublicPage() {
+/* ─── page ────────────────────────────────────────────────────────────────── */
+
+export default function RendezVousPage() {
   const [step, setStep] = useState<Step>('date');
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirmation, setConfirmation] =
     useState<RendezVousConfirmation | null>(null);
-
-  const dateStr = selectedDate || null;
-  const { data: dispos, isLoading: loadingSlots } = useDisponibilites(
-    step === 'slot' || step === 'info' ? dateStr : null,
-  );
 
   const form = useForm<ReservationInput>({
     resolver: zodResolver(ReservationInputSchema),
@@ -219,381 +551,152 @@ export default function RendezVousPublicPage() {
   });
 
   const {
-    mutate: book,
+    mutate: bookAppointment,
     isPending,
     error: bookError,
   } = useBookAppointment({
-    onSuccess: (data) => {
-      setConfirmation(data);
-      setStep('confirm');
-    },
+    onSuccess: (data: RendezVousConfirmation) => setConfirmation(data),
   });
 
-  const handleDateSelect = (date: string) => {
+  function handleDateSelect(date: string) {
     setSelectedDate(date);
     setSelectedSlot(null);
-  };
-
-  const handleNext = () => {
-    if (step === 'date' && selectedDate) {
-      form.setValue('date', selectedDate);
-      setStep('slot');
-    } else if (step === 'slot' && selectedSlot) {
-      form.setValue('heure_debut', selectedSlot);
-      setStep('info');
-    }
-  };
-
-  const handleSubmit = form.handleSubmit((values) => {
-    book(values);
-  });
-
-  if (confirmation) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="border-b border-slate-200 bg-white">
-          <div className="mx-auto flex max-w-3xl items-center justify-between p-4">
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-blue-600">
-                <Eye className="size-3.5 text-white" />
-              </div>
-              <span className="font-bold text-slate-900">
-                GUISS Ophtalmologie
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto max-w-3xl px-4 py-12">
-          <ConfirmationPage confirmation={confirmation} />
-        </div>
-      </div>
-    );
+    form.setValue('date', date);
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top bar */}
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-blue-600">
-              <Eye className="size-3.5 text-white" />
-            </div>
-            <span className="font-bold text-slate-900">
-              GUISS Ophtalmologie
-            </span>
-          </div>
-          <Link
-            href="/evenements"
-            className="text-sm text-slate-500 transition-colors hover:text-slate-900"
-          >
-            Voir les événements
-          </Link>
-        </div>
-      </div>
+  function handleSlotSelect(slot: string) {
+    setSelectedSlot(slot);
+    form.setValue('heure_debut', slot);
+  }
 
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        {/* Header */}
+  function handleSubmit(values: ReservationInput) {
+    bookAppointment(values);
+  }
+
+  if (confirmation) {
+    return <ConfirmationPage confirmation={confirmation} />;
+  }
+
+  const canContinue =
+    (step === 'date' && !!selectedDate) ||
+    (step === 'slot' && !!selectedSlot) ||
+    step === 'info';
+
+  return (
+    <PublicShell>
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        {/* header */}
         <div className="mb-10 text-center">
-          <h1 className="mb-2 text-3xl font-extrabold text-slate-900">
+          <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-foreground">
             Prendre un rendez-vous
           </h1>
-          <p className="text-slate-500">
-            Consultation ophtalmologique — Service Ophtalmologie, UIDT
+          <p className="text-muted-foreground">
+            Consultation ophtalmologique — Service UIDT
           </p>
         </div>
 
-        {/* Step indicator */}
+        {/* stepper */}
         <div className="mb-10">
           <StepIndicator current={step} />
         </div>
 
-        {/* Step content */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          {step === 'date' && (
-            <div>
-              <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
-                <Calendar className="size-5 text-blue-600" />
-                Choisissez une date
-              </h2>
-              <div className="mx-auto max-w-xs space-y-3">
-                <label
-                  className="block text-sm font-medium text-slate-700"
-                  htmlFor="rdv-date"
-                >
-                  Choisissez une date
-                </label>
-                <input
-                  id="rdv-date"
-                  type="date"
-                  title="Date du rendez-vous"
-                  min={format(new Date(), 'yyyy-MM-dd')}
-                  value={selectedDate}
-                  onChange={(e) => handleDateSelect(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-lg text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        {/* step content card */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} id="rdv-form">
+            <div className="min-h-[280px] rounded-2xl border border-border bg-card p-6 sm:p-8">
+              {step === 'date' && (
+                <DateStep
+                  selectedDate={selectedDate}
+                  onSelect={handleDateSelect}
                 />
-                {selectedDate && (
-                  <p className="text-center text-sm font-medium text-blue-700">
-                    Sélectionné :{' '}
-                    {new Date(selectedDate + 'T12:00:00').toLocaleDateString(
-                      'fr-FR',
-                      {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                      },
-                    )}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {step === 'slot' && (
-            <div>
-              <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-slate-900">
-                <Clock className="size-5 text-blue-600" />
-                Choisissez un créneau
-              </h2>
-              <p className="mb-6 text-sm text-slate-500">
-                {selectedDate &&
-                  new Date(selectedDate + 'T12:00:00').toLocaleDateString(
-                    'fr-FR',
-                    {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    },
-                  )}
-              </p>
-
-              {loadingSlots ? (
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <Skeleton key={i} className="h-11 rounded-xl" />
-                  ))}
-                </div>
-              ) : !dispos?.slots?.length ? (
-                <div className="rounded-xl bg-amber-50 p-6 text-center">
-                  <p className="font-medium text-amber-800">
-                    Aucun créneau disponible
-                  </p>
-                  <p className="mt-1 text-sm text-amber-600">
-                    Essayez une autre date.
-                  </p>
-                  <button
-                    onClick={() => setStep('date')}
-                    className="mt-3 text-sm text-blue-600 hover:underline"
-                  >
-                    ← Changer de date
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  {dispos.slots.map((slot) => (
-                    <button
-                      key={slot}
-                      onClick={() => setSelectedSlot(slot)}
-                      className={cn(
-                        'rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition-all',
-                        selectedSlot === slot
-                          ? 'border-blue-600 bg-blue-600 text-white shadow-md'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50',
-                      )}
-                    >
-                      {slot}
-                    </button>
-                  ))}
-                </div>
+              )}
+              {step === 'slot' && selectedDate && (
+                <SlotStep
+                  selectedDate={selectedDate}
+                  selectedSlot={selectedSlot}
+                  onSelect={handleSlotSelect}
+                />
+              )}
+              {step === 'info' && selectedSlot && (
+                <InfoStep
+                  form={form}
+                  selectedDate={selectedDate}
+                  selectedSlot={selectedSlot}
+                />
               )}
             </div>
-          )}
 
-          {step === 'info' && (
-            <div>
-              <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
-                <User className="size-5 text-blue-600" />
-                Vos informations
-              </h2>
-              <Form {...form}>
-                <form
-                  onSubmit={handleSubmit}
-                  className="space-y-4"
-                  id="rdv-form"
+            {/* error */}
+            {bookError && step === 'info' && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-400/20 dark:bg-red-400/[0.06] dark:text-red-400">
+                {(bookError as { response?: { data?: { detail?: string } } })
+                  ?.response?.data?.detail ??
+                  "Une erreur s'est produite. Vérifiez vos informations et réessayez."}
+              </div>
+            )}
+
+            {/* navigation */}
+            <div className="mt-6 flex items-center justify-between gap-4">
+              {/* left */}
+              {step === 'date' ? (
+                <Link
+                  href="/evenements"
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="patient_prenom"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prénom</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Fatou" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="patient_nom"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Diallo" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="patient_phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Téléphone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+221 77 000 00 00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="patient_email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email (optionnel)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="fatou@example.com"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="motif"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Motif (optionnel)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: bilan visuel, renouvellement lunettes..."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <ArrowLeft className="size-4" />
+                  Voir les événements
+                </Link>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (step === 'slot') setStep('date');
+                    else if (step === 'info') setStep('slot');
+                  }}
+                >
+                  <ArrowLeft className="mr-1.5 size-4" />
+                  Retour
+                </Button>
+              )}
 
-                  {/* Summary */}
-                  <div className="mt-2 rounded-xl bg-slate-50 p-4 text-sm">
-                    <p className="mb-2 font-semibold text-slate-700">
-                      Récapitulatif
-                    </p>
-                    <div className="grid grid-cols-2 gap-1 text-slate-500">
-                      <span>Date :</span>
-                      <span className="font-medium text-slate-700">
-                        {selectedDate &&
-                          new Date(
-                            selectedDate + 'T12:00:00',
-                          ).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                          })}
-                      </span>
-                      <span>Heure :</span>
-                      <span className="font-medium text-slate-700">
-                        {selectedSlot}
-                      </span>
-                    </div>
-                  </div>
-
-                  {bookError && (
-                    <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                      {(
-                        bookError as {
-                          response?: { data?: { detail?: string } };
-                        }
-                      )?.response?.data?.detail ??
-                        "Une erreur s'est produite. Vérifiez vos informations."}
-                    </p>
+              {/* right */}
+              {step !== 'info' ? (
+                <Button
+                  type="button"
+                  disabled={!canContinue}
+                  className="bg-cyan-500 font-semibold text-white hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.25)] disabled:opacity-40 dark:bg-cyan-400 dark:text-slate-900 dark:hover:bg-cyan-300"
+                  onClick={() => {
+                    if (step === 'date') setStep('slot');
+                    else if (step === 'slot') setStep('info');
+                  }}
+                >
+                  Continuer
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  form="rdv-form"
+                  disabled={isPending}
+                  className="bg-cyan-500 font-semibold text-white hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.25)] disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-900 dark:hover:bg-cyan-300"
+                >
+                  {isPending ? (
+                    <>
+                      <span className="mr-2 size-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white dark:border-slate-900/30 dark:border-t-slate-900" />
+                      Réservation…
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-1.5 size-4" />
+                      Confirmer le rendez-vous
+                    </>
                   )}
-                </form>
-              </Form>
+                </Button>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="mt-6 flex items-center justify-between">
-          {step !== 'date' ? (
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (step === 'slot') setStep('date');
-                else if (step === 'info') setStep('slot');
-              }}
-              className="gap-2"
-            >
-              <ArrowLeft className="size-4" />
-              Retour
-            </Button>
-          ) : (
-            <Link
-              href="/evenements"
-              className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
-            >
-              <ArrowLeft className="size-4" />
-              Voir les événements
-            </Link>
-          )}
-
-          {step === 'date' && (
-            <Button
-              onClick={handleNext}
-              disabled={!selectedDate}
-              className="gap-2"
-            >
-              Continuer
-              <ArrowRight className="size-4" />
-            </Button>
-          )}
-          {step === 'slot' && (
-            <Button
-              onClick={handleNext}
-              disabled={!selectedSlot}
-              className="gap-2"
-            >
-              Continuer
-              <ArrowRight className="size-4" />
-            </Button>
-          )}
-          {step === 'info' && (
-            <Button
-              type="submit"
-              form="rdv-form"
-              disabled={isPending}
-              className="gap-2"
-              onClick={handleSubmit}
-            >
-              {isPending ? 'Réservation...' : 'Confirmer le rendez-vous'}
-              <CheckCircle2 className="size-4" />
-            </Button>
-          )}
-        </div>
+          </form>
+        </Form>
       </div>
-    </div>
+    </PublicShell>
   );
 }

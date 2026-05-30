@@ -1,8 +1,11 @@
 'use client';
 
 import {
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  Clock,
   Loader2,
   RefreshCw,
   Search,
@@ -29,8 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { KpiCard } from '@/features/dashboard/components/kpi-card';
 import { useAdultExams } from '@/features/exams/api';
 import type { ExamsQueryParams } from '@/features/exams/types';
+import { useSites } from '@/features/sites/api/get-sites';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -38,7 +43,10 @@ export default function AdultExamsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [siteFilter, setSiteFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { data: sitesData } = useSites();
 
   // Debounce search
   useEffect(() => {
@@ -58,6 +66,7 @@ export default function AdultExamsPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(statusFilter === 'complete' && { is_completed: true }),
     ...(statusFilter === 'in-progress' && { is_completed: false }),
+    ...(siteFilter !== 'all' && { site: Number(siteFilter) }),
     ordering: '-created',
   };
 
@@ -68,17 +77,61 @@ export default function AdultExamsPage() {
     refetch,
   } = useAdultExams({ params: queryParams });
 
+  const { data: allExamsData } = useAdultExams({
+    params: { limit: 1, offset: 0 },
+  });
+  const { data: completedExamsData } = useAdultExams({
+    params: { limit: 1, offset: 0, is_completed: true },
+  });
+
   const exams = examsData?.results ?? [];
   const totalCount = examsData?.count ?? 0;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const totalExams = allExamsData?.count ?? 0;
+  const completedExams = completedExamsData?.count ?? 0;
+  const inProgressExams = totalExams - completedExams;
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value);
     setCurrentPage(1);
   };
 
+  const handleSiteFilter = (value: string) => {
+    setSiteFilter(value);
+    setCurrentPage(1);
+  };
+
   return (
     <Shell title="Examens Adultes">
+      {/* KPI Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiCard
+          title="Total examens"
+          value={totalExams}
+          subtitle="depuis le début"
+          icon={ClipboardList}
+        />
+        <KpiCard
+          title="Complétés"
+          value={completedExams}
+          subtitle={
+            totalExams > 0
+              ? `${Math.round((completedExams / totalExams) * 100)}% du total`
+              : '—'
+          }
+          icon={CheckCircle2}
+          className="border-emerald-200 dark:border-emerald-900/40"
+        />
+        <KpiCard
+          title="En cours"
+          value={inProgressExams}
+          subtitle="examens non finalisés"
+          icon={Clock}
+          className="border-amber-200 dark:border-amber-900/40"
+        />
+      </div>
+
       {/* Filters */}
       <div className="mb-6 flex items-center gap-4">
         <div className="relative max-w-sm flex-1">
@@ -104,6 +157,20 @@ export default function AdultExamsPage() {
             <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="complete">Complété</SelectItem>
             <SelectItem value="in-progress">En cours</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={siteFilter} onValueChange={handleSiteFilter}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Filtrer par site" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les sites</SelectItem>
+            {(sitesData?.results ?? []).map((site) => (
+              <SelectItem key={site.id} value={String(site.id)}>
+                {site.libelle}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

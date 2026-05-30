@@ -372,9 +372,6 @@ export default function PatientDetailPage() {
               {/* Examens Adulte */}
               {patientExams?.adult && patientExams.adult.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-foreground">
-                    Examens Adulte ({patientExams.adult.length})
-                  </h3>
                   <div className="overflow-hidden rounded-lg border border-border">
                     <table className="w-full">
                       <thead className="bg-muted/50 border-b border-border">
@@ -386,10 +383,13 @@ export default function PatientDetailPage() {
                             Site
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                            Date
+                            Statut
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                            Statut
+                            Date de création
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                            Dernière modification
                           </th>
                           <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
                             Action
@@ -400,16 +400,17 @@ export default function PatientDetailPage() {
                         {patientExams.adult.map((exam) => (
                           <tr key={exam.id} className="hover:bg-muted/30">
                             <td className="px-4 py-3 font-mono text-sm">
-                              {exam.numero_examen}
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/exams/adult/${exam.id}`}>
+                                  <ExternalLink className="mr-1.5 size-4" />
+                                  {exam.numero_examen}
+                                </Link>
+                              </Button>
                             </td>
                             <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {exam.site_libelle || '—'}
                             </td>
-                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
-                              {format(new Date(exam.created), 'dd/MM/yyyy', {
-                                locale: fr,
-                              })}
-                            </td>
+
                             <td className="px-4 py-3">
                               <Badge
                                 variant={
@@ -418,6 +419,16 @@ export default function PatientDetailPage() {
                               >
                                 {exam.is_completed ? 'Terminé' : 'En cours'}
                               </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
+                              {format(new Date(exam.created), 'dd/MM/yyyy', {
+                                locale: fr,
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
+                              {format(new Date(exam.modified), 'dd/MM/yyyy', {
+                                locale: fr,
+                              })}
                             </td>
                             <td className="px-4 py-3 text-right">
                               <Button variant="ghost" size="sm" asChild>
@@ -438,9 +449,6 @@ export default function PatientDetailPage() {
               {/* Examens Enfant */}
               {patientExams?.child && patientExams.child.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-foreground">
-                    Examens Enfant ({patientExams.child.length})
-                  </h3>
                   <div className="overflow-hidden rounded-lg border border-border">
                     <table className="w-full">
                       <thead className="bg-muted/50 border-b border-border">
@@ -452,13 +460,13 @@ export default function PatientDetailPage() {
                             Site
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                            Date
+                            Statut
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                            Reflet Pupillaire
+                            Date de création
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                            Fond d&apos;œil
+                            Dernière modification
                           </th>
                           <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
                             Action
@@ -469,24 +477,34 @@ export default function PatientDetailPage() {
                         {patientExams.child.map((exam) => (
                           <tr key={exam.id} className="hover:bg-muted/30">
                             <td className="px-4 py-3 font-mono text-sm">
-                              <Link href={`/exams/child/${exam.id}`}>
-                                <ExternalLink className="mr-1.5 size-4" />
-                                {exam.numero_examen}
-                              </Link>
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/exams/child/${exam.id}`}>
+                                  <ExternalLink className="mr-1.5 size-4" />
+                                  {exam.numero_examen}
+                                </Link>
+                              </Button>
                             </td>
                             <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {exam.site_libelle || '—'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge
+                                variant={
+                                  exam.is_completed ? 'default' : 'secondary'
+                                }
+                              >
+                                {exam.is_completed ? 'Terminé' : 'En cours'}
+                              </Badge>
                             </td>
                             <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
                               {format(new Date(exam.created), 'dd/MM/yyyy', {
                                 locale: fr,
                               })}
                             </td>
-                            <td className="px-4 py-3 text-sm capitalize">
-                              {exam.reflet_pupillaire || '-'}
-                            </td>
-                            <td className="px-4 py-3 text-sm capitalize">
-                              {exam.fo || '-'}
+                            <td className="px-4 py-3 text-sm font-medium text-muted-foreground">
+                              {format(new Date(exam.modified), 'dd/MM/yyyy', {
+                                locale: fr,
+                              })}
                             </td>
                             <td className="px-4 py-3 text-right">
                               <Button variant="ghost" size="sm" asChild>

@@ -21,6 +21,7 @@ export const mockDashboard: Dashboard = {
   conducteurs: { total: 120, today_new: 1 },
   rendez_vous: {
     today: { total: 9, by_statut: { PLANIFIE: 4, CONFIRME: 3, EN_COURS: 2 } },
+    pending_count: 0,
     prochains: [
       {
         id: 1,
@@ -58,6 +59,7 @@ export const mockDashboard: Dashboard = {
       },
     ],
     inscriptions_aujourd_hui: 7,
+    pending_count: 0,
   },
 };
 

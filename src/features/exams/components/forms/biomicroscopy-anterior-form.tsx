@@ -193,9 +193,7 @@ export function BiomicroscopyAnteriorForm({
     }
   }, [typeAnomalie, form, namePrefix]);
 
-  // Helper pour afficher l'indicateur obligatoire
-  const RequiredIndicator = () =>
-    isPresenceLesion ? <span className="text-destructive">*</span> : null;
+  const RequiredIndicator = () => null;
 
   return (
     <section className="space-y-4">
@@ -205,8 +203,7 @@ export function BiomicroscopyAnteriorForm({
         </h4>
         {isPresenceLesion && (
           <p className="mt-1 text-xs text-muted-foreground">
-            <span className="text-destructive">*</span> Champs obligatoires en
-            cas de présence de lésion
+            Champs optionnels en cas de présence de lésion
           </p>
         )}
       </div>

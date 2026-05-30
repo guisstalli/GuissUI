@@ -10,6 +10,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { MainErrorFallback } from '@/components/errors/main';
 import { Notifications } from '@/components/ui/notifications';
 import { TooltipProvider } from '@/components/ui/tooltip/tooltip';
+import { NotificationSocketProvider } from '@/features/notifications/hooks/use-notification-socket';
 import { InternalAppGuard } from '@/lib/internal-app-guard';
 import { queryConfig } from '@/lib/react-query';
 
@@ -38,6 +39,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             <TooltipProvider>
               {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
               <Notifications />
+              <NotificationSocketProvider />
               <InternalAppGuard>{children}</InternalAppGuard>
             </TooltipProvider>
           </QueryClientProvider>

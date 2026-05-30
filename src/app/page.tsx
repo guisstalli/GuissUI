@@ -2,12 +2,23 @@
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
-import { CalendarCheck, ClipboardList, Truck, Users } from 'lucide-react';
+import {
+  AlertCircle,
+  CalendarCheck,
+  ClipboardList,
+  Truck,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Spinner } from '@/components/ui/spinner';
 import { useDashboard } from '@/features/dashboard/api/get-dashboard';
 import { ActiveEvents } from '@/features/dashboard/components/active-events';
+import {
+  DismissibleAlert,
+  alertSignature,
+} from '@/features/dashboard/components/dismissible-alert';
 import { ExamsChart } from '@/features/dashboard/components/exams-chart';
 import { KpiCard } from '@/features/dashboard/components/kpi-card';
 import { UpcomingAppointments } from '@/features/dashboard/components/upcoming-appointments';
@@ -83,6 +94,40 @@ export default function DashboardPage() {
             {dateLabel}
           </p>
         </div>
+
+        {/* Pending RDV alert */}
+        {!isLoading && data && (data.rendez_vous.pending_count ?? 0) > 0 && (
+          <DismissibleAlert
+            storageKey="dashboard.alert.rdv_pending"
+            signature={alertSignature(data.rendez_vous.pending_count)}
+            href="/gestion/rendez-vous?tab=liste&statut=en_attente"
+            className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-400/20 dark:bg-amber-400/[0.06] dark:text-amber-300 dark:hover:bg-amber-400/[0.10]"
+            icon={
+              <AlertCircle className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
+            }
+          >
+            {data.rendez_vous.pending_count} réservation
+            {data.rendez_vous.pending_count > 1 ? 's' : ''} en attente de
+            confirmation
+          </DismissibleAlert>
+        )}
+
+        {/* Pending event inscriptions alert */}
+        {!isLoading && data && (data.evenements.pending_count ?? 0) > 0 && (
+          <DismissibleAlert
+            storageKey="dashboard.alert.events_pending"
+            signature={alertSignature(data.evenements.pending_count)}
+            href="/gestion/evenements?statut=en_cours"
+            className="border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-400/[0.06] dark:text-violet-300 dark:hover:bg-violet-400/[0.10]"
+            icon={
+              <AlertCircle className="size-4 shrink-0 text-violet-500 dark:text-violet-400" />
+            }
+          >
+            {data.evenements.pending_count} inscription
+            {data.evenements.pending_count > 1 ? 's' : ''} à un événement en
+            attente de check-in
+          </DismissibleAlert>
+        )}
 
         {isLoading ? (
           <DashboardSkeleton />
@@ -179,21 +224,23 @@ export default function DashboardPage() {
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {data.evenements.planifies_7j.map((event) => (
-                    <div
+                    <Link
                       key={event.id}
-                      className="rounded-lg border border-border bg-card p-4"
+                      href={`/gestion/evenements/${event.id}/inscriptions`}
+                      className="group rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm block"
                     >
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary">
                         {event.titre}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {dayjs(event.date_event).format('DD/MM/YYYY')} —{' '}
-                        {event.lieu}
+                        {dayjs(event.date_event).isValid()
+                          ? `${dayjs(event.date_event).format('DD/MM/YYYY')} — ${event.lieu}`
+                          : event.lieu}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {event.inscrits} inscrits
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

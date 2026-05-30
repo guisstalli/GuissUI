@@ -37,6 +37,12 @@ function getRoleLabel(role: UserListItem['role']): string {
       return 'Médecin';
     case 'TECHNICIEN':
       return 'Technicien';
+    case 'DATA_ENTRY':
+      return 'Saisie de données';
+    case 'SUPERUSER':
+      return 'Superuser';
+    default:
+      return role;
   }
 }
 
@@ -46,6 +52,8 @@ function RoleBadge({ role }: { role: UserListItem['role'] }) {
     STAFF: 'bg-blue-100 text-blue-700 border-blue-200',
     DOCTEUR: 'bg-green-100 text-green-700 border-green-200',
     TECHNICIEN: 'bg-amber-100 text-amber-700 border-amber-200',
+    DATA_ENTRY: 'bg-purple-100 text-purple-700 border-purple-200',
+    SUPERUSER: 'bg-gray-100 text-gray-700 border-gray-200',
   };
   return (
     <span
@@ -76,6 +84,8 @@ function UserAvatar({ user }: { user: UserListItem }) {
     STAFF: 'bg-blue-500',
     DOCTEUR: 'bg-green-500',
     TECHNICIEN: 'bg-amber-500',
+    DATA_ENTRY: 'bg-purple-500',
+    SUPERUSER: 'bg-gray-500',
   };
 
   if (user.user_profile?.avatar) {

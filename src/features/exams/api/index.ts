@@ -31,8 +31,15 @@ export {
   useUpdateSection,
   completeAdultExam,
   useCompleteAdultExam,
+  uncompleteAdultExam,
+  useUncompleteAdultExam,
   deleteAdultExam,
   useDeleteAdultExam,
+  // Ordonnance
+  getAdultOrdonnanceStatusQueryOptions,
+  useAdultOrdonnanceStatus,
+  useGenerateAdultOrdonnance,
+  useDownloadAdultOrdonnance,
 } from './adult';
 
 // Child Exams
@@ -66,6 +73,15 @@ export {
   useUpdateClinicalData,
   deleteChildExam,
   useDeleteChildExam,
+  completeChildExam,
+  useCompleteChildExam,
+  uncompleteChildExam,
+  useUncompleteChildExam,
+  // Ordonnance
+  getChildOrdonnanceStatusQueryOptions,
+  useChildOrdonnanceStatus,
+  useGenerateChildOrdonnance,
+  useDownloadChildOrdonnance,
 } from './child';
 
 // Attachments

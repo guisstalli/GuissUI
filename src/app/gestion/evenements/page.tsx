@@ -15,6 +15,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -44,6 +45,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form/form';
+import { Switch } from '@/components/ui/form/switch';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -350,6 +352,28 @@ function CreateEventDialog() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="pour_conducteurs"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div>
+                    <FormLabel className="text-sm font-medium">
+                      Événement pour conducteurs
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Collecte des données de permis lors de l&apos;inscription
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 type="button"
@@ -369,8 +393,15 @@ function CreateEventDialog() {
   );
 }
 
+const VALID_EVENT_STATUTS = ['planifie', 'en_cours', 'termine', 'annule'];
+
 export default function GestionEvenementsPage() {
-  const [statutFilter, setStatutFilter] = useState<string>('all');
+  const searchParams = useSearchParams();
+  const initialStatut = searchParams.get('statut') ?? 'all';
+  const safeInitialStatut = VALID_EVENT_STATUTS.includes(initialStatut)
+    ? initialStatut
+    : 'all';
+  const [statutFilter, setStatutFilter] = useState<string>(safeInitialStatut);
   const { data, isLoading } = useStaffEvents({
     statut: statutFilter !== 'all' ? statutFilter : undefined,
     limit: 100,
@@ -462,9 +493,12 @@ export default function GestionEvenementsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="truncate font-semibold text-foreground">
+                  <Link
+                    href={`/gestion/evenements/${event.id}/inscriptions`}
+                    className="truncate font-semibold text-foreground hover:text-primary hover:underline"
+                  >
                     {event.titre}
-                  </p>
+                  </Link>
                   <div className="mt-1 flex flex-wrap gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="size-3.5" />

@@ -46,7 +46,7 @@ export type DriverExperienceInput = Partial<
 export const getDriverExperience = (
   examId: number,
 ): Promise<DriverExperience> =>
-  api.get<DriverExperience>(`/drivers/exams/${examId}/driver-experience/`);
+  api.get<DriverExperience>(`/conducteurs/exams/${examId}/driver-experience/`);
 
 export const getDriverExperienceQueryOptions = (examId: number) =>
   queryOptions({
@@ -83,7 +83,7 @@ export const upsertDriverExperience = ({
   data,
 }: UpsertDriverExperienceParams): Promise<DriverExperience> =>
   api.post<DriverExperience>(
-    `/drivers/exams/${examId}/driver-experience/`,
+    `/conducteurs/exams/${examId}/driver-experience/`,
     data,
   );
 

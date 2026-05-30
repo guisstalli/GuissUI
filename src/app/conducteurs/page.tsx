@@ -2,6 +2,7 @@
 
 import dayjs from 'dayjs';
 import {
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   ClipboardPlus,
@@ -10,6 +11,7 @@ import {
   Pencil,
   Search,
   Trash2,
+  Truck,
   UserPlus,
   X,
 } from 'lucide-react';
@@ -52,6 +54,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { KpiCard } from '@/features/dashboard/components/kpi-card';
 import { useCreateDriver } from '@/features/drivers/api/create-driver';
 import { useDeleteDriver } from '@/features/drivers/api/delete-driver';
 import { useDrivers } from '@/features/drivers/api/get-drivers';
@@ -118,6 +121,17 @@ export default function ConducteursPage() {
 
   const { data, isLoading } = useDrivers({ params: queryParams });
 
+  const { data: allDriversData } = useDrivers({
+    params: { limit: 1, offset: 0 },
+  });
+  const { data: newThisMonthData } = useDrivers({
+    params: {
+      limit: 1,
+      offset: 0,
+      date_start: dayjs().startOf('month').format('YYYY-MM-DD'),
+    },
+  });
+
   const createMutation = useCreateDriver({
     mutationConfig: { onSuccess: () => setShowCreateDialog(false) },
   });
@@ -136,6 +150,9 @@ export default function ConducteursPage() {
   const totalCount = data?.count ?? 0;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
+  const totalDrivers = allDriversData?.count ?? 0;
+  const newThisMonth = newThisMonthData?.count ?? 0;
+
   const hasActiveFilters =
     !!serviceFilter ||
     !!typePermisFilter ||
@@ -153,6 +170,30 @@ export default function ConducteursPage() {
 
   return (
     <Shell title="Conducteurs">
+      {/* KPI Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiCard
+          title="Total conducteurs"
+          value={totalDrivers}
+          subtitle="inscrits dans le système"
+          icon={Truck}
+        />
+        <KpiCard
+          title="Nouveaux ce mois"
+          value={newThisMonth}
+          subtitle={dayjs().format('MMMM YYYY')}
+          icon={CalendarDays}
+          className="border-cyan-200 dark:border-cyan-900/40"
+        />
+        <KpiCard
+          title="Résultats filtrés"
+          value={totalCount}
+          subtitle="selon les filtres actifs"
+          icon={UserPlus}
+          className="border-blue-200 dark:border-blue-900/40"
+        />
+      </div>
+
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -414,7 +455,7 @@ export default function ConducteursPage() {
           if (!open) setShowCreateDialog(false);
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-[70%] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nouveau conducteur</DialogTitle>
             <DialogDescription>

@@ -1004,6 +1004,7 @@ export const ExamenChildSchema = z.object({
   patient: z.number(),
   patient_name: z.string(),
   site_libelle: z.string().nullable().optional(),
+  is_completed: z.boolean(),
   reflet_pupillaire: ClinicalCheckEnum.optional().nullable(),
   reflet_pupillaire_detail: z.string().max(255).optional().nullable(),
   fo: ClinicalCheckEnum.optional().nullable(),
@@ -1071,6 +1072,7 @@ export const ExamenChildDetailSchema = z.object({
   ocular_tension: OcularTensionSchema.nullable(),
   refraction: RefractionSchema.nullable(),
   vision_binoculaire: VisionBinoculaireSchema.nullable(),
+  is_completed: z.boolean(),
   created: z.string().datetime(),
   modified: z.string().datetime(),
 });
