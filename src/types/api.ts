@@ -201,6 +201,21 @@ export function formatFieldName(field: string): string {
 /**
  * Extrait un message d'erreur lisible à partir d'une réponse d'erreur API
  */
+function flattenFieldErrors(
+  fields: Record<string, unknown>,
+  prefix = '',
+): string[] {
+  return Object.entries(fields).flatMap(([field, value]) => {
+    const key = prefix ? field : field;
+    const label = formatFieldName(key);
+    if (Array.isArray(value)) return [`${label}: ${value.join(', ')}`];
+    if (typeof value === 'object' && value !== null) {
+      return flattenFieldErrors(value as Record<string, unknown>, field);
+    }
+    return [`${label}: ${String(value)}`];
+  });
+}
+
 export function extractErrorMessage(errorData: unknown): string {
   // Format HackSoft: { message: "...", extra: { fields: { ... } } }
   if (isValidationError(errorData)) {
@@ -210,16 +225,9 @@ export function extractErrorMessage(errorData: unknown): string {
       typeof fields === 'object' &&
       Object.keys(fields).length > 0
     ) {
-      // Extraire les messages des champs
-      const fieldErrors = Object.entries(fields)
-        .map(([field, messages]) => {
-          const fieldName = formatFieldName(field);
-          const message = Array.isArray(messages)
-            ? messages.join(', ')
-            : String(messages);
-          return `${fieldName}: ${message}`;
-        })
-        .join('\n');
+      const fieldErrors = flattenFieldErrors(
+        fields as Record<string, unknown>,
+      ).join('\n');
 
       if (fieldErrors) {
         return fieldErrors;

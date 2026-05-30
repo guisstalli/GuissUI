@@ -24,6 +24,7 @@ export interface PatientExamChild {
   patient_name: string;
   site_libelle: string | null;
   reflet_pupillaire: string | null;
+  is_completed: boolean;
   fo: string | null;
   created: string;
   modified: string;

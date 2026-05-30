@@ -1,8 +1,11 @@
 'use client';
 
 import {
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  Clock,
   Loader2,
   RefreshCw,
   Search,
@@ -29,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { KpiCard } from '@/features/dashboard/components/kpi-card';
 import { useChildExams } from '@/features/exams/api';
 import type { ExamsQueryParams } from '@/features/exams/types';
 
@@ -66,9 +70,20 @@ export default function ChildExamsPage() {
     refetch,
   } = useChildExams({ params: queryParams });
 
+  const { data: allExamsData } = useChildExams({
+    params: { limit: 1, offset: 0 },
+  });
+  const { data: completedExamsData } = useChildExams({
+    params: { limit: 1, offset: 0, is_completed: true },
+  });
+
   const exams = examsData?.results ?? [];
   const totalCount = examsData?.count ?? 0;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const totalExams = allExamsData?.count ?? 0;
+  const completedExams = completedExamsData?.count ?? 0;
+  const inProgressExams = totalExams - completedExams;
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value);
@@ -86,6 +101,34 @@ export default function ChildExamsPage() {
 
   return (
     <Shell title="Examens Enfants">
+      {/* KPI Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiCard
+          title="Total examens"
+          value={totalExams}
+          subtitle="depuis le début"
+          icon={ClipboardList}
+        />
+        <KpiCard
+          title="Complétés"
+          value={completedExams}
+          subtitle={
+            totalExams > 0
+              ? `${Math.round((completedExams / totalExams) * 100)}% du total`
+              : '—'
+          }
+          icon={CheckCircle2}
+          className="border-emerald-200 dark:border-emerald-900/40"
+        />
+        <KpiCard
+          title="En cours"
+          value={inProgressExams}
+          subtitle="examens non finalisés"
+          icon={Clock}
+          className="border-amber-200 dark:border-amber-900/40"
+        />
+      </div>
+
       {/* Filters */}
       <div className="mb-6 flex items-center gap-4">
         <div className="relative max-w-sm flex-1">

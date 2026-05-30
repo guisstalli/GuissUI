@@ -31,4 +31,17 @@ export {
   useUpdateClinicalData,
   deleteChildExam,
   useDeleteChildExam,
+  completeChildExam,
+  useCompleteChildExam,
+  uncompleteChildExam,
+  useUncompleteChildExam,
 } from './mutations';
+
+// Ordonnance
+export {
+  getChildOrdonnanceStatusQueryOptions,
+  useChildOrdonnanceStatus,
+  useGenerateChildOrdonnance,
+  useDownloadChildOrdonnance,
+} from './ordonnance';
+export type { OrdonnanceStatus as ChildOrdonnanceStatus } from './ordonnance';

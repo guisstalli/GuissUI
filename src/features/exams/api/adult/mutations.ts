@@ -321,6 +321,63 @@ export const useCompleteAdultExam = ({
 };
 
 // =============================================================================
+// UNCOMPLETE EXAM
+// =============================================================================
+
+type UncompleteExamParams = { id: number };
+
+export const uncompleteAdultExam = ({
+  id,
+}: UncompleteExamParams): Promise<ExamenAdultDetailApi> => {
+  return api.post<ExamenAdultDetailApi>(
+    `/depistage/examens/adultes/${id}/uncomplete/`,
+    {},
+  );
+};
+
+type UseUncompleteAdultExamOptions = {
+  mutationConfig?: MutationConfig<typeof uncompleteAdultExam>;
+};
+
+export const useUncompleteAdultExam = ({
+  mutationConfig = {},
+}: UseUncompleteAdultExamOptions = {}) => {
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotifications();
+
+  const { onSuccess, ...restConfig } = mutationConfig;
+
+  return useMutation({
+    mutationFn: uncompleteAdultExam,
+    onSuccess: (data, variables, ...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getAdultExamQueryOptions(variables.id).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: getAdultExamsQueryOptions().queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: getIncompleteAdultExamsQueryOptions().queryKey,
+      });
+      addNotification({
+        type: 'success',
+        title: 'Examen rouvert',
+        message: `L'examen ${data.numero_examen} a été marqué comme en cours.`,
+      });
+      onSuccess?.(data, variables, ...args);
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: 'Erreur',
+        message: "Impossible de rouvrir l'examen.",
+      });
+    },
+    ...restConfig,
+  });
+};
+
+// =============================================================================
 // DELETE EXAM
 // =============================================================================
 

@@ -39,6 +39,18 @@ const ETAT_CONDUCTEUR_OPTIONS = [
   { value: 'PERTE_VUE', label: 'Perdu de vue' },
 ] as const;
 
+const CORPOREL_DOMMAGE_OPTIONS = [
+  { value: 'itt 1 semaine', label: '1 semaine (ITT < 1 sem.)' },
+  { value: 'itt 2 à 3 semaines', label: '2 à 3 semaines' },
+  { value: 'itt supérieur à 3 semaines', label: 'Supérieur à 3 semaines' },
+] as const;
+
+const MATERIEL_DOMMAGE_OPTIONS = [
+  { value: 'LEGER', label: 'Léger' },
+  { value: 'MODERE', label: 'Modéré' },
+  { value: 'IMPORTANT', label: 'Important' },
+] as const;
+
 // =============================================================================
 // SCHEMA
 // =============================================================================
@@ -52,9 +64,15 @@ const driverExperienceFormSchema = z.object({
   nombre_accidents: z.coerce.number().int().min(0).nullable().optional(),
   tranche_horaire: z.string().nullable().optional(),
   corporel_dommage: z.boolean().optional(),
-  corporel_dommage_type: z.string().nullable().optional(),
+  corporel_dommage_type: z
+    .enum(['itt 1 semaine', 'itt 2 à 3 semaines', 'itt supérieur à 3 semaines'])
+    .nullable()
+    .optional(),
   materiel_dommage: z.boolean().optional(),
-  materiel_dommage_type: z.string().nullable().optional(),
+  materiel_dommage_type: z
+    .enum(['IMPORTANT', 'MODERE', 'LEGER'])
+    .nullable()
+    .optional(),
   date_dernier_accident: z.string().nullable().optional(),
 });
 
@@ -74,9 +92,17 @@ function toFormValues(data: DriverExperience): DriverExperienceFormValues {
     nombre_accidents: data.nombre_accidents ?? null,
     tranche_horaire: data.tranche_horaire ?? null,
     corporel_dommage: data.corporel_dommage ?? false,
-    corporel_dommage_type: data.corporel_dommage_type ?? null,
+    corporel_dommage_type: (data.corporel_dommage_type ?? null) as
+      | 'itt 1 semaine'
+      | 'itt 2 à 3 semaines'
+      | 'itt supérieur à 3 semaines'
+      | null,
     materiel_dommage: data.materiel_dommage ?? false,
-    materiel_dommage_type: data.materiel_dommage_type ?? null,
+    materiel_dommage_type: (data.materiel_dommage_type ?? null) as
+      | 'IMPORTANT'
+      | 'MODERE'
+      | 'LEGER'
+      | null,
     date_dernier_accident: data.date_dernier_accident ?? null,
   };
 }
@@ -111,6 +137,7 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
     },
   });
 
+  const { setValue } = form;
   const etatConducteur = form.watch('etat_conducteur');
   const hasCorporelDommage = form.watch('corporel_dommage');
   const hasMaterielDommage = form.watch('materiel_dommage');
@@ -342,7 +369,10 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                   <FormControl>
                     <Checkbox
                       checked={field.value ?? false}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) setValue('corporel_dommage_type', null);
+                      }}
                     />
                   </FormControl>
                   <FormLabel className="font-normal">
@@ -358,14 +388,24 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                 name="corporel_dommage_type"
                 render={({ field }) => (
                   <FormItem className="ml-6">
-                    <FormLabel>Préciser</FormLabel>
-                    <FormControl>
-                      <Input
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value || null)}
-                        placeholder="Nature des dommages corporels..."
-                      />
-                    </FormControl>
+                    <FormLabel>Type de dommage corporel</FormLabel>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(v) => field.onChange(v || null)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner la gravité..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CORPOREL_DOMMAGE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -380,7 +420,10 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                   <FormControl>
                     <Checkbox
                       checked={field.value ?? false}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) setValue('materiel_dommage_type', null);
+                      }}
                     />
                   </FormControl>
                   <FormLabel className="font-normal">
@@ -396,14 +439,24 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                 name="materiel_dommage_type"
                 render={({ field }) => (
                   <FormItem className="ml-6">
-                    <FormLabel>Préciser</FormLabel>
-                    <FormControl>
-                      <Input
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value || null)}
-                        placeholder="Nature des dommages matériels..."
-                      />
-                    </FormControl>
+                    <FormLabel>Type de dommage matériel</FormLabel>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(v) => field.onChange(v || null)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner la gravité..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {MATERIEL_DOMMAGE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Baby,
   CalendarIcon,
   ChevronLeft,
   ChevronRight,
@@ -12,6 +13,8 @@ import {
   Plus,
   Search,
   Trash2,
+  User,
+  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -52,6 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { KpiCard } from '@/features/dashboard/components/kpi-card';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
 import { useDeletePatient, usePatients } from '@/features/patients/api';
 import { NewPatientModal } from '@/features/patients/components/new-patient-modal';
@@ -103,6 +107,7 @@ export default function PatientsPage() {
   const queryParams = {
     search: searchQuery || undefined,
     is_adult: getIsAdultFilter(),
+    is_driver: false as const,
     sex: getSexFilter(),
     created_after: createdAfter || undefined,
     limit: ITEMS_PER_PAGE,
@@ -112,6 +117,20 @@ export default function PatientsPage() {
   const { data, isLoading, error, refetch } = usePatients({
     params: queryParams,
   });
+
+  const { data: totalPatientsData } = usePatients({
+    params: { is_driver: false, limit: 1, offset: 0 },
+  });
+  const { data: adultPatientsData } = usePatients({
+    params: { is_driver: false, is_adult: true, limit: 1, offset: 0 },
+  });
+  const { data: childPatientsData } = usePatients({
+    params: { is_driver: false, is_adult: false, limit: 1, offset: 0 },
+  });
+
+  const totalPatients = totalPatientsData?.count ?? 0;
+  const adultPatients = adultPatientsData?.count ?? 0;
+  const childPatients = childPatientsData?.count ?? 0;
 
   const deletePatientMutation = useDeletePatient({
     mutationConfig: {
@@ -236,6 +255,38 @@ export default function PatientsPage() {
         </Button>
       }
     >
+      {/* KPI Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiCard
+          title="Total patients"
+          value={totalPatients}
+          subtitle="hors conducteurs"
+          icon={Users}
+        />
+        <KpiCard
+          title="Adultes"
+          value={adultPatients}
+          subtitle={
+            totalPatients > 0
+              ? `${Math.round((adultPatients / totalPatients) * 100)}% du total`
+              : '—'
+          }
+          icon={User}
+          className="border-blue-200 dark:border-blue-900/40"
+        />
+        <KpiCard
+          title="Enfants"
+          value={childPatients}
+          subtitle={
+            totalPatients > 0
+              ? `${Math.round((childPatients / totalPatients) * 100)}% du total`
+              : '—'
+          }
+          icon={Baby}
+          className="border-purple-200 dark:border-purple-900/40"
+        />
+      </div>
+
       {/* Filters */}
       <div className="mb-6 space-y-4">
         {/* Search and Toggle Filters */}

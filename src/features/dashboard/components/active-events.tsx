@@ -1,4 +1,5 @@
-import { MapPin, Users } from 'lucide-react';
+import { ArrowRight, MapPin, Users } from 'lucide-react';
+import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -62,27 +63,36 @@ export function ActiveEvents({ events }: ActiveEventsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {events.map((event) => (
-        <Card key={event.id} className="overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold leading-snug text-foreground">
-              {event.titre}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{event.lieu}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Users className="size-3.5 shrink-0" aria-hidden="true" />
-              <span>{event.inscrits} inscrits</span>
-            </div>
-            <PresenceProgress
-              presents={event.presents}
-              inscrits={event.inscrits}
-            />
-          </CardContent>
-        </Card>
+        <Link
+          key={event.id}
+          href={`/gestion/evenements/${event.id}/inscriptions`}
+          className="group block"
+        >
+          <Card className="overflow-hidden transition-shadow group-hover:shadow-md">
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-sm font-semibold leading-snug text-foreground">
+                  {event.titre}
+                </CardTitle>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{event.lieu}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Users className="size-3.5 shrink-0" aria-hidden="true" />
+                <span>{event.inscrits} inscrits</span>
+              </div>
+              <PresenceProgress
+                presents={event.presents}
+                inscrits={event.inscrits}
+              />
+            </CardContent>
+          </Card>
+        </Link>
       ))}
     </div>
   );

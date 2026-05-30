@@ -1,7 +1,15 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bell, CreditCard, Loader2, Save, Sliders } from 'lucide-react';
+import {
+  Bell,
+  Building2,
+  CreditCard,
+  Loader2,
+  Pill,
+  Save,
+  Sliders,
+} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -28,6 +36,10 @@ import type { ReminderConfig } from '@/features/appointments/types/schemas';
 import { useBillingPreferences } from '@/features/billing/api/get-billing-preferences';
 import { useUpdateBillingPreferences } from '@/features/billing/api/update-billing-preferences';
 import type { BillingPreferences } from '@/features/billing/types/schemas';
+import { useClinicSettings } from '@/features/clinic/api/get-clinic-settings';
+import { ClinicSettingsForm } from '@/features/clinic/components/clinic-settings-form';
+import { MedicamentsAdminTable } from '@/features/medicaments-admin/components/medicaments-admin-table';
+import { useUser } from '@/lib/auth';
 
 // ─── Reminder form ────────────────────────────────────────────────────────────
 
@@ -314,10 +326,14 @@ function BillingPreferencesForm({ prefs }: { prefs: BillingPreferences }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ParametresPage() {
+  const { user } = useUser();
+  const canManageClinic = user?.role === 'ADMIN' || user?.role === 'SUPERUSER';
   const { data: reminderConfig, isLoading: loadingReminder } =
     useReminderConfig();
   const { data: billingPrefs, isLoading: loadingBilling } =
     useBillingPreferences();
+  const { data: clinicSettings, isLoading: loadingClinic } =
+    useClinicSettings();
 
   return (
     <Shell title="Paramètres">
@@ -342,6 +358,18 @@ export default function ParametresPage() {
               <CreditCard className="size-4" />
               Facturation
             </TabsTrigger>
+            {canManageClinic && (
+              <TabsTrigger value="clinique" className="gap-2">
+                <Building2 className="size-4" />
+                Clinique
+              </TabsTrigger>
+            )}
+            {canManageClinic && (
+              <TabsTrigger value="medicaments" className="gap-2">
+                <Pill className="size-4" />
+                Médicaments
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="rappels" className="mt-4">
@@ -393,6 +421,54 @@ export default function ParametresPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {canManageClinic && (
+            <TabsContent value="clinique" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Informations de la clinique
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingClinic ? (
+                    <div className="space-y-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 rounded-lg" />
+                      ))}
+                    </div>
+                  ) : clinicSettings ? (
+                    <ClinicSettingsForm settings={clinicSettings} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Impossible de charger les paramètres.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {canManageClinic && (
+            <TabsContent value="medicaments" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Référentiel médicaments
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Niveau 3 du référentiel (table locale). Les médecins voient
+                    ces entrées en autocomplétion lors de la prescription, et
+                    les résultats RxNorm matchant un DCI local sont enrichis
+                    automatiquement.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <MedicamentsAdminTable />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </Shell>

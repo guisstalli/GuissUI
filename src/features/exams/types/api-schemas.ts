@@ -24,6 +24,7 @@ export const PatientNestedApiSchema = z.object({
   sex: z.enum(['H', 'F', 'A']),
   is_adult: z.boolean(),
   has_driver: z.boolean().optional(),
+  driver_id: z.number().nullable().optional(),
   phone_number: z.string().nullable().optional(),
   created: z.string(),
 });
@@ -327,6 +328,7 @@ export const ExamenChildDetailApiSchema = z.object({
   ocular_tension: OcularTensionApiSchema.nullable().optional(),
   refraction: RefractionApiSchema.nullable().optional(),
   vision_binoculaire: VisionBinoculaireApiSchema.nullable().optional(),
+  is_completed: z.boolean(),
   created: z.string(),
   modified: z.string(),
 });

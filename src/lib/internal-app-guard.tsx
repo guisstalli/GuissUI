@@ -9,7 +9,12 @@ import { paths } from '@/config/paths';
 import { canAccessInternalApp } from '@/lib/authorization';
 
 function isPublicPath(pathname: string): boolean {
-  return pathname.startsWith('/auth') || pathname.startsWith('/unauthorized');
+  return (
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/unauthorized') ||
+    pathname.startsWith('/evenements') ||
+    pathname.startsWith('/rendez-vous')
+  );
 }
 
 interface InternalAppGuardProps {
