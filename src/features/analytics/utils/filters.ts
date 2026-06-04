@@ -32,6 +32,7 @@ export const normalizeAnalyticsFilters = (
     age_band: filters.age_band ?? 'all',
     eye_strategy: filters.eye_strategy ?? 'separate',
     exam_scope: filters.exam_scope ?? 'all',
+    driver_only: filters.driver_only,
   };
 
   if (normalized.analytics_scope !== 'patient') {
