@@ -54,7 +54,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/features/dashboard/components/kpi-card';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { useCreateDriver } from '@/features/drivers/api/create-driver';
 import { useDeleteDriver } from '@/features/drivers/api/delete-driver';
 import { useDrivers } from '@/features/drivers/api/get-drivers';

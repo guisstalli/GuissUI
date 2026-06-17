@@ -4,12 +4,8 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type {
-  ExamenAdultDetailApi,
-  ExamenAdultCreate,
-  ExamenAdultProgressive,
-  ExamenAdultComplete,
-} from '../../types';
+import type { ExamenAdultCreate, ExamenAdultProgressive, ExamenAdultComplete } from '../../types/types';
+import type { ExamenAdultDetailApi } from '../../types/api-schemas';
 import type {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,

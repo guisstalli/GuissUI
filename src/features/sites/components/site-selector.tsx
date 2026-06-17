@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { useSites } from '../api';
+import { useSites } from '../api/get-sites';
 
 import { SiteFormModal } from './site-form-modal';
 

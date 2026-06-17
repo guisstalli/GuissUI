@@ -3,13 +3,11 @@
 import { useMemo } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  useAnalyticsGlaucoma,
-  useAnalyticsOverview,
-  useAnalyticsRefraction,
-  useAnalyticsVisualAcuity,
-  useAnalyticsOcularTension,
-} from '@/features/analytics/api';
+import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
+import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
+import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
+import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
+import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
 import {
   GlaucomaScatterChart,
   OverviewDonutChart,

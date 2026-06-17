@@ -4,17 +4,15 @@ import { useMemo, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Can } from '@/components/ui/can';
-import {
-  useAnalyticsOverview,
-  useAnalyticsTimeline,
-  useAnalyticsSites,
-  useAnalyticsGlaucoma,
-  useAnalyticsVisualAcuity,
-  useAnalyticsRefraction,
-  useAnalyticsOcularTension,
-  useAnalyticsPachymetry,
-  useAnalyticsSymptoms,
-} from '@/features/analytics/api';
+import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
+import { useAnalyticsTimeline } from '@/features/analytics/api/get-analytics-timeline';
+import { useAnalyticsSites } from '@/features/analytics/api/get-analytics-sites';
+import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
+import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
+import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
+import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
+import { useAnalyticsPachymetry } from '@/features/analytics/api/get-analytics-pachymetry';
+import { useAnalyticsSymptoms } from '@/features/analytics/api/get-analytics-symptoms';
 import {
   AnalyticsFiltersBar,
   AnalyticsHeader,
@@ -38,7 +36,7 @@ import {
   DEFAULT_ANALYTICS_FILTERS,
   type AnalyticsFilters,
 } from '@/features/analytics/types';
-import { useSites } from '@/features/sites/api';
+import { useSites } from '@/features/sites/api/get-sites';
 
 const DRIVER_DEFAULT_FILTERS: AnalyticsFilters = {
   ...DEFAULT_ANALYTICS_FILTERS,

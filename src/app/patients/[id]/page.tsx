@@ -39,6 +39,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
@@ -48,21 +49,20 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 //import { PatientAnalyticsContext } from '@/features/analytics/components';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
-import {
-  usePatient,
-  usePatientExams,
-  usePatchPatient,
-} from '@/features/patients/api';
+import { usePatient } from '@/features/patients/api/get-patient';
+import { usePatientExams } from '@/features/patients/api/get-patient-exams';
+import { usePatchPatient } from '@/features/patients/api/update-patient';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { SiteSelector } from '@/features/sites/components/site-selector';
+import { optionalPhoneSchema } from '@/utils/phone';
 
 const editPatientSchema = z.object({
   last_name: z.string().min(1, 'Le nom est requis'),
   name: z.string().min(1, 'Le prénom est requis'),
   date_de_naissance: z.string().min(1, 'La date de naissance est requise'),
   sex: z.enum(['H', 'F', 'A']),
-  phone_number: z.string().nullable().optional(),
+  phone_number: optionalPhoneSchema,
 });
 type EditPatientValues = z.infer<typeof editPatientSchema>;
 
@@ -643,10 +643,12 @@ export default function PatientDetailPage() {
                   <FormItem>
                     <FormLabel>Téléphone</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        value={field.value ?? ''}
-                        placeholder="+221 XX XXX XX XX"
+                      <PhoneInput
+                        placeholder="77 000 00 00"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                     </FormControl>
                     <FormMessage />

@@ -1,7 +1,8 @@
 'use client';
 
 import dayjs from 'dayjs';
-import { Download, Eye } from 'lucide-react';
+import { Download, Eye, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -13,8 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { paths } from '@/config/paths';
 
-import { downloadFacturePdf } from '../api/download-facture-pdf';
+import { useDownloadFacturePdf } from '../api/facture-pdf';
 import type { Facture } from '../types/schemas';
 
 import { FacturePreviewDialog } from './facture-preview-dialog';
@@ -27,11 +29,12 @@ interface FacturesTableProps {
 export function FacturesTable({ factures }: FacturesTableProps) {
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const { download } = useDownloadFacturePdf();
 
   const handleDownload = async (facture: Facture) => {
     setDownloadingId(facture.id);
     try {
-      await downloadFacturePdf(facture.id, facture.numero);
+      await download(facture.id, facture.numero);
     } catch (e) {
       // Surfaced via console; the table action button stays usable.
       // A toast layer can be added by the host page if needed.
@@ -89,6 +92,15 @@ export function FacturesTable({ factures }: FacturesTableProps) {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link
+                      href={paths.billing.detail.getHref(facture.id)}
+                      aria-label={`Ouvrir facture ${facture.numero}`}
+                    >
+                      <ExternalLink className="mr-1.5 size-3.5" />
+                      Ouvrir
+                    </Link>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

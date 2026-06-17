@@ -32,9 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/features/dashboard/components/kpi-card';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { useChildExams } from '@/features/exams/api';
-import type { ExamsQueryParams } from '@/features/exams/types';
+import type { ExamsQueryParams } from '@/features/exams/types/types';
 
 const ITEMS_PER_PAGE = 10;
 

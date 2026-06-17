@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form/form';
 import { Input } from '@/components/ui/form/input';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { useNotifications } from '@/components/ui/notifications';
 
 import { useCreateUser } from '../api/create-user';
@@ -149,10 +150,12 @@ export function CreateUserDialog() {
                 <FormItem>
                   <FormLabel>Téléphone</FormLabel>
                   <FormControl>
-                    <Input
-                      type="tel"
-                      placeholder="+221 XX XXX XX XX"
-                      {...field}
+                    <PhoneInput
+                      placeholder="77 000 00 00"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
                     />
                   </FormControl>
                   <FormMessage />

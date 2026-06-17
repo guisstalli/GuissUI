@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/table';
 import { useAddPaiement } from '@/features/billing/api/add-paiement';
 import { useAnnulerFacture } from '@/features/billing/api/annuler-facture';
-import { downloadFacturePdf } from '@/features/billing/api/download-facture-pdf';
+import { useDownloadFacturePdf } from '@/features/billing/api/facture-pdf';
 import { useEmettreFacture } from '@/features/billing/api/emettre-facture';
 import { useFacture } from '@/features/billing/api/get-facture';
 import { FactureStatusBadge } from '@/features/billing/components/facture-status-badge';
@@ -74,6 +74,7 @@ export default function FactureDetailPage() {
   const [showPaiementDialog, setShowPaiementDialog] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const { addNotification } = useNotifications();
+  const { download } = useDownloadFacturePdf();
 
   useDialogCleanup([showEmettreDialog, showAnnulerDialog, showPaiementDialog]);
 
@@ -95,7 +96,7 @@ export default function FactureDetailPage() {
     if (!facture) return;
     setIsDownloading(true);
     try {
-      await downloadFacturePdf(facture.id, facture.numero);
+      await download(facture.id, facture.numero);
     } catch {
       addNotification({
         type: 'error',

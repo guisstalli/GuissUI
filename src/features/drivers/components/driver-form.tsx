@@ -11,6 +11,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
@@ -200,7 +201,13 @@ export function DriverForm({
                   <FormItem>
                     <FormLabel>Téléphone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+221 XX XXX XX XX" {...field} />
+                      <PhoneInput
+                        placeholder="77 000 00 00"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

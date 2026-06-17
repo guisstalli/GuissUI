@@ -2,47 +2,25 @@
 
 import { useMutation } from '@tanstack/react-query';
 
-import { clientEnv } from '@/config/env';
+import { api } from '@/lib/api-client';
 
-interface ConfirmPasswordResetInput {
-  token: string;
-  new_password: string;
-}
+import {
+  type ConfirmPasswordResetInput,
+  type PasswordResetResponse,
+} from '../types/schemas';
 
-interface ConfirmPasswordResetResponse {
-  detail: string;
-}
-
-const confirmPasswordReset = async (
+// Endpoint public (réinitialisation de mot de passe) : aucun token requis.
+// Le client `api` n'impose pas l'auth — l'en-tête Authorization est simplement
+// omis en l'absence de session.
+const confirmPasswordReset = (
   data: ConfirmPasswordResetInput,
-): Promise<ConfirmPasswordResetResponse> => {
-  const response = await fetch(
-    `${clientEnv.API_URL}/users/password/reset/confirm/`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    },
-  );
-
-  if (!response.ok) {
-    let message = 'Le lien de réinitialisation est invalide ou expiré.';
-    try {
-      const body = await response.json();
-      if (typeof body?.detail === 'string') message = body.detail;
-      else if (Array.isArray(body?.new_password))
-        message = body.new_password.join(' ');
-    } catch {
-      // ignore
-    }
-    throw new Error(message);
-  }
-
-  return response.json();
-};
+): Promise<PasswordResetResponse> =>
+  api.post<PasswordResetResponse>('/users/password/reset/confirm/', data, {
+    silentErrors: true,
+  });
 
 export const useConfirmPasswordReset = (options?: {
-  onSuccess?: (data: ConfirmPasswordResetResponse) => void;
+  onSuccess?: (data: PasswordResetResponse) => void;
 }) =>
   useMutation({
     mutationFn: confirmPasswordReset,

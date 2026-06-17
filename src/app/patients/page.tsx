@@ -55,9 +55,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/features/dashboard/components/kpi-card';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
-import { useDeletePatient, usePatients } from '@/features/patients/api';
+import { useDeletePatient } from '@/features/patients/api/delete-patient';
+import { usePatients } from '@/features/patients/api/get-patients';
 import { NewPatientModal } from '@/features/patients/components/new-patient-modal';
 import type { Sex } from '@/features/patients/types';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
@@ -136,7 +137,6 @@ export default function PatientsPage() {
     mutationConfig: {
       onSuccess: () => {
         setPatientToDelete(null);
-        refetch();
       },
     },
   });
@@ -187,7 +187,7 @@ export default function PatientsPage() {
   };
 
   const handlePatientCreated = () => {
-    refetch();
+    // L'invalidation du cache est gérée par useCreatePatient.onSuccess
   };
 
   const handlePreviousPage = () => {

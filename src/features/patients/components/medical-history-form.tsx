@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/form';
 import { ICDSelector } from '@/components/ui/icd-selector/icd-selector';
 import { Switch } from '@/components/ui/switch';
-import { useAntecedent, useUpdateAntecedent } from '@/features/patients/api';
+import { useAntecedent, useUpdateAntecedent } from '@/features/patients/api/antecedent';
 import {
   FAMILIAL_LABELS,
   TYPE_ADDICTION_LABELS,

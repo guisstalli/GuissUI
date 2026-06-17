@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { optionalPhoneSchema } from '@/utils/phone';
+
 export const EventStatutSchema = z.enum([
   'planifie',
   'en_cours',
@@ -36,11 +38,7 @@ export type EventStaff = z.infer<typeof EventStaffSchema>;
 export const InscriptionPubliqueInputSchema = z.object({
   nom: z.string().min(1, 'Nom requis'),
   prenom: z.string().min(1, 'Prénom requis'),
-  phone_number: z
-    .string()
-    .min(9, 'Numéro invalide')
-    .optional()
-    .or(z.literal('')),
+  phone_number: optionalPhoneSchema,
   date_de_naissance: z.string().optional().nullable(),
   sex: z.enum(['H', 'F', 'A']).optional().nullable(),
 });

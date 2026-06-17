@@ -1,17 +1,15 @@
 'use client';
 
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  useAnalyticsGlaucoma,
-  useAnalyticsOcularTension,
-  useAnalyticsOverview,
-  useAnalyticsPachymetry,
-  useAnalyticsRefraction,
-  useAnalyticsSites,
-  useAnalyticsSymptoms,
-  useAnalyticsTimeline,
-  useAnalyticsVisualAcuity,
-} from '@/features/analytics/api';
+import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
+import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
+import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
+import { useAnalyticsPachymetry } from '@/features/analytics/api/get-analytics-pachymetry';
+import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
+import { useAnalyticsSites } from '@/features/analytics/api/get-analytics-sites';
+import { useAnalyticsSymptoms } from '@/features/analytics/api/get-analytics-symptoms';
+import { useAnalyticsTimeline } from '@/features/analytics/api/get-analytics-timeline';
+import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
 import {
   GlaucomaScatterChart,
   OcularTensionBarChart,

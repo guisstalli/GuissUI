@@ -13,7 +13,9 @@ export const UserProfileSchema = z.object({
 export const UserSchema = z.object({
   id: z.number(),
   email: z.string().email(),
-  phone_number: z.string(),
+  // Lecture seule (réponse serveur) : optionnel, jamais validé en E.164 ici
+  // pour ne pas rejeter d'éventuelles données héritées.
+  phone_number: z.string().nullable().optional(),
   role: z.enum(['ADMIN', 'STAFF', 'DOCTEUR', 'TECHNICIEN']),
   is_active: z.boolean(),
   is_verified: z.boolean(),

@@ -24,11 +24,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useDeletedPatients } from '@/features/patients/api/get-patients';
 import {
-  useDeletedPatients,
   useHardDeletePatient,
   useRestorePatient,
-} from '@/features/patients/api';
+} from '@/features/patients/api/delete-patient';
 import type { PatientList } from '@/features/patients/types';
 
 export default function CorbeillePatientPage() {

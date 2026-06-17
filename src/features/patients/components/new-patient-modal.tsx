@@ -24,15 +24,17 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
-import { useCreatePatient } from '@/features/patients/api';
+import { useCreatePatient } from '@/features/patients/api/create-patient';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';
+import { optionalPhoneSchema } from '@/utils/phone';
 
 export type PatientType = 'adult' | 'child' | null;
 
@@ -44,7 +46,7 @@ const patientFormSchema = z.object({
   sex: z.enum(['H', 'F', 'A'], {
     required_error: 'Le sexe est requis',
   }),
-  phone_number: z.string().optional(),
+  phone_number: optionalPhoneSchema,
 });
 
 export type PatientFormValues = z.infer<typeof patientFormSchema>;
@@ -402,10 +404,12 @@ export function NewPatientModal({
                       <FormItem>
                         <FormLabel>Numéro de téléphone</FormLabel>
                         <FormControl>
-                          <Input
-                            type="tel"
-                            placeholder="+221 77 000 00 00"
-                            {...field}
+                          <PhoneInput
+                            placeholder="77 000 00 00"
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
                           />
                         </FormControl>
                         <FormMessage />

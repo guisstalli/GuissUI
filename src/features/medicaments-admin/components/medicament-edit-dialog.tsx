@@ -29,8 +29,8 @@ import {
   Switch,
   Textarea,
 } from '@/components/ui/form';
+import { MedicamentSelector } from '@/components/medicament-selector/medicament-selector';
 import { useNotifications } from '@/components/ui/notifications';
-import { MedicamentSelector } from '@/features/exams/components/medicament-selector';
 
 import {
   useCreateMedicament,

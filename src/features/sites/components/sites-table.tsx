@@ -28,7 +28,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { useDeleteSite, useSites } from '../api';
+import { useDeleteSite } from '../api/delete-site';
+import { useSites } from '../api/get-sites';
 import { Site } from '../types';
 
 import { SiteFormModal } from './site-form-modal';

@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/form';
 import { slugify } from '@/lib/slugify';
 
-import { useCreateSite, useUpdateSite } from '../api';
+import { useCreateSite } from '../api/create-site';
+import { useUpdateSite } from '../api/update-site';
 import { Site, SiteSchema } from '../types';
 
 interface SiteFormModalProps {

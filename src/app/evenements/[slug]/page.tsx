@@ -24,6 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -271,10 +272,16 @@ function RegistrationForm({
                 Téléphone
               </FormLabel>
               <FormControl>
-                <Input
-                  placeholder="+221 77 000 00 00"
-                  {...field}
-                  className="border-white/[0.10] bg-white/[0.05] text-slate-100 placeholder:text-slate-600 focus:border-cyan-400/40"
+                <PhoneInput
+                  placeholder="77 000 00 00"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  numberInputProps={{
+                    className:
+                      'flex h-9 w-full rounded-md border border-white/[0.10] bg-white/[0.05] px-3 py-1 text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400/40 focus-visible:outline-none',
+                  }}
                 />
               </FormControl>
               <FormMessage className="text-xs text-red-400" />

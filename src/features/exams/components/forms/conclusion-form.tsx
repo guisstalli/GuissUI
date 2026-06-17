@@ -16,7 +16,7 @@ import {
   Textarea,
 } from '@/components/ui/form';
 import { ICDSelector } from '@/components/ui/icd-selector';
-import { VISION_APTITUDE } from '@/features/exams/types';
+import { VISION_APTITUDE } from '@/features/exams/types/schemas';
 
 interface ConclusionFormProps {
   namePrefix?: string;

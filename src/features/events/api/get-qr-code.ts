@@ -1,3 +1,4 @@
+// fetch() direct requis : réponse binaire (Blob) non supportée par le client api centralisé
 import { useQuery } from '@tanstack/react-query';
 import { getSession } from 'next-auth/react';
 

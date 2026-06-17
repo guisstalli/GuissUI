@@ -317,8 +317,8 @@ export default function EvenementsPage() {
 
           {/* subtitle */}
           <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-400">
-            Consultations ophtalmologiques organisées par l&apos;Université Iba
-            Der Thiam. Prenez soin de votre vue — sans frais, sans rendez-vous
+            Consultations ophtalmologiques organisées par le centre vision Madoune Robert Ndiaye - UFR Santé Université Iba
+            Der Thiam de Thies. Prenez soin de votre vue — sans frais, sans rendez-vous
             obligatoire.
           </p>
 
