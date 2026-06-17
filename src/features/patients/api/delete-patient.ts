@@ -4,7 +4,7 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type { Patient } from '../types';
+import type { Patient } from '../types/types';
 
 import {
   getPatientsQueryOptions,

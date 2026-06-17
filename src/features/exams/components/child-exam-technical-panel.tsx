@@ -3,11 +3,9 @@
 import { Check, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  OcularTensionForm,
-  RefractionForm,
-  VisualAcuityForm,
-} from '@/features/exams/components/forms';
+import { OcularTensionForm } from '@/features/exams/components/forms/ocular-tension-form';
+import { RefractionForm } from '@/features/exams/components/forms/refraction-form';
+import { VisualAcuityForm } from '@/features/exams/components/forms/visual-acuity-form';
 import { cn } from '@/lib/utils';
 
 type TechnicalSubsection = 'acuity' | 'refraction' | 'tension';

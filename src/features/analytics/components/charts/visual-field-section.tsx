@@ -10,7 +10,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsVisualField } from '../../types';
+import type { AnalyticsVisualField } from '../../types/types';
 
 type VisualFieldSectionProps = {
   data: AnalyticsVisualField;

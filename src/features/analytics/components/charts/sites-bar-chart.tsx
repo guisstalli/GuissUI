@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, type TableColumn } from '@/components/ui/table';
 
-import type { AnalyticsSites } from '../../types';
+import type { AnalyticsSites } from '../../types/types';
 
 type SitesBarChartProps = {
   data: AnalyticsSites['sites'];

@@ -11,7 +11,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsVisualAcuity } from '../../types';
+import type { AnalyticsVisualAcuity } from '../../types/types';
 
 type VisualAcuityBarChartProps = {
   data: AnalyticsVisualAcuity;

@@ -2,7 +2,7 @@
 
 import { Car } from 'lucide-react';
 
-import { DriverExperienceForm } from '@/features/exams/components/forms';
+import { DriverExperienceForm } from '@/features/exams/components/forms/driver-experience-form';
 
 interface AdultExamExperiencePanelProps {
   numericExamId: number;

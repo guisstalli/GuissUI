@@ -2,7 +2,7 @@ import { Layers } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsPachymetry } from '../../types';
+import type { AnalyticsPachymetry } from '../../types/types';
 
 type PachymetryKpiProps = {
   data: AnalyticsPachymetry;

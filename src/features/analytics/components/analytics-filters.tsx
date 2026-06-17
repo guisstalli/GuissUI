@@ -30,12 +30,12 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 import {
-  type AnalyticsFilters,
   SEX_VALUES,
   AGE_BAND_VALUES,
   EYE_STRATEGY_VALUES,
   EXAM_SCOPE_VALUES,
-} from '../types';
+} from '../types/schemas';
+import { type AnalyticsFilters } from '../types/types';
 
 type Option = { label: string; value: string };
 

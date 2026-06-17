@@ -4,17 +4,12 @@ import { Check, Eye, Loader2, Save } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  OcularTensionForm,
-  PachymetryForm,
-  RefractionForm,
-  VisualAcuityForm,
-} from '@/features/exams/components/forms';
+import { OcularTensionForm } from '@/features/exams/components/forms/ocular-tension-form';
+import { PachymetryForm } from '@/features/exams/components/forms/pachymetry-form';
+import { RefractionForm } from '@/features/exams/components/forms/refraction-form';
+import { VisualAcuityForm } from '@/features/exams/components/forms/visual-acuity-form';
 
-import type {
-  SectionStatus,
-  TechnicalSubsection,
-} from './adult-exam-types';
+import type { SectionStatus, TechnicalSubsection } from './adult-exam-types';
 
 interface AdultExamTechnicalPanelProps {
   technicalSubsection: TechnicalSubsection;

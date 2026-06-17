@@ -4,50 +4,48 @@ import { useMemo, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Can } from '@/components/ui/can';
-import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
-import { useAnalyticsTimeline } from '@/features/analytics/api/get-analytics-timeline';
-import { useAnalyticsSites } from '@/features/analytics/api/get-analytics-sites';
-import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
-import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
-import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
-import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
-import { useAnalyticsPachymetry } from '@/features/analytics/api/get-analytics-pachymetry';
-import { useAnalyticsSymptoms } from '@/features/analytics/api/get-analytics-symptoms';
-import { useAnalyticsRiskFactors } from '@/features/analytics/api/get-analytics-risk-factors';
-import { useAnalyticsSymptomsFull } from '@/features/analytics/api/get-analytics-symptoms-full';
 import { useAnalyticsBiomicroscopy } from '@/features/analytics/api/get-analytics-biomicroscopy';
-import { useAnalyticsPediatric } from '@/features/analytics/api/get-analytics-pediatric';
-import { useAnalyticsVisualField } from '@/features/analytics/api/get-analytics-visual-field';
 import { useAnalyticsDriverExperience } from '@/features/analytics/api/get-analytics-driver-experience';
+import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
+import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
+import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
+import { useAnalyticsPachymetry } from '@/features/analytics/api/get-analytics-pachymetry';
+import { useAnalyticsPediatric } from '@/features/analytics/api/get-analytics-pediatric';
+import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
+import { useAnalyticsRiskFactors } from '@/features/analytics/api/get-analytics-risk-factors';
+import { useAnalyticsSites } from '@/features/analytics/api/get-analytics-sites';
+import { useAnalyticsSymptoms } from '@/features/analytics/api/get-analytics-symptoms';
+import { useAnalyticsSymptomsFull } from '@/features/analytics/api/get-analytics-symptoms-full';
+import { useAnalyticsTimeline } from '@/features/analytics/api/get-analytics-timeline';
+import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
+import { useAnalyticsVisualField } from '@/features/analytics/api/get-analytics-visual-field';
+import { AnalyticsFiltersBar } from '@/features/analytics/components/analytics-filters';
+import { AnalyticsHeader } from '@/features/analytics/components/analytics-header';
+import { AnalyticsKpiRow } from '@/features/analytics/components/analytics-kpi-row';
 import {
-  AnalyticsFiltersBar,
-  AnalyticsHeader,
-  AnalyticsKpiRow,
   AnalyticsEmptyState,
   AnalyticsErrorState,
   AnalyticsLoadingState,
-} from '@/features/analytics/components';
-import {
-  OverviewDonutChart,
-  TimelineChart,
-  SitesBarChart,
-  GlaucomaScatterChart,
-  VisualAcuityBarChart,
-  RefractionDonutChart,
-  OcularTensionBarChart,
-  PachymetryKpiCard,
-  SymptomsGroupedBar,
-  RiskFactorsSection,
-  SymptomsFullChart,
-  BiomicroscopySection,
-  PediatricSection,
-  VisualFieldSection,
-  DriverExperienceSection,
-} from '@/features/analytics/components/charts';
+} from '@/features/analytics/components/analytics-states';
+import { BiomicroscopySection } from '@/features/analytics/components/charts/biomicroscopy-section';
+import { DriverExperienceSection } from '@/features/analytics/components/charts/driver-experience-section';
+import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
+import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
+import { OverviewDonutChart } from '@/features/analytics/components/charts/overview-donut-chart';
+import { PachymetryKpiCard } from '@/features/analytics/components/charts/pachymetry-kpi-card';
+import { PediatricSection } from '@/features/analytics/components/charts/pediatric-section';
+import { RefractionDonutChart } from '@/features/analytics/components/charts/refraction-donut-chart';
+import { RiskFactorsSection } from '@/features/analytics/components/charts/risk-factors-section';
+import { SitesBarChart } from '@/features/analytics/components/charts/sites-bar-chart';
+import { SymptomsFullChart } from '@/features/analytics/components/charts/symptoms-full-chart';
+import { SymptomsGroupedBar } from '@/features/analytics/components/charts/symptoms-grouped-bar';
+import { TimelineChart } from '@/features/analytics/components/charts/timeline-chart';
+import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
+import { VisualFieldSection } from '@/features/analytics/components/charts/visual-field-section';
 import {
   DEFAULT_ANALYTICS_FILTERS,
   type AnalyticsFilters,
-} from '@/features/analytics/types';
+} from '@/features/analytics/types/types';
 import { useSites } from '@/features/sites/api/get-sites';
 
 export default function AnalyticsPage() {

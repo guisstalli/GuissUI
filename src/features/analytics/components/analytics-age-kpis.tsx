@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
-import type { AnalyticsOverview } from '../types';
+import type { AnalyticsOverview } from '../types/types';
 
 const formatInteger = (value: number) =>
   new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value);

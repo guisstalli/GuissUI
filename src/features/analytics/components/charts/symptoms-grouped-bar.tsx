@@ -10,7 +10,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsSymptoms } from '../../types';
+import type { AnalyticsSymptoms } from '../../types/types';
 
 type SymptomsGroupedBarProps = {
   data: AnalyticsSymptoms;

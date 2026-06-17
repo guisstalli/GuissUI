@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import { rtlRender, screen } from '@/testing/test-utils';
 
+import type { AnalyticsSites } from '../../types/types';
 import { SitesBarChart } from '../charts/sites-bar-chart';
-import type { AnalyticsSites } from '../../types';
 
 const mockSitesData: AnalyticsSites['sites'] = [
   {

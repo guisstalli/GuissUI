@@ -10,7 +10,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsOcularTension } from '../../types';
+import type { AnalyticsOcularTension } from '../../types/types';
 
 type OcularTensionBarChartProps = {
   data: AnalyticsOcularTension;

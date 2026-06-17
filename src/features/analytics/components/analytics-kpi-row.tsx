@@ -2,7 +2,7 @@ import { Activity, Users, FileText, Clock } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsOverview } from '../types';
+import type { AnalyticsOverview } from '../types/types';
 
 type AnalyticsKpiRowProps = {
   data: AnalyticsOverview['population'];

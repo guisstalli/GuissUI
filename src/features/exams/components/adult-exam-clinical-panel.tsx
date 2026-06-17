@@ -18,13 +18,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input, Label, Textarea } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  BiomicroscopyAnteriorForm,
-  BiomicroscopyPosteriorForm,
-  ExamensAdditionelsSection,
-  PerimetryForm,
-  PlaintesForm,
-} from '@/features/exams/components/forms';
+import { BiomicroscopyAnteriorForm } from '@/features/exams/components/forms/biomicroscopy-anterior-form';
+import { BiomicroscopyPosteriorForm } from '@/features/exams/components/forms/biomicroscopy-posterior-form';
+import { ExamensAdditionelsSection } from '@/features/exams/components/forms/examens-additionnels-section';
+import { PerimetryForm } from '@/features/exams/components/forms/perimetry-form';
+import { PlaintesForm } from '@/features/exams/components/forms/plaintes-form';
 
 import type {
   AdultExamAttachment,
@@ -157,7 +155,9 @@ export function AdultExamClinicalPanel({
               <Tabs defaultValue="anterior">
                 <TabsList>
                   <TabsTrigger value="anterior">Segment Antérieur</TabsTrigger>
-                  <TabsTrigger value="posterior">Segment Postérieur</TabsTrigger>
+                  <TabsTrigger value="posterior">
+                    Segment Postérieur
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="anterior" className="pt-4">
                   <BiomicroscopyAnteriorForm
@@ -178,7 +178,9 @@ export function AdultExamClinicalPanel({
               <Tabs defaultValue="anterior">
                 <TabsList>
                   <TabsTrigger value="anterior">Segment Antérieur</TabsTrigger>
-                  <TabsTrigger value="posterior">Segment Postérieur</TabsTrigger>
+                  <TabsTrigger value="posterior">
+                    Segment Postérieur
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="anterior" className="pt-4">
                   <BiomicroscopyAnteriorForm
@@ -337,7 +339,9 @@ export function AdultExamClinicalPanel({
             {clinicalExamId && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Fichiers existants</CardTitle>
+                  <CardTitle className="text-base">
+                    Fichiers existants
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {isLoadingAttachments ? (

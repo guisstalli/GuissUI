@@ -2,7 +2,10 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { PaginatedPatientsResponse, PatientsQueryParams } from '../types';
+import type {
+  PaginatedPatientsResponse,
+  PatientsQueryParams,
+} from '../types/types';
 
 /**
  * Récupère la liste paginée des patients

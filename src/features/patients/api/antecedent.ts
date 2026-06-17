@@ -9,7 +9,7 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type { Antecedent, AntecedentCreate } from '../types';
+import type { Antecedent, AntecedentCreate } from '../types/types';
 
 /**
  * Récupère les antécédents d'un patient

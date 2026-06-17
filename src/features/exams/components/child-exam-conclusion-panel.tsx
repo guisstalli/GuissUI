@@ -3,7 +3,7 @@
 import { Check, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { ConclusionForm } from '@/features/exams/components/forms';
+import { ConclusionForm } from '@/features/exams/components/forms/conclusion-form';
 
 interface ChildExamConclusionPanelProps {
   examId: string;

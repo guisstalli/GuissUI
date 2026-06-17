@@ -15,26 +15,28 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { AppSidebar } from '@/components/layouts/sidebar';
 import { Header } from '@/components/layouts/header';
+import { AppSidebar } from '@/components/layouts/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
-  useAdultExam,
+  useDownloadAdultReport,
+  useDownloadAdultConclusion,
+} from '@/features/exams/api/adult/download-report';
+import { useAdultExam } from '@/features/exams/api/adult/get-adult-exams';
+import {
   useAddTechnicalData,
   useAddClinicalData,
   useCompleteAdultExam,
   useUncompleteAdultExam,
+} from '@/features/exams/api/adult/mutations';
+import {
   useAttachments,
   useUploadAttachment,
   useDeleteAttachment,
   downloadAttachment,
-} from '@/features/exams/api';
-import {
-  useDownloadAdultReport,
-  useDownloadAdultConclusion,
-} from '@/features/exams/api/adult/download-report';
+} from '@/features/exams/api/attachments';
 import {
   findOrdonnance,
   useDownloadOrdonnance,
@@ -58,7 +60,10 @@ import {
   type TechnicalSubsection,
 } from '@/features/exams/components/adult-exam-types';
 import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
-import { defaultBiomicroscopyAnterior, defaultBiomicroscopyPosterior } from '@/features/exams/types/schemas';
+import {
+  defaultBiomicroscopyAnterior,
+  defaultBiomicroscopyPosterior,
+} from '@/features/exams/types/schemas';
 import {
   mapVisualAcuityApiToForm,
   mapRefractionApiToForm,
@@ -69,9 +74,11 @@ import {
   mapBiomicroscopyPosteriorApiToForm,
   mapPerimetryApiToForm,
   mapConclusionApiToForm,
+} from '@/features/exams/utils/api-to-form-mappers';
+import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
-} from '@/features/exams/utils';
+} from '@/features/exams/utils/form-to-api-mappers';
 import { useUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 

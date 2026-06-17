@@ -1,11 +1,10 @@
 import { HttpResponse, http } from 'msw';
 
 import { env } from '@/config/env';
-
 import type {
   AnalyticsOverview,
   AnalyticsSites,
-} from '@/features/analytics/types';
+} from '@/features/analytics/types/types';
 
 export const mockAnalyticsOverview: AnalyticsOverview = {
   filters: {

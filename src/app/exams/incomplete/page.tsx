@@ -15,10 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  useIncompleteAdultExams,
-  useIncompleteChildExams,
-} from '@/features/exams/api';
+import { useIncompleteAdultExams } from '@/features/exams/api/adult/get-adult-exams';
+import { useIncompleteChildExams } from '@/features/exams/api/child/get-child-exams';
 
 export default function IncompleteExamsPage() {
   const {

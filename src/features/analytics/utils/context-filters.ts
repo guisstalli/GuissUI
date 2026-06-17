@@ -1,4 +1,4 @@
-import type { AnalyticsFilters, ExamType } from '../types';
+import type { AnalyticsFilters, ExamType } from '../types/types';
 
 type CommonAnalyticsFilterOverrides = Partial<
   Pick<

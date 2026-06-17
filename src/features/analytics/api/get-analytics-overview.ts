@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { AnalyticsFilters, AnalyticsOverview } from '../types';
+import type { AnalyticsFilters, AnalyticsOverview } from '../types/types';
 import { normalizeAnalyticsFilters } from '../utils/filters';
 
 const buildOverviewUrl = (filters: AnalyticsFilters) => {

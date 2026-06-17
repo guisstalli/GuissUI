@@ -5,7 +5,7 @@ import type {
   Patient,
   PatientList,
   PaginatedPatientsResponse,
-} from '@/features/patients/types';
+} from '@/features/patients/types/types';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -120,32 +120,35 @@ export const patientsHandlers = [
   }),
 
   // POST /depistage/patients/create/
-  http.post(`${env.API_URL}/depistage/patients/create/`, async ({ request }) => {
-    const body = (await request.json()) as {
-      last_name: string;
-      name: string;
-      date_de_naissance: string;
-      sex: string;
-      phone_number?: string | null;
-    };
+  http.post(
+    `${env.API_URL}/depistage/patients/create/`,
+    async ({ request }) => {
+      const body = (await request.json()) as {
+        last_name: string;
+        name: string;
+        date_de_naissance: string;
+        sex: string;
+        phone_number?: string | null;
+      };
 
-    const created: Patient = {
-      id: 99,
-      numero_identifiant: 'PAT-2026-099',
-      last_name: body.last_name,
-      name: body.name,
-      full_name: `${body.name} ${body.last_name}`,
-      date_de_naissance: body.date_de_naissance,
-      age: 25,
-      sex: body.sex as 'H' | 'F' | 'A',
-      is_adult: true,
-      has_driver: false,
-      phone_number: body.phone_number ?? null,
-      created: new Date().toISOString(),
-      modified: new Date().toISOString(),
-    };
-    return HttpResponse.json(created, { status: 201 });
-  }),
+      const created: Patient = {
+        id: 99,
+        numero_identifiant: 'PAT-2026-099',
+        last_name: body.last_name,
+        name: body.name,
+        full_name: `${body.name} ${body.last_name}`,
+        date_de_naissance: body.date_de_naissance,
+        age: 25,
+        sex: body.sex as 'H' | 'F' | 'A',
+        is_adult: true,
+        has_driver: false,
+        phone_number: body.phone_number ?? null,
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+      };
+      return HttpResponse.json(created, { status: 201 });
+    },
+  ),
 
   // DELETE /depistage/patients/:id/delete/ (soft-delete)
   http.delete(`${env.API_URL}/depistage/patients/:id/delete/`, ({ params }) => {

@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { AnalyticsFilters, AnalyticsTimeline } from '../types';
+import type { AnalyticsFilters, AnalyticsTimeline } from '../types/types';
 import { normalizeAnalyticsFilters } from '../utils/filters';
 
 const buildTimelineUrl = (filters: AnalyticsFilters) => {

@@ -2,7 +2,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsPediatric } from '../../types';
+import type { AnalyticsPediatric } from '../../types/types';
 
 const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#8b5cf6'];
 

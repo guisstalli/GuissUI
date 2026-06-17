@@ -3,12 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
-import { server } from '@/testing/mocks/server';
 import {
   analyticsHandlers,
   mockAnalyticsOverview,
   mockAnalyticsSites,
 } from '@/testing/mocks/handlers/analytics';
+import { server } from '@/testing/mocks/server';
 
 // Prevent next-auth from firing async fetch calls that cause errors in jsdom
 vi.mock('next-auth/react', async () => {
@@ -21,9 +21,9 @@ vi.mock('next-auth/react', async () => {
   };
 });
 
+import { DEFAULT_ANALYTICS_FILTERS } from '../../types/types';
 import { useAnalyticsOverview } from '../get-analytics-overview';
 import { useAnalyticsSites } from '../get-analytics-sites';
-import { DEFAULT_ANALYTICS_FILTERS } from '../../types';
 
 function createWrapper() {
   const queryClient = new QueryClient({

@@ -8,14 +8,12 @@ import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytic
 import { useAnalyticsPachymetry } from '@/features/analytics/api/get-analytics-pachymetry';
 import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
 import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
-import {
-  GlaucomaScatterChart,
-  OcularTensionBarChart,
-  PachymetryKpiCard,
-  RefractionDonutChart,
-  VisualAcuityBarChart,
-} from '@/features/analytics/components/charts';
-import { buildExamAnalyticsFilters } from '@/features/analytics/utils';
+import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
+import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
+import { PachymetryKpiCard } from '@/features/analytics/components/charts/pachymetry-kpi-card';
+import { RefractionDonutChart } from '@/features/analytics/components/charts/refraction-donut-chart';
+import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
+import { buildExamAnalyticsFilters } from '@/features/analytics/utils/context-filters';
 
 import { AnalyticsCollapsibleContext } from './analytics-collapsible-context';
 import {

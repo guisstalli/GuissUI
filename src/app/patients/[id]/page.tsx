@@ -47,8 +47,9 @@ import {
 } from '@/components/ui/form';
 import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-//import { PatientAnalyticsContext } from '@/features/analytics/components';
-import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
+//import { PatientAnalyticsContext } from '@/features/analytics/components/patient-analytics-context';
+import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
+import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { usePatient } from '@/features/patients/api/get-patient';
 import { usePatientExams } from '@/features/patients/api/get-patient-exams';
 import { usePatchPatient } from '@/features/patients/api/update-patient';

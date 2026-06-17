@@ -10,7 +10,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsRiskFactors } from '../../types';
+import type { AnalyticsRiskFactors } from '../../types/types';
 
 type RiskFactorsSectionProps = {
   data: AnalyticsRiskFactors;

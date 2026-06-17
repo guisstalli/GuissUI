@@ -9,7 +9,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsRefraction } from '../../types';
+import type { AnalyticsRefraction } from '../../types/types';
 
 type RefractionDonutChartProps = {
   data: AnalyticsRefraction;

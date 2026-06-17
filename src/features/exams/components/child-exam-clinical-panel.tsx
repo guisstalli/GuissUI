@@ -4,10 +4,8 @@ import { Check, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import {
-  ClinicalCheckChildForm,
-  VisionBinoculaireForm,
-} from '@/features/exams/components/forms';
+import { ClinicalCheckChildForm } from '@/features/exams/components/forms/clinical-check-child-form';
+import { VisionBinoculaireForm } from '@/features/exams/components/forms/vision-binoculaire-form';
 import { cn } from '@/lib/utils';
 
 type ClinicalSubsection = 'visionBinoculaire' | 'clinicalCheck';

@@ -5,13 +5,11 @@ import { Check, Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input, Label } from '@/components/ui/form';
-import {
-  BiomicroscopyAnteriorForm,
-  BiomicroscopyPosteriorForm,
-  ExamensAdditionelsSection,
-  PerimetryForm,
-  PlaintesForm,
-} from '@/features/exams/components/forms';
+import { BiomicroscopyAnteriorForm } from '@/features/exams/components/forms/biomicroscopy-anterior-form';
+import { BiomicroscopyPosteriorForm } from '@/features/exams/components/forms/biomicroscopy-posterior-form';
+import { ExamensAdditionelsSection } from '@/features/exams/components/forms/examens-additionnels-section';
+import { PerimetryForm } from '@/features/exams/components/forms/perimetry-form';
+import { PlaintesForm } from '@/features/exams/components/forms/plaintes-form';
 import { cn } from '@/lib/utils';
 
 type ComplementarySubsection =
@@ -208,9 +206,7 @@ export function ChildExamComplementaryPanel({
                         size="sm"
                         type="button"
                         onClick={() =>
-                          document
-                            .getElementById('file-upload-child')
-                            ?.click()
+                          document.getElementById('file-upload-child')?.click()
                         }
                       >
                         <Upload className="mr-1.5 size-3.5" /> Sélectionner

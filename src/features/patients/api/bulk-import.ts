@@ -4,7 +4,11 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type { BulkPatientImport, TaskResponse, TaskStatus } from '../types';
+import type {
+  BulkPatientImport,
+  TaskResponse,
+  TaskStatus,
+} from '../types/types';
 
 /**
  * Import bulk de patients (tâche asynchrone Celery)

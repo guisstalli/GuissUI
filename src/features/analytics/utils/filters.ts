@@ -1,4 +1,4 @@
-import type { AnalyticsFilters } from '../types';
+import type { AnalyticsFilters } from '../types/types';
 
 export type AnalyticsFilterValidation = {
   isValid: boolean;

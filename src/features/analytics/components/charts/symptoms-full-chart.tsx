@@ -10,7 +10,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsSymptomsFull } from '../../types';
+import type { AnalyticsSymptomsFull } from '../../types/types';
 
 const SYMPTOM_LABELS: Record<string, string> = {
   BAV: 'BAV',

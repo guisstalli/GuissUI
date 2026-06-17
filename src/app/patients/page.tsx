@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import {
   TableBody,
   TableCell,
@@ -55,13 +56,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
-import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
+import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
+import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { useDeletePatient } from '@/features/patients/api/delete-patient';
 import { usePatients } from '@/features/patients/api/get-patients';
 import { NewPatientModal } from '@/features/patients/components/new-patient-modal';
-import type { Sex } from '@/features/patients/types';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
+import type { Sex } from '@/features/patients/types/types';
 import { SiteSelector } from '@/features/sites/components/site-selector';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 

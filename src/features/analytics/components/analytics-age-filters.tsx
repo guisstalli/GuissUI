@@ -25,9 +25,9 @@ import {
   ANALYTICS_SCOPE_VALUES,
   EXAM_TYPE_VALUES,
   SEX_VALUES,
-} from '../types';
-import type { AnalyticsFilters } from '../types';
-import type { AnalyticsFilterValidation } from '../utils';
+} from '../types/schemas';
+import type { AnalyticsFilters } from '../types/types';
+import type { AnalyticsFilterValidation } from '../utils/filters';
 
 const AGE_LABELS: Record<string, string> = {
   all: 'Tous',

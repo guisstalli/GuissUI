@@ -14,8 +14,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import { AppSidebar } from '@/components/layouts/sidebar';
 import { Header } from '@/components/layouts/header';
+import { AppSidebar } from '@/components/layouts/sidebar';
 import { Button } from '@/components/ui/button';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
@@ -23,18 +23,18 @@ import {
   useUploadAttachment,
   useDeleteAttachment,
   downloadAttachment,
-} from '@/features/exams/api';
-import {
-  useChildExam,
-  useUpdateTechnicalData,
-  useUpdateClinicalData,
-  useCompleteChildExam,
-  useUncompleteChildExam,
-} from '@/features/exams/api/child';
+} from '@/features/exams/api/attachments';
 import {
   useDownloadChildReport,
   useDownloadChildConclusion,
 } from '@/features/exams/api/child/download-report';
+import { useChildExam } from '@/features/exams/api/child/get-child-exams';
+import {
+  useUpdateTechnicalData,
+  useUpdateClinicalData,
+  useCompleteChildExam,
+  useUncompleteChildExam,
+} from '@/features/exams/api/child/mutations';
 import {
   findOrdonnance,
   useDownloadOrdonnance,
@@ -50,27 +50,42 @@ import { ChildExamDialogs } from '@/features/exams/components/child-exam-dialogs
 import { ChildExamSidebar } from '@/features/exams/components/child-exam-sidebar';
 import { ChildExamTechnicalPanel } from '@/features/exams/components/child-exam-technical-panel';
 import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
-import { BiomicroscopyAnteriorSchema, BiomicroscopyPosteriorSchema, ClinicalCheckChildSchema, ConclusionSchema, defaultBiomicroscopyAnterior, defaultBiomicroscopyPosterior, OcularTensionSchema, PerimetrySchema, PlaintesSchema, RefractionSchema, VisionBinoculaireSchema, VisualAcuitySchema } from '@/features/exams/types/schemas';
+import {
+  BiomicroscopyAnteriorSchema,
+  BiomicroscopyPosteriorSchema,
+  ClinicalCheckChildSchema,
+  ConclusionSchema,
+  defaultBiomicroscopyAnterior,
+  defaultBiomicroscopyPosterior,
+  OcularTensionSchema,
+  PerimetrySchema,
+  PlaintesSchema,
+  RefractionSchema,
+  VisionBinoculaireSchema,
+  VisualAcuitySchema,
+} from '@/features/exams/types/schemas';
 import {
   mapBiomicroscopyAnteriorApiToForm,
-  mapBiomicroscopyAnteriorFormToApi,
   mapBiomicroscopyPosteriorApiToForm,
-  mapBiomicroscopyPosteriorFormToApi,
   mapClinicalCheckChildApiToForm,
   mapConclusionApiToForm,
-  mapConclusionFormToApi,
   mapOcularTensionApiToForm,
-  mapOcularTensionFormToApi,
   mapPerimetryApiToForm,
-  mapPerimetryFormToApi,
   mapPlaintesApiToForm,
-  mapPlaintesFormToApi,
   mapRefractionApiToForm,
-  mapRefractionFormToApi,
   mapVisualAcuityApiToForm,
-  mapVisualAcuityFormToApi,
   mapVisionBinoculaireApiToForm,
-} from '@/features/exams/utils';
+} from '@/features/exams/utils/api-to-form-mappers';
+import {
+  mapBiomicroscopyAnteriorFormToApi,
+  mapBiomicroscopyPosteriorFormToApi,
+  mapConclusionFormToApi,
+  mapOcularTensionFormToApi,
+  mapPerimetryFormToApi,
+  mapPlaintesFormToApi,
+  mapRefractionFormToApi,
+  mapVisualAcuityFormToApi,
+} from '@/features/exams/utils/form-to-api-mappers';
 import { useUser } from '@/lib/auth';
 
 type Section = 'technical' | 'clinical' | 'complementary' | 'conclusion';
@@ -948,7 +963,9 @@ function ChildExamContent(props: ChildExamContentProps) {
                   handleSaveClinical={handleSaveClinical}
                   isSaving={isSaving}
                   simplifiedClinicalExam={simplifiedClinicalExam}
-                  onToggleSimplifiedClinicalExam={onToggleSimplifiedClinicalExam}
+                  onToggleSimplifiedClinicalExam={
+                    onToggleSimplifiedClinicalExam
+                  }
                 />
               )}
 

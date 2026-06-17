@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import { rtlRender, screen } from '@/testing/test-utils';
 
+import type { AnalyticsOverview } from '../../types/types';
 import { AnalyticsKpiRow } from '../analytics-kpi-row';
-import type { AnalyticsOverview } from '../../types';
 
 const mockPopulation: AnalyticsOverview['population'] = {
   patients_total: 245,

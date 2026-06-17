@@ -10,18 +10,16 @@ import { useAnalyticsSites } from '@/features/analytics/api/get-analytics-sites'
 import { useAnalyticsSymptoms } from '@/features/analytics/api/get-analytics-symptoms';
 import { useAnalyticsTimeline } from '@/features/analytics/api/get-analytics-timeline';
 import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
-import {
-  GlaucomaScatterChart,
-  OcularTensionBarChart,
-  OverviewDonutChart,
-  PachymetryKpiCard,
-  RefractionDonutChart,
-  SitesBarChart,
-  SymptomsGroupedBar,
-  TimelineChart,
-  VisualAcuityBarChart,
-} from '@/features/analytics/components/charts';
-import type { AnalyticsFilters } from '@/features/analytics/types';
+import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
+import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
+import { OverviewDonutChart } from '@/features/analytics/components/charts/overview-donut-chart';
+import { PachymetryKpiCard } from '@/features/analytics/components/charts/pachymetry-kpi-card';
+import { RefractionDonutChart } from '@/features/analytics/components/charts/refraction-donut-chart';
+import { SitesBarChart } from '@/features/analytics/components/charts/sites-bar-chart';
+import { SymptomsGroupedBar } from '@/features/analytics/components/charts/symptoms-grouped-bar';
+import { TimelineChart } from '@/features/analytics/components/charts/timeline-chart';
+import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
+import type { AnalyticsFilters } from '@/features/analytics/types/types';
 
 import { AnalyticsKpiRow } from './analytics-kpi-row';
 import {
