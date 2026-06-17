@@ -1,15 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { env } from '@/config/env';
-import { server } from '@/testing/mocks/server';
 import {
   mockMedicaments,
   medicamentsAdminHandlers,
 } from '@/testing/mocks/handlers/medicaments-admin';
+import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, waitFor } from '@/testing/test-utils';
-import userEvent from '@testing-library/user-event';
 
 import { MedicamentsAdminTable } from '../medicaments-admin-table';
 
@@ -24,7 +24,7 @@ vi.mock('next-auth/react', async () => {
 });
 
 // MedicamentSelector calls /depistage/medicaments/search/ — intercept silently
-vi.mock('@/features/exams/api/get-medicaments', () => ({
+vi.mock('@/components/medicament-selector/use-medicament-search', () => ({
   useMedicamentSearch: () => ({ data: [], isFetching: false }),
   FormeGalenique: {},
 }));
@@ -72,7 +72,9 @@ describe('MedicamentsAdminTable', () => {
     renderTable();
 
     // Assert
-    expect(await screen.findByRole('button', { name: /ajouter/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /ajouter/i }),
+    ).toBeInTheDocument();
   });
 
   test('ouvre le dialog de création quand on clique sur Ajouter', async () => {
@@ -128,7 +130,9 @@ describe('MedicamentsAdminTable', () => {
 
     // Act
     await screen.findByText('timolol');
-    const [firstDeleteBtn] = screen.getAllByRole('button', { name: /supprimer/i });
+    const [firstDeleteBtn] = screen.getAllByRole('button', {
+      name: /supprimer/i,
+    });
     await user.click(firstDeleteBtn);
 
     // Assert

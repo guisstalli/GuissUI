@@ -11,13 +11,13 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 
 import {
   DriverCreateSchema,
@@ -116,7 +116,7 @@ export function DriverForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Section Identité patient */}
         {!isEdit && (
-          <div className="space-y-4 mt-2">
+          <div className="mt-2 space-y-4">
             <h3 className="border-b pb-2 text-lg font-semibold">
               Identité du patient
             </h3>
@@ -218,7 +218,7 @@ export function DriverForm({
         )}
 
         {/* Section Permis */}
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <h3 className="border-b pb-2 text-lg font-semibold">
             Permis de conduire
           </h3>
@@ -321,7 +321,7 @@ export function DriverForm({
         </div>
 
         {/* Section Activité */}
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <h3 className="border-b pb-2 text-lg font-semibold">
             Activité professionnelle
           </h3>
@@ -428,7 +428,7 @@ export function DriverForm({
         </div>
 
         {/* Section Profil */}
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <h3 className="border-b pb-2 text-lg font-semibold">Profil</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField

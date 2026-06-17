@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
+import type { ComponentType, ReactNode } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -7,10 +8,10 @@ interface KpiCardProps {
   title: string;
   value: number | string;
   subtitle?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string }>;
   trend?: number;
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 export function KpiCard({

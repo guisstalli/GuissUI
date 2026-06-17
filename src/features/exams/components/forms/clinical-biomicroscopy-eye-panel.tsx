@@ -15,7 +15,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
-import { AXE_VISUEL_VALUES, type ClinicalExamFormValues, CORNEE_VALUES, CRISTALLIN_VALUES, IRIS_VALUES, MACULA_VALUES, PAPILLE_VALUES, POSITION_CRISTALLIN_VALUES, PROFONDEUR_VALUES, PUPILLE_VALUES, QUANTITE_ANOMALIE_VALUES, RETINIEN_VALUES, RPM_VALUES, SEGMENT_STATUS, TRANSPARENCE_VALUES, TYPE_ANOMALIE_VALUES, VAISSEAUX_VALUES, VITRE_VALUES } from '@/features/exams/types/schemas';
+import {
+  AXE_VISUEL_VALUES,
+  type ClinicalExamFormValues,
+  CORNEE_VALUES,
+  CRISTALLIN_VALUES,
+  IRIS_VALUES,
+  MACULA_VALUES,
+  PAPILLE_VALUES,
+  POSITION_CRISTALLIN_VALUES,
+  PROFONDEUR_VALUES,
+  PUPILLE_VALUES,
+  QUANTITE_ANOMALIE_VALUES,
+  RETINIEN_VALUES,
+  RPM_VALUES,
+  SEGMENT_STATUS,
+  TRANSPARENCE_VALUES,
+  TYPE_ANOMALIE_VALUES,
+  VAISSEAUX_VALUES,
+  VITRE_VALUES,
+} from '@/features/exams/types/schemas';
 
 interface BiomicroscopyEyePanelProps {
   form: UseFormReturn<ClinicalExamFormValues>;
@@ -49,10 +68,7 @@ export function BiomicroscopyEyePanel({
           render={({ field }) => (
             <FormItem>
               <FormLabel>État du segment</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-              >
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Sélectionner..." />
@@ -61,9 +77,7 @@ export function BiomicroscopyEyePanel({
                 <SelectContent>
                   {SEGMENT_STATUS.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status === 'NORMAL'
-                        ? 'Normal'
-                        : 'Présence de lésion'}
+                      {status === 'NORMAL' ? 'Normal' : 'Présence de lésion'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -133,9 +147,7 @@ export function BiomicroscopyEyePanel({
                 name={`${eye}.bp_sg_anterieur.profondeur`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">
-                      Profondeur CA
-                    </FormLabel>
+                    <FormLabel className="text-xs">Profondeur CA</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? undefined}
@@ -162,9 +174,7 @@ export function BiomicroscopyEyePanel({
                 name={`${eye}.bp_sg_anterieur.transparence`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">
-                      Transparence
-                    </FormLabel>
+                    <FormLabel className="text-xs">Transparence</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? undefined}
@@ -224,9 +234,7 @@ export function BiomicroscopyEyePanel({
                   name={`${eye}.bp_sg_anterieur.quantite_anomalie`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">
-                        Quantité
-                      </FormLabel>
+                      <FormLabel className="text-xs">Quantité</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value ?? undefined}
@@ -284,9 +292,7 @@ export function BiomicroscopyEyePanel({
                 name={`${eye}.bp_sg_anterieur.axe_visuel`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">
-                      Axe visuel
-                    </FormLabel>
+                    <FormLabel className="text-xs">Axe visuel</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? undefined}
@@ -392,9 +398,7 @@ export function BiomicroscopyEyePanel({
                 name={`${eye}.bp_sg_anterieur.cristallin`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">
-                      Cristallin
-                    </FormLabel>
+                    <FormLabel className="text-xs">Cristallin</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? undefined}
@@ -459,10 +463,7 @@ export function BiomicroscopyEyePanel({
           render={({ field }) => (
             <FormItem>
               <FormLabel>État du segment</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-              >
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Sélectionner..." />
@@ -471,9 +472,7 @@ export function BiomicroscopyEyePanel({
                 <SelectContent>
                   {SEGMENT_STATUS.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status === 'NORMAL'
-                        ? 'Normal'
-                        : 'Présence de lésion'}
+                      {status === 'NORMAL' ? 'Normal' : 'Présence de lésion'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -503,8 +502,8 @@ export function BiomicroscopyEyePanel({
                     <SelectContent>
                       {VITRE_VALUES.map((v) => (
                         <SelectItem key={v} value={v}>
-                          {v.replace('_', ' ').charAt(0) +
-                            v.replace('_', ' ').slice(1).toLowerCase()}
+                          {v.replace(/_/g, ' ').charAt(0) +
+                            v.replace(/_/g, ' ').slice(1).toLowerCase()}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -558,8 +557,8 @@ export function BiomicroscopyEyePanel({
                     <SelectContent>
                       {MACULA_VALUES.map((v) => (
                         <SelectItem key={v} value={v}>
-                          {v.replace('_', ' ').charAt(0) +
-                            v.replace('_', ' ').slice(1).toLowerCase()}
+                          {v.replace(/_/g, ' ').charAt(0) +
+                            v.replace(/_/g, ' ').slice(1).toLowerCase()}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -573,9 +572,7 @@ export function BiomicroscopyEyePanel({
               name={`${eye}.bp_sg_posterieur.retine_peripherique`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs">
-                    Rétine périphérique
-                  </FormLabel>
+                  <FormLabel className="text-xs">Rétine périphérique</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value ?? undefined}
@@ -629,9 +626,7 @@ export function BiomicroscopyEyePanel({
               name={`${eye}.bp_sg_posterieur.cd`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs">
-                    Cup/Disc (C/D)
-                  </FormLabel>
+                  <FormLabel className="text-xs">Cup/Disc (C/D)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -643,9 +638,7 @@ export function BiomicroscopyEyePanel({
                       value={field.value ?? ''}
                       onChange={(e) =>
                         field.onChange(
-                          e.target.value
-                            ? Number(e.target.value)
-                            : null,
+                          e.target.value ? Number(e.target.value) : null,
                         )
                       }
                     />

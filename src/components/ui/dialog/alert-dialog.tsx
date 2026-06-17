@@ -34,7 +34,6 @@ function AlertDialog({ onOpenChange, ...props }: AlertDialogProps) {
     <AlertDialogPrimitive.Root {...props} onOpenChange={handleOpenChange} />
   );
 }
-AlertDialog.displayName = 'AlertDialog';
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 

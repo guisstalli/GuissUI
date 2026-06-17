@@ -24,13 +24,13 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { useCreatePatient } from '@/features/patients/api/create-patient';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';

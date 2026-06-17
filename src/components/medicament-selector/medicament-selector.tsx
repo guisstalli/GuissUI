@@ -1,15 +1,16 @@
 'use client';
 
 import { Loader2, Pill, Search } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Input } from '@/components/ui/form/input';
+import { cn } from '@/lib/utils';
+
 import {
   type FormeGalenique,
   type Medicament,
   useMedicamentSearch,
-} from '@/features/exams/api/get-medicaments';
-import { cn } from '@/lib/utils';
+} from './use-medicament-search';
 
 interface MedicamentSelectorProps {
   /** Valeur affichée dans l'input (nom prescrit) */
@@ -90,8 +91,6 @@ export function MedicamentSelector({
     setOpen(false);
   };
 
-  const sortedResults = useMemo(() => results, [results]);
-
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       <div className="relative">
@@ -123,11 +122,11 @@ export function MedicamentSelector({
             <div className="px-3 py-2 text-sm text-muted-foreground">
               Tapez au moins 3 caractères (DCI ou nom commercial)…
             </div>
-          ) : isFetching && sortedResults.length === 0 ? (
+          ) : isFetching && results.length === 0 ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               Recherche…
             </div>
-          ) : sortedResults.length === 0 ? (
+          ) : results.length === 0 ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               Aucun résultat
             </div>
@@ -137,7 +136,7 @@ export function MedicamentSelector({
               aria-label="Résultats de recherche de médicaments"
               className="py-1"
             >
-              {sortedResults.map((m, index) => {
+              {results.map((m, index) => {
                 const dciDisplay = m.dci
                   ? m.dci.charAt(0).toUpperCase() + m.dci.slice(1)
                   : m.dci;

@@ -39,13 +39,13 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 //import { PatientAnalyticsContext } from '@/features/analytics/components';
 import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';

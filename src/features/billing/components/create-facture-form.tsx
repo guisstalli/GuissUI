@@ -13,7 +13,6 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
@@ -21,6 +20,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 
 import { usePrestations } from '../api/get-prestations';
 import { FactureCreateSchema, type FactureCreate } from '../types/schemas';
