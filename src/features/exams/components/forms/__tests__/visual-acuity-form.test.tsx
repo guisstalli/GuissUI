@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { describe, it, expect, vi } from 'vitest';
 
@@ -11,6 +10,17 @@ import {
 } from '@/features/exams/types/schemas';
 
 import { VisualAcuityForm } from '../visual-acuity-form';
+
+// =============================================================================
+// Libellés tels que rendus par le composant (source de vérité)
+// =============================================================================
+
+/** Switch "Avec Correction prescrite ?" */
+const CORRECTION_SWITCH_NAME = /avec correction prescrite/i;
+/** Titre de la section conditionnelle "Acuité avec correction prescrite (AVAC)" */
+const CORRECTION_SECTION_TEXT = /acuité avec correction prescrite/i;
+/** Message d'erreur Zod sur les 3 champs prescrits */
+const CORRECTION_ERROR_TEXT = /requis si correction sélectionnée/i;
 
 // =============================================================================
 // Wrapper
@@ -64,17 +74,12 @@ describe('VisualAcuityForm', () => {
     expect(screen.getAllByText(/og \(gauche\)/i).length).toBeGreaterThan(0);
   });
 
-  it("n'affiche pas les champs avec correction par défaut", () => {
+  it("n'affiche pas la section avec correction prescrite par défaut", () => {
     // Arrange
     render(<VisualAcuityFormWrapper />);
 
-    // Assert — les labels spécifiques aux champs avec correction sont absents
-    expect(
-      screen.queryByText(/sans correction \+ avec surcorrection/i),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/avec correction \+ avec surcorrection/i),
-    ).not.toBeInTheDocument();
+    // Assert — la section conditionnelle est absente quand correction=false
+    expect(screen.queryByText(CORRECTION_SECTION_TEXT)).not.toBeInTheDocument();
   });
 
   // --------------------------------------------------------------------------
@@ -82,46 +87,40 @@ describe('VisualAcuityForm', () => {
   // --------------------------------------------------------------------------
 
   describe('switch Correction activé', () => {
-    it('affiche les 6 champs avec correction quand le switch est activé', async () => {
+    it('affiche les 3 champs prescrits quand le switch est activé', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisualAcuityFormWrapper />);
+      const before = screen.getAllByRole('spinbutton').length;
 
       // Act
       await user.click(
-        screen.getByRole('switch', {
-          name: /surcorrection \/ avec correction/i,
-        }),
+        screen.getByRole('switch', { name: CORRECTION_SWITCH_NAME }),
       );
 
-      // Assert
-      await screen.findByText(/sans correction \+ avec surcorrection/i);
-      await screen.findByText(/avec correction \+ avec surcorrection/i);
-
-      // 6 inputs de correction (3 AVSC + 3 AVAC) + un label
-      const corrInputs = screen
-        .getAllByRole('spinbutton')
-        .filter((_, i) => i >= 5); // Les inputs de correction viennent après les 5 premiers (parinaud + 3 AVSC + 3 AVAC)
-      expect(corrInputs.length).toBeGreaterThan(0);
+      // Assert — la section + 3 inputs avac_*_prescrite apparaissent
+      await screen.findByText(CORRECTION_SECTION_TEXT);
+      const after = screen.getAllByRole('spinbutton').length;
+      expect(after).toBe(before + 3);
     });
 
-    it('masque les 6 champs avec correction quand le switch est désactivé', async () => {
+    it('masque les champs prescrits quand le switch est désactivé', async () => {
       // Arrange
       const user = userEvent.setup();
       render(<VisualAcuityFormWrapper />);
 
       // Act
       const corrSwitch = screen.getByRole('switch', {
-        name: /surcorrection \/ avec correction/i,
+        name: CORRECTION_SWITCH_NAME,
       });
       await user.click(corrSwitch);
-      await screen.findByText(/sans correction \+ avec surcorrection/i);
+      await screen.findByText(CORRECTION_SECTION_TEXT);
       await user.click(corrSwitch);
 
       // Assert
       await waitFor(() => {
         expect(
-          screen.queryByText(/sans correction \+ avec surcorrection/i),
+          screen.queryByText(CORRECTION_SECTION_TEXT),
         ).not.toBeInTheDocument();
       });
     });
@@ -132,7 +131,7 @@ describe('VisualAcuityForm', () => {
   // --------------------------------------------------------------------------
 
   describe('validation à la soumission', () => {
-    it('affiche 6 erreurs quand correction=true et tous les champs avec correction sont vides', async () => {
+    it('affiche 3 erreurs quand correction=true et les champs prescrits sont vides', async () => {
       // Arrange
       const user = userEvent.setup();
       const onSubmit = vi.fn();
@@ -140,19 +139,15 @@ describe('VisualAcuityForm', () => {
 
       // Act
       await user.click(
-        screen.getByRole('switch', {
-          name: /surcorrection \/ avec correction/i,
-        }),
+        screen.getByRole('switch', { name: CORRECTION_SWITCH_NAME }),
       );
-      await screen.findByText(/sans correction \+ avec surcorrection/i);
+      await screen.findByText(CORRECTION_SECTION_TEXT);
       await user.click(screen.getByRole('button', { name: /soumettre/i }));
 
       // Assert
       await waitFor(() => {
-        const errorMessages = screen.queryAllByText(
-          /requis si correction sélectionnée/i,
-        );
-        expect(errorMessages.length).toBe(6);
+        const errorMessages = screen.queryAllByText(CORRECTION_ERROR_TEXT);
+        expect(errorMessages.length).toBe(3);
       });
       expect(onSubmit).not.toHaveBeenCalled();
     });
@@ -165,16 +160,12 @@ describe('VisualAcuityForm', () => {
 
       // Act
       await user.click(
-        screen.getByRole('switch', {
-          name: /surcorrection \/ avec correction/i,
-        }),
+        screen.getByRole('switch', { name: CORRECTION_SWITCH_NAME }),
       );
-      await screen.findByText(/sans correction \+ avec surcorrection/i);
+      await screen.findByText(CORRECTION_SECTION_TEXT);
 
-      // Remplir les 6 champs avec correction
+      // Remplir tous les inputs vides (dont les 3 champs prescrits) avec une valeur valide
       const inputs = screen.getAllByRole('spinbutton');
-      // Les inputs avec correction ont les labels "OD + Corr", "OG + Corr", "ODG + Corr" × 2
-      // On remplit tous les inputs vides avec une valeur valide
       for (const input of inputs) {
         if ((input as HTMLInputElement).value === '') {
           await user.clear(input);
@@ -209,7 +200,7 @@ describe('VisualAcuityForm', () => {
       // Assert - pas d'erreur de correction
       await waitFor(() => {
         expect(
-          screen.queryByText(/requis si correction sélectionnée/i),
+          screen.queryByText(CORRECTION_ERROR_TEXT),
         ).not.toBeInTheDocument();
       });
       await waitFor(() => {

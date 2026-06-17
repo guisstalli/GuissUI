@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
+import { env } from '@/config/env';
 import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, waitFor } from '@/testing/test-utils';
 
@@ -56,7 +57,7 @@ describe('NotificationBell', () => {
   test('hides the badge when unread count is zero', async () => {
     // Arrange — override handler for this test
     server.use(
-      http.get('http://localhost:8000/api/v1/notifications/unread-count/', () =>
+      http.get(`${env.API_URL}/notifications/unread-count/`, () =>
         HttpResponse.json({ count: 0 }),
       ),
     );
@@ -72,7 +73,7 @@ describe('NotificationBell', () => {
   test('caps the displayed badge at "99+" when count exceeds 99', async () => {
     // Arrange
     server.use(
-      http.get('http://localhost:8000/api/v1/notifications/unread-count/', () =>
+      http.get(`${env.API_URL}/notifications/unread-count/`, () =>
         HttpResponse.json({ count: 150 }),
       ),
     );
@@ -87,7 +88,7 @@ describe('NotificationBell', () => {
 
   test('shows exactly 99 when count equals 99 (no truncation)', async () => {
     server.use(
-      http.get('http://localhost:8000/api/v1/notifications/unread-count/', () =>
+      http.get(`${env.API_URL}/notifications/unread-count/`, () =>
         HttpResponse.json({ count: 99 }),
       ),
     );

@@ -50,8 +50,8 @@ describe('DATA_ENTRY role permissions', () => {
     expect(hasPermission(user, 'exams:view')).toBe(true);
   });
 
-  it('has analytics:view permission', () => {
-    expect(hasPermission(user, 'analytics:view')).toBe(true);
+  it('does NOT have analytics:view permission (gated module)', () => {
+    expect(hasPermission(user, 'analytics:view')).toBe(false);
   });
 
   it('has exams:technical:edit permission', () => {

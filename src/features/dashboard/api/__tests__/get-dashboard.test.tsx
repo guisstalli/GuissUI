@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
+import { env } from '@/config/env';
 import { server } from '@/testing/mocks/server';
 
 // Suppress next-auth telemetry fetch that causes URLSearchParams errors in jsdom
@@ -58,9 +59,7 @@ describe('useDashboard', () => {
   test('returns an error when the API fails', async () => {
     // Arrange
     server.use(
-      http.get('http://localhost:8000/api/v1/dashboard/', () =>
-        HttpResponse.error(),
-      ),
+      http.get(`${env.API_URL}/dashboard/`, () => HttpResponse.error()),
     );
     const wrapper = createWrapper();
 

@@ -15,6 +15,7 @@ const validPrestation = {
   description: 'Consultation initiale',
   prix: '25000.00',
   prix_display: '25 000 FCFA',
+  is_active: true,
 };
 
 const validLigne = {
