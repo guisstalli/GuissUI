@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/components/ui/notifications';
 import {
   TableBody,
   TableCell,
@@ -35,11 +36,12 @@ export function FacturesTable({ factures }: FacturesTableProps) {
     setDownloadingId(facture.id);
     try {
       await download(facture.id, facture.numero);
-    } catch (e) {
-      // Surfaced via console; the table action button stays usable.
-      // A toast layer can be added by the host page if needed.
-      // eslint-disable-next-line no-console
-      console.error('Téléchargement facture échoué', e);
+    } catch {
+      useNotifications.getState().addNotification({
+        type: 'error',
+        title: 'Téléchargement échoué',
+        message: `Impossible de télécharger la facture ${facture.numero}.`,
+      });
     } finally {
       setDownloadingId(null);
     }
