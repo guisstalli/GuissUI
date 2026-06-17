@@ -16,14 +16,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Button } from '@/components/ui/button';
-import { useNotifications } from '@/components/ui/notifications';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import {
-  useAttachments,
-  useUploadAttachment,
-  useDeleteAttachment,
-  downloadAttachment,
-} from '@/features/exams/api/attachments';
 import {
   useDownloadChildReport,
   useDownloadChildConclusion,
@@ -41,10 +34,7 @@ import {
   useExamOrdonnances,
 } from '@/features/exams/api/ordonnances';
 import { ChildExamClinicalPanel } from '@/features/exams/components/child-exam-clinical-panel';
-import {
-  ChildExamComplementaryPanel,
-  type ChildExamAttachment,
-} from '@/features/exams/components/child-exam-complementary-panel';
+import { ChildExamComplementaryPanel } from '@/features/exams/components/child-exam-complementary-panel';
 import { ChildExamConclusionPanel } from '@/features/exams/components/child-exam-conclusion-panel';
 import { ChildExamDialogs } from '@/features/exams/components/child-exam-dialogs';
 import { ChildExamSidebar } from '@/features/exams/components/child-exam-sidebar';
@@ -181,21 +171,6 @@ export default function ChildExamPage() {
   }, [uncompleteExam, numericExamId]);
 
   const clinicalExamId = examData?.clinical_examen?.id;
-
-  const {
-    data: attachmentsData,
-    isLoading: isLoadingAttachments,
-    refetch: refetchAttachments,
-  } = useAttachments({
-    clinicalExamId: clinicalExamId ?? 0,
-    enabled: !!clinicalExamId,
-  });
-
-  const { mutate: uploadAttachment, isPending: isUploading } =
-    useUploadAttachment();
-  const { mutate: deleteAttachment, isPending: isDeleting } =
-    useDeleteAttachment();
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const handleToggleSimplifiedClinicalExam = useCallback(
     (enabled: boolean) => {
@@ -574,68 +549,6 @@ export default function ChildExamPage() {
     );
   }, [saveClinical, form, numericExamId, refetchExam]);
 
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fileDescription, setFileDescription] = useState('');
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setSelectedFiles(Array.from(e.target.files));
-  };
-
-  const handleUploadFiles = useCallback(() => {
-    if (!clinicalExamId || selectedFiles.length === 0) return;
-    selectedFiles.forEach((file) => {
-      uploadAttachment(
-        { clinicalExamId, file, description: fileDescription || undefined },
-        {
-          onSuccess: () => {
-            refetchAttachments();
-            setSelectedFiles([]);
-            setFileDescription('');
-          },
-        },
-      );
-    });
-  }, [
-    clinicalExamId,
-    selectedFiles,
-    fileDescription,
-    uploadAttachment,
-    refetchAttachments,
-  ]);
-
-  const handleDeleteAttachment = useCallback(
-    (id: number) => {
-      if (!clinicalExamId) return;
-      deleteAttachment(
-        { id, clinicalExamId },
-        { onSuccess: () => refetchAttachments() },
-      );
-    },
-    [deleteAttachment, refetchAttachments, clinicalExamId],
-  );
-
-  const handleDownloadAttachment = async (id: number, filename: string) => {
-    try {
-      setDownloadingId(id);
-      const { url } = await downloadAttachment(id);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-    } catch {
-      useNotifications.getState().addNotification({
-        type: 'error',
-        title: 'Téléchargement impossible',
-        message:
-          'Impossible de télécharger le fichier joint. Veuillez réessayer.',
-      });
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
   const isSaving = isSavingTechnical || isSavingClinical;
 
   if (isLoadingExam && !isNewExam) {
@@ -690,19 +603,6 @@ export default function ChildExamPage() {
         handleSaveConclusion={handleSaveConclusion}
         isSaving={isSaving}
         clinicalExamId={clinicalExamId}
-        attachments={attachmentsData ?? []}
-        isLoadingAttachments={isLoadingAttachments}
-        selectedFiles={selectedFiles}
-        setSelectedFiles={setSelectedFiles}
-        fileDescription={fileDescription}
-        setFileDescription={setFileDescription}
-        handleFileSelect={handleFileSelect}
-        handleUploadFiles={handleUploadFiles}
-        handleDeleteAttachment={handleDeleteAttachment}
-        handleDownloadAttachment={handleDownloadAttachment}
-        isUploading={isUploading}
-        isDeleting={isDeleting}
-        downloadingId={downloadingId}
         simplifiedClinicalExam={simplifiedClinicalExam}
         onToggleSimplifiedClinicalExam={handleToggleSimplifiedClinicalExam}
         isComplete={isComplete}
@@ -750,19 +650,6 @@ interface ChildExamContentProps {
   handleSaveConclusion: () => void;
   isSaving: boolean;
   clinicalExamId?: number;
-  attachments: ChildExamAttachment[];
-  isLoadingAttachments: boolean;
-  selectedFiles: File[];
-  setSelectedFiles: (f: File[]) => void;
-  fileDescription: string;
-  setFileDescription: (d: string) => void;
-  handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleUploadFiles: () => void;
-  handleDeleteAttachment: (id: number) => void;
-  handleDownloadAttachment: (id: number, filename: string) => void;
-  isUploading: boolean;
-  isDeleting: boolean;
-  downloadingId: number | null;
   simplifiedClinicalExam: boolean;
   onToggleSimplifiedClinicalExam: (enabled: boolean) => void;
   isComplete: boolean;
@@ -797,18 +684,6 @@ function ChildExamContent(props: ChildExamContentProps) {
     handleSaveConclusion,
     isSaving,
     clinicalExamId,
-    attachments,
-    isLoadingAttachments,
-    selectedFiles,
-    fileDescription,
-    setFileDescription,
-    handleFileSelect,
-    handleUploadFiles,
-    handleDeleteAttachment,
-    handleDownloadAttachment,
-    isUploading,
-    isDeleting,
-    downloadingId,
     simplifiedClinicalExam,
     onToggleSimplifiedClinicalExam,
     isComplete,
@@ -959,18 +834,6 @@ function ChildExamContent(props: ChildExamContentProps) {
                   handleSaveComplementary={handleSaveComplementary}
                   isSaving={isSaving}
                   clinicalExamId={clinicalExamId}
-                  attachments={attachments}
-                  isLoadingAttachments={isLoadingAttachments}
-                  selectedFiles={selectedFiles}
-                  fileDescription={fileDescription}
-                  setFileDescription={setFileDescription}
-                  handleFileSelect={handleFileSelect}
-                  handleUploadFiles={handleUploadFiles}
-                  handleDeleteAttachment={handleDeleteAttachment}
-                  handleDownloadAttachment={handleDownloadAttachment}
-                  isUploading={isUploading}
-                  isDeleting={isDeleting}
-                  downloadingId={downloadingId}
                 />
               )}
 

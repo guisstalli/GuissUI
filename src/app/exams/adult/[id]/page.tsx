@@ -19,7 +19,6 @@ import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useNotifications } from '@/components/ui/notifications';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
   useDownloadAdultReport,
@@ -32,12 +31,7 @@ import {
   useCompleteAdultExam,
   useUncompleteAdultExam,
 } from '@/features/exams/api/adult/mutations';
-import {
-  useAttachments,
-  useUploadAttachment,
-  useDeleteAttachment,
-  downloadAttachment,
-} from '@/features/exams/api/attachments';
+import { useAttachments } from '@/features/exams/api/attachments';
 import {
   findOrdonnance,
   useDownloadOrdonnance,
@@ -50,7 +44,6 @@ import { AdultExamFinalizeDialog } from '@/features/exams/components/adult-exam-
 import { AdultExamSidebar } from '@/features/exams/components/adult-exam-sidebar';
 import { AdultExamTechnicalPanel } from '@/features/exams/components/adult-exam-technical-panel';
 import {
-  type AdultExamAttachment,
   type AdultExamForm,
   type AdultExamPatient,
   type SectionStatus,
@@ -163,47 +156,10 @@ export default function AdultExamPage() {
   // Pièces jointes - utiliser l'ID de l'examen clinique (clinical_examen.id)
   const clinicalExamId = examData?.clinical_examen?.id;
 
-  const {
-    data: attachmentsData,
-    isLoading: isLoadingAttachments,
-    refetch: refetchAttachments,
-  } = useAttachments({
+  const { data: attachmentsData } = useAttachments({
     clinicalExamId: clinicalExamId ?? 0,
     enabled: !!clinicalExamId,
   });
-
-  const { mutate: uploadAttachment, isPending: isUploading } =
-    useUploadAttachment();
-  const { mutate: deleteAttachment, isPending: isDeleting } =
-    useDeleteAttachment();
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
-
-  const handleDownloadAttachment = async (
-    id: number,
-    originalFilename: string,
-  ) => {
-    try {
-      setDownloadingId(id);
-      const { url } = await downloadAttachment(id);
-
-      // Télécharger via un lien temporaire
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = originalFilename; // Tente de forcer le nom du fichier si cross-origin le permet
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-    } catch {
-      useNotifications.getState().addNotification({
-        type: 'error',
-        title: 'Téléchargement impossible',
-        message:
-          'Impossible de télécharger le fichier joint. Veuillez réessayer.',
-      });
-    } finally {
-      setDownloadingId(null);
-    }
-  };
 
   // Données patient depuis l'API
   const patient = examData?.patient
@@ -495,61 +451,13 @@ export default function AdultExamPage() {
     uncompleteExam({ id: numericExamId });
   }, [uncompleteExam, numericExamId]);
 
-  // Gestion des fichiers joints
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fileDescription, setFileDescription] = useState('');
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
-    }
-  };
-
-  const handleUploadFiles = useCallback(() => {
-    if (!clinicalExamId || selectedFiles.length === 0) return;
-
-    selectedFiles.forEach((file) => {
-      uploadAttachment(
-        {
-          clinicalExamId,
-          file,
-          description: fileDescription.trim(),
-        },
-        {
-          onSuccess: () => {
-            refetchAttachments();
-            setSelectedFiles([]);
-            setFileDescription('');
-            setSectionStatus((prev) => ({
-              ...prev,
-              clinical: { ...prev.clinical, attachments: true },
-            }));
-          },
-        },
-      );
-    });
-  }, [
-    clinicalExamId,
-    selectedFiles,
-    fileDescription,
-    uploadAttachment,
-    refetchAttachments,
-  ]);
-
-  const handleDeleteAttachment = useCallback(
-    (attachmentId: number) => {
-      if (!clinicalExamId) return;
-      deleteAttachment(
-        { id: attachmentId, clinicalExamId },
-        {
-          onSuccess: () => {
-            refetchAttachments();
-          },
-        },
-      );
-    },
-    [deleteAttachment, refetchAttachments, clinicalExamId],
-  );
+  // Marque la sous-section "pièces jointes" comme complétée après un upload.
+  const handleAttachmentUploaded = useCallback(() => {
+    setSectionStatus((prev) => ({
+      ...prev,
+      clinical: { ...prev.clinical, attachments: true },
+    }));
+  }, []);
 
   // Calcul de la progression
   const technicalCompleted = Object.values(sectionStatus.technical).filter(
@@ -631,21 +539,9 @@ export default function AdultExamPage() {
         isSaving={isSaving}
         isCompleting={isCompleting}
         isUncompleting={isUncompleting}
-        // Attachments props
+        // Attachments
         clinicalExamId={clinicalExamId}
-        attachments={attachmentsData ?? []}
-        isLoadingAttachments={isLoadingAttachments}
-        selectedFiles={selectedFiles}
-        setSelectedFiles={setSelectedFiles}
-        fileDescription={fileDescription}
-        setFileDescription={setFileDescription}
-        handleFileSelect={handleFileSelect}
-        handleUploadFiles={handleUploadFiles}
-        handleDeleteAttachment={handleDeleteAttachment}
-        handleDownloadAttachment={handleDownloadAttachment}
-        isUploading={isUploading}
-        isDeleting={isDeleting}
-        downloadingId={downloadingId}
+        onUploaded={handleAttachmentUploaded}
       />
     </SidebarProvider>
   );
@@ -683,19 +579,7 @@ interface AdultExamContentProps {
   isUncompleting: boolean;
   // Attachments
   clinicalExamId?: number;
-  attachments: AdultExamAttachment[];
-  isLoadingAttachments: boolean;
-  selectedFiles: File[];
-  setSelectedFiles: (files: File[]) => void;
-  fileDescription: string;
-  setFileDescription: (desc: string) => void;
-  handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleUploadFiles: () => void;
-  handleDeleteAttachment: (id: number) => void;
-  handleDownloadAttachment: (id: number, filename: string) => void;
-  isUploading: boolean;
-  isDeleting: boolean;
-  downloadingId: number | null;
+  onUploaded?: () => void;
 }
 
 function AdultExamContent(props: AdultExamContentProps) {
@@ -726,18 +610,7 @@ function AdultExamContent(props: AdultExamContentProps) {
     isCompleting,
     isUncompleting,
     clinicalExamId,
-    attachments,
-    isLoadingAttachments,
-    selectedFiles,
-    fileDescription,
-    setFileDescription,
-    handleFileSelect,
-    handleUploadFiles,
-    handleDeleteAttachment,
-    handleDownloadAttachment,
-    isUploading,
-    isDeleting,
-    downloadingId,
+    onUploaded,
   } = props;
 
   const { mutate: downloadReport, isPending: isDownloadingReport } =
@@ -908,18 +781,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                   handleSaveSection={handleSaveSection}
                   isSaving={isSaving}
                   clinicalExamId={clinicalExamId}
-                  attachments={attachments}
-                  isLoadingAttachments={isLoadingAttachments}
-                  selectedFiles={selectedFiles}
-                  fileDescription={fileDescription}
-                  setFileDescription={setFileDescription}
-                  handleFileSelect={handleFileSelect}
-                  handleUploadFiles={handleUploadFiles}
-                  handleDeleteAttachment={handleDeleteAttachment}
-                  handleDownloadAttachment={handleDownloadAttachment}
-                  isUploading={isUploading}
-                  isDeleting={isDeleting}
-                  downloadingId={downloadingId}
+                  onUploaded={onUploaded}
                 />
               )}
 
