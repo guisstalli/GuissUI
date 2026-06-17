@@ -8,8 +8,9 @@ import { OcularTensionForm } from '@/features/exams/components/forms/ocular-tens
 import { PachymetryForm } from '@/features/exams/components/forms/pachymetry-form';
 import { RefractionForm } from '@/features/exams/components/forms/refraction-form';
 import { VisualAcuityForm } from '@/features/exams/components/forms/visual-acuity-form';
+import type { TechnicalSubsection } from '@/features/exams/types/adult-exam';
 
-import type { SectionStatus, TechnicalSubsection } from './adult-exam-types';
+import type { SectionStatus } from './adult-exam-types';
 
 interface AdultExamTechnicalPanelProps {
   technicalSubsection: TechnicalSubsection;

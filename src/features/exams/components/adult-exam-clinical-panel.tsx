@@ -23,12 +23,9 @@ import { BiomicroscopyPosteriorForm } from '@/features/exams/components/forms/bi
 import { ExamensAdditionelsSection } from '@/features/exams/components/forms/examens-additionnels-section';
 import { PerimetryForm } from '@/features/exams/components/forms/perimetry-form';
 import { PlaintesForm } from '@/features/exams/components/forms/plaintes-form';
+import type { ClinicalSubsection } from '@/features/exams/types/adult-exam';
 
-import type {
-  AdultExamAttachment,
-  ClinicalSubsection,
-  SectionStatus,
-} from './adult-exam-types';
+import type { AdultExamAttachment, SectionStatus } from './adult-exam-types';
 
 interface AdultExamClinicalPanelProps {
   clinicalSubsection: ClinicalSubsection;

@@ -12,11 +12,11 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import * as z from 'zod';
 
 import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/components/ui/notifications';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
   useAttachments,
@@ -49,20 +49,17 @@ import { ChildExamConclusionPanel } from '@/features/exams/components/child-exam
 import { ChildExamDialogs } from '@/features/exams/components/child-exam-dialogs';
 import { ChildExamSidebar } from '@/features/exams/components/child-exam-sidebar';
 import { ChildExamTechnicalPanel } from '@/features/exams/components/child-exam-technical-panel';
-import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
 import {
-  BiomicroscopyAnteriorSchema,
-  BiomicroscopyPosteriorSchema,
-  ClinicalCheckChildSchema,
-  ConclusionSchema,
+  OrdonnanceFormDialog,
+  type PrescriptionData,
+} from '@/features/exams/components/ordonnance-form-dialog';
+import {
+  childExamSchema,
+  type ChildExamFormValues,
+} from '@/features/exams/types/child-exam';
+import {
   defaultBiomicroscopyAnterior,
   defaultBiomicroscopyPosterior,
-  OcularTensionSchema,
-  PerimetrySchema,
-  PlaintesSchema,
-  RefractionSchema,
-  VisionBinoculaireSchema,
-  VisualAcuitySchema,
 } from '@/features/exams/types/schemas';
 import {
   mapBiomicroscopyAnteriorApiToForm,
@@ -76,6 +73,7 @@ import {
   mapVisualAcuityApiToForm,
   mapVisionBinoculaireApiToForm,
 } from '@/features/exams/utils/api-to-form-mappers';
+import { hasFilledConclusion } from '@/features/exams/utils/conclusion-status';
 import {
   mapBiomicroscopyAnteriorFormToApi,
   mapBiomicroscopyPosteriorFormToApi,
@@ -114,27 +112,6 @@ const sections = [
   },
   { id: 'conclusion' as const, title: 'Conclusion', icon: FileText },
 ];
-
-const childExamSchema = z.object({
-  visualAcuity: VisualAcuitySchema,
-  refraction: RefractionSchema,
-  ocularTension: OcularTensionSchema,
-  visionBinoculaire: VisionBinoculaireSchema,
-  clinicalCheck: ClinicalCheckChildSchema,
-  plaintes: PlaintesSchema,
-  perimetry: PerimetrySchema,
-  od: z.object({
-    bp_sg_anterieur: BiomicroscopyAnteriorSchema,
-    bp_sg_posterieur: BiomicroscopyPosteriorSchema,
-  }),
-  og: z.object({
-    bp_sg_anterieur: BiomicroscopyAnteriorSchema,
-    bp_sg_posterieur: BiomicroscopyPosteriorSchema,
-  }),
-  conclusion: ConclusionSchema,
-});
-
-type ChildExamFormValues = z.infer<typeof childExamSchema>;
 
 export default function ChildExamPage() {
   const params = useParams();
@@ -383,7 +360,9 @@ export default function ChildExamPage() {
         examData.vision_binoculaire
       );
       const hasComplementary = !!examData.clinical_examen;
-      const hasConclusion = !!examData.clinical_examen?.conclusion;
+      const hasConclusion = hasFilledConclusion(
+        examData.clinical_examen?.conclusion,
+      );
 
       setSectionStatus({
         technical: hasTechnical,
@@ -646,7 +625,12 @@ export default function ChildExamPage() {
       anchor.click();
       document.body.removeChild(anchor);
     } catch {
-      /* noop */
+      useNotifications.getState().addNotification({
+        type: 'error',
+        title: 'Téléchargement impossible',
+        message:
+          'Impossible de télécharger le fichier joint. Veuillez réessayer.',
+      });
     } finally {
       setDownloadingId(null);
     }
@@ -922,9 +906,8 @@ function ChildExamContent(props: ChildExamContentProps) {
             open={medicamentDialogOpen}
             onClose={() => setMedicamentDialogOpen(false)}
             initialData={
-              (medicamentOrdonnance?.prescription_data as Parameters<
-                typeof OrdonnanceFormDialog
-              >[0]['initialData']) ?? null
+              (medicamentOrdonnance?.prescription_data as PrescriptionData) ??
+              null
             }
           />
           <OrdonnanceFormDialog
@@ -934,9 +917,7 @@ function ChildExamContent(props: ChildExamContentProps) {
             open={optiqueDialogOpen}
             onClose={() => setOptiqueDialogOpen(false)}
             initialData={
-              (optiqueOrdonnance?.prescription_data as Parameters<
-                typeof OrdonnanceFormDialog
-              >[0]['initialData']) ?? null
+              (optiqueOrdonnance?.prescription_data as PrescriptionData) ?? null
             }
           />
 

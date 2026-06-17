@@ -1,57 +1,15 @@
 import type { UseFormReturn } from 'react-hook-form';
-import * as z from 'zod';
 
-import { BiomicroscopyAnteriorSchema, BiomicroscopyPosteriorSchema, ConclusionSchema, OcularTensionSchema, PachymetrySchema, PerimetrySchema, PlaintesSchema, RefractionSchema, VisualAcuitySchema } from '@/features/exams/types/schemas';
+import type { AdultExamFormValues } from '@/features/exams/types/adult-exam';
 
 /**
- * Shared types for the adult exam page panels.
+ * UI-only helper types for the adult exam page panels.
  *
- * Mirrors the local schema/types defined in
- * `src/app/exams/adult/[id]/page.tsx`. Kept here so extracted panel
- * components can be typed without `any` and without cross-importing the page.
+ * The Zod schema, the inferred `AdultExamFormValues`, and the
+ * `Section` / `TechnicalSubsection` / `ClinicalSubsection` unions now live in
+ * `@/features/exams/types/adult-exam`. Kept here are the presentation-layer
+ * shapes used to type the extracted panel components without `any`.
  */
-
-export const adultExamSchema = z.object({
-  // Technical
-  visualAcuity: VisualAcuitySchema,
-  refraction: RefractionSchema,
-  ocularTension: OcularTensionSchema,
-  pachymetry: PachymetrySchema,
-  // Clinical
-  plaintes: PlaintesSchema,
-  perimetry: PerimetrySchema,
-  od: z.object({
-    bp_sg_anterieur: BiomicroscopyAnteriorSchema,
-    bp_sg_posterieur: BiomicroscopyPosteriorSchema,
-  }),
-  og: z.object({
-    bp_sg_anterieur: BiomicroscopyAnteriorSchema,
-    bp_sg_posterieur: BiomicroscopyPosteriorSchema,
-  }),
-  // Conclusion
-  conclusion: ConclusionSchema,
-});
-
-export type AdultExamFormValues = z.infer<typeof adultExamSchema>;
-
-export type Section =
-  | 'technical'
-  | 'clinical'
-  | 'analytics'
-  | 'conclusion'
-  | 'experience';
-
-export type TechnicalSubsection =
-  | 'acuity'
-  | 'refraction'
-  | 'tension'
-  | 'pachymetry';
-
-export type ClinicalSubsection =
-  | 'plaintes'
-  | 'biomicroscopy'
-  | 'perimetry'
-  | 'attachments';
 
 export interface SectionStatus {
   technical: {

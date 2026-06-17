@@ -17,7 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
-import { type ClinicalExamFormValues, DIPLOPIE_TYPES, EYE_OPTIONS, EYE_SYMPTOMS } from '@/features/exams/types/schemas';
+import {
+  type ClinicalExamFormValues,
+  DIPLOPIE_TYPES,
+  EYE_LABELS,
+  EYE_OPTIONS,
+  EYE_SYMPTOMS,
+} from '@/features/exams/types/schemas';
 
 // Labels pour les symptômes
 const SYMPTOM_LABELS: Record<(typeof EYE_SYMPTOMS)[number], string> = {
@@ -33,12 +39,6 @@ const SYMPTOM_LABELS: Record<(typeof EYE_SYMPTOMS)[number], string> = {
   LARMOIEMENT: 'Larmoiement',
   SECRETIONS: 'Sécrétions',
   AUTRES: 'Autres',
-};
-
-const EYE_LABELS: Record<(typeof EYE_OPTIONS)[number], string> = {
-  od: 'OD (Droit)',
-  og: 'OG (Gauche)',
-  odg: 'ODG (Les deux)',
 };
 
 interface PlaintesSectionProps {
@@ -76,8 +76,7 @@ export function PlaintesSection({
         render={() => (
           <FormItem>
             <FormLabel>
-              Symptômes oculaires{' '}
-              <span className="text-destructive">*</span>
+              Symptômes oculaires <span className="text-destructive">*</span>
             </FormLabel>
             <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
               {EYE_SYMPTOMS.map((symptom) => (
@@ -123,8 +122,7 @@ export function PlaintesSection({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Précisez le symptôme{' '}
-                <span className="text-destructive">*</span>
+                Précisez le symptôme <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
                 <Input
@@ -167,8 +165,7 @@ export function PlaintesSection({
             render={({ field }) => (
               <FormItem className="ml-6">
                 <FormLabel>
-                  Type de diplopie{' '}
-                  <span className="text-destructive">*</span>
+                  Type de diplopie <span className="text-destructive">*</span>
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -221,8 +218,7 @@ export function PlaintesSection({
             render={({ field }) => (
               <FormItem className="ml-6">
                 <FormLabel>
-                  Type de strabisme{' '}
-                  <span className="text-destructive">*</span>
+                  Type de strabisme <span className="text-destructive">*</span>
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}

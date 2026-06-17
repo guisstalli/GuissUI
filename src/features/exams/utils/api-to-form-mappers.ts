@@ -307,8 +307,6 @@ export const mapConclusionApiToForm = (
     cat: data.cat ?? null,
     traitement: data.traitement ?? null,
     observation: data.observation ?? null,
-    //rv: false,
-    //date_prochain_rendez_vous: null,
     diagnostic_cim_11: data.diagnostic_cim_11 ?? null,
   };
 };

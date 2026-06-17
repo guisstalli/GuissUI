@@ -19,6 +19,7 @@ import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/components/ui/notifications';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
   useDownloadAdultReport,
@@ -49,17 +50,22 @@ import { AdultExamFinalizeDialog } from '@/features/exams/components/adult-exam-
 import { AdultExamSidebar } from '@/features/exams/components/adult-exam-sidebar';
 import { AdultExamTechnicalPanel } from '@/features/exams/components/adult-exam-technical-panel';
 import {
-  adultExamSchema,
   type AdultExamAttachment,
   type AdultExamForm,
-  type AdultExamFormValues,
   type AdultExamPatient,
+  type SectionStatus,
+} from '@/features/exams/components/adult-exam-types';
+import {
+  OrdonnanceFormDialog,
+  type PrescriptionData,
+} from '@/features/exams/components/ordonnance-form-dialog';
+import {
+  adultExamSchema,
+  type AdultExamFormValues,
   type ClinicalSubsection,
   type Section,
-  type SectionStatus,
   type TechnicalSubsection,
-} from '@/features/exams/components/adult-exam-types';
-import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
+} from '@/features/exams/types/adult-exam';
 import {
   defaultBiomicroscopyAnterior,
   defaultBiomicroscopyPosterior,
@@ -75,6 +81,7 @@ import {
   mapPerimetryApiToForm,
   mapConclusionApiToForm,
 } from '@/features/exams/utils/api-to-form-mappers';
+import { hasFilledConclusion } from '@/features/exams/utils/conclusion-status';
 import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
@@ -138,7 +145,6 @@ export default function AdultExamPage() {
     data: examData,
     isLoading: isLoadingExam,
     isError: isErrorExam,
-    refetch: refetchExam,
   } = useAdultExam({
     id: numericExamId,
     enabled: !isNewExam && numericExamId > 0,
@@ -187,9 +193,13 @@ export default function AdultExamPage() {
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
-    } catch (error) {
-      console.error('Erreur lors du téléchargement:', error);
-      // Optionnel: ajouter une notification d'erreur si disponible
+    } catch {
+      useNotifications.getState().addNotification({
+        type: 'error',
+        title: 'Téléchargement impossible',
+        message:
+          'Impossible de télécharger le fichier joint. Veuillez réessayer.',
+      });
     } finally {
       setDownloadingId(null);
     }
@@ -298,8 +308,6 @@ export default function AdultExamPage() {
         cat: null,
         traitement: null,
         observation: null,
-        //rv: false,
-        //date_prochain_rendez_vous: null,
         diagnostic_cim_11: [],
       },
     },
@@ -326,7 +334,7 @@ export default function AdultExamPage() {
           perimetry: hasClinical,
           attachments: (attachmentsData?.length ?? 0) > 0,
         },
-        conclusion: hasClinical,
+        conclusion: hasFilledConclusion(examData.clinical_examen?.conclusion),
       });
 
       // Charger les données techniques
@@ -398,7 +406,8 @@ export default function AdultExamPage() {
       { id: numericExamId, data: apiData },
       {
         onSuccess: () => {
-          refetchExam();
+          // The mutation already invalidates the exam detail query
+          // (['exams', 'adult', id]); no manual refetch needed.
           setSectionStatus((prev) => ({
             ...prev,
             technical: {
@@ -411,7 +420,7 @@ export default function AdultExamPage() {
         },
       },
     );
-  }, [addTechnical, form, numericExamId, refetchExam]);
+  }, [addTechnical, form, numericExamId]);
 
   const handleSaveClinical = useCallback(() => {
     const data = {
@@ -429,7 +438,8 @@ export default function AdultExamPage() {
       { id: numericExamId, data: apiData },
       {
         onSuccess: () => {
-          refetchExam();
+          // The mutation already invalidates the exam detail query
+          // (['exams', 'adult', id]); no manual refetch needed.
           setSectionStatus((prev) => ({
             ...prev,
             clinical: {
@@ -443,7 +453,7 @@ export default function AdultExamPage() {
         },
       },
     );
-  }, [addClinical, form, numericExamId, refetchExam]);
+  }, [addClinical, form, numericExamId]);
 
   const handleSaveSection = useCallback(
     (section: Section) => {
@@ -805,9 +815,8 @@ function AdultExamContent(props: AdultExamContentProps) {
             open={medicamentDialogOpen}
             onClose={() => setMedicamentDialogOpen(false)}
             initialData={
-              (medicamentOrdonnance?.prescription_data as Parameters<
-                typeof OrdonnanceFormDialog
-              >[0]['initialData']) ?? null
+              (medicamentOrdonnance?.prescription_data as PrescriptionData) ??
+              null
             }
           />
           <OrdonnanceFormDialog
@@ -817,9 +826,7 @@ function AdultExamContent(props: AdultExamContentProps) {
             open={optiqueDialogOpen}
             onClose={() => setOptiqueDialogOpen(false)}
             initialData={
-              (optiqueOrdonnance?.prescription_data as Parameters<
-                typeof OrdonnanceFormDialog
-              >[0]['initialData']) ?? null
+              (optiqueOrdonnance?.prescription_data as PrescriptionData) ?? null
             }
           />
 

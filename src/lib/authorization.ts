@@ -175,6 +175,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
 
   // STAFF : accès complet, gestion admin incluse
+  // (analytics volontairement exclu — réservé à DOCTEUR / SUPERUSER)
   STAFF: [
     'patients:view',
     'patients:create',

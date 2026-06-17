@@ -1242,7 +1242,7 @@ export type PaginatedExamenSupplementaireList = z.infer<
   typeof PaginatedExamenSupplementaireListSchema
 >;
 
-export const EYE_LABELS: Record<string, string> = {
+export const EYE_LABELS: Record<(typeof EYE_OPTIONS)[number], string> = {
   od: 'Œil Droit (OD)',
   og: 'Œil Gauche (OG)',
   odg: 'Les deux yeux (ODG)',

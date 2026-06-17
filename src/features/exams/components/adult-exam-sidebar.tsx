@@ -12,13 +12,10 @@ import type { LucideIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { Section } from '@/features/exams/types/adult-exam';
 import { cn } from '@/lib/utils';
 
-import type {
-  AdultExamPatient,
-  Section,
-  SectionStatus,
-} from './adult-exam-types';
+import type { AdultExamPatient, SectionStatus } from './adult-exam-types';
 
 interface AdultExamSidebarSection {
   id: Section;
@@ -221,7 +218,10 @@ export function AdultExamSidebar({
             onClick={() => downloadReport(Number(examId))}
           >
             {isDownloadingReport ? (
-              <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader2
+                className="mr-2 size-4 animate-spin"
+                aria-hidden="true"
+              />
             ) : (
               <Download className="mr-2 size-4" aria-hidden="true" />
             )}
@@ -235,7 +235,10 @@ export function AdultExamSidebar({
             onClick={() => downloadConclusion(Number(examId))}
           >
             {isDownloadingConclusion ? (
-              <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader2
+                className="mr-2 size-4 animate-spin"
+                aria-hidden="true"
+              />
             ) : (
               <FileText className="mr-2 size-4" aria-hidden="true" />
             )}
