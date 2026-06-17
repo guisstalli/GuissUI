@@ -256,7 +256,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sites:view',
   ],
 
-  // DATA_ENTRY : accès complet dépistage + analytics, pas de billing/RDV/sites/admin
+  // DATA_ENTRY : accès complet dépistage, pas d'analytics/billing/RDV/sites/admin
+  // (analytics gaté — module non prêt pour ce rôle)
   DATA_ENTRY: [
     'patients:view',
     'patients:create',

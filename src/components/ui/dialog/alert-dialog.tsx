@@ -3,15 +3,18 @@
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import * as React from 'react';
 
+import { useBodyPointerEventsCleanup } from '@/hooks/use-dialog-cleanup';
 import { cn } from '@/lib/utils';
+
+type AlertDialogProps = React.ComponentPropsWithoutRef<
+  typeof AlertDialogPrimitive.Root
+>;
 
 /**
  * Custom AlertDialog Root with cleanup logic to prevent "frozen page" issues
  * when used in combination with DropdownMenu or other Radix components
  */
-const AlertDialog: React.FC<
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>
-> = ({ onOpenChange, ...props }) => {
+function AlertDialog({ onOpenChange, ...props }: AlertDialogProps) {
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
       onOpenChange?.(open);
@@ -30,7 +33,7 @@ const AlertDialog: React.FC<
   return (
     <AlertDialogPrimitive.Root {...props} onOpenChange={handleOpenChange} />
   );
-};
+}
 AlertDialog.displayName = 'AlertDialog';
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
@@ -52,19 +55,23 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
-    <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-xl sm:rounded-lg dark:border-slate-700 dark:bg-slate-900',
-        className,
-      )}
-      {...props}
-    />
-  </AlertDialogPortal>
-));
+>(({ className, ...props }, ref) => {
+  useBodyPointerEventsCleanup();
+
+  return (
+    <AlertDialogPortal>
+      <AlertDialogOverlay />
+      <AlertDialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-xl sm:rounded-lg dark:border-slate-700 dark:bg-slate-900',
+          className,
+        )}
+        {...props}
+      />
+    </AlertDialogPortal>
+  );
+});
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 const AlertDialogHeader = ({

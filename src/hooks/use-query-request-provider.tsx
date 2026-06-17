@@ -7,7 +7,7 @@ import {
   initialQueryRequest,
   QueryRequestContextProps,
   QueryState,
-} from '@/types';
+} from '@/types/api';
 import { WithChildren } from '@/utils/react18-migration-helpers';
 
 const QueryRequestContext =

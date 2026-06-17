@@ -24,12 +24,17 @@ export function PublicFooter() {
               </div>
             </div>
             <p className="mb-5 max-w-xs text-sm leading-relaxed text-slate-400">
-              Service de dépistage ophtalmologique de l&apos;Université Iba Der
-              Thiam. Des consultations accessibles à tous, gratuitement.
+              Service de dépistage ophtalmologique du le centre vision Madoune
+              Robert Ndiaye - UFR Santé Université Iba Der Thiam de Thies.
+              <br />
+              Des consultations accessibles à tous, gratuitement.
             </p>
             <div className="flex items-start gap-2 text-sm text-slate-500">
               <MapPin className="mt-0.5 size-3.5 shrink-0 text-cyan-400/50" />
-              <span>Université Iba Der Thiam · Thiès, Sénégal</span>
+              <span>
+                centre vision Madoune Robert Ndiaye - UFR Santé Université Iba
+                Der Thiam de Thies · Thiès, Sénégal
+              </span>
             </div>
           </div>
 
@@ -42,7 +47,6 @@ export function PublicFooter() {
               {[
                 { href: '/evenements', label: 'Événements de dépistage' },
                 { href: '/rendez-vous', label: 'Prendre un rendez-vous' },
-                { href: '/auth/login', label: 'Espace professionnel' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -62,8 +66,10 @@ export function PublicFooter() {
               À propos
             </h3>
             <p className="mb-4 text-sm leading-relaxed text-slate-400">
-              Initiative portée par le service d&apos;ophtalmologie de
-              l&apos;UIDT dans le cadre du programme national de santé visuelle.
+              Initiative portée par le service de dépistage ophtalmologique du
+              le centre vision Madoune Robert Ndiaye - UFR Santé Université Iba
+              Der Thiam de Thies dans le cadre du programme national de santé
+              visuelle.
             </p>
             <p className="text-sm text-slate-500">
               Consultations{' '}
@@ -78,8 +84,8 @@ export function PublicFooter() {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-xs text-slate-600 sm:flex-row">
           <p>
-            © {year} GUISS Ophtalmologie · Kamal Moustoifa · Université Iba Der
-            Thiam
+            © {year} GUISS · Kamal Moussa MOUSTOIFA BEN · Centre vision Madoune
+            Robert Ndiaye - UFR Santé Université Iba Der Thiam de Thies
           </p>
           <div className="flex gap-5">
             <Link
@@ -93,12 +99,6 @@ export function PublicFooter() {
               className="transition-colors hover:text-slate-400"
             >
               Rendez-vous
-            </Link>
-            <Link
-              href="/auth/login"
-              className="transition-colors hover:text-slate-400"
-            >
-              Staff
             </Link>
           </div>
         </div>

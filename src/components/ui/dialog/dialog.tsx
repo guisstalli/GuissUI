@@ -4,15 +4,16 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import * as React from 'react';
 
+import { useBodyPointerEventsCleanup } from '@/hooks/use-dialog-cleanup';
 import { cn } from '@/utils/cn';
+
+type DialogProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>;
 
 /**
  * Custom Dialog Root with cleanup logic to prevent "frozen page" issues
  * when used in combination with DropdownMenu or other Radix components
  */
-const Dialog: React.FC<
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
-> = ({ onOpenChange, ...props }) => {
+function Dialog({ onOpenChange, ...props }: DialogProps) {
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
       onOpenChange?.(open);
@@ -28,7 +29,7 @@ const Dialog: React.FC<
   );
 
   return <DialogPrimitive.Root {...props} onOpenChange={handleOpenChange} />;
-};
+}
 Dialog.displayName = 'Dialog';
 
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -57,27 +58,31 @@ interface DialogContentProps
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, showCloseButton = true, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-xl sm:rounded-lg dark:border-slate-700 dark:bg-slate-900',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-          <Cross2Icon className="size-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+>(({ className, children, showCloseButton = true, ...props }, ref) => {
+  useBodyPointerEventsCleanup();
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-xl sm:rounded-lg dark:border-slate-700 dark:bg-slate-900',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+            <Cross2Icon className="size-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({

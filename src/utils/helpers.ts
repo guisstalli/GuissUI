@@ -1,7 +1,7 @@
 import qs from 'qs';
 import type { Dispatch, SetStateAction } from 'react';
 
-import { ID, QueryState } from '@/types';
+import { ID, QueryState } from '@/types/api';
 
 function isNotEmpty(obj: unknown) {
   return obj !== undefined && obj !== null && obj !== '';
