@@ -11,12 +11,43 @@ export const AGE_BAND_VALUES = ['all', 'child', 'adult', 'over_40'] as const;
 export const EYE_STRATEGY_VALUES = ['separate', 'average', 'worst'] as const;
 export const EXAM_SCOPE_VALUES = ['all', 'first'] as const;
 
+// Critères cliniques de cohorte (un seul à la fois côté backend)
+export const ACUITY_VALUES = ['malvoyance', 'basse_vision', 'moyenne'] as const;
+export const TENSION_VALUES = [
+  'hypertonie_legere',
+  'hypertonie_moderee',
+] as const;
+export const CONCLUSION_VALUES = [
+  'compatible',
+  'incompatible',
+  'a_risque',
+] as const;
+export const SYMPTOM_VALUES = [
+  'BAV',
+  'ROUGEUR',
+  'DOULEUR',
+  'DIPLOPIE',
+  'STRABISME',
+  'NYSTAGMUS',
+  'PTOSIS',
+  'PURIT_OCULAIRE',
+  'LARMOIEMENT',
+  'SECRETIONS',
+  'AUTRES',
+] as const;
+export const COHORT_SEVERITY_VALUES = ['high', 'medium', 'low'] as const;
+
 export const AnalyticsScopeSchema = z.enum(ANALYTICS_SCOPE_VALUES);
 export const ExamTypeSchema = z.enum(EXAM_TYPE_VALUES);
 export const SexSchema = z.enum(SEX_VALUES);
 export const AgeBandSchema = z.enum(AGE_BAND_VALUES);
 export const EyeStrategySchema = z.enum(EYE_STRATEGY_VALUES);
 export const ExamScopeSchema = z.enum(EXAM_SCOPE_VALUES);
+export const AcuityCategorySchema = z.enum(ACUITY_VALUES);
+export const TensionCategorySchema = z.enum(TENSION_VALUES);
+export const ConclusionCategorySchema = z.enum(CONCLUSION_VALUES);
+export const SymptomCodeSchema = z.enum(SYMPTOM_VALUES);
+export const CohortSeveritySchema = z.enum(COHORT_SEVERITY_VALUES);
 
 export const AnalyticsFiltersSchema = z.object({
   date_start: z.string().optional(),
@@ -31,6 +62,13 @@ export const AnalyticsFiltersSchema = z.object({
   eye_strategy: EyeStrategySchema.optional(),
   exam_scope: ExamScopeSchema.optional(),
   driver_only: z.boolean().optional(),
+  // Critères cliniques de cohorte — un seul appliqué à la fois
+  acuity: AcuityCategorySchema.optional(),
+  tension: TensionCategorySchema.optional(),
+  conclusion: ConclusionCategorySchema.optional(),
+  symptom: SymptomCodeSchema.optional(),
+  // Phase 2 — restreint toutes les métriques à la cohorte sélectionnée
+  patient_ids: z.array(z.number()).optional(),
 });
 
 export const AnalyticsOverviewSchema = z.object({
@@ -40,6 +78,8 @@ export const AnalyticsOverviewSchema = z.object({
     examens_total: z.number(),
     age_mean: z.number().nullable(),
     sex_distribution: z.record(z.number()),
+    // Optionnel pour rétro-compatibilité — alimente le donut « Verdicts cliniques »
+    conclusion_distribution: z.record(z.number()).optional(),
   }),
 });
 
@@ -301,4 +341,33 @@ export const AnalyticsDriverExperienceSchema = z.object({
       count: z.number(),
     }),
   ),
+});
+
+// =============================================================================
+// COHORT SCHEMAS (Explorateur de cohortes cliniques)
+// =============================================================================
+
+export const CohortPatientItemSchema = z.object({
+  id: z.number(),
+  full_name: z.string(),
+  sex: z.string(),
+  age: z.number(),
+  is_driver: z.boolean(),
+  last_exam_date: z.string().nullable(),
+});
+
+export const CohortSummarySchema = z.object({
+  count: z.number(),
+  criterion_label: z.string(),
+  severity: CohortSeveritySchema,
+});
+
+export const CohortResponseSchema = z.object({
+  limit: z.number(),
+  offset: z.number(),
+  count: z.number(),
+  next: z.string().nullable(),
+  previous: z.string().nullable(),
+  results: z.array(CohortPatientItemSchema),
+  summary: CohortSummarySchema,
 });

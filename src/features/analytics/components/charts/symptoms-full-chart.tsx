@@ -10,7 +10,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsSymptomsFull } from '../../types/types';
+import type { AnalyticsSymptomsFull, CohortCriterion } from '../../types/types';
 
 const SYMPTOM_LABELS: Record<string, string> = {
   BAV: 'BAV',
@@ -27,11 +27,30 @@ const SYMPTOM_LABELS: Record<string, string> = {
   AUCUN: 'Aucun',
 };
 
+// Codes de symptôme filtrables côté backend (exclut AUCUN)
+const FILTERABLE_SYMPTOMS = new Set([
+  'BAV',
+  'ROUGEUR',
+  'DOULEUR',
+  'DIPLOPIE',
+  'STRABISME',
+  'NYSTAGMUS',
+  'PTOSIS',
+  'PURIT_OCULAIRE',
+  'LARMOIEMENT',
+  'SECRETIONS',
+  'AUTRES',
+]);
+
 type SymptomsFullChartProps = {
   data: AnalyticsSymptomsFull;
+  onSegmentClick?: (criterion: CohortCriterion) => void;
 };
 
-export const SymptomsFullChart = ({ data }: SymptomsFullChartProps) => {
+export const SymptomsFullChart = ({
+  data,
+  onSegmentClick,
+}: SymptomsFullChartProps) => {
   if (!data || data.sample_size === 0) {
     return (
       <Card className="col-span-full">
@@ -51,7 +70,22 @@ export const SymptomsFullChart = ({ data }: SymptomsFullChartProps) => {
     name: SYMPTOM_LABELS[d.symptom] ?? d.symptom,
     count: d.count,
     pct: d.pct,
+    code: d.symptom,
+    label: SYMPTOM_LABELS[d.symptom] ?? d.symptom,
   }));
+
+  const handleBarClick = (entry: {
+    payload?: { code?: string; label?: string };
+  }) => {
+    const code = entry?.payload?.code;
+    if (onSegmentClick && code && FILTERABLE_SYMPTOMS.has(code)) {
+      onSegmentClick({
+        type: 'symptom',
+        value: code,
+        label: `Symptôme : ${entry.payload?.label ?? code}`,
+      });
+    }
+  };
 
   return (
     <Card className="col-span-full">
@@ -100,6 +134,8 @@ export const SymptomsFullChart = ({ data }: SymptomsFullChartProps) => {
                       fill="#3b82f6"
                       radius={[0, 4, 4, 0]}
                       barSize={16}
+                      onClick={onSegmentClick ? handleBarClick : undefined}
+                      cursor={onSegmentClick ? 'pointer' : undefined}
                     />
                   </BarChart>
                 </ResponsiveContainer>

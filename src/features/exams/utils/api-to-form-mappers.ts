@@ -122,7 +122,7 @@ export const mapRefractionApiToForm = (
 ): Refraction | undefined => {
   if (!data) return undefined;
   return {
-    correction: data.correction ?? false,
+    correction: data.correction_prescrite ?? false,
     // Réfraction standard OD
     od_sphere: toNumber(data.od_s),
     od_cylinder: toNumber(data.od_c),
@@ -134,16 +134,19 @@ export const mapRefractionApiToForm = (
     og_axis: toNumber(data.og_a),
     og_visual_acuity: toNumber(data.avog),
     odg_visual_acuity: toNumber(data.avodg),
-    // Champs avec correction
-    od_sphere_avec_correction: toNumber(data.od_s_avec_correction),
-    od_cylinder_avec_correction: toNumber(data.od_c_avec_correction),
-    od_axis_avec_correction: toNumber(data.od_a_avec_correction),
-    og_sphere_avec_correction: toNumber(data.og_s_avec_correction),
-    og_cylinder_avec_correction: toNumber(data.og_c_avec_correction),
-    og_axis_avec_correction: toNumber(data.og_a_avec_correction),
-    od_visual_acuity_avec_correction: toNumber(data.avod_avec_correction),
-    og_visual_acuity_avec_correction: toNumber(data.avog_avec_correction),
-    odg_visual_acuity_avec_correction: toNumber(data.avodg_avec_correction),
+    // Champs avec correction prescrite (vision de loin)
+    od_sphere_avec_correction: toNumber(data.od_s_avec_correction_prescrite),
+    od_cylinder_avec_correction: toNumber(data.od_c_avec_correction_prescrite),
+    od_axis_avec_correction: toNumber(data.od_a_avec_correction_prescrite),
+    og_sphere_avec_correction: toNumber(data.og_s_avec_correction_prescrite),
+    og_cylinder_avec_correction: toNumber(data.og_c_avec_correction_prescrite),
+    og_axis_avec_correction: toNumber(data.og_a_avec_correction_prescrite),
+    od_visual_acuity_avec_correction: toNumber(data.avod_avec_correction_prescrite),
+    og_visual_acuity_avec_correction: toNumber(data.avog_avec_correction_prescrite),
+    odg_visual_acuity_avec_correction: toNumber(data.avodg_avec_correction_prescrite),
+    // Addition (vision de près)
+    addition_od: toNumber(data.addition_od),
+    addition_og: toNumber(data.addition_og),
     // Rétinoscopie OD (Focale H, Focale V, Axe H)
     retino_od_sphere: toNumber(data.retinoscopie_focale_h),
     retino_od_cylinder: toNumber(data.retinoscopie_focale_v),

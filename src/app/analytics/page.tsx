@@ -1,9 +1,13 @@
 'use client';
 
+import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Can } from '@/components/ui/can';
+import { useNotifications } from '@/components/ui/notifications';
 import { useAnalyticsBiomicroscopy } from '@/features/analytics/api/get-analytics-biomicroscopy';
 import { useAnalyticsDriverExperience } from '@/features/analytics/api/get-analytics-driver-experience';
 import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
@@ -28,6 +32,7 @@ import {
   AnalyticsLoadingState,
 } from '@/features/analytics/components/analytics-states';
 import { BiomicroscopySection } from '@/features/analytics/components/charts/biomicroscopy-section';
+import { ConclusionDonutChart } from '@/features/analytics/components/charts/conclusion-donut-chart';
 import { DriverExperienceSection } from '@/features/analytics/components/charts/driver-experience-section';
 import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
 import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
@@ -42,11 +47,15 @@ import { SymptomsGroupedBar } from '@/features/analytics/components/charts/sympt
 import { TimelineChart } from '@/features/analytics/components/charts/timeline-chart';
 import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
 import { VisualFieldSection } from '@/features/analytics/components/charts/visual-field-section';
+import { CohortSheet } from '@/features/analytics/components/cohort/cohort-sheet';
 import {
   DEFAULT_ANALYTICS_FILTERS,
   type AnalyticsFilters,
+  type CohortCriterion,
 } from '@/features/analytics/types/types';
 import { useSites } from '@/features/sites/api/get-sites';
+
+const MAX_COHORT_PATIENTS = 200;
 
 export default function AnalyticsPage() {
   const [draftFilters, setDraftFilters] = useState<AnalyticsFilters>(
@@ -55,6 +64,10 @@ export default function AnalyticsPage() {
   const [appliedFilters, setAppliedFilters] = useState<AnalyticsFilters>(
     DEFAULT_ANALYTICS_FILTERS,
   );
+  const [cohortCriterion, setCohortCriterion] =
+    useState<CohortCriterion | null>(null);
+
+  const { addNotification } = useNotifications();
 
   const { data: sitesData } = useSites({ params: { limit: 200 } });
   const siteOptions = useMemo(
@@ -119,6 +132,25 @@ export default function AnalyticsPage() {
     setAppliedFilters(DEFAULT_ANALYTICS_FILTERS);
   };
 
+  const handleAnalyzeCohort = (ids: number[]) => {
+    let selectedIds = ids;
+    if (ids.length > MAX_COHORT_PATIENTS) {
+      selectedIds = ids.slice(0, MAX_COHORT_PATIENTS);
+      addNotification({
+        type: 'warning',
+        title: 'Cohorte tronquée',
+        message: `La sélection a été limitée aux ${MAX_COHORT_PATIENTS} premiers patients.`,
+      });
+    }
+    setAppliedFilters((prev) => ({ ...prev, patient_ids: selectedIds }));
+    setCohortCriterion(null);
+  };
+
+  const resetCohortScope = () =>
+    setAppliedFilters((prev) => ({ ...prev, patient_ids: undefined }));
+
+  const cohortPatientCount = appliedFilters.patient_ids?.length ?? 0;
+
   const isEmpty =
     !!reqOverview.data &&
     reqOverview.data.population.patients_total === 0 &&
@@ -141,6 +173,22 @@ export default function AnalyticsPage() {
           onApply={onApplyFilters}
           onReset={onResetFilters}
         />
+
+        {cohortPatientCount > 0 && (
+          <div className="bg-primary/5 border-primary/30 mb-6 flex items-center justify-between gap-3 rounded-lg border px-4 py-3 duration-300 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Badge variant="default">Cohorte</Badge>
+              <span className="text-sm text-foreground">
+                Analyse restreinte à {cohortPatientCount} patient(s)
+                sélectionné(s)
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={resetCohortScope}>
+              <X className="size-4" />
+              Réinitialiser la cohorte
+            </Button>
+          </div>
+        )}
 
         {isLoading ? (
           <AnalyticsLoadingState />
@@ -168,9 +216,17 @@ export default function AnalyticsPage() {
                 )}
 
                 <div className="grid min-h-[300px] flex-1 gap-6 md:grid-cols-2">
-                  {reqVA.data && <VisualAcuityBarChart data={reqVA.data} />}
+                  {reqVA.data && (
+                    <VisualAcuityBarChart
+                      data={reqVA.data}
+                      onSegmentClick={setCohortCriterion}
+                    />
+                  )}
                   {reqTension.data && (
-                    <OcularTensionBarChart data={reqTension.data} />
+                    <OcularTensionBarChart
+                      data={reqTension.data}
+                      onSegmentClick={setCohortCriterion}
+                    />
                   )}
                 </div>
 
@@ -187,6 +243,14 @@ export default function AnalyticsPage() {
                   <div className="min-h-[300px]">
                     <OverviewDonutChart
                       data={reqOverview.data.population.sex_distribution}
+                    />
+                  </div>
+                )}
+                {reqOverview.data?.population.conclusion_distribution && (
+                  <div className="min-h-[300px]">
+                    <ConclusionDonutChart
+                      data={reqOverview.data.population.conclusion_distribution}
+                      onSegmentClick={setCohortCriterion}
                     />
                   </div>
                 )}
@@ -218,7 +282,10 @@ export default function AnalyticsPage() {
             {/* Nouvelles sections analytiques */}
             <div className="grid grid-cols-1 gap-6">
               {reqSymptomsFull.data && (
-                <SymptomsFullChart data={reqSymptomsFull.data} />
+                <SymptomsFullChart
+                  data={reqSymptomsFull.data}
+                  onSegmentClick={setCohortCriterion}
+                />
               )}
               {reqRiskFactors.data && (
                 <RiskFactorsSection data={reqRiskFactors.data} />
@@ -238,6 +305,13 @@ export default function AnalyticsPage() {
             </div>
           </div>
         )}
+
+        <CohortSheet
+          criterion={cohortCriterion}
+          appliedFilters={appliedFilters}
+          onClose={() => setCohortCriterion(null)}
+          onAnalyze={handleAnalyzeCohort}
+        />
       </Shell>
     </Can>
   );

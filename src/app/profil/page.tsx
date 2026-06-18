@@ -20,9 +20,16 @@ import { ChangeEmailForm } from '@/features/users/components/change-email-form';
 import { ChangePasswordForm } from '@/features/users/components/change-password-form';
 import { ProfileHeader } from '@/features/users/components/profile-header';
 import { ProfileInfoForm } from '@/features/users/components/profile-info-form';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 
 export default function ProfilPage() {
   const { data: user, isLoading, isError } = useGetMe();
+  const [activeTab, setActiveTab] = usePersistentTabState({
+    paramKey: 'tab',
+    storageKey: 'guiss.tab.profil',
+    defaultValue: 'informations',
+    allowed: ['informations', 'securite'],
+  });
 
   if (isLoading) {
     return (
@@ -56,7 +63,7 @@ export default function ProfilPage() {
       <div className="space-y-6">
         <ProfileHeader user={user} />
 
-        <Tabs defaultValue="informations">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="informations">Informations</TabsTrigger>
             <TabsTrigger value="securite">Sécurité</TabsTrigger>

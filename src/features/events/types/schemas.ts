@@ -39,8 +39,8 @@ export const InscriptionPubliqueInputSchema = z.object({
   nom: z.string().min(1, 'Nom requis'),
   prenom: z.string().min(1, 'Prénom requis'),
   phone_number: optionalPhoneSchema,
-  date_de_naissance: z.string().optional().nullable(),
-  sex: z.enum(['H', 'F', 'A']).optional().nullable(),
+  date_de_naissance: z.string().min(1, 'Date de naissance requise'),
+  sex: z.enum(['H', 'F', 'A'], { message: 'Sexe requis' }),
 });
 
 export type InscriptionPubliqueInput = z.infer<

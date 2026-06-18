@@ -10,13 +10,20 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsOcularTension } from '../../types/types';
+import type {
+  AnalyticsOcularTension,
+  CohortCriterion,
+} from '../../types/types';
 
 type OcularTensionBarChartProps = {
   data: AnalyticsOcularTension;
+  onSegmentClick?: (criterion: CohortCriterion) => void;
 };
 
-export const OcularTensionBarChart = ({ data }: OcularTensionBarChartProps) => {
+export const OcularTensionBarChart = ({
+  data,
+  onSegmentClick,
+}: OcularTensionBarChartProps) => {
   if (!data || !data.kpis || data.kpis.sample_size === 0) {
     return (
       <Card className="h-full">
@@ -34,7 +41,12 @@ export const OcularTensionBarChart = ({ data }: OcularTensionBarChartProps) => {
 
   const { kpis } = data;
 
-  const chartData = [
+  const chartData: Array<{
+    name: string;
+    value: number;
+    fill: string;
+    criterion?: CohortCriterion;
+  }> = [
     {
       name: 'Normale (<21)',
       value: 100 - kpis.pct_to_above_21,
@@ -44,9 +56,32 @@ export const OcularTensionBarChart = ({ data }: OcularTensionBarChartProps) => {
       name: 'Élevée (>21)',
       value: kpis.pct_to_above_21 - kpis.pct_to_above_25,
       fill: '#f59e0b',
+      criterion: {
+        type: 'tension',
+        value: 'hypertonie_legere',
+        label: 'Tension oculaire > 21 mmHg (Hypertonie légère)',
+      },
     }, // amber
-    { name: 'Très élevée (>25)', value: kpis.pct_to_above_25, fill: '#ef4444' }, // red
+    {
+      name: 'Très élevée (>25)',
+      value: kpis.pct_to_above_25,
+      fill: '#ef4444',
+      criterion: {
+        type: 'tension',
+        value: 'hypertonie_moderee',
+        label: 'Tension oculaire > 25 mmHg (Hypertonie modérée)',
+      },
+    }, // red
   ];
+
+  const handleBarClick = (entry: {
+    payload?: { criterion?: CohortCriterion };
+  }) => {
+    const criterion = entry?.payload?.criterion;
+    if (onSegmentClick && criterion) {
+      onSegmentClick(criterion);
+    }
+  };
 
   return (
     <Card className="h-full">
@@ -85,7 +120,13 @@ export const OcularTensionBarChart = ({ data }: OcularTensionBarChartProps) => {
                 ]}
                 contentStyle={{ borderRadius: '8px' }}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40} />
+              <Bar
+                dataKey="value"
+                radius={[4, 4, 0, 0]}
+                barSize={40}
+                onClick={onSegmentClick ? handleBarClick : undefined}
+                cursor={onSegmentClick ? 'pointer' : undefined}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

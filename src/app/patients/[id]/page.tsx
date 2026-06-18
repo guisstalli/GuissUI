@@ -56,6 +56,7 @@ import { usePatchPatient } from '@/features/patients/api/update-patient';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { SiteSelector } from '@/features/sites/components/site-selector';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { optionalPhoneSchema } from '@/utils/phone';
 
 const editPatientSchema = z.object({
@@ -73,6 +74,13 @@ export default function PatientDetailPage() {
   const searchParams = useSearchParams();
 
   const patientId = Number(params.id);
+
+  const [activeTab, setActiveTab] = usePersistentTabState({
+    paramKey: 'tab',
+    storageKey: `guiss.tab.patient.${patientId}`,
+    defaultValue: 'information',
+    allowed: ['information', 'medical-history', 'exams'],
+  });
 
   const {
     data: patient,
@@ -251,7 +259,7 @@ export default function PatientDetailPage() {
       </div>
 
       {/* Patient Tabs - 3 tabs now */}
-      <Tabs defaultValue="information" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start border-b border-border bg-transparent p-0">
           <TabsTrigger
             value="information"

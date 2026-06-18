@@ -10,6 +10,7 @@ import { ExamensAdditionelsSection } from '@/features/exams/components/forms/exa
 import { PerimetryForm } from '@/features/exams/components/forms/perimetry-form';
 import { PlaintesForm } from '@/features/exams/components/forms/plaintes-form';
 import type { ClinicalSubsection } from '@/features/exams/types/adult-exam';
+import { usePersistentLocalTabState } from '@/hooks/use-persistent-tab-state';
 
 import type { SectionStatus } from './adult-exam-types';
 import { ExamAttachmentsSection } from './exam-attachments-section';
@@ -34,6 +35,24 @@ export function AdultExamClinicalPanel({
   clinicalExamId,
   onUploaded,
 }: AdultExamClinicalPanelProps) {
+  // Persistance des onglets biomicroscopie (localStorage seul, scopé à l'examen).
+  const biomicroScope = `guiss.tab.exam.adult.${clinicalExamId ?? 'x'}.biomicro`;
+  const [biomicroEye, setBiomicroEye] = usePersistentLocalTabState({
+    storageKey: `${biomicroScope}.eye`,
+    defaultValue: 'od',
+    allowed: ['od', 'og'],
+  });
+  const [odSegment, setOdSegment] = usePersistentLocalTabState({
+    storageKey: `${biomicroScope}.od.seg`,
+    defaultValue: 'anterior',
+    allowed: ['anterior', 'posterior'],
+  });
+  const [ogSegment, setOgSegment] = usePersistentLocalTabState({
+    storageKey: `${biomicroScope}.og.seg`,
+    defaultValue: 'anterior',
+    allowed: ['anterior', 'posterior'],
+  });
+
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border p-4">
@@ -107,14 +126,18 @@ export function AdultExamClinicalPanel({
 
         <TabsContent value="biomicroscopy" className="space-y-8 p-6">
           {/* Biomicroscopy with Eye Tabs */}
-          <Tabs defaultValue="od" className="w-full">
+          <Tabs
+            value={biomicroEye}
+            onValueChange={setBiomicroEye}
+            className="w-full"
+          >
             <TabsList className="mb-4 grid w-full grid-cols-2">
               <TabsTrigger value="od">OD (Oeil Droit)</TabsTrigger>
               <TabsTrigger value="og">OG (Oeil Gauche)</TabsTrigger>
             </TabsList>
 
             <TabsContent value="od" className="space-y-6">
-              <Tabs defaultValue="anterior">
+              <Tabs value={odSegment} onValueChange={setOdSegment}>
                 <TabsList>
                   <TabsTrigger value="anterior">Segment Antérieur</TabsTrigger>
                   <TabsTrigger value="posterior">
@@ -137,7 +160,7 @@ export function AdultExamClinicalPanel({
             </TabsContent>
 
             <TabsContent value="og" className="space-y-6">
-              <Tabs defaultValue="anterior">
+              <Tabs value={ogSegment} onValueChange={setOgSegment}>
                 <TabsList>
                   <TabsTrigger value="anterior">Segment Antérieur</TabsTrigger>
                   <TabsTrigger value="posterior">

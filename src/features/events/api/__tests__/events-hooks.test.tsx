@@ -74,6 +74,8 @@ function RegisterComponent({
           nom: 'Diop',
           prenom: 'Fatou',
           phone_number: '+221771112233',
+          sex: 'F',
+          date_de_naissance: '2000-01-01',
         })
       }
       disabled={isPending}

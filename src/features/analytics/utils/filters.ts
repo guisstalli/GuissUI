@@ -20,6 +20,10 @@ export const normalizeAnalyticsFilters = (
     (siteId) => typeof siteId === 'number' && !Number.isNaN(siteId),
   );
 
+  const normalizedPatientIds = filters.patient_ids?.filter(
+    (patientId) => typeof patientId === 'number' && !Number.isNaN(patientId),
+  );
+
   const normalized: AnalyticsFilters = {
     date_start: filters.date_start || undefined,
     date_end: filters.date_end || undefined,
@@ -33,6 +37,13 @@ export const normalizeAnalyticsFilters = (
     eye_strategy: filters.eye_strategy ?? 'separate',
     exam_scope: filters.exam_scope ?? 'all',
     driver_only: filters.driver_only,
+    acuity: filters.acuity,
+    tension: filters.tension,
+    conclusion: filters.conclusion,
+    symptom: filters.symptom,
+    patient_ids: normalizedPatientIds?.length
+      ? normalizedPatientIds
+      : undefined,
   };
 
   if (normalized.analytics_scope !== 'patient') {

@@ -13,6 +13,7 @@ import type { TechnicalSubsection } from '@/features/exams/types/adult-exam';
 import type { SectionStatus } from './adult-exam-types';
 
 interface AdultExamTechnicalPanelProps {
+  examId: string;
   technicalSubsection: TechnicalSubsection;
   setTechnicalSubsection: (s: TechnicalSubsection) => void;
   sectionStatus: SectionStatus;
@@ -21,6 +22,7 @@ interface AdultExamTechnicalPanelProps {
 }
 
 export function AdultExamTechnicalPanel({
+  examId,
   technicalSubsection,
   setTechnicalSubsection,
   sectionStatus,
@@ -98,7 +100,7 @@ export function AdultExamTechnicalPanel({
         </TabsContent>
 
         <TabsContent value="refraction" className="p-6">
-          <RefractionForm namePrefix="refraction" />
+          <RefractionForm namePrefix="refraction" scope={examId} />
           <div className="mt-6 flex justify-end border-t border-border pt-4">
             <Button
               type="button"

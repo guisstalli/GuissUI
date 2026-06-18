@@ -4,11 +4,15 @@ import { type UseFormReturn } from 'react-hook-form';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { ClinicalExamFormValues } from '@/features/exams/types/schemas';
+import { usePersistentLocalTabState } from '@/hooks/use-persistent-tab-state';
 
 import { BiomicroscopyEyePanel } from './clinical-biomicroscopy-eye-panel';
 
 interface BiomicroscopySectionProps {
   form: UseFormReturn<ClinicalExamFormValues>;
+  /** Scope localStorage namespacé à l'examen (ex. l'examId). Évite de coupler
+   *  ce composant partagé à la structure de l'URL. */
+  scope?: string;
   odSegmentAnterior: string | undefined;
   odCornee: string | null | undefined;
   odTransparence: string | null | undefined;
@@ -23,6 +27,7 @@ interface BiomicroscopySectionProps {
 
 export function BiomicroscopySection({
   form,
+  scope,
   odSegmentAnterior,
   odCornee,
   odTransparence,
@@ -34,6 +39,12 @@ export function BiomicroscopySection({
   ogIris,
   ogSegmentPosterior,
 }: BiomicroscopySectionProps) {
+  const [biomicroEye, setBiomicroEye] = usePersistentLocalTabState({
+    storageKey: `guiss.tab.biomicro-section.${scope ?? 'x'}.eye`,
+    defaultValue: 'od',
+    allowed: ['od', 'og'],
+  });
+
   return (
     <section className="space-y-4">
       <div className="border-b border-border pb-2">
@@ -45,7 +56,11 @@ export function BiomicroscopySection({
         </p>
       </div>
 
-      <Tabs defaultValue="od" className="w-full">
+      <Tabs
+        value={biomicroEye}
+        onValueChange={setBiomicroEye}
+        className="w-full"
+      >
         <TabsList className="mb-4">
           <TabsTrigger value="od">OD (Œil droit)</TabsTrigger>
           <TabsTrigger value="og">OG (Œil gauche)</TabsTrigger>

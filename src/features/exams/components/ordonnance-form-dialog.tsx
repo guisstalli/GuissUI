@@ -100,7 +100,6 @@ const CorrectionOeilSchema = z.object({
   sphere: z.coerce.number().nullable().optional(),
   cylindre: z.coerce.number().nullable().optional(),
   axe: AxeSchema,
-  add: z.coerce.number().nullable().optional(),
 });
 
 // Quand l'utilisateur ne prescrit pas de correction (type Médicamenteuse ou
@@ -108,6 +107,9 @@ const CorrectionOeilSchema = z.object({
 // les valeurs pré-remplies depuis la réfraction objective sont conservées
 // dans l'état du form mais ignorées par Zod. Validation conditionnelle via
 // superRefine (cf. ci-dessous).
+//
+// Forme simplifiée : OD/OG = réfraction avec correction prescrite (vision de
+// loin), addition_od/og = vision de près, dp = distance pupillaire unique.
 const OrdonnanceFormSchema = z
   .object({
     type_ordonnance: z
@@ -118,18 +120,11 @@ const OrdonnanceFormSchema = z
     prochain_rdv: z.string().optional().default(''),
     od: z.any().optional(),
     og: z.any().optional(),
-    dp_od: z.coerce.number().nullable().optional(),
-    dp_og: z.coerce.number().nullable().optional(),
-    // Vision de près (presbytie) — optionnelle
-    vision_pres_prescrit: z.boolean().default(false),
-    od_pres: z.any().optional(),
-    og_pres: z.any().optional(),
-    dp_pres_od: z.coerce.number().nullable().optional(),
-    dp_pres_og: z.coerce.number().nullable().optional(),
-    type_correction: z
-      .enum(['VL', 'VP', 'Progressive', ''])
-      .nullable()
-      .optional(),
+    // Vision de près = addition
+    addition_od: z.coerce.number().nullable().optional(),
+    addition_og: z.coerce.number().nullable().optional(),
+    // Distance pupillaire unique (en bas)
+    dp: z.coerce.number().nullable().optional(),
     medicaments: z.array(MedicamentSchema).default([]),
   })
   .superRefine((data, ctx) => {
@@ -140,16 +135,6 @@ const OrdonnanceFormSchema = z
       if (!parsed.success) {
         for (const issue of parsed.error.issues) {
           ctx.addIssue({ ...issue, path: [side, ...issue.path] });
-        }
-      }
-    }
-    if (data.vision_pres_prescrit) {
-      for (const side of ['od_pres', 'og_pres'] as const) {
-        const parsed = CorrectionOeilSchema.safeParse(data[side]);
-        if (!parsed.success) {
-          for (const issue of parsed.error.issues) {
-            ctx.addIssue({ ...issue, path: [side, ...issue.path] });
-          }
         }
       }
     }
@@ -164,36 +149,22 @@ type OrdonnanceFormValues = z.infer<typeof OrdonnanceFormSchema>;
 export interface PrescriptionData {
   correction_optique?: {
     prescrit?: boolean;
+    // Vision de loin = réfraction avec correction prescrite
     od?: {
       sphere?: number | null;
       cylindre?: number | null;
       axe?: number | null;
-      add?: number | null;
     };
     og?: {
       sphere?: number | null;
       cylindre?: number | null;
       axe?: number | null;
-      add?: number | null;
     };
-    dp_od?: number | null;
-    dp_og?: number | null;
-    type?: string | null;
-    vision_pres_prescrit?: boolean;
-    od_pres?: {
-      sphere?: number | null;
-      cylindre?: number | null;
-      axe?: number | null;
-      add?: number | null;
-    };
-    og_pres?: {
-      sphere?: number | null;
-      cylindre?: number | null;
-      axe?: number | null;
-      add?: number | null;
-    };
-    dp_pres_od?: number | null;
-    dp_pres_og?: number | null;
+    // Vision de près = addition
+    addition_od?: number | null;
+    addition_og?: number | null;
+    // Distance pupillaire unique
+    dp?: number | null;
   } | null;
   medicaments?: Array<{
     medicament_id?: number | null;
@@ -244,44 +215,22 @@ function buildPrescriptionData(
       correction_optique: values.correction_prescrit
         ? {
             prescrit: true,
+            // Vision de loin = réfraction avec correction prescrite
             od: {
               sphere: values.od?.sphere ?? null,
               cylindre: values.od?.cylindre ?? null,
               axe: values.od?.axe ?? null,
-              add: values.od?.add ?? null,
             },
             og: {
               sphere: values.og?.sphere ?? null,
               cylindre: values.og?.cylindre ?? null,
               axe: values.og?.axe ?? null,
-              add: values.og?.add ?? null,
             },
-            dp_od: values.dp_od ?? null,
-            dp_og: values.dp_og ?? null,
-            type: values.type_correction || null,
-            vision_pres_prescrit: values.vision_pres_prescrit ?? false,
-            od_pres: values.vision_pres_prescrit
-              ? {
-                  sphere: values.od_pres?.sphere ?? null,
-                  cylindre: values.od_pres?.cylindre ?? null,
-                  axe: values.od_pres?.axe ?? null,
-                  add: values.od_pres?.add ?? null,
-                }
-              : undefined,
-            og_pres: values.vision_pres_prescrit
-              ? {
-                  sphere: values.og_pres?.sphere ?? null,
-                  cylindre: values.og_pres?.cylindre ?? null,
-                  axe: values.og_pres?.axe ?? null,
-                  add: values.og_pres?.add ?? null,
-                }
-              : undefined,
-            dp_pres_od: values.vision_pres_prescrit
-              ? (values.dp_pres_od ?? null)
-              : null,
-            dp_pres_og: values.vision_pres_prescrit
-              ? (values.dp_pres_og ?? null)
-              : null,
+            // Vision de près = addition
+            addition_od: values.addition_od ?? null,
+            addition_og: values.addition_og ?? null,
+            // Distance pupillaire unique
+            dp: values.dp ?? null,
           }
         : { prescrit: false },
       // ``notes_generales`` est utilisée comme « Options » sur le PDF optique.
@@ -315,7 +264,6 @@ export function OrdonnanceFormDialog({
       return {
         type_ordonnance: lockedType,
         correction_prescrit: mode === 'optique',
-        vision_pres_prescrit: false,
         medicaments: [],
         notes_generales: '',
         prochain_rdv: '',
@@ -329,17 +277,9 @@ export function OrdonnanceFormDialog({
           : (initialData.correction_optique?.prescrit ?? false),
       od: initialData.correction_optique?.od ?? undefined,
       og: initialData.correction_optique?.og ?? undefined,
-      dp_od: initialData.correction_optique?.dp_od ?? undefined,
-      dp_og: initialData.correction_optique?.dp_og ?? undefined,
-      vision_pres_prescrit:
-        initialData.correction_optique?.vision_pres_prescrit ?? false,
-      od_pres: initialData.correction_optique?.od_pres ?? undefined,
-      og_pres: initialData.correction_optique?.og_pres ?? undefined,
-      dp_pres_od: initialData.correction_optique?.dp_pres_od ?? undefined,
-      dp_pres_og: initialData.correction_optique?.dp_pres_og ?? undefined,
-      type_correction:
-        (initialData.correction_optique
-          ?.type as OrdonnanceFormValues['type_correction']) ?? undefined,
+      addition_od: initialData.correction_optique?.addition_od ?? undefined,
+      addition_og: initialData.correction_optique?.addition_og ?? undefined,
+      dp: initialData.correction_optique?.dp ?? undefined,
       medicaments:
         (initialData.medicaments as OrdonnanceFormValues['medicaments']) ?? [],
       notes_generales:
@@ -362,7 +302,6 @@ export function OrdonnanceFormDialog({
   });
 
   const correctionPrescrit = form.watch('correction_prescrit');
-  const visionPresPrescrit = form.watch('vision_pres_prescrit');
 
   // ---------------------------------------------------------------------------
   // Prefill (only on first generation: when no initialData has been saved yet)
@@ -390,16 +329,15 @@ export function OrdonnanceFormDialog({
         sphere: prefillData.od.sphere ?? null,
         cylindre: prefillData.od.cylindre ?? null,
         axe: prefillData.od.axe ?? null,
-        add: null,
       },
       og: {
         sphere: prefillData.og.sphere ?? null,
         cylindre: prefillData.og.cylindre ?? null,
         axe: prefillData.og.axe ?? null,
-        add: null,
       },
-      dp_od: prefillData.dp_loin ?? null,
-      dp_og: prefillData.dp_loin ?? null,
+      addition_od: prefillData.addition_od ?? null,
+      addition_og: prefillData.addition_og ?? null,
+      dp: prefillData.dp ?? prefillData.dp_loin ?? null,
     });
     hasAppliedPrefill.current = true;
   }, [shouldPrefill, prefillData, form]);
@@ -561,7 +499,9 @@ export function OrdonnanceFormDialog({
           {/* ---------------------------------------------------------------- */}
           {showCorrection && (
             <div className="rounded-md border border-border p-4">
-              <h3 className="mb-3 text-sm font-semibold">Correction optique</h3>
+              <h3 className="mb-3 text-sm font-semibold">
+                Correction prescrite
+              </h3>
 
               <div className="mb-4 flex items-center gap-2">
                 <Controller
@@ -576,47 +516,21 @@ export function OrdonnanceFormDialog({
                   )}
                 />
                 <Label htmlFor="correction_prescrit" className="cursor-pointer">
-                  Prescrire une correction optique
+                  Correction prescrite
                 </Label>
               </div>
 
               {correctionPrescrit && (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Label className="w-20 shrink-0">Type</Label>
-                    <Controller
-                      control={form.control}
-                      name="type_correction"
-                      render={({ field }) => (
-                        <Select
-                          value={field.value ?? ''}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-48">
-                            <SelectValue placeholder="Sélectionner…" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="VL">
-                              Vision de loin (VL)
-                            </SelectItem>
-                            <SelectItem value="VP">
-                              Vision de près (VP)
-                            </SelectItem>
-                            <SelectItem value="Progressive">
-                              Progressive
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-
-                  {/* OD / OG table */}
+                  {/* OD / OG = réfraction avec correction prescrite (vision de
+                      loin) ; Addition = vision de près. */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="w-10 pb-2 text-left font-medium text-muted-foreground"></th>
+                          <th className="w-10 pb-2 text-left font-medium text-muted-foreground">
+                            Œil
+                          </th>
                           <th className="pb-2 text-center font-medium text-muted-foreground">
                             Sphère
                           </th>
@@ -637,165 +551,46 @@ export function OrdonnanceFormDialog({
                             <td className="py-2 pr-2 font-semibold uppercase text-foreground">
                               {eye}
                             </td>
-                            {(
-                              ['sphere', 'cylindre', 'axe', 'add'] as const
-                            ).map((field) => (
-                              <td key={field} className="px-1 py-2">
-                                <Input
-                                  type="number"
-                                  step={field === 'axe' ? '1' : '0.25'}
-                                  min={field === 'axe' ? '0' : undefined}
-                                  max={field === 'axe' ? '180' : undefined}
-                                  className="w-20 text-center"
-                                  {...form.register(`${eye}.${field}`)}
-                                />
-                              </td>
-                            ))}
+                            {(['sphere', 'cylindre', 'axe'] as const).map(
+                              (field) => (
+                                <td key={field} className="px-1 py-2">
+                                  <Input
+                                    type="number"
+                                    step={field === 'axe' ? '1' : '0.25'}
+                                    min={field === 'axe' ? '0' : undefined}
+                                    max={field === 'axe' ? '180' : undefined}
+                                    className="w-20 text-center"
+                                    {...form.register(`${eye}.${field}`)}
+                                  />
+                                </td>
+                              ),
+                            )}
+                            <td className="px-1 py-2">
+                              <Input
+                                type="number"
+                                step="0.25"
+                                className="w-20 text-center"
+                                {...form.register(`addition_${eye}` as const)}
+                              />
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
 
-                  {/* DP loin */}
-                  <div className="flex items-center gap-4">
+                  {/* DP unique — en bas */}
+                  <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">
-                      DP (loin) :
+                      DP (distance pupillaire) :
                     </span>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs">OD</Label>
-                      <Input
-                        type="number"
-                        step="0.5"
-                        className="w-20"
-                        {...form.register('dp_od')}
-                      />
-                      <span className="text-xs text-muted-foreground">mm</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs">OG</Label>
-                      <Input
-                        type="number"
-                        step="0.5"
-                        className="w-20"
-                        {...form.register('dp_og')}
-                      />
-                      <span className="text-xs text-muted-foreground">mm</span>
-                    </div>
-                  </div>
-
-                  {/* Vision de près (presbytie) */}
-                  <div className="border-border/70 rounded-md border border-dashed p-3">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Controller
-                        control={form.control}
-                        name="vision_pres_prescrit"
-                        render={({ field }) => (
-                          <Checkbox
-                            id="vision_pres_prescrit"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor="vision_pres_prescrit"
-                        className="cursor-pointer text-sm font-medium"
-                      >
-                        Prescrire une vision de près (presbytie)
-                      </Label>
-                    </div>
-
-                    {visionPresPrescrit && (
-                      <div className="space-y-3">
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b border-border">
-                                <th className="w-10 pb-2 text-left font-medium text-muted-foreground">
-                                  Œil
-                                </th>
-                                <th className="pb-2 text-center font-medium text-muted-foreground">
-                                  Sphère
-                                </th>
-                                <th className="pb-2 text-center font-medium text-muted-foreground">
-                                  Cylindre
-                                </th>
-                                <th className="pb-2 text-center font-medium text-muted-foreground">
-                                  Axe (°)
-                                </th>
-                                <th className="pb-2 text-center font-medium text-muted-foreground">
-                                  Addition
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(['od_pres', 'og_pres'] as const).map((eye) => (
-                                <tr
-                                  key={eye}
-                                  className="border-border/50 border-b"
-                                >
-                                  <td className="py-2 pr-2 font-semibold uppercase text-foreground">
-                                    {eye === 'od_pres' ? 'OD' : 'OG'}
-                                  </td>
-                                  {(
-                                    [
-                                      'sphere',
-                                      'cylindre',
-                                      'axe',
-                                      'add',
-                                    ] as const
-                                  ).map((field) => (
-                                    <td key={field} className="px-1 py-2">
-                                      <Input
-                                        type="number"
-                                        step={field === 'axe' ? '1' : '0.25'}
-                                        min={field === 'axe' ? '0' : undefined}
-                                        max={
-                                          field === 'axe' ? '180' : undefined
-                                        }
-                                        className="w-20 text-center"
-                                        {...form.register(`${eye}.${field}`)}
-                                      />
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm text-muted-foreground">
-                            DP (près) :
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs">OD</Label>
-                            <Input
-                              type="number"
-                              step="0.5"
-                              className="w-20"
-                              {...form.register('dp_pres_od')}
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              mm
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs">OG</Label>
-                            <Input
-                              type="number"
-                              step="0.5"
-                              className="w-20"
-                              {...form.register('dp_pres_og')}
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              mm
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    <Input
+                      type="number"
+                      step="0.5"
+                      className="w-24"
+                      {...form.register('dp')}
+                    />
+                    <span className="text-xs text-muted-foreground">mm</span>
                   </div>
                 </div>
               )}

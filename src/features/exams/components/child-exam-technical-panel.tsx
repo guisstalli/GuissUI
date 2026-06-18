@@ -60,7 +60,7 @@ export function ChildExamTechnicalPanel({
         <VisualAcuityForm namePrefix="visualAcuity" />
       )}
       {technicalSubsection === 'refraction' && (
-        <RefractionForm namePrefix="refraction" />
+        <RefractionForm namePrefix="refraction" scope={examId} />
       )}
       {technicalSubsection === 'tension' && (
         <OcularTensionForm namePrefix="ocularTension" />

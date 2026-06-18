@@ -63,10 +63,13 @@ function calculateAge(dateOfBirth: string): number {
 /**
  * Détermine si le patient est adulte ou enfant basé sur la date de naissance
  */
+// Seuil : adulte à partir de 16 ans (enfant 0–15).
+const ADULT_MIN_AGE = 16;
+
 function getPatientType(dateOfBirth: string): PatientType {
   if (!dateOfBirth) return null;
   const age = calculateAge(dateOfBirth);
-  return age >= 18 ? 'adult' : 'child';
+  return age >= ADULT_MIN_AGE ? 'adult' : 'child';
 }
 
 interface NewPatientModalProps {
@@ -214,7 +217,7 @@ export function NewPatientModal({
                 <div>
                   <p className="font-medium text-foreground">Patient adulte</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    18 ans et plus
+                    16 ans et plus
                   </p>
                 </div>
               </button>
@@ -240,7 +243,7 @@ export function NewPatientModal({
                 <div>
                   <p className="font-medium text-foreground">Patient enfant</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    Moins de 18 ans
+                    Moins de 16 ans
                   </p>
                 </div>
               </button>

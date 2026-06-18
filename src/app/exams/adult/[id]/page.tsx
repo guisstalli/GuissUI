@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Header } from '@/components/layouts/header';
@@ -79,6 +79,11 @@ import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
 } from '@/features/exams/utils/form-to-api-mappers';
+import {
+  usePersistentLocalTabState,
+  usePersistentTabState,
+  useUrlParamMirror,
+} from '@/hooks/use-persistent-tab-state';
 import { useUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -98,6 +103,11 @@ const BASE_SECTIONS = [
   { id: 'conclusion' as const, title: 'Conclusion', icon: FileText },
 ];
 
+// Valeurs autorisées (validation URL/localStorage — voir usePersistentTabState).
+const SECTIONS_ALLOWED = ['technical', 'clinical', 'conclusion', 'experience'];
+const TECHNICAL_SUBS = ['acuity', 'refraction', 'tension', 'pachymetry'];
+const CLINICAL_SUBS = ['plaintes', 'biomicroscopy', 'perimetry', 'attachments'];
+
 export default function AdultExamPage() {
   const params = useParams();
   const router = useRouter();
@@ -105,11 +115,54 @@ export default function AdultExamPage() {
   const isNewExam = examId === 'new';
   const numericExamId = isNewExam ? 0 : Number(examId);
 
-  const [activeSection, setActiveSection] = useState<Section>('technical');
-  const [technicalSubsection, setTechnicalSubsection] =
-    useState<TechnicalSubsection>('acuity');
-  const [clinicalSubsection, setClinicalSubsection] =
-    useState<ClinicalSubsection>('plaintes');
+  // Persistance section + sous-sections au reload (URL pour la section, et la
+  // sous-section active reflétée dans ?sub= ; mémoire par section en localStorage).
+  const examScope = `guiss.tab.exam.adult.${examId}`;
+  const [activeSectionRaw, setActiveSection] = usePersistentTabState({
+    paramKey: 'section',
+    storageKey: `${examScope}.section`,
+    defaultValue: 'technical',
+    allowed: SECTIONS_ALLOWED,
+  });
+  const activeSection = activeSectionRaw as Section;
+  const [technicalSubsectionRaw, setTechnicalSubsection] =
+    usePersistentLocalTabState({
+      storageKey: `${examScope}.technical.sub`,
+      defaultValue: 'acuity',
+      allowed: TECHNICAL_SUBS,
+    });
+  const technicalSubsection = technicalSubsectionRaw as TechnicalSubsection;
+  const [clinicalSubsectionRaw, setClinicalSubsection] =
+    usePersistentLocalTabState({
+      storageKey: `${examScope}.clinical.sub`,
+      defaultValue: 'plaintes',
+      allowed: CLINICAL_SUBS,
+    });
+  const clinicalSubsection = clinicalSubsectionRaw as ClinicalSubsection;
+
+  // Reflète la sous-section active dans l'URL (?sub=) et restaure depuis l'URL au montage.
+  const activeSub =
+    activeSection === 'technical'
+      ? technicalSubsection
+      : activeSection === 'clinical'
+        ? clinicalSubsection
+        : '';
+  const initialSub = useUrlParamMirror('sub', activeSub);
+  const subAppliedRef = useRef(false);
+  useEffect(() => {
+    if (subAppliedRef.current) return;
+    subAppliedRef.current = true;
+    if (!initialSub) return;
+    if (activeSection === 'technical' && TECHNICAL_SUBS.includes(initialSub)) {
+      setTechnicalSubsection(initialSub);
+    } else if (
+      activeSection === 'clinical' &&
+      CLINICAL_SUBS.includes(initialSub)
+    ) {
+      setClinicalSubsection(initialSub);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [sectionStatus, setSectionStatus] = useState<SectionStatus>({
     technical: {
@@ -764,6 +817,7 @@ function AdultExamContent(props: AdultExamContentProps) {
               {/* Technical Exam Section */}
               {activeSection === 'technical' && (
                 <AdultExamTechnicalPanel
+                  examId={examId}
                   technicalSubsection={technicalSubsection}
                   setTechnicalSubsection={setTechnicalSubsection}
                   sectionStatus={sectionStatus}

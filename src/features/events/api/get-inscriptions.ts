@@ -4,6 +4,7 @@ import { api } from '@/lib/api-client';
 
 interface GetInscriptionsParams {
   statut?: string;
+  search?: string;
   limit?: number;
   offset?: number;
 }
