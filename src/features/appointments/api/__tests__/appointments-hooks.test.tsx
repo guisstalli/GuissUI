@@ -1,32 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 import { env } from '@/config/env';
+import { appointmentsHandlers } from '@/testing/mocks/handlers/appointments';
 import { server } from '@/testing/mocks/server';
-import {
-  mockRdvList,
-  appointmentsHandlers,
-} from '@/testing/mocks/handlers/appointments';
 import { rtlRender, screen, waitFor } from '@/testing/test-utils';
 
-vi.mock('next-auth/react', async () => {
-  const actual =
-    await vi.importActual<typeof import('next-auth/react')>('next-auth/react');
-  return {
-    ...actual,
-    getSession: vi.fn().mockResolvedValue(null),
-    signOut: vi.fn().mockResolvedValue(undefined),
-  };
-});
-
-// ---------------------------------------------------------------------------
-// Composant minimal pour tester useRdvList
-// ---------------------------------------------------------------------------
-import { useRdvList } from '../get-rdv-list';
-import { useRdvStats } from '../get-rdv-stats';
 import { useBookAppointment } from '../book-appointment';
 import { useDisponibilites } from '../get-disponibilites';
+import { useRdvList } from '../get-rdv-list';
+import { useRdvStats } from '../get-rdv-stats';
+
+// next-auth/react est déjà mocké globalement dans setup-tests.ts.
 
 function RdvListComponent() {
   const { data, isLoading, isError } = useRdvList();
@@ -128,18 +114,16 @@ describe('appointments hooks', () => {
       expect(screen.getByText(/confirme/)).toBeInTheDocument();
     });
 
-    test('affiche une erreur quand l\'API echoue', async () => {
+    test("affiche une erreur quand l'API echoue", async () => {
       // Arrange
       server.use(
-        http.get(`${env.API_URL}/rendez-vous/`, () =>
-          HttpResponse.error(),
-        ),
+        http.get(`${env.API_URL}/rendez-vous/`, () => HttpResponse.error()),
       );
 
       wrap(<RdvListComponent />);
 
       // Assert
-      await screen.findByText(/erreur liste rdv/i);
+      expect(await screen.findByText(/erreur liste rdv/i)).toBeInTheDocument();
     });
 
     test('affiche le chargement initialement', () => {
@@ -164,7 +148,7 @@ describe('appointments hooks', () => {
       expect(screen.getByText(/confirme: 3/)).toBeInTheDocument();
     });
 
-    test('affiche une erreur quand l\'API echoue', async () => {
+    test("affiche une erreur quand l'API echoue", async () => {
       // Arrange
       server.use(
         http.get(`${env.API_URL}/rendez-vous/statistiques/`, () =>
@@ -175,7 +159,7 @@ describe('appointments hooks', () => {
       wrap(<RdvStatsComponent />);
 
       // Assert
-      await screen.findByText(/erreur stats/i);
+      expect(await screen.findByText(/erreur stats/i)).toBeInTheDocument();
     });
   });
 
@@ -189,7 +173,13 @@ describe('appointments hooks', () => {
       const user = userEvent.setup();
       let capturedNr = '';
 
-      wrap(<BookingComponent onSuccess={(nr) => { capturedNr = nr; }} />);
+      wrap(
+        <BookingComponent
+          onSuccess={(nr) => {
+            capturedNr = nr;
+          }}
+        />,
+      );
 
       // Act
       await user.click(screen.getByRole('button', { name: /réserver/i }));

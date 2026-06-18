@@ -181,6 +181,22 @@ body {
   .dark .badge-danger {
     @apply bg-red-900/30 text-red-400;
   }
+
+  /* Animation d'apparition (ex: coche de confirmation de rendez-vous) */
+  .animate-pop-in {
+    animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @layer base {
