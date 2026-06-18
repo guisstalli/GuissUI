@@ -225,21 +225,24 @@ export default function AnalyticsPage() {
               minSize={40}
               className="min-w-0"
             >
-              <div className="space-y-8 duration-500 animate-in fade-in md:pr-1">
+              <div className="space-y-8 duration-500 animate-in fade-in @container md:pr-1">
                 {reqOverview.data && (
                   <AnalyticsKpiRow data={reqOverview.data.population} />
                 )}
 
-                <div className="grid gap-6 md:grid-cols-12">
-                  {/* Colonne gauche (8 colonnes sur Desktop) */}
-                  <div className="flex flex-col space-y-6 md:col-span-8">
+                {/* Grilles pilotées par la largeur DU PANNEAU (container query),
+                    pas du viewport — sinon les charts se chevauchent quand le
+                    panneau cohorte rétrécit le dashboard. */}
+                <div className="grid gap-6 @5xl:grid-cols-12">
+                  {/* Colonne gauche */}
+                  <div className="flex flex-col space-y-6 @5xl:col-span-8">
                     {reqTimeline.data && (
                       <div className="min-h-[400px] flex-1">
                         <TimelineChart data={reqTimeline.data.timeline} />
                       </div>
                     )}
 
-                    <div className="grid min-h-[300px] flex-1 gap-6 md:grid-cols-2">
+                    <div className="grid min-h-[300px] flex-1 gap-6 @3xl:grid-cols-2">
                       {reqVA.data && (
                         <VisualAcuityBarChart
                           data={reqVA.data}
@@ -261,8 +264,8 @@ export default function AnalyticsPage() {
                     )}
                   </div>
 
-                  {/* Colonne droite (4 colonnes sur Desktop) */}
-                  <div className="flex flex-col space-y-6 md:col-span-4">
+                  {/* Colonne droite */}
+                  <div className="flex flex-col space-y-6 @5xl:col-span-4">
                     {reqOverview.data && (
                       <div className="min-h-[300px]">
                         <OverviewDonutChart

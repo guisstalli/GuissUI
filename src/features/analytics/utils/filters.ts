@@ -13,6 +13,39 @@ const normalizeNumber = (value?: number) => {
   return value;
 };
 
+/**
+ * Sérialise les filtres analytiques en query params.
+ * Toute valeur tableau (site_id, patient_ids…) est ajoutée en paramètres
+ * répétables (`patient_ids=1&patient_ids=2`) — JAMAIS jointe en une chaîne
+ * `1,2,3`, sinon le backend la lit comme un seul entier et renvoie une
+ * « Validation error » sur patient_ids/site_id.
+ */
+export const analyticsFiltersToSearchParams = (
+  filters: AnalyticsFilters,
+): URLSearchParams => {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item === undefined || item === null) {
+          return;
+        }
+        params.append(key, String(item));
+      });
+      return;
+    }
+
+    params.set(key, String(value));
+  });
+
+  return params;
+};
+
 export const normalizeAnalyticsFilters = (
   filters: AnalyticsFilters,
 ): AnalyticsFilters => {
