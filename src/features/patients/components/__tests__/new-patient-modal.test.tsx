@@ -8,13 +8,11 @@
  * - phone_number vide → soumis sans erreur (règle métier)
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
+import { z } from 'zod';
 
-import { server } from '@/testing/mocks/server';
-import { patientsHandlers } from '@/testing/mocks/handlers/patients';
 import { NewPatientModal } from '../new-patient-modal';
 
 // next-auth est chargé via les hooks TanStack
@@ -68,25 +66,19 @@ describe('NewPatientModal — étape 1 (sélection du type)', () => {
 
   test('le bouton "Continuer" est désactivé tant qu\'aucun type n\'est sélectionné', () => {
     renderModal();
-    expect(
-      screen.getByRole('button', { name: /continuer/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: /continuer/i })).toBeDisabled();
   });
 
   test('sélectionner "Patient adulte" active le bouton "Continuer"', async () => {
     renderModal();
     await userEvent.click(screen.getByText('Patient adulte'));
-    expect(
-      screen.getByRole('button', { name: /continuer/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /continuer/i })).toBeEnabled();
   });
 
   test('sélectionner "Patient enfant" active le bouton "Continuer"', async () => {
     renderModal();
     await userEvent.click(screen.getByText('Patient enfant'));
-    expect(
-      screen.getByRole('button', { name: /continuer/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /continuer/i })).toBeEnabled();
   });
 
   test('cliquer sur "Annuler" appelle onOpenChange(false)', async () => {
@@ -102,9 +94,7 @@ describe('NewPatientModal — étape 2 (formulaire)', () => {
   async function goToStep2(type: 'adult' | 'child' = 'adult') {
     const label = type === 'adult' ? 'Patient adulte' : 'Patient enfant';
     await userEvent.click(screen.getByText(label));
-    await userEvent.click(
-      screen.getByRole('button', { name: /continuer/i }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: /continuer/i }));
   }
 
   test('affiche les champs Nom, Prénom, Date de naissance après navigation', async () => {
@@ -112,9 +102,7 @@ describe('NewPatientModal — étape 2 (formulaire)', () => {
     await goToStep2();
     // Le formulaire contient les deux champs d'identité — on cible par placeholder
     expect(screen.getByPlaceholderText('Entrez le nom')).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText('Entrez le prénom'),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Entrez le prénom')).toBeInTheDocument();
     // La date de naissance — on vérifie le label texte
     expect(screen.getByText('Date de naissance')).toBeInTheDocument();
   });
@@ -126,7 +114,7 @@ describe('NewPatientModal — étape 2 (formulaire)', () => {
     expect(screen.getByText(/optionnel/i)).toBeInTheDocument();
   });
 
-  test('le bouton retour ramène à l\'étape 1', async () => {
+  test("le bouton retour ramène à l'étape 1", async () => {
     renderModal();
     await goToStep2();
     await userEvent.click(screen.getByRole('button', { name: /retour/i }));
@@ -141,7 +129,7 @@ describe('NewPatientModal — étape 2 (formulaire)', () => {
     const phoneInput = screen.getByPlaceholderText('77 000 00 00');
     expect(phoneInput).toBeInTheDocument();
     // Le schéma Zod accepte phone_number vide ou absent
-    expect(phoneInput).not.toHaveAttribute('required');
+    expect(phoneInput).not.toBeRequired();
   });
 
   test('affiche le bouton "Créer le patient" dans le formulaire', async () => {
@@ -154,7 +142,7 @@ describe('NewPatientModal — étape 2 (formulaire)', () => {
     // Il n'est pas désactivé au repos (sans soumission en cours)
     expect(
       screen.getByRole('button', { name: /créer le patient/i }),
-    ).not.toBeDisabled();
+    ).toBeEnabled();
   });
 });
 
@@ -165,7 +153,6 @@ describe('NewPatientModal — règle métier phone_number', () => {
     // Vérifie directement via la définition du schéma dans le composant
     // phone_number: z.string().min(8).optional().or(z.literal(''))
     // → chaîne vide acceptée sans erreur
-    const { z } = require('zod');
     const schema = z.object({
       phone_number: z
         .string()
@@ -178,7 +165,6 @@ describe('NewPatientModal — règle métier phone_number', () => {
   });
 
   test('phone_number absent (undefined) est accepté par le schéma', () => {
-    const { z } = require('zod');
     const schema = z.object({
       phone_number: z
         .string()
@@ -190,15 +176,13 @@ describe('NewPatientModal — règle métier phone_number', () => {
     expect(result.success).toBe(true);
   });
 
-  test('le champ téléphone n\'a pas l\'attribut required dans le rendu', async () => {
+  test("le champ téléphone n'a pas l'attribut required dans le rendu", async () => {
     renderModal();
     // Étape 1 → adulte
     await userEvent.click(screen.getByText('Patient adulte'));
-    await userEvent.click(
-      screen.getByRole('button', { name: /continuer/i }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: /continuer/i }));
     const phoneInput = screen.getByPlaceholderText('77 000 00 00');
     // HTML required n'est pas posé — la validation est gérée par React Hook Form / Zod
-    expect(phoneInput).not.toHaveAttribute('required');
+    expect(phoneInput).not.toBeRequired();
   });
 });

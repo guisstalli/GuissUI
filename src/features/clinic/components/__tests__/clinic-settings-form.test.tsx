@@ -3,8 +3,8 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
 import { env } from '@/config/env';
-import { server } from '@/testing/mocks/server';
 import { mockClinicSettings } from '@/testing/mocks/handlers/clinic';
+import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, waitFor } from '@/testing/test-utils';
 
 import { ClinicSettingsForm } from '../clinic-settings-form';
@@ -81,9 +81,8 @@ describe('ClinicSettingsForm', () => {
     const user = userEvent.setup();
 
     server.use(
-      http.patch(
-        `${env.API_URL}/clinic/settings/update/`,
-        () => HttpResponse.json({ ...mockClinicSettings }),
+      http.patch(`${env.API_URL}/clinic/settings/update/`, () =>
+        HttpResponse.json({ ...mockClinicSettings }),
       ),
     );
 

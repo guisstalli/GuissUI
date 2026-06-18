@@ -19,6 +19,11 @@ import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
   useDownloadAdultReport,
@@ -79,6 +84,7 @@ import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
 } from '@/features/exams/utils/form-to-api-mappers';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   usePersistentLocalTabState,
   usePersistentTabState,
@@ -688,6 +694,8 @@ function AdultExamContent(props: AdultExamContentProps) {
   const [medicamentDialogOpen, setMedicamentDialogOpen] = useState(false);
   const [optiqueDialogOpen, setOptiqueDialogOpen] = useState(false);
 
+  const isMobile = useIsMobile();
+
   const sections = [
     ...BASE_SECTIONS,
     ...(patient.hasDriver
@@ -705,35 +713,6 @@ function AdultExamContent(props: AdultExamContentProps) {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Left: Section Navigation */}
-          <AdultExamSidebar
-            examId={examId}
-            patient={patient}
-            sections={sections}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            sectionStatus={sectionStatus}
-            technicalCompleted={technicalCompleted}
-            clinicalCompleted={clinicalCompleted}
-            totalTechnical={totalTechnical}
-            totalClinical={totalClinical}
-            isComplete={isComplete}
-            isCompleting={isCompleting}
-            isUncompleting={isUncompleting}
-            setShowSaveDialog={setShowSaveDialog}
-            handleUncompleteExam={handleUncompleteExam}
-            isDownloadingReport={isDownloadingReport}
-            isDownloadingConclusion={isDownloadingConclusion}
-            downloadReport={downloadReport}
-            downloadConclusion={downloadConclusion}
-            canGenerateOrdonnance={canGenerateOrdonnance}
-            medicamentOrdonnance={medicamentOrdonnance}
-            optiqueOrdonnance={optiqueOrdonnance}
-            setMedicamentDialogOpen={setMedicamentDialogOpen}
-            setOptiqueDialogOpen={setOptiqueDialogOpen}
-            downloadOrdonnance={downloadOrdonnance}
-          />
-
           <OrdonnanceFormDialog
             examId={numericExamId}
             examType="adult"
@@ -756,103 +735,160 @@ function AdultExamContent(props: AdultExamContentProps) {
             }
           />
 
-          {/* Right: Active Section Content */}
-          <main className="flex-1 overflow-y-auto p-6">
-            {/* Mobile section nav — hidden on md+ */}
-            <div className="mb-4 flex overflow-x-auto rounded-lg border bg-card md:hidden">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => setActiveSection(section.id)}
-                  className={cn(
-                    'flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium',
-                    activeSection === section.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground',
-                  )}
+          <ResizablePanelGroup
+            direction="horizontal"
+            autoSaveId="guiss.exam.adult.layout"
+            className="flex-1"
+          >
+            {!isMobile && (
+              <>
+                {/* Left: Section Navigation */}
+                <ResizablePanel
+                  id="nav"
+                  order={1}
+                  defaultSize={20}
+                  minSize={14}
+                  maxSize={32}
+                  className="min-w-0"
                 >
-                  <section.icon className="size-4" aria-hidden="true" />
-                  {section.title}
-                </button>
-              ))}
-            </div>
-
-            {/* Back Link */}
-            <div className="mb-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link
-                  href={
-                    patient.hasDriver && patient.driverId
-                      ? `/conducteurs/${patient.driverId}`
-                      : `/patients/${patient.id}`
-                  }
-                >
-                  <ArrowLeft className="mr-1.5 size-4" aria-hidden="true" />
-                  {patient.hasDriver
-                    ? 'Retour au conducteur'
-                    : 'Retour au patient'}
-                </Link>
-              </Button>
-            </div>
-
-            {/* Exam Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-xl font-semibold text-foreground">
-                    Examen Adulte
-                  </h1>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {isNewExam ? 'Nouvel examen' : `Examen ID: ${examId}`}
-                  </p>
-                </div>
-                <Badge variant={isComplete ? 'default' : 'secondary'}>
-                  {isComplete ? 'Complet' : 'En cours'}
-                </Badge>
-              </div>
-            </div>
-
-            <FormProvider {...form}>
-              {/* Technical Exam Section */}
-              {activeSection === 'technical' && (
-                <AdultExamTechnicalPanel
-                  examId={examId}
-                  technicalSubsection={technicalSubsection}
-                  setTechnicalSubsection={setTechnicalSubsection}
-                  sectionStatus={sectionStatus}
-                  handleSaveSection={handleSaveSection}
-                  isSaving={isSaving}
-                />
-              )}
-
-              {/* Clinical Exam Section */}
-              {activeSection === 'clinical' && (
-                <AdultExamClinicalPanel
-                  clinicalSubsection={clinicalSubsection}
-                  setClinicalSubsection={setClinicalSubsection}
-                  sectionStatus={sectionStatus}
-                  handleSaveSection={handleSaveSection}
-                  isSaving={isSaving}
-                  clinicalExamId={clinicalExamId}
-                  onUploaded={onUploaded}
-                />
-              )}
-
-              {/* Conclusion Section */}
-              {activeSection === 'conclusion' && (
-                <AdultExamConclusionPanel
-                  handleSaveSection={handleSaveSection}
-                  isSaving={isSaving}
-                />
-              )}
-            </FormProvider>
-
-            {/* Driver Experience Section — outside FormProvider, standalone form */}
-            {activeSection === 'experience' && patient.hasDriver && (
-              <AdultExamExperiencePanel numericExamId={numericExamId} />
+                  <AdultExamSidebar
+                    examId={examId}
+                    patient={patient}
+                    sections={sections}
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                    sectionStatus={sectionStatus}
+                    technicalCompleted={technicalCompleted}
+                    clinicalCompleted={clinicalCompleted}
+                    totalTechnical={totalTechnical}
+                    totalClinical={totalClinical}
+                    isComplete={isComplete}
+                    isCompleting={isCompleting}
+                    isUncompleting={isUncompleting}
+                    setShowSaveDialog={setShowSaveDialog}
+                    handleUncompleteExam={handleUncompleteExam}
+                    isDownloadingReport={isDownloadingReport}
+                    isDownloadingConclusion={isDownloadingConclusion}
+                    downloadReport={downloadReport}
+                    downloadConclusion={downloadConclusion}
+                    canGenerateOrdonnance={canGenerateOrdonnance}
+                    medicamentOrdonnance={medicamentOrdonnance}
+                    optiqueOrdonnance={optiqueOrdonnance}
+                    setMedicamentDialogOpen={setMedicamentDialogOpen}
+                    setOptiqueDialogOpen={setOptiqueDialogOpen}
+                    downloadOrdonnance={downloadOrdonnance}
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+              </>
             )}
-          </main>
+
+            {/* Right: Active Section Content */}
+            <ResizablePanel
+              id="content"
+              order={2}
+              defaultSize={80}
+              minSize={50}
+              className="min-w-0"
+            >
+              <main className="size-full overflow-y-auto p-6">
+                {/* Mobile section nav — hidden on md+ */}
+                <div className="mb-4 flex overflow-x-auto rounded-lg border bg-card md:hidden">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => setActiveSection(section.id)}
+                      className={cn(
+                        'flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium',
+                        activeSection === section.id
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      <section.icon className="size-4" aria-hidden="true" />
+                      {section.title}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Back Link */}
+                <div className="mb-4">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link
+                      href={
+                        patient.hasDriver && patient.driverId
+                          ? `/conducteurs/${patient.driverId}`
+                          : `/patients/${patient.id}`
+                      }
+                    >
+                      <ArrowLeft className="mr-1.5 size-4" aria-hidden="true" />
+                      {patient.hasDriver
+                        ? 'Retour au conducteur'
+                        : 'Retour au patient'}
+                    </Link>
+                  </Button>
+                </div>
+
+                {/* Exam Header */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h1 className="text-xl font-semibold text-foreground">
+                        Examen Adulte
+                      </h1>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {isNewExam ? 'Nouvel examen' : `Examen ID: ${examId}`}
+                      </p>
+                    </div>
+                    <Badge variant={isComplete ? 'default' : 'secondary'}>
+                      {isComplete ? 'Complet' : 'En cours'}
+                    </Badge>
+                  </div>
+                </div>
+
+                <FormProvider {...form}>
+                  {/* Technical Exam Section */}
+                  {activeSection === 'technical' && (
+                    <AdultExamTechnicalPanel
+                      examId={examId}
+                      technicalSubsection={technicalSubsection}
+                      setTechnicalSubsection={setTechnicalSubsection}
+                      sectionStatus={sectionStatus}
+                      handleSaveSection={handleSaveSection}
+                      isSaving={isSaving}
+                    />
+                  )}
+
+                  {/* Clinical Exam Section */}
+                  {activeSection === 'clinical' && (
+                    <AdultExamClinicalPanel
+                      clinicalSubsection={clinicalSubsection}
+                      setClinicalSubsection={setClinicalSubsection}
+                      sectionStatus={sectionStatus}
+                      handleSaveSection={handleSaveSection}
+                      isSaving={isSaving}
+                      clinicalExamId={clinicalExamId}
+                      onUploaded={onUploaded}
+                    />
+                  )}
+
+                  {/* Conclusion Section */}
+                  {activeSection === 'conclusion' && (
+                    <AdultExamConclusionPanel
+                      handleSaveSection={handleSaveSection}
+                      isSaving={isSaving}
+                    />
+                  )}
+                </FormProvider>
+
+                {/* Driver Experience Section — outside FormProvider, standalone form */}
+                {activeSection === 'experience' && patient.hasDriver && (
+                  <AdultExamExperiencePanel numericExamId={numericExamId} />
+                )}
+              </main>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </SidebarInset>
 

@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { CohortCriterion } from '../../types/types';
 
+import { DrilldownHint } from './drilldown-hint';
+
 type ConclusionDonutChartProps = {
   data: Record<string, number>;
   onSegmentClick?: (criterion: CohortCriterion) => void;
@@ -71,9 +73,14 @@ export const ConclusionDonutChart = ({
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="text-sm font-medium">
-          Verdicts cliniques
-        </CardTitle>
+        <div className="space-y-1">
+          <CardTitle className="text-sm font-medium">
+            Verdicts cliniques
+          </CardTitle>
+          {onSegmentClick && (
+            <DrilldownHint label="Cliquez sur un segment pour explorer" />
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[250px] w-full">

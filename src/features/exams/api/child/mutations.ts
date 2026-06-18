@@ -4,8 +4,8 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type { ExamenChildCreate } from '../../types/types';
 import type { ExamenChildDetailApi } from '../../types/api-schemas';
+import type { ExamenChildCreate } from '../../types/types';
 
 import {
   getChildExamsQueryOptions,

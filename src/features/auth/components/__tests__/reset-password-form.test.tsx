@@ -134,20 +134,21 @@ describe('ResetPasswordForm — with valid token', () => {
       expect(capturedBody).not.toBeNull();
     });
 
-    const body = capturedBody as { token?: string; new_password?: string } | null;
+    const body = capturedBody as {
+      token?: string;
+      new_password?: string;
+    } | null;
     expect(body?.token).toBe('valid-token-abc');
     expect(body?.new_password).toBe('Secure@123');
   });
 
   test('displays a server error alert when the API returns 400', async () => {
     server.use(
-      http.post(
-        'http://localhost:8000/users/password/reset/confirm/',
-        () =>
-          HttpResponse.json(
-            { detail: 'Token invalide ou expiré.' },
-            { status: 400 },
-          ),
+      http.post('http://localhost:8000/users/password/reset/confirm/', () =>
+        HttpResponse.json(
+          { detail: 'Token invalide ou expiré.' },
+          { status: 400 },
+        ),
       ),
     );
 
@@ -222,8 +223,6 @@ describe('ResetPasswordForm — with valid token', () => {
       expect(btn).toBeDisabled();
     });
 
-    resolveRequest(
-      HttpResponse.json({ detail: 'ok' }) as unknown as Response,
-    );
+    resolveRequest(HttpResponse.json({ detail: 'ok' }) as unknown as Response);
   });
 });

@@ -18,7 +18,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
-import { AXE_VISUEL_VALUES, CORNEE_VALUES, CRISTALLIN_VALUES, IRIS_VALUES, POSITION_CRISTALLIN_VALUES, PROFONDEUR_VALUES, PUPILLE_VALUES, QUANTITE_ANOMALIE_VALUES, RPM_VALUES, SEGMENT_STATUS, TRANSPARENCE_VALUES, TYPE_ANOMALIE_VALUES } from '@/features/exams/types/schemas';
+import {
+  AXE_VISUEL_VALUES,
+  CORNEE_VALUES,
+  CRISTALLIN_VALUES,
+  IRIS_VALUES,
+  POSITION_CRISTALLIN_VALUES,
+  PROFONDEUR_VALUES,
+  PUPILLE_VALUES,
+  QUANTITE_ANOMALIE_VALUES,
+  RPM_VALUES,
+  SEGMENT_STATUS,
+  TRANSPARENCE_VALUES,
+  TYPE_ANOMALIE_VALUES,
+} from '@/features/exams/types/schemas';
 
 interface BiomicroscopyAnteriorFormProps {
   namePrefix: string; // Required: 'od.bp_sg_anterieur' or 'og.bp_sg_anterieur'

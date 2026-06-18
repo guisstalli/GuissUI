@@ -88,7 +88,7 @@ export function AdultExamSidebar({
   downloadOrdonnance,
 }: AdultExamSidebarProps) {
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 md:block">
+    <aside className="h-full w-full overflow-y-auto border-r border-border bg-card p-4">
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-foreground">Sections</h2>
         <p className="mt-1 text-xs text-muted-foreground">

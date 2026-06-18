@@ -9,7 +9,7 @@ import {
   medicamentsAdminHandlers,
 } from '@/testing/mocks/handlers/medicaments-admin';
 import { server } from '@/testing/mocks/server';
-import { rtlRender, screen, waitFor } from '@/testing/test-utils';
+import { rtlRender, screen } from '@/testing/test-utils';
 
 import { MedicamentsAdminTable } from '../medicaments-admin-table';
 

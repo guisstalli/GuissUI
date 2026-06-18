@@ -71,13 +71,6 @@ export const mockPatientFull: Patient = {
   modified: '2026-03-01T10:00:00.000Z',
 };
 
-const mockPaginatedResponse: PaginatedPatientsResponse = {
-  count: 2,
-  next: null,
-  previous: null,
-  results: [mockPatient1, mockPatient2],
-};
-
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export const patientsHandlers = [

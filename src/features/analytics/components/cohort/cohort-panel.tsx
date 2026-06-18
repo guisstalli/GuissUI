@@ -1,12 +1,8 @@
+import { X } from 'lucide-react';
 import { useMemo } from 'react';
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import {
   COHORT_FETCH_LIMIT,
@@ -22,11 +18,12 @@ import { CohortPatientTable } from './cohort-patient-table';
 import { CohortSeverityBadge } from './cohort-severity-badge';
 import { useCohortSelection } from './use-cohort-selection';
 
-type CohortSheetProps = {
-  criterion: CohortCriterion | null;
+type CohortPanelProps = {
+  criterion: CohortCriterion;
   appliedFilters: AnalyticsFilters;
   onClose: () => void;
   onAnalyze: (ids: number[]) => void;
+  className?: string;
 };
 
 /**
@@ -47,25 +44,29 @@ const buildCohortFilters = (
   [criterion.type]: criterion.value,
 });
 
-export const CohortSheet = ({
+/**
+ * Contenu du drill-down cohorte, indépendant du conteneur. Rendu soit dans un
+ * panneau redimensionnable ancré (desktop), soit dans un overlay plein écran
+ * (mobile). N'utilise volontairement aucun modal Radix : l'ouverture ne dépend
+ * donc plus de l'état de la sidebar.
+ */
+export const CohortPanel = ({
   criterion,
   appliedFilters,
   onClose,
   onAnalyze,
-}: CohortSheetProps) => {
+  className,
+}: CohortPanelProps) => {
   const selection = useCohortSelection();
 
   const cohortFilters = useMemo(
-    () =>
-      criterion
-        ? buildCohortFilters(appliedFilters, criterion)
-        : appliedFilters,
+    () => buildCohortFilters(appliedFilters, criterion),
     [appliedFilters, criterion],
   );
 
   const { data, isLoading, isError, refetch, isFetching } = useAnalyticsCohort({
     filters: cohortFilters,
-    enabled: !!criterion,
+    enabled: true,
     limit: COHORT_FETCH_LIMIT,
   });
 
@@ -94,64 +95,72 @@ export const CohortSheet = ({
     selection.clear();
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      selection.clear();
-      onClose();
-    }
+  const handleClose = () => {
+    selection.clear();
+    onClose();
   };
 
   return (
-    <Sheet open={!!criterion} onOpenChange={handleOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full gap-0 p-0 sm:max-w-2xl"
-        aria-describedby="cohort-scope-description"
-      >
-        <SheetHeader className="border-b p-4">
-          <div className="flex items-start justify-between gap-3 pr-8">
-            <SheetTitle className="text-base font-semibold">
-              {criterion?.label ?? 'Cohorte'}
-            </SheetTitle>
+    <section
+      aria-label="Cohorte"
+      className={cn(
+        'flex min-h-0 flex-col bg-popover text-popover-foreground',
+        className,
+      )}
+    >
+      <header className="flex items-start justify-between gap-3 border-b p-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <h2 className="truncate text-base font-semibold text-foreground">
+              {criterion.label}
+            </h2>
             {summary && <CohortSeverityBadge severity={summary.severity} />}
           </div>
-          <SheetDescription id="cohort-scope-description">
+          <p className="text-sm text-muted-foreground">
             Patients du périmètre courant correspondant à ce critère clinique.
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          {isError ? (
-            <AnalyticsErrorState
-              message="Impossible de charger la cohorte."
-              onRetry={() => refetch()}
-              isRetrying={isFetching}
-            />
-          ) : (
-            <>
-              {summary && (
-                <CohortKpiHeader
-                  total={summary.count}
-                  severity={summary.severity}
-                />
-              )}
-              <CohortPatientTable
-                patients={patients}
-                isLoading={isLoading}
-                isSelected={selection.isSelected}
-                onToggle={selection.toggle}
-                onToggleAllPage={handleToggleAllPage}
-              />
-            </>
-          )}
+          </p>
         </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleClose}
+          aria-label="Fermer le panneau cohorte"
+        >
+          <X className="size-4" />
+        </Button>
+      </header>
 
-        <CohortActionBar
-          selectionCount={selection.count}
-          onExportCsv={handleExportCsv}
-          onAnalyze={handleAnalyze}
-        />
-      </SheetContent>
-    </Sheet>
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        {isError ? (
+          <AnalyticsErrorState
+            message="Impossible de charger la cohorte."
+            onRetry={() => refetch()}
+            isRetrying={isFetching}
+          />
+        ) : (
+          <>
+            {summary && (
+              <CohortKpiHeader
+                total={summary.count}
+                severity={summary.severity}
+              />
+            )}
+            <CohortPatientTable
+              patients={patients}
+              isLoading={isLoading}
+              isSelected={selection.isSelected}
+              onToggle={selection.toggle}
+              onToggleAllPage={handleToggleAllPage}
+            />
+          </>
+        )}
+      </div>
+
+      <CohortActionBar
+        selectionCount={selection.count}
+        onExportCsv={handleExportCsv}
+        onAnalyze={handleAnalyze}
+      />
+    </section>
   );
 };

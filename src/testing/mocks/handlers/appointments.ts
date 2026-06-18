@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
 import { env } from '@/config/env';
-
 import type {
   PaginatedRdv,
   RendezVous,
@@ -91,43 +90,35 @@ export const appointmentsHandlers = [
     HttpResponse.json(mockConfirmation, { status: 201 }),
   ),
 
-  http.patch(
-    `${env.API_URL}/rendez-vous/:id/confirmer/`,
-    ({ params }) =>
-      HttpResponse.json({
-        ...mockRdvList[0],
-        id: Number(params.id),
-        statut: 'confirme',
-      }),
+  http.patch(`${env.API_URL}/rendez-vous/:id/confirmer/`, ({ params }) =>
+    HttpResponse.json({
+      ...mockRdvList[0],
+      id: Number(params.id),
+      statut: 'confirme',
+    }),
   ),
 
-  http.patch(
-    `${env.API_URL}/rendez-vous/:id/annuler/`,
-    ({ params }) =>
-      HttpResponse.json({
-        ...mockRdvList[0],
-        id: Number(params.id),
-        statut: 'annule',
-      }),
+  http.patch(`${env.API_URL}/rendez-vous/:id/annuler/`, ({ params }) =>
+    HttpResponse.json({
+      ...mockRdvList[0],
+      id: Number(params.id),
+      statut: 'annule',
+    }),
   ),
 
-  http.patch(
-    `${env.API_URL}/rendez-vous/:id/present/`,
-    ({ params }) =>
-      HttpResponse.json({
-        ...mockRdvList[0],
-        id: Number(params.id),
-        statut: 'present',
-      }),
+  http.patch(`${env.API_URL}/rendez-vous/:id/present/`, ({ params }) =>
+    HttpResponse.json({
+      ...mockRdvList[0],
+      id: Number(params.id),
+      statut: 'present',
+    }),
   ),
 
-  http.patch(
-    `${env.API_URL}/rendez-vous/:id/absent/`,
-    ({ params }) =>
-      HttpResponse.json({
-        ...mockRdvList[0],
-        id: Number(params.id),
-        statut: 'absent',
-      }),
+  http.patch(`${env.API_URL}/rendez-vous/:id/absent/`, ({ params }) =>
+    HttpResponse.json({
+      ...mockRdvList[0],
+      id: Number(params.id),
+      statut: 'absent',
+    }),
   ),
 ];

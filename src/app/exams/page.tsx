@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/form/input';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { Spinner } from '@/components/ui/spinner';
 import {
   TableBody,
@@ -36,7 +37,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { useAdultExams } from '@/features/exams/api/adult/get-adult-exams';
 import { useChildExams } from '@/features/exams/api/child/get-child-exams';
 import type { ExamenAdult, ExamenChild } from '@/features/exams/types/types';

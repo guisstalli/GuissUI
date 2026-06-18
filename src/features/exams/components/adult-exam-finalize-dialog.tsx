@@ -38,7 +38,10 @@ export function AdultExamFinalizeDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={handleFinalizeExam} disabled={isCompleting}>
+          <AlertDialogAction
+            onClick={handleFinalizeExam}
+            disabled={isCompleting}
+          >
             {isCompleting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Finaliser
           </AlertDialogAction>

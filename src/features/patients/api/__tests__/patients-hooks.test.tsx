@@ -12,8 +12,8 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
-import { server } from '@/testing/mocks/server';
 import { patientsHandlers } from '@/testing/mocks/handlers/patients';
+import { server } from '@/testing/mocks/server';
 
 // next-auth / next-auth/react génèrent des appels réseau non gérés dans jsdom
 vi.mock('next-auth/react', async () => {
@@ -26,10 +26,10 @@ vi.mock('next-auth/react', async () => {
   };
 });
 
-import { usePatients } from '../get-patients';
-import { usePatient } from '../get-patient';
 import { useCreatePatient } from '../create-patient';
 import { useDeletePatient } from '../delete-patient';
+import { usePatient } from '../get-patient';
+import { usePatients } from '../get-patients';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -76,15 +76,14 @@ describe('usePatients', () => {
     );
 
     const wrapper = createWrapper();
-    renderHook(
-      () => usePatients({ params: { is_driver: false } }),
-      { wrapper },
-    );
+    renderHook(() => usePatients({ params: { is_driver: false } }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(capturedUrl).toContain('is_driver=false'));
   });
 
-  test('transmet le paramètre search à l\'API', async () => {
+  test("transmet le paramètre search à l'API", async () => {
     server.use(...patientsHandlers);
     let capturedUrl = '';
     server.use(
@@ -100,15 +99,14 @@ describe('usePatients', () => {
     );
 
     const wrapper = createWrapper();
-    renderHook(
-      () => usePatients({ params: { search: 'Diallo' } }),
-      { wrapper },
-    );
+    renderHook(() => usePatients({ params: { search: 'Diallo' } }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(capturedUrl).toContain('search=Diallo'));
   });
 
-  test('retourne une erreur quand l\'API échoue', async () => {
+  test("retourne une erreur quand l'API échoue", async () => {
     server.use(
       http.get('http://localhost:8000/depistage/patients/', () =>
         HttpResponse.error(),
@@ -265,7 +263,7 @@ describe('useCreatePatient', () => {
     expect(capturedBody).toBeTruthy();
   });
 
-  test('entre en état error quand l\'API retourne 500', async () => {
+  test("entre en état error quand l'API retourne 500", async () => {
     server.use(
       http.post(
         'http://localhost:8000/depistage/patients/create/',
@@ -305,7 +303,7 @@ describe('useDeletePatient', () => {
     expect(onSuccess).toHaveBeenCalledOnce();
   });
 
-  test('appelle l\'endpoint correct DELETE /depistage/patients/:id/delete/', async () => {
+  test("appelle l'endpoint correct DELETE /depistage/patients/:id/delete/", async () => {
     server.use(...patientsHandlers);
     let capturedUrl = '';
     server.use(
@@ -327,7 +325,7 @@ describe('useDeletePatient', () => {
     expect(capturedUrl).toContain('/depistage/patients/7/delete/');
   });
 
-  test('entre en état error si l\'API retourne 500', async () => {
+  test("entre en état error si l'API retourne 500", async () => {
     server.use(
       http.delete(
         'http://localhost:8000/depistage/patients/:id/delete/',

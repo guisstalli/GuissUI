@@ -4,11 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi, afterEach } from 'vitest';
 
+import { adminHandlers, mockAdminUsers } from '@/testing/mocks/handlers/admin';
 import { server } from '@/testing/mocks/server';
-import {
-  adminHandlers,
-  mockAdminUsers,
-} from '@/testing/mocks/handlers/admin';
 
 // Suppress next-auth telemetry fetch that causes URLSearchParams errors in jsdom
 vi.mock('next-auth/react', async () => {
@@ -143,86 +140,78 @@ describe('UsersTable', () => {
   // The component debounces the email filter by 300ms. We type into the input
   // and then wait > 300ms using real timers + waitFor with a generous timeout.
 
-  test(
-    'sends the email param in the URL after debounce',
-    async () => {
-      let capturedUrl = '';
-      server.use(
-        http.get('http://localhost:8000/users/', ({ request }) => {
-          capturedUrl = request.url;
-          const url = new URL(request.url);
-          const emailFilter = url.searchParams.get('email');
-          const filtered = emailFilter
-            ? mockAdminUsers.filter((u) => u.email.includes(emailFilter))
-            : mockAdminUsers;
+  test('sends the email param in the URL after debounce', async () => {
+    let capturedUrl = '';
+    server.use(
+      http.get('http://localhost:8000/users/', ({ request }) => {
+        capturedUrl = request.url;
+        const url = new URL(request.url);
+        const emailFilter = url.searchParams.get('email');
+        const filtered = emailFilter
+          ? mockAdminUsers.filter((u) => u.email.includes(emailFilter))
+          : mockAdminUsers;
+        return HttpResponse.json({
+          count: filtered.length,
+          next: null,
+          previous: null,
+          results: filtered,
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderTable();
+
+    // Wait for initial load
+    await screen.findByText('alice@guiss.sn');
+
+    const searchInput = screen.getByPlaceholderText(/rechercher par email/i);
+    await user.type(searchInput, 'alice');
+
+    // Wait for the debounce (300ms) to fire and for a new request to be made
+    await waitFor(
+      () => {
+        expect(capturedUrl).toContain('email=alice');
+      },
+      { timeout: 2000 },
+    );
+  }, 10000);
+
+  test('shows a reset-filters button when email filter yields no results', async () => {
+    server.use(
+      http.get('http://localhost:8000/users/', ({ request }) => {
+        const url = new URL(request.url);
+        const emailFilter = url.searchParams.get('email');
+        if (emailFilter) {
           return HttpResponse.json({
-            count: filtered.length,
+            count: 0,
             next: null,
             previous: null,
-            results: filtered,
+            results: [],
           });
-        }),
-      );
+        }
+        return HttpResponse.json({
+          count: mockAdminUsers.length,
+          next: null,
+          previous: null,
+          results: mockAdminUsers,
+        });
+      }),
+    );
 
-      const user = userEvent.setup();
-      renderTable();
+    const user = userEvent.setup();
+    renderTable();
 
-      // Wait for initial load
-      await screen.findByText('alice@guiss.sn');
+    // Wait for initial load
+    await screen.findByText('alice@guiss.sn');
 
-      const searchInput = screen.getByPlaceholderText(/rechercher par email/i);
-      await user.type(searchInput, 'alice');
+    const searchInput = screen.getByPlaceholderText(/rechercher par email/i);
+    await user.type(searchInput, 'zzz-nobody');
 
-      // Wait for the debounce (300ms) to fire and for a new request to be made
-      await waitFor(
-        () => {
-          expect(capturedUrl).toContain('email=alice');
-        },
-        { timeout: 2000 },
-      );
-    },
-    10000,
-  );
-
-  test(
-    'shows a reset-filters button when email filter yields no results',
-    async () => {
-      server.use(
-        http.get('http://localhost:8000/users/', ({ request }) => {
-          const url = new URL(request.url);
-          const emailFilter = url.searchParams.get('email');
-          if (emailFilter) {
-            return HttpResponse.json({
-              count: 0,
-              next: null,
-              previous: null,
-              results: [],
-            });
-          }
-          return HttpResponse.json({
-            count: mockAdminUsers.length,
-            next: null,
-            previous: null,
-            results: mockAdminUsers,
-          });
-        }),
-      );
-
-      const user = userEvent.setup();
-      renderTable();
-
-      // Wait for initial load
-      await screen.findByText('alice@guiss.sn');
-
-      const searchInput = screen.getByPlaceholderText(/rechercher par email/i);
-      await user.type(searchInput, 'zzz-nobody');
-
-      // Wait for debounce + API response + re-render
-      await screen.findByText(/aucun utilisateur trouvé/i, {}, { timeout: 2000 });
-      expect(
-        screen.getByRole('button', { name: /réinitialiser les filtres/i }),
-      ).toBeInTheDocument();
-    },
-    10000,
-  );
+    // Wait for debounce + API response + re-render
+    await screen.findByText(/aucun utilisateur trouvé/i, {}, { timeout: 2000 });
+    expect(
+      screen.getByRole('button', { name: /réinitialiser les filtres/i }),
+    ).toBeInTheDocument();
+  }, 10000);
 });

@@ -19,7 +19,14 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui/form';
-import { MACULA_VALUES, PAPILLE_VALUES, RETINIEN_VALUES, SEGMENT_STATUS, VAISSEAUX_VALUES, VITRE_VALUES } from '@/features/exams/types/schemas';
+import {
+  MACULA_VALUES,
+  PAPILLE_VALUES,
+  RETINIEN_VALUES,
+  SEGMENT_STATUS,
+  VAISSEAUX_VALUES,
+  VITRE_VALUES,
+} from '@/features/exams/types/schemas';
 
 interface BiomicroscopyPosteriorFormProps {
   namePrefix: string; // Required: 'od.bp_sg_posterieur' or 'og.bp_sg_posterieur'

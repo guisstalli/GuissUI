@@ -9,11 +9,12 @@ import {
 } from '../analytics-states';
 
 describe('AnalyticsLoadingState', () => {
-  test('renders skeleton placeholders', () => {
-    const { container } = rtlRender(<AnalyticsLoadingState />);
-    // The loading state renders animate-pulse skeleton divs
-    const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBeGreaterThan(0);
+  test('renders an accessible loading status', () => {
+    rtlRender(<AnalyticsLoadingState />);
+    // The loading state exposes role="status" for assistive technologies
+    expect(screen.getByRole('status')).toHaveAccessibleName(
+      'Chargement des analytiques',
+    );
   });
 });
 
@@ -88,9 +89,7 @@ describe('AnalyticsEmptyState', () => {
   });
 
   test('renders a custom description when provided', () => {
-    rtlRender(
-      <AnalyticsEmptyState description="Essayez une autre période." />,
-    );
+    rtlRender(<AnalyticsEmptyState description="Essayez une autre période." />);
     expect(screen.getByText('Essayez une autre période.')).toBeInTheDocument();
   });
 });

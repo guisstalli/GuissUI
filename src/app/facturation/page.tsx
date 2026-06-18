@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form/select';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { Spinner } from '@/components/ui/spinner';
 import { useCreateFacture } from '@/features/billing/api/create-facture';
 import { useFactureStats } from '@/features/billing/api/get-facture-stats';
@@ -36,7 +37,6 @@ import { useFactures } from '@/features/billing/api/get-factures';
 import { CreateFactureForm } from '@/features/billing/components/create-facture-form';
 import { FacturesTable } from '@/features/billing/components/factures-table';
 import { FACTURE_STATUT_VALUES } from '@/features/billing/types/schemas';
-import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { useSites } from '@/features/sites/api/get-sites';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 

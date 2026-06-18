@@ -52,9 +52,7 @@ describe('DriverForm — rendu de base (création)', () => {
     render(<DriverForm onSubmit={vi.fn()} />);
     // Utilise les placeholders pour distinguer Prénom et Nom
     expect(screen.getByPlaceholderText('Prénom')).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText('Nom de famille'),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Nom de famille')).toBeInTheDocument();
     // Date de naissance — vérification par le texte du label
     expect(screen.getByText('Date de naissance')).toBeInTheDocument();
   });
@@ -64,7 +62,7 @@ describe('DriverForm — rendu de base (création)', () => {
     expect(screen.getByText('Téléphone')).toBeInTheDocument();
     // Le champ téléphone ne doit pas avoir d'indicateur * obligatoire
     const phoneLabel = screen.getByText('Téléphone');
-    expect(phoneLabel.querySelector('span.text-destructive')).toBeNull();
+    expect(phoneLabel).not.toHaveTextContent('*');
   });
 
   test('affiche le champ "N° de permis"', () => {
@@ -96,9 +94,7 @@ describe('DriverForm — rendu de base (création)', () => {
 
   test('cache la section "Identité du patient" en mode édition', () => {
     render(<DriverForm onSubmit={vi.fn()} isEdit />);
-    expect(
-      screen.queryByText('Identité du patient'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Identité du patient')).not.toBeInTheDocument();
   });
 });
 
@@ -107,9 +103,7 @@ describe('DriverForm — rendu de base (création)', () => {
 describe('DriverForm — soumission valide', () => {
   test('appelle onSubmit avec les valeurs correctes', async () => {
     const onSubmit = vi.fn();
-    render(
-      <DriverForm defaultValues={VALID_DEFAULTS} onSubmit={onSubmit} />,
-    );
+    render(<DriverForm defaultValues={VALID_DEFAULTS} onSubmit={onSubmit} />);
 
     await userEvent.click(
       screen.getByRole('button', { name: /créer le conducteur/i }),

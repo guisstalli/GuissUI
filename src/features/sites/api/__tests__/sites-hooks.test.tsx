@@ -3,8 +3,8 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
-import { server } from '@/testing/mocks/server';
 import { sitesHandlers } from '@/testing/mocks/handlers/sites';
+import { server } from '@/testing/mocks/server';
 
 // Prevent next-auth from firing async fetch calls that cause errors in jsdom
 vi.mock('next-auth/react', async () => {
@@ -92,10 +92,9 @@ describe('useSites', () => {
     );
 
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useSites({ params: { limit: 10 } }),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useSites({ params: { limit: 10 } }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(capturedUrl).toContain('limit=10');

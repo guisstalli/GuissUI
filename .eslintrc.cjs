@@ -128,6 +128,18 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': ['off'],
         '@typescript-eslint/no-empty-function': ['off'],
         '@typescript-eslint/no-explicit-any': ['off'],
+        // Testing Library `findBy*`/`findAllBy*` queries reject when the element
+        // is absent, so they count as assertions for async tests.
+        'vitest/expect-expect': [
+          'error',
+          {
+            assertFunctionNames: [
+              'expect',
+              'screen.findBy*',
+              'screen.findAllBy*',
+            ],
+          },
+        ],
         'prettier/prettier': ['error', {}, { usePrettierrc: true }],
       },
     },

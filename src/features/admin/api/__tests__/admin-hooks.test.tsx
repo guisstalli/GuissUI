@@ -3,7 +3,14 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
+import { adminHandlers } from '@/testing/mocks/handlers/admin';
 import { server } from '@/testing/mocks/server';
+
+import { useCreateUser } from '../create-user';
+import { useDeleteUser } from '../delete-user';
+import { useAuditLog } from '../get-audit-log';
+import { useUsers } from '../get-users';
+import { useToggleActive } from '../toggle-active';
 
 // Suppress next-auth telemetry fetch that causes URLSearchParams errors in jsdom
 vi.mock('next-auth/react', async () => {
@@ -16,20 +23,11 @@ vi.mock('next-auth/react', async () => {
   };
 });
 
-// Register admin MSW handlers for these tests
-import { adminHandlers } from '@/testing/mocks/handlers/admin';
-
 // Activate the admin handlers before each test because setup-tests.ts calls
 // server.resetHandlers() in afterEach, which would remove them after the first test.
 beforeEach(() => {
   server.use(...adminHandlers);
 });
-
-import { useUsers } from '../get-users';
-import { useCreateUser } from '../create-user';
-import { useDeleteUser } from '../delete-user';
-import { useToggleActive } from '../toggle-active';
-import { useAuditLog } from '../get-audit-log';
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -62,10 +60,9 @@ describe('useUsers', () => {
 
   test('filters users by email when the email param is provided', async () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useUsers({ email: 'alice@guiss.sn' }),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useUsers({ email: 'alice@guiss.sn' }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.results).toHaveLength(1);
@@ -85,10 +82,9 @@ describe('useUsers', () => {
 
   test('filters users by is_active when the param is provided', async () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useUsers({ is_active: false }),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useUsers({ is_active: false }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.results).toHaveLength(1);
@@ -110,10 +106,9 @@ describe('useUsers', () => {
     );
 
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useUsers({ email: 'test@guiss.sn' }),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useUsers({ email: 'test@guiss.sn' }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(capturedUrl).toContain('email=test%40guiss.sn');
@@ -167,13 +162,11 @@ describe('useCreateUser', () => {
 
   test('enters an error state when the API returns a 400', async () => {
     server.use(
-      http.post(
-        'http://localhost:8000/users/admin/create/',
-        () =>
-          HttpResponse.json(
-            { email: ['This email already exists.'] },
-            { status: 400 },
-          ),
+      http.post('http://localhost:8000/users/admin/create/', () =>
+        HttpResponse.json(
+          { email: ['This email already exists.'] },
+          { status: 400 },
+        ),
       ),
     );
 
@@ -194,13 +187,10 @@ describe('useCreateUser', () => {
   test('posts to the correct endpoint URL', async () => {
     let capturedUrl = '';
     server.use(
-      http.post(
-        'http://localhost:8000/users/admin/create/',
-        ({ request }) => {
-          capturedUrl = request.url;
-          return HttpResponse.json({ id: 10 }, { status: 201 });
-        },
-      ),
+      http.post('http://localhost:8000/users/admin/create/', ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json({ id: 10 }, { status: 201 });
+      }),
     );
 
     const wrapper = createWrapper();
@@ -238,13 +228,10 @@ describe('useDeleteUser', () => {
   test('calls the correct endpoint URL', async () => {
     let capturedUrl = '';
     server.use(
-      http.delete(
-        'http://localhost:8000/users/:id/delete/',
-        ({ request }) => {
-          capturedUrl = request.url;
-          return new HttpResponse(null, { status: 204 });
-        },
-      ),
+      http.delete('http://localhost:8000/users/:id/delete/', ({ request }) => {
+        capturedUrl = request.url;
+        return new HttpResponse(null, { status: 204 });
+      }),
     );
 
     const wrapper = createWrapper();
@@ -258,10 +245,8 @@ describe('useDeleteUser', () => {
 
   test('enters an error state when the API returns a 404', async () => {
     server.use(
-      http.delete(
-        'http://localhost:8000/users/:id/delete/',
-        () =>
-          HttpResponse.json({ detail: 'Not found.' }, { status: 404 }),
+      http.delete('http://localhost:8000/users/:id/delete/', () =>
+        HttpResponse.json({ detail: 'Not found.' }, { status: 404 }),
       ),
     );
 
@@ -329,7 +314,9 @@ describe('useToggleActive', () => {
     result.current.mutate({ id: 2, is_active: false });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect((capturedBody as Record<string, unknown> | null)?.is_active).toBe(false);
+    expect((capturedBody as Record<string, unknown> | null)?.is_active).toBe(
+      false,
+    );
   });
 });
 
@@ -355,9 +342,8 @@ describe('useAuditLog', () => {
 
   test('returns an error when the API fails', async () => {
     server.use(
-      http.get(
-        'http://localhost:8000/users/:id/audit-log/',
-        () => HttpResponse.error(),
+      http.get('http://localhost:8000/users/:id/audit-log/', () =>
+        HttpResponse.error(),
       ),
     );
 
@@ -370,13 +356,10 @@ describe('useAuditLog', () => {
   test('calls the correct endpoint URL', async () => {
     let capturedUrl = '';
     server.use(
-      http.get(
-        'http://localhost:8000/users/:id/audit-log/',
-        ({ request }) => {
-          capturedUrl = request.url;
-          return HttpResponse.json([]);
-        },
-      ),
+      http.get('http://localhost:8000/users/:id/audit-log/', ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json([]);
+      }),
     );
 
     const wrapper = createWrapper();

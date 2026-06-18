@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { Spinner } from '@/components/ui/spinner';
 import { useDashboard } from '@/features/dashboard/api/get-dashboard';
 import { ActiveEvents } from '@/features/dashboard/components/active-events';
@@ -20,7 +21,6 @@ import {
   alertSignature,
 } from '@/features/dashboard/components/dismissible-alert';
 import { ExamsChart } from '@/features/dashboard/components/exams-chart';
-import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { UpcomingAppointments } from '@/features/dashboard/components/upcoming-appointments';
 import { useUser } from '@/lib/auth';
 
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                     <Link
                       key={event.id}
                       href={`/gestion/evenements/${event.id}/inscriptions`}
-                      className="group rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm block"
+                      className="group block rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm"
                     >
                       <p className="text-sm font-medium text-foreground group-hover:text-primary">
                         {event.titre}

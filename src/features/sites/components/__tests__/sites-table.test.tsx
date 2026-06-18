@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
-import { server } from '@/testing/mocks/server';
 import { sitesHandlers } from '@/testing/mocks/handlers/sites';
+import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, waitFor } from '@/testing/test-utils';
 
 import { SitesTable } from '../sites-table';
@@ -19,23 +19,15 @@ vi.mock('next-auth/react', async () => {
   };
 });
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
-}
-
 function renderSitesTable(search = '') {
   return rtlRender(
     <QueryClientProvider
       client={
         new QueryClient({
-          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
         })
       }
     >
@@ -135,7 +127,12 @@ describe('SitesTable', () => {
   test('shows empty state message when no sites are returned', async () => {
     server.use(
       http.get('http://localhost:8000/depistage/sites/', () =>
-        HttpResponse.json({ count: 0, next: null, previous: null, results: [] }),
+        HttpResponse.json({
+          count: 0,
+          next: null,
+          previous: null,
+          results: [],
+        }),
       ),
     );
 

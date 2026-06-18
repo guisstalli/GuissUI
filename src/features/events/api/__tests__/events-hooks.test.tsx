@@ -3,12 +3,12 @@ import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { env } from '@/config/env';
-import { server } from '@/testing/mocks/server';
 import {
   mockPublicEvents,
   mockStaffEvents,
   eventsHandlers,
 } from '@/testing/mocks/handlers/events';
+import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, waitFor } from '@/testing/test-utils';
 
 vi.mock('next-auth/react', async () => {
@@ -21,10 +21,10 @@ vi.mock('next-auth/react', async () => {
   };
 });
 
+import { useCreateEvent } from '../create-event';
 import { usePublicEvents } from '../get-public-events';
 import { useStaffEvents } from '../get-staff-events';
 import { useRegisterEvent } from '../register-event';
-import { useCreateEvent } from '../create-event';
 
 // ---------------------------------------------------------------------------
 // Composants légers pour exercer les hooks
@@ -173,9 +173,7 @@ describe('events hooks', () => {
           const url = new URL(request.url);
           const type = url.searchParams.get('type_examen');
           const results =
-            type === 'adulte'
-              ? [mockPublicEvents[0]]
-              : mockPublicEvents;
+            type === 'adulte' ? [mockPublicEvents[0]] : mockPublicEvents;
           return HttpResponse.json({
             count: results.length,
             next: null,
@@ -186,13 +184,6 @@ describe('events hooks', () => {
       );
 
       wrap(<PublicEventsComponent />);
-
-      // Act — on passe un filtre
-      const { rerender } = wrap(
-        <QueryClientProvider client={createQueryClient()}>
-          {null}
-        </QueryClientProvider>,
-      );
 
       // Pour tester le filtre, on utilise un composant dédié
       function FilteredEvents() {
@@ -235,7 +226,7 @@ describe('events hooks', () => {
   // useRegisterEvent
   // -------------------------------------------------------------------------
   describe('useRegisterEvent', () => {
-    test("appelle onSuccess avec le numero_inscription apres inscription", async () => {
+    test('appelle onSuccess avec le numero_inscription apres inscription', async () => {
       // Arrange
       const userEvent = (await import('@testing-library/user-event')).default;
       const user = userEvent.setup();
@@ -244,7 +235,9 @@ describe('events hooks', () => {
       wrap(
         <RegisterComponent
           slug="campagne-depistage-thies-2024"
-          onSuccess={(nr) => { capturedNr = nr; }}
+          onSuccess={(nr) => {
+            capturedNr = nr;
+          }}
         />,
       );
 
@@ -268,10 +261,18 @@ describe('events hooks', () => {
       const user = userEvent.setup();
       let called = false;
 
-      wrap(<CreateEventComponent onSuccess={() => { called = true; }} />);
+      wrap(
+        <CreateEventComponent
+          onSuccess={() => {
+            called = true;
+          }}
+        />,
+      );
 
       // Act
-      await user.click(screen.getByRole('button', { name: /créer événement/i }));
+      await user.click(
+        screen.getByRole('button', { name: /créer événement/i }),
+      );
 
       // Assert
       await waitFor(() => {

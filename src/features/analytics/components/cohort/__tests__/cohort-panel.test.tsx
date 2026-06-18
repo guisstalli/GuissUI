@@ -22,7 +22,7 @@ vi.mock('next-auth/react', async () => {
 
 import { DEFAULT_ANALYTICS_FILTERS } from '../../../types/types';
 import type { CohortCriterion } from '../../../types/types';
-import { CohortSheet } from '../cohort-sheet';
+import { CohortPanel } from '../cohort-panel';
 
 const COHORT_URL = `${env.API_URL}/analytics/cohort/`;
 
@@ -32,8 +32,8 @@ const criterion: CohortCriterion = {
   label: 'Acuité < 3/10 (Malvoyance)',
 };
 
-function renderSheet(
-  overrides: Partial<ComponentProps<typeof CohortSheet>> = {},
+function renderPanel(
+  overrides: Partial<ComponentProps<typeof CohortPanel>> = {},
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -46,7 +46,7 @@ function renderSheet(
   );
 
   const utils = render(
-    <CohortSheet
+    <CohortPanel
       criterion={criterion}
       appliedFilters={DEFAULT_ANALYTICS_FILTERS}
       onClose={onClose}
@@ -59,7 +59,7 @@ function renderSheet(
   return { ...utils, onClose, onAnalyze };
 }
 
-describe('CohortSheet', () => {
+describe('CohortPanel', () => {
   beforeEach(() => {
     server.use(
       http.get(COHORT_URL, () => HttpResponse.json(mockCohortResponse)),
@@ -67,7 +67,7 @@ describe('CohortSheet', () => {
   });
 
   test('renders the criterion label and the patient list', async () => {
-    renderSheet();
+    renderPanel();
 
     expect(
       await screen.findByText('Acuité < 3/10 (Malvoyance)'),
@@ -79,7 +79,7 @@ describe('CohortSheet', () => {
 
   test('selecting a patient updates the action bar count', async () => {
     const user = userEvent.setup();
-    renderSheet();
+    renderPanel();
 
     await screen.findByText('Amadou Diallo');
 
@@ -117,7 +117,7 @@ describe('CohortSheet', () => {
       .spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(() => undefined);
 
-    renderSheet();
+    renderPanel();
 
     await screen.findByText('Amadou Diallo');
     await user.click(
@@ -137,7 +137,7 @@ describe('CohortSheet', () => {
 
   test('analyzing the cohort calls onAnalyze with the selected ids', async () => {
     const user = userEvent.setup();
-    const { onAnalyze } = renderSheet();
+    const { onAnalyze } = renderPanel();
 
     await screen.findByText('Amadou Diallo');
     await user.click(
@@ -152,7 +152,7 @@ describe('CohortSheet', () => {
 
   test('select-all checkbox selects every patient on the page', async () => {
     const user = userEvent.setup();
-    renderSheet();
+    renderPanel();
 
     await screen.findByText('Amadou Diallo');
 
@@ -165,5 +165,17 @@ describe('CohortSheet', () => {
     expect(
       screen.getByRole('button', { name: /Analyser la cohorte \(3\)/i }),
     ).toBeEnabled();
+  });
+
+  test('the close button clears the selection and calls onClose', async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderPanel();
+
+    await screen.findByText('Amadou Diallo');
+    await user.click(
+      screen.getByRole('button', { name: /Fermer le panneau cohorte/i }),
+    );
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsVisualAcuity, CohortCriterion } from '../../types/types';
 
+import { DrilldownHint } from './drilldown-hint';
+
 type VisualAcuityBarChartProps = {
   data: AnalyticsVisualAcuity;
   onSegmentClick?: (criterion: CohortCriterion) => void;
@@ -82,11 +84,12 @@ export const VisualAcuityBarChart = ({
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
             <CardTitle className="text-sm font-medium">
               Acuité Visuelle
             </CardTitle>
+            {onSegmentClick && <DrilldownHint />}
           </div>
           <div className="text-right">
             <div className="text-xs text-muted-foreground">Échantillon</div>
@@ -115,6 +118,7 @@ export const VisualAcuityBarChart = ({
                 barSize={24}
                 onClick={onSegmentClick ? handleBarClick : undefined}
                 cursor={onSegmentClick ? 'pointer' : undefined}
+                activeBar={onSegmentClick ? { fillOpacity: 0.8 } : undefined}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />

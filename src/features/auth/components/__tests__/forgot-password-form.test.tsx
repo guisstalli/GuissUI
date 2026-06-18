@@ -69,19 +69,15 @@ describe('ForgotPasswordForm', () => {
 
   test('displays success message after a successful submission', async () => {
     server.use(
-      http.post(
-        'http://localhost:8000/users/password/reset/request/',
-        () => HttpResponse.json({ detail: 'Email sent.' }),
+      http.post('http://localhost:8000/users/password/reset/request/', () =>
+        HttpResponse.json({ detail: 'Email sent.' }),
       ),
     );
 
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByLabelText(/adresse e-mail/i),
-      'user@guiss.sn',
-    );
+    await user.type(screen.getByLabelText(/adresse e-mail/i), 'user@guiss.sn');
     await user.click(screen.getByRole('button', { name: /envoyer le lien/i }));
 
     const status = await screen.findByRole('status');
@@ -90,19 +86,15 @@ describe('ForgotPasswordForm', () => {
 
   test('shows a "back to login" link after successful submission', async () => {
     server.use(
-      http.post(
-        'http://localhost:8000/users/password/reset/request/',
-        () => HttpResponse.json({ detail: 'Email sent.' }),
+      http.post('http://localhost:8000/users/password/reset/request/', () =>
+        HttpResponse.json({ detail: 'Email sent.' }),
       ),
     );
 
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByLabelText(/adresse e-mail/i),
-      'user@guiss.sn',
-    );
+    await user.type(screen.getByLabelText(/adresse e-mail/i), 'user@guiss.sn');
     await user.click(screen.getByRole('button', { name: /envoyer le lien/i }));
 
     await screen.findByRole('status');
@@ -113,23 +105,15 @@ describe('ForgotPasswordForm', () => {
 
   test('displays a server error when the API returns a 500', async () => {
     server.use(
-      http.post(
-        'http://localhost:8000/users/password/reset/request/',
-        () =>
-          HttpResponse.json(
-            { detail: 'Une erreur interne.' },
-            { status: 500 },
-          ),
+      http.post('http://localhost:8000/users/password/reset/request/', () =>
+        HttpResponse.json({ detail: 'Une erreur interne.' }, { status: 500 }),
       ),
     );
 
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByLabelText(/adresse e-mail/i),
-      'user@guiss.sn',
-    );
+    await user.type(screen.getByLabelText(/adresse e-mail/i), 'user@guiss.sn');
     await user.click(screen.getByRole('button', { name: /envoyer le lien/i }));
 
     await waitFor(() => {
@@ -153,10 +137,7 @@ describe('ForgotPasswordForm', () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByLabelText(/adresse e-mail/i),
-      'user@guiss.sn',
-    );
+    await user.type(screen.getByLabelText(/adresse e-mail/i), 'user@guiss.sn');
     await user.click(screen.getByRole('button', { name: /envoyer le lien/i }));
 
     await waitFor(() => {

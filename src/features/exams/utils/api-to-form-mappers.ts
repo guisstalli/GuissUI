@@ -141,9 +141,15 @@ export const mapRefractionApiToForm = (
     og_sphere_avec_correction: toNumber(data.og_s_avec_correction_prescrite),
     og_cylinder_avec_correction: toNumber(data.og_c_avec_correction_prescrite),
     og_axis_avec_correction: toNumber(data.og_a_avec_correction_prescrite),
-    od_visual_acuity_avec_correction: toNumber(data.avod_avec_correction_prescrite),
-    og_visual_acuity_avec_correction: toNumber(data.avog_avec_correction_prescrite),
-    odg_visual_acuity_avec_correction: toNumber(data.avodg_avec_correction_prescrite),
+    od_visual_acuity_avec_correction: toNumber(
+      data.avod_avec_correction_prescrite,
+    ),
+    og_visual_acuity_avec_correction: toNumber(
+      data.avog_avec_correction_prescrite,
+    ),
+    odg_visual_acuity_avec_correction: toNumber(
+      data.avodg_avec_correction_prescrite,
+    ),
     // Addition (vision de près)
     addition_od: toNumber(data.addition_od),
     addition_og: toNumber(data.addition_og),
