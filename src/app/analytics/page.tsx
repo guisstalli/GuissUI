@@ -212,7 +212,11 @@ export default function AnalyticsPage() {
           <ResizablePanelGroup
             direction="horizontal"
             autoSaveId="analytics-cohort"
-            className="h-auto items-stretch"
+            className="items-stretch"
+            // La lib force height:100%+overflow:hidden en inline, ce qui
+            // tronquerait le dashboard (plus haut que l'écran) dans le <main>
+            // borné. On laisse le groupe grandir et c'est <main> qui scrolle.
+            style={{ height: 'auto', overflow: 'visible' }}
           >
             <ResizablePanel
               id="dashboard"
