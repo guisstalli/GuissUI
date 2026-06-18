@@ -1,8 +1,6 @@
 'use client';
 
 import { AlertCircle, Download, Printer } from 'lucide-react';
-import { getSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,9 +11,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { env } from '@/config/env';
 
-import { downloadFacturePdf } from '../api/download-facture-pdf';
+import { useDownloadFacturePdf, useFacturePdfBlob } from '../api/facture-pdf';
 
 interface FacturePreviewDialogProps {
   factureId: number | null;
@@ -32,70 +29,15 @@ export function FacturePreviewDialog({
   open,
   onClose,
 }: FacturePreviewDialogProps) {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    if (!open || factureId === null) {
-      return;
-    }
-
-    let cancelled = false;
-    let createdUrl: string | null = null;
-
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const session = await getSession();
-        const token = session?.accessToken ?? null;
-        const response = await fetch(
-          `${env.API_URL}/billing/factures/${factureId}/pdf/`,
-          {
-            headers: {
-              Accept: 'application/pdf',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const blob = await response.blob();
-        if (cancelled) return;
-        createdUrl = URL.createObjectURL(blob);
-        setObjectUrl(createdUrl);
-      } catch (e) {
-        if (!cancelled) {
-          setError(
-            e instanceof Error ? e.message : 'Erreur lors du chargement du PDF',
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-      if (createdUrl) {
-        URL.revokeObjectURL(createdUrl);
-      }
-      setObjectUrl(null);
-    };
-  }, [factureId, open, reloadKey]);
+  const { objectUrl, isLoading, error, refetch } = useFacturePdfBlob(
+    factureId,
+    { enabled: open },
+  );
+  const { download } = useDownloadFacturePdf();
 
   const handleDownload = async () => {
     if (factureId === null) return;
-    await downloadFacturePdf(factureId, factureNumero ?? String(factureId));
+    await download(factureId, factureNumero ?? String(factureId));
   };
 
   const handlePrint = () => {
@@ -162,13 +104,11 @@ export function FacturePreviewDialog({
                 <p className="text-sm font-medium text-foreground">
                   Impossible de charger la facture.
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {error.message}
+                </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setReloadKey((k) => k + 1)}
-              >
+              <Button variant="outline" size="sm" onClick={refetch}>
                 Réessayer
               </Button>
             </div>

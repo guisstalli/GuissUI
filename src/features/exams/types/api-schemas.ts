@@ -53,7 +53,7 @@ export const VisualAcuityApiSchema = z.object({
 /** Refraction API Response - utilise od_s, od_c, od_a */
 export const RefractionApiSchema = z.object({
   id: z.number().optional(),
-  correction: z.boolean().optional(),
+  correction_prescrite: z.boolean().optional(),
   // OD
   od_s: z.string().nullable().optional(),
   od_c: z.string().nullable().optional(),
@@ -73,16 +73,19 @@ export const RefractionApiSchema = z.object({
   avod: z.string().nullable().optional(),
   avog: z.string().nullable().optional(),
   avodg: z.string().nullable().optional(),
-  // Champs avec correction
-  od_s_avec_correction: z.string().nullable().optional(),
-  od_c_avec_correction: z.string().nullable().optional(),
-  od_a_avec_correction: z.string().nullable().optional(),
-  og_s_avec_correction: z.string().nullable().optional(),
-  og_c_avec_correction: z.string().nullable().optional(),
-  og_a_avec_correction: z.string().nullable().optional(),
-  avod_avec_correction: z.string().nullable().optional(),
-  avog_avec_correction: z.string().nullable().optional(),
-  avodg_avec_correction: z.string().nullable().optional(),
+  // Champs avec correction prescrite (vision de loin)
+  od_s_avec_correction_prescrite: z.string().nullable().optional(),
+  od_c_avec_correction_prescrite: z.string().nullable().optional(),
+  od_a_avec_correction_prescrite: z.string().nullable().optional(),
+  og_s_avec_correction_prescrite: z.string().nullable().optional(),
+  og_c_avec_correction_prescrite: z.string().nullable().optional(),
+  og_a_avec_correction_prescrite: z.string().nullable().optional(),
+  avod_avec_correction_prescrite: z.string().nullable().optional(),
+  avog_avec_correction_prescrite: z.string().nullable().optional(),
+  avodg_avec_correction_prescrite: z.string().nullable().optional(),
+  // Addition (vision de près)
+  addition_od: z.string().nullable().optional(),
+  addition_og: z.string().nullable().optional(),
   // Pupillary distance
   dp: z.string().nullable().optional(),
   created: z.string().optional(),

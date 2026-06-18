@@ -17,14 +17,7 @@ import {
   Input,
   Label,
 } from '@/components/ui/form';
-import {
-  OcularTensionSchema,
-  PachymetrySchema,
-  RefractionSchema,
-  type TechnicalExamFormValues,
-  TTT_HYPOTONISANT_VALUES,
-  VisualAcuitySchema,
-} from '@/features/exams/types';
+import { OcularTensionSchema, PachymetrySchema, RefractionSchema, type TechnicalExamFormValues, TTT_HYPOTONISANT_VALUES, VisualAcuitySchema } from '@/features/exams/types/schemas';
 
 // Schema combiné pour le formulaire technique complet
 const technicalExamFormSchema = z.object({

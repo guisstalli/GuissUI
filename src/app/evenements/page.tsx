@@ -36,7 +36,7 @@ const STATUS_MAP = {
   en_cours: {
     label: 'En cours',
     dot: true,
-    cls: 'bg-emerald-400/[0.12] border border-emerald-400/30 text-emerald-400',
+    cls: 'bg-emerald-400/[0.12] border border-emerald-400/30 text-emerald-600',
   },
   planifie: {
     label: 'À venir',
@@ -71,8 +71,8 @@ function CornerOrnament({ className }: { className?: string }) {
       className={cn('pointer-events-none absolute size-12', className)}
       aria-hidden
     >
-      <div className="absolute left-0 top-0 h-px w-8 bg-white/[0.18]" />
-      <div className="absolute left-0 top-0 h-8 w-px bg-white/[0.18]" />
+      <div className="absolute left-0 top-0 h-px w-8 bg-white" />
+      <div className="absolute left-0 top-0 h-8 w-px bg-white" />
       <span
         className="absolute left-1.5 top-1.5 size-1.5 rounded-full bg-cyan-400/70"
         style={{ boxShadow: '0 0 8px rgba(34,211,238,0.7)' }}
@@ -98,8 +98,8 @@ function FilterPill({
       className={cn(
         'rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200',
         active
-          ? 'border-cyan-400/50 bg-cyan-400/[0.12] text-cyan-400'
-          : 'border-white/[0.10] text-slate-400 hover:border-white/[0.20] hover:text-slate-200',
+          ? 'border-cyan-400/50 bg-cyan-400/[0.12] text-cyan-600'
+          : 'border-slate-200 text-slate-600 hover:border-slate-200 hover:text-slate-800',
       )}
     >
       {children}
@@ -124,7 +124,7 @@ function EventCard({ event }: { event: EventPublic }) {
   return (
     <Link
       href={`/evenements/${event.slug}`}
-      className="group flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 backdrop-blur-sm transition-all duration-200 hover:border-white/[0.18] hover:bg-white/[0.07] hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(34,211,238,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+      className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 backdrop-blur-sm transition-all duration-200 hover:border-slate-200 hover:bg-white hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(34,211,238,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
     >
       {/* badges */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -139,7 +139,7 @@ function EventCard({ event }: { event: EventPublic }) {
           )}
           {status.label}
         </span>
-        <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium text-slate-400">
+        <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600">
           {TYPE_LABELS[event.type_examen] ?? event.type_examen}
         </span>
         {event.pour_conducteurs && (
@@ -151,26 +151,26 @@ function EventCard({ event }: { event: EventPublic }) {
 
       {/* title */}
       <div className="mb-5 flex items-start justify-between gap-3">
-        <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-100 transition-colors group-hover:text-white">
+        <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 transition-colors group-hover:text-slate-900">
           {event.titre}
         </h3>
-        <ChevronRight className="mt-0.5 size-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-cyan-400" />
+        <ChevronRight className="mt-0.5 size-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-cyan-600" />
       </div>
 
       {/* meta */}
-      <div className="mb-5 space-y-2.5 text-sm text-slate-400">
+      <div className="mb-5 space-y-2.5 text-sm text-slate-600">
         <div className="flex items-center gap-2.5">
-          <Calendar className="size-3.5 shrink-0 text-cyan-400/70" />
+          <Calendar className="size-3.5 shrink-0 text-cyan-600/80" />
           <span className="capitalize">{formatDate(event.date_event)}</span>
         </div>
         <div className="flex items-center gap-2.5">
-          <Clock className="size-3.5 shrink-0 text-cyan-400/70" />
+          <Clock className="size-3.5 shrink-0 text-cyan-600/80" />
           <span>
             {formatTime(event.heure_debut)} – {formatTime(event.heure_fin)}
           </span>
         </div>
         <div className="flex items-center gap-2.5">
-          <MapPin className="size-3.5 shrink-0 text-cyan-400/70" />
+          <MapPin className="size-3.5 shrink-0 text-cyan-600/80" />
           <span className="line-clamp-1">{event.lieu}</span>
         </div>
       </div>
@@ -185,7 +185,7 @@ function EventCard({ event }: { event: EventPublic }) {
             </span>
             <span>{event.places_restantes} places</span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white">
             <div
               className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
               style={{ width: `${pct}%` }}
@@ -217,18 +217,18 @@ function EventCard({ event }: { event: EventPublic }) {
 
 function EventCardSkeleton() {
   return (
-    <div className="flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6">
+    <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6">
       <div className="mb-4 flex gap-2">
-        <Skeleton className="h-5 w-20 rounded-full bg-white/[0.06]" />
-        <Skeleton className="h-5 w-16 rounded-full bg-white/[0.06]" />
+        <Skeleton className="h-5 w-20 rounded-full bg-white" />
+        <Skeleton className="h-5 w-16 rounded-full bg-white" />
       </div>
-      <Skeleton className="mb-5 h-5 w-4/5 rounded bg-white/[0.06]" />
+      <Skeleton className="mb-5 h-5 w-4/5 rounded bg-white" />
       <div className="mb-5 space-y-2.5">
-        <Skeleton className="h-4 w-3/4 rounded bg-white/[0.06]" />
-        <Skeleton className="h-4 w-1/2 rounded bg-white/[0.06]" />
-        <Skeleton className="h-4 w-2/3 rounded bg-white/[0.06]" />
+        <Skeleton className="h-4 w-3/4 rounded bg-white" />
+        <Skeleton className="h-4 w-1/2 rounded bg-white" />
+        <Skeleton className="h-4 w-2/3 rounded bg-white" />
       </div>
-      <Skeleton className="h-2 w-full rounded-full bg-white/[0.06]" />
+      <Skeleton className="h-2 w-full rounded-full bg-white" />
     </div>
   );
 }
@@ -283,7 +283,7 @@ export default function EvenementsPage() {
         <div className="mx-auto max-w-3xl text-center">
           {/* badge */}
           <div
-            className="mb-8 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/[0.08] px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-cyan-400"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/[0.08] px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-cyan-600"
             style={{ animationFillMode: 'both' }}
           >
             <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
@@ -291,7 +291,7 @@ export default function EvenementsPage() {
           </div>
 
           {/* h1 */}
-          <h1 className="mb-6 font-black leading-[1.05] tracking-tight text-white">
+          <h1 className="mb-6 font-black leading-[1.05] tracking-tight text-slate-900">
             <span
               className="block"
               style={{
@@ -316,10 +316,10 @@ export default function EvenementsPage() {
           </h1>
 
           {/* subtitle */}
-          <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-400">
-            Consultations ophtalmologiques organisées par l&apos;Université Iba
-            Der Thiam. Prenez soin de votre vue — sans frais, sans rendez-vous
-            obligatoire.
+          <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-600">
+            Consultations ophtalmologiques organisées par le centre vision
+            Madoune Robert Ndiaye - UFR Santé Université Iba Der Thiam de Thies.
+            Prenez soin de votre vue — sans frais, sans rendez-vous obligatoire.
           </p>
 
           {/* search */}
@@ -331,7 +331,7 @@ export default function EvenementsPage() {
                 placeholder="Rechercher un événement ou un lieu…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-12 w-full rounded-xl border border-white/[0.10] bg-white/[0.06] pl-11 pr-4 text-sm text-slate-200 backdrop-blur-sm transition-all placeholder:text-slate-500 focus:border-cyan-400/40 focus:bg-white/[0.09] focus:outline-none focus:ring-0"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 backdrop-blur-sm transition-all placeholder:text-slate-500 focus:border-cyan-400/40 focus:bg-white focus:outline-none focus:ring-0"
               />
             </div>
           </div>
@@ -339,14 +339,14 @@ export default function EvenementsPage() {
           {/* stats + cta */}
           <div className="flex flex-wrap items-center justify-center gap-4">
             {activeCount > 0 && (
-              <span className="text-sm text-slate-400">
-                <span className="font-bold text-white">{activeCount}</span>{' '}
+              <span className="text-sm text-slate-600">
+                <span className="font-bold text-slate-900">{activeCount}</span>{' '}
                 événements disponibles
               </span>
             )}
             <Link
               href="/rendez-vous"
-              className="rounded-lg border border-white/[0.12] px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/[0.25] hover:bg-white/[0.06] hover:text-white"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition-all hover:border-slate-200 hover:bg-white hover:text-slate-900"
             >
               Prendre un RDV individuel
             </Link>
@@ -362,7 +362,7 @@ export default function EvenementsPage() {
       {/* ── events section ── */}
       <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
         {/* filters */}
-        <div className="mb-8 flex flex-wrap items-center gap-2.5 border-b border-white/[0.06] pb-6">
+        <div className="mb-8 flex flex-wrap items-center gap-2.5 border-b border-slate-200 pb-6">
           <FilterPill
             active={typeFilter === 'all'}
             onClick={() => setTypeFilter('all')}
@@ -387,7 +387,7 @@ export default function EvenementsPage() {
           >
             Tous publics
           </FilterPill>
-          <div className="ml-0 h-4 w-px bg-white/[0.10] sm:ml-2" />
+          <div className="ml-0 h-4 w-px bg-white sm:ml-2" />
           <FilterPill
             active={includePast}
             onClick={() => setIncludePast((v) => !v)}
@@ -416,9 +416,9 @@ export default function EvenementsPage() {
             </p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] py-20 text-center">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 text-center">
             <Users className="mb-4 size-12 text-slate-700" />
-            <p className="font-semibold text-slate-400">
+            <p className="font-semibold text-slate-600">
               Aucun événement trouvé
             </p>
             <p className="mt-1 text-sm text-slate-600">

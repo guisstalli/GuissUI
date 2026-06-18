@@ -4,7 +4,8 @@ import { api } from '@/lib/api-client';
 
 export const useHardDeleteUser = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => api.delete(`/users/${id}/hard-delete/`),
@@ -12,5 +13,6 @@ export const useHardDeleteUser = ({
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onSuccess?.();
     },
+    onError,
   });
 };

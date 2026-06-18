@@ -2,11 +2,8 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type {
-  PaginatedExamenAdultList,
-  ExamenAdultDetailApi,
-  ExamsQueryParams,
-} from '../../types';
+import type { PaginatedExamenAdultList, ExamsQueryParams } from '../../types/types';
+import type { ExamenAdultDetailApi } from '../../types/api-schemas';
 
 /**
  * Récupère la liste paginée des examens adulte
@@ -61,7 +58,7 @@ export const getAdultExamQueryOptions = (id: number) => {
   return queryOptions({
     queryKey: ['exams', 'adult', id],
     queryFn: () => getAdultExam(id),
-    enabled: !!id,
+    enabled: id > 0,
   });
 };
 

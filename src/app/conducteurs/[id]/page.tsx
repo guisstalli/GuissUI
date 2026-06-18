@@ -53,6 +53,7 @@ import {
 import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { usePatientExams } from '@/features/patients/api/get-patient-exams';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 
 const TYPE_PERMIS_LABELS: Record<string, string> = {
   Leger: 'Léger',
@@ -228,6 +229,12 @@ export default function DriverDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const driverId = Number(id);
+  const [activeTab, setActiveTab] = usePersistentTabState({
+    paramKey: 'tab',
+    storageKey: `guiss.tab.conducteur.${driverId}`,
+    defaultValue: 'identite',
+    allowed: ['identite', 'antecedents', 'examens'],
+  });
   const [showEditDialog, setShowEditDialog] = useState(
     searchParams.get('edit') === 'true',
   );
@@ -345,7 +352,7 @@ export default function DriverDetailPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="identite" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start border-b border-border bg-transparent p-0">
           <TabsTrigger
             value="identite"

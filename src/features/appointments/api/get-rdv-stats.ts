@@ -2,13 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-export type RdvStats = {
-  en_attente: number;
-  confirme: number;
-  present: number;
-  absent: number;
-  annule: number;
-};
+import type { RdvStats } from '../types/schemas';
 
 const getRdvStats = (): Promise<RdvStats> =>
   api.get('/rendez-vous/statistiques/');

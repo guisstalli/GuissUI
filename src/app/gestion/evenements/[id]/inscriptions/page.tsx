@@ -5,7 +5,9 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  LogIn,
   MapPin,
+  MoreVertical,
   QrCode,
   Search,
   UserPlus,
@@ -14,7 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge/badge';
@@ -25,6 +27,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown/dropdown';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCheckin } from '@/features/events/api/checkin';
@@ -35,6 +43,7 @@ import {
   useInscriptions,
 } from '@/features/events/api/get-inscriptions';
 import { useEventQRCode } from '@/features/events/api/get-qr-code';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { cn } from '@/lib/utils';
 
 interface Inscription {
@@ -139,7 +148,7 @@ function QRCodeDialog({ eventId }: { eventId: number }) {
           <div className="flex flex-col items-center gap-4 py-2">
             {qrLoading ? (
               <div className="flex size-56 items-center justify-center rounded-lg border border-border bg-muted">
-                <QrCode className="size-10 text-muted-foreground/40" />
+                <QrCode className="text-muted-foreground/40 size-10" />
               </div>
             ) : qrSrc ? (
               <img
@@ -181,11 +190,32 @@ export default function EventInscriptionsPage() {
   const params = useParams();
   const eventId = Number(params.id);
 
-  const [statutFilter, setStatutFilter] = useState<string>('all');
+  const [statutFilter, setStatutFilter] = usePersistentTabState({
+    paramKey: 'statut',
+    storageKey: `guiss.tab.inscriptions.${eventId}`,
+    defaultValue: 'all',
+    allowed: ['all', 'inscrit', 'present', 'absent', 'annule'],
+  });
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [checkinValue, setCheckinValue] = useState('');
   const [checkinResult, setCheckinResult] = useState<Inscription | null>(null);
   const [checkinError, setCheckinError] = useState('');
   const [convertingId, setConvertingId] = useState<number | null>(null);
+  const [checkinRowId, setCheckinRowId] = useState<number | null>(null);
+
+  // Debounce ~300ms de la recherche pour limiter les requêtes serveur.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(
+      () => setDebouncedSearch(searchInput),
+      300,
+    );
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchInput]);
 
   const { data: eventData, isLoading: eventLoading } = useEvent(eventId);
   const event = eventData as EventDetail | null;
@@ -193,6 +223,7 @@ export default function EventInscriptionsPage() {
   const { data: inscriptionsData, isLoading: inscriptionsLoading } =
     useInscriptions(eventId, {
       statut: statutFilter !== 'all' ? statutFilter : undefined,
+      search: debouncedSearch.trim() || undefined,
       limit: 200,
     });
 
@@ -210,12 +241,20 @@ export default function EventInscriptionsPage() {
       setCheckinResult(data as Inscription);
       setCheckinError('');
       setCheckinValue('');
+      setCheckinRowId(null);
     },
     onError: () => {
       setCheckinError('Participant introuvable ou déjà enregistré.');
       setCheckinResult(null);
+      setCheckinRowId(null);
     },
   });
+
+  // Check-in direct depuis une ligne du tableau (réutilise l'endpoint par n°).
+  const handleInlineCheckin = (ins: Inscription) => {
+    setCheckinRowId(ins.id);
+    checkin({ numero_inscription: ins.numero_inscription });
+  };
 
   const { mutate: convertToPatient } = useConvertToPatient(eventId, {
     onSuccess: () => setConvertingId(null),
@@ -375,6 +414,17 @@ export default function EventInscriptionsPage() {
 
         {/* Inscriptions list */}
         <div>
+          {/* Recherche par nom complet, téléphone ou n° d'inscription */}
+          <div className="relative mb-3">
+            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Rechercher par nom, prénom, téléphone ou n° d'inscription…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+
           <div className="mb-3 flex gap-1 overflow-x-auto rounded-xl bg-muted p-1">
             {TABS.map((tab) => (
               <button
@@ -410,7 +460,7 @@ export default function EventInscriptionsPage() {
             <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-muted/30">
+                  <tr className="bg-muted/30 border-b border-border">
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       N°
                     </th>
@@ -438,7 +488,7 @@ export default function EventInscriptionsPage() {
                   {inscriptions.map((ins) => (
                     <tr
                       key={ins.id}
-                      className="border-b border-border last:border-0 hover:bg-muted/20"
+                      className="hover:bg-muted/20 border-b border-border last:border-0"
                     >
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                         {ins.numero_inscription}
@@ -459,33 +509,82 @@ export default function EventInscriptionsPage() {
                           : '—'}
                       </td>
                       <td className="px-4 py-3">
-                        {ins.patient_id ? (
-                          <Link
-                            href={`/patients/${ins.patient_id}`}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Voir patient
-                          </Link>
-                        ) : ins.statut === 'inscrit' ||
-                          ins.statut === 'absent' ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1.5 text-xs"
-                            disabled={convertingId === ins.id}
-                            onClick={() => {
-                              setConvertingId(ins.id);
-                              convertToPatient(ins.id);
-                            }}
-                          >
-                            <UserPlus className="size-3.5" />
-                            {convertingId === ins.id ? '...' : 'Créer patient'}
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            —
-                          </span>
-                        )}
+                        {(() => {
+                          const canCheckin =
+                            event?.statut === 'en_cours' &&
+                            ins.statut === 'inscrit';
+                          const canCreatePatient =
+                            !ins.patient_id &&
+                            (ins.statut === 'inscrit' ||
+                              ins.statut === 'absent');
+                          const canViewPatient = !!ins.patient_id;
+
+                          if (
+                            !canCheckin &&
+                            !canCreatePatient &&
+                            !canViewPatient
+                          ) {
+                            return (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-7"
+                                  aria-label="Actions"
+                                >
+                                  <MoreVertical className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {canCheckin && (
+                                  <DropdownMenuItem
+                                    disabled={checkinRowId === ins.id}
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      handleInlineCheckin(ins);
+                                    }}
+                                  >
+                                    <LogIn className="mr-2 size-3.5" />
+                                    {checkinRowId === ins.id
+                                      ? 'Check-in…'
+                                      : 'Check-in'}
+                                  </DropdownMenuItem>
+                                )}
+                                {canViewPatient && (
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/patients/${ins.patient_id}`}>
+                                      <Users className="mr-2 size-3.5" />
+                                      Voir patient
+                                    </Link>
+                                  </DropdownMenuItem>
+                                )}
+                                {canCreatePatient && (
+                                  <DropdownMenuItem
+                                    disabled={convertingId === ins.id}
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      setConvertingId(ins.id);
+                                      convertToPatient(ins.id);
+                                    }}
+                                  >
+                                    <UserPlus className="mr-2 size-3.5" />
+                                    {convertingId === ins.id
+                                      ? 'Création…'
+                                      : 'Créer patient'}
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}

@@ -13,7 +13,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsDriverExperience } from '../../types';
+import type { AnalyticsDriverExperience } from '../../types/types';
 
 const ETAT_COLORS: Record<string, string> = {
   ACTIF: '#22c55e',

@@ -28,7 +28,7 @@ export function PublicNavbar() {
       className={cn(
         'fixed inset-x-0 top-0 z-50 transition-all duration-300',
         scrolled
-          ? 'border-b border-white/[0.06] bg-[#060b17]/90 shadow-[0_1px_24px_rgba(0,0,0,0.6)] backdrop-blur-xl'
+          ? 'border-b border-slate-200 bg-white/90 shadow-[0_1px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl'
           : 'bg-transparent',
       )}
     >
@@ -40,10 +40,10 @@ export function PublicNavbar() {
             <div className="absolute inset-0 rounded-full bg-cyan-400/0 blur-md transition-all duration-300 group-hover:bg-cyan-400/20" />
           </div>
           <div className="flex flex-col leading-none">
-            <span className="text-base font-extrabold tracking-wider text-white">
+            <span className="text-base font-extrabold tracking-wider text-slate-900">
               GUISS
             </span>
-            <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-cyan-400/70">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-cyan-600/80">
               Ophtalmologie
             </span>
           </div>

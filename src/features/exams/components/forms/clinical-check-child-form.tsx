@@ -13,7 +13,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from '@/components/ui/form';
-import { CLINICAL_CHECK_VALUES } from '@/features/exams/types';
+import { CLINICAL_CHECK_VALUES } from '@/features/exams/types/schemas';
 
 interface ClinicalCheckChildFormProps {
   namePrefix?: string;

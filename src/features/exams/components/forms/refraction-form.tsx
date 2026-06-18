@@ -14,9 +14,15 @@ import {
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePersistentLocalTabState } from '@/hooks/use-persistent-tab-state';
 
 interface RefractionFormProps {
   namePrefix?: string;
+  /**
+   * Scope localStorage namespacé à l'examen (ex. l'examId). Passé par la page
+   * parente pour éviter de coupler ce composant partagé à la structure d'URL.
+   */
+  scope?: string;
 }
 
 /**
@@ -39,10 +45,20 @@ interface RefractionFormProps {
  *
  * DESIGN: Grouped by eye, correction toggle, Tabs for Retinoscopy
  */
-export function RefractionForm({ namePrefix = '' }: RefractionFormProps) {
+export function RefractionForm({
+  namePrefix = '',
+  scope,
+}: RefractionFormProps) {
   const form = useFormContext();
   const prefix = namePrefix ? `${namePrefix}.` : '';
   const correction = form.watch(`${prefix}correction`);
+
+  // Persiste l'onglet rétinoscopie (localStorage uniquement, scopé à l'examen).
+  const [retinoTab, setRetinoTab] = usePersistentLocalTabState({
+    storageKey: `guiss.tab.refraction.${scope ?? 'x'}.retino`,
+    defaultValue: 'standard',
+    allowed: ['standard', 'cycloplegic'],
+  });
 
   useEffect(() => {
     if (!correction) {
@@ -499,7 +515,7 @@ export function RefractionForm({ namePrefix = '' }: RefractionFormProps) {
           </div>
           <div className="flex items-center gap-2">
             <Label htmlFor="correction" className="text-xs font-medium">
-              Avec Correction
+              Correction Prescrite
             </Label>
             <FormField
               control={form.control}
@@ -568,11 +584,72 @@ export function RefractionForm({ namePrefix = '' }: RefractionFormProps) {
               )}
             />
           </div>
+
+          {/* Addition (vision de près) */}
+          <div className="mt-4">
+            <Label className="text-sm font-medium text-muted-foreground">
+              Addition (vision de près)
+            </Label>
+            <div className="mt-3 grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name={`${prefix}addition_od`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Addition OD</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.25"
+                        min="0"
+                        max="5"
+                        placeholder="0-5 D"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`${prefix}addition_og`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Addition OG</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.25"
+                        min="0"
+                        max="5"
+                        placeholder="0-5 D"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
         </div>
       )}
 
       {/* Retinoscopy Tabs */}
-      <Tabs defaultValue="standard" className="w-full">
+      <Tabs value={retinoTab} onValueChange={setRetinoTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="standard">Rétinoscopie Standard</TabsTrigger>
           <TabsTrigger value="cycloplegic">

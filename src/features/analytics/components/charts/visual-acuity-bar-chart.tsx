@@ -11,13 +11,17 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsVisualAcuity } from '../../types';
+import type { AnalyticsVisualAcuity, CohortCriterion } from '../../types/types';
 
 type VisualAcuityBarChartProps = {
   data: AnalyticsVisualAcuity;
+  onSegmentClick?: (criterion: CohortCriterion) => void;
 };
 
-export const VisualAcuityBarChart = ({ data }: VisualAcuityBarChartProps) => {
+export const VisualAcuityBarChart = ({
+  data,
+  onSegmentClick,
+}: VisualAcuityBarChartProps) => {
   if (!data || !data.kpis || data.kpis.sample_size === 0) {
     return (
       <Card className="h-full">
@@ -38,18 +42,42 @@ export const VisualAcuityBarChart = ({ data }: VisualAcuityBarChartProps) => {
       name: '< 3/10 (Malvoyance)',
       value: kpis.pct_av_less_than_3,
       color: '#ef4444',
+      criterion: {
+        type: 'acuity' as const,
+        value: 'malvoyance',
+        label: 'Acuité d’au moins un œil < 3/10 (Malvoyance)',
+      },
     }, // red
     {
       name: '< 5/10 (Basse)',
       value: kpis.pct_av_less_than_5,
       color: '#f59e0b',
+      criterion: {
+        type: 'acuity' as const,
+        value: 'basse_vision',
+        label: 'Acuité d’au moins un œil < 5/10 (Basse vision)',
+      },
     }, // amber
     {
       name: '< 10/10 (Moyenne)',
       value: kpis.pct_av_less_than_10,
       color: '#3b82f6',
+      criterion: {
+        type: 'acuity' as const,
+        value: 'moyenne',
+        label: 'Acuité d’au moins un œil < 10/10 (Moyenne)',
+      },
     }, // blue
   ];
+
+  const handleBarClick = (entry: {
+    payload?: { criterion?: CohortCriterion };
+  }) => {
+    const criterion = entry?.payload?.criterion;
+    if (onSegmentClick && criterion) {
+      onSegmentClick(criterion);
+    }
+  };
 
   return (
     <Card className="h-full">
@@ -81,7 +109,13 @@ export const VisualAcuityBarChart = ({ data }: VisualAcuityBarChartProps) => {
                 formatter={(value: any) => [`${value}%`, 'Proportion']}
                 contentStyle={{ borderRadius: '8px' }}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+              <Bar
+                dataKey="value"
+                radius={[0, 4, 4, 0]}
+                barSize={24}
+                onClick={onSegmentClick ? handleBarClick : undefined}
+                cursor={onSegmentClick ? 'pointer' : undefined}
+              >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}

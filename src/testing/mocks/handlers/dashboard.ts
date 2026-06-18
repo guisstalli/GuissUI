@@ -64,7 +64,5 @@ export const mockDashboard: Dashboard = {
 };
 
 export const dashboardHandlers = [
-  http.get(`${env.API_URL}/api/v1/dashboard/`, () =>
-    HttpResponse.json(mockDashboard),
-  ),
+  http.get(`${env.API_URL}/dashboard/`, () => HttpResponse.json(mockDashboard)),
 ];

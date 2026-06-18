@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { AnalyticsFilters, AnalyticsGlaucoma } from '../types';
+import type { AnalyticsFilters, AnalyticsGlaucoma } from '../types/types';
 import { normalizeAnalyticsFilters } from '../utils/filters';
 
 const buildGlaucomaUrl = (filters: AnalyticsFilters) => {

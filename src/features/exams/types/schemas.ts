@@ -420,6 +420,9 @@ export const RefractionSchema = z
     cyclo_og_sphere: z.coerce.number().min(-20).max(15).optional().nullable(), // Focale Horizontale
     cyclo_og_cylinder: z.coerce.number().min(-8).max(8).optional().nullable(), // Focale Verticale
     cyclo_og_axis: z.coerce.number().min(0).max(180).optional().nullable(), // Axe Horizontal
+    // Addition (vision de près)
+    addition_od: z.coerce.number().min(0).max(5).optional().nullable(),
+    addition_og: z.coerce.number().min(0).max(5).optional().nullable(),
     // Pupillary Distance
     dp: z.coerce.number().min(40).max(80).optional().nullable(),
     created: z.string().datetime().optional(),
@@ -1241,3 +1244,9 @@ export type ExamenSupplementaireCreate = z.infer<
 export type PaginatedExamenSupplementaireList = z.infer<
   typeof PaginatedExamenSupplementaireListSchema
 >;
+
+export const EYE_LABELS: Record<(typeof EYE_OPTIONS)[number], string> = {
+  od: 'Œil Droit (OD)',
+  og: 'Œil Gauche (OG)',
+  odg: 'Les deux yeux (ODG)',
+};

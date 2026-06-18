@@ -63,6 +63,7 @@ import { useCreateFacture } from '@/features/billing/api/create-facture';
 import { useFactures } from '@/features/billing/api/get-factures';
 import { CreateFactureForm } from '@/features/billing/components/create-facture-form';
 import { useSites } from '@/features/sites/api/get-sites';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { cn } from '@/lib/utils';
 
 const localizer = dateFnsLocalizer({
@@ -393,7 +394,12 @@ const STATUT_FILTER_OPTIONS: { value: string; label: string }[] = [
 
 export default function GestionRendezVousPage() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'liste' ? 'liste' : 'agenda';
+  const [activeTab, setActiveTab] = usePersistentTabState({
+    paramKey: 'tab',
+    storageKey: 'guiss.tab.gestion-rdv',
+    defaultValue: 'agenda',
+    allowed: ['agenda', 'liste', 'stats'],
+  });
   const initialStatut = searchParams.get('statut') ?? 'all';
 
   const [selectedRdv, setSelectedRdv] = useState<RendezVous | null>(null);
@@ -490,7 +496,11 @@ export default function GestionRendezVousPage() {
 
   return (
     <Shell title="Agenda">
-      <Tabs defaultValue={initialTab} className="flex flex-1 flex-col gap-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-1 flex-col gap-4"
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
@@ -680,7 +690,7 @@ export default function GestionRendezVousPage() {
                       <tr
                         key={rdv.id}
                         onClick={() => setSelectedRdv(rdv)}
-                        className="cursor-pointer transition-colors hover:bg-muted/50"
+                        className="hover:bg-muted/50 cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3 font-medium text-foreground">
                           {rdv.patient_prenom} {rdv.patient_nom}

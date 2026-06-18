@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { AnalyticsFilters, AnalyticsOcularTension } from '../types';
+import type { AnalyticsFilters, AnalyticsOcularTension } from '../types/types';
 import { normalizeAnalyticsFilters } from '../utils/filters';
 
 const buildOcularTensionUrl = (filters: AnalyticsFilters) => {

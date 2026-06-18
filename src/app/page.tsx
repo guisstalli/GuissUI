@@ -20,7 +20,7 @@ import {
   alertSignature,
 } from '@/features/dashboard/components/dismissible-alert';
 import { ExamsChart } from '@/features/dashboard/components/exams-chart';
-import { KpiCard } from '@/features/dashboard/components/kpi-card';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { UpcomingAppointments } from '@/features/dashboard/components/upcoming-appointments';
 import { useUser } from '@/lib/auth';
 

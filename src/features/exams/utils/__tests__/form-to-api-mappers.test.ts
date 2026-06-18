@@ -87,16 +87,16 @@ describe('mapRefractionFormToApi', () => {
 
   it('sends null avec-correction fields when correction=false', () => {
     const result = mapRefractionFormToApi(baseRefraction);
-    expect(result.correction).toBe(false);
-    expect(result.od_s_avec_correction).toBeNull();
-    expect(result.od_c_avec_correction).toBeNull();
-    expect(result.od_a_avec_correction).toBeNull();
-    expect(result.og_s_avec_correction).toBeNull();
-    expect(result.og_c_avec_correction).toBeNull();
-    expect(result.og_a_avec_correction).toBeNull();
-    expect(result.avod_avec_correction).toBeNull();
-    expect(result.avog_avec_correction).toBeNull();
-    expect(result.avodg_avec_correction).toBeNull();
+    expect(result.correction_prescrite).toBe(false);
+    expect(result.od_s_avec_correction_prescrite).toBeNull();
+    expect(result.od_c_avec_correction_prescrite).toBeNull();
+    expect(result.od_a_avec_correction_prescrite).toBeNull();
+    expect(result.og_s_avec_correction_prescrite).toBeNull();
+    expect(result.og_c_avec_correction_prescrite).toBeNull();
+    expect(result.og_a_avec_correction_prescrite).toBeNull();
+    expect(result.avod_avec_correction_prescrite).toBeNull();
+    expect(result.avog_avec_correction_prescrite).toBeNull();
+    expect(result.avodg_avec_correction_prescrite).toBeNull();
   });
 
   it('maps field names correctly: sphere → od_s, cylinder → od_c, axis → od_a', () => {
@@ -123,8 +123,8 @@ describe('mapRefractionFormToApi', () => {
       og_visual_acuity_avec_correction: 0.9,
     };
     const result = mapRefractionFormToApi(data);
-    expect(result.od_s_avec_correction).toBe('-1.25');
-    expect(result.avod_avec_correction).toBe('1');
+    expect(result.od_s_avec_correction_prescrite).toBe('-1.25');
+    expect(result.avod_avec_correction_prescrite).toBe('1');
   });
 
   it('falls back to base values when avec_correction fields are null but correction=true', () => {
@@ -135,8 +135,8 @@ describe('mapRefractionFormToApi', () => {
       od_visual_acuity_avec_correction: null,
     };
     const result = mapRefractionFormToApi(data);
-    expect(result.od_s_avec_correction).toBe('-1.5');
-    expect(result.avod_avec_correction).toBe('0.8');
+    expect(result.od_s_avec_correction_prescrite).toBe('-1.5');
+    expect(result.avod_avec_correction_prescrite).toBe('0.8');
   });
 });
 

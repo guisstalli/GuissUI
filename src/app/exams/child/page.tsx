@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import {
   TableBody,
   TableCell,
@@ -32,9 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/features/dashboard/components/kpi-card';
-import { useChildExams } from '@/features/exams/api';
-import type { ExamsQueryParams } from '@/features/exams/types';
+import { useChildExams } from '@/features/exams/api/child/get-child-exams';
+import type { ExamsQueryParams } from '@/features/exams/types/types';
 
 const ITEMS_PER_PAGE = 10;
 

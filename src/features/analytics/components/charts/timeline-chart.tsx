@@ -11,7 +11,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import type { AnalyticsTimeline } from '../../types';
+import type { AnalyticsTimeline } from '../../types/types';
 
 type TimelineChartProps = {
   data: AnalyticsTimeline['timeline'];

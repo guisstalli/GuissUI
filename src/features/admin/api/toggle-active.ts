@@ -4,7 +4,8 @@ import { api } from '@/lib/api-client';
 
 export const useToggleActive = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
@@ -13,5 +14,6 @@ export const useToggleActive = ({
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onSuccess?.();
     },
+    onError,
   });
 };

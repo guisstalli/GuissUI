@@ -6,7 +6,8 @@ import type { CreateUserInput } from '../types/schemas';
 
 export const useCreateUser = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: { onSuccess?: () => void; onError?: () => void } = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateUserInput) =>
@@ -15,5 +16,6 @@ export const useCreateUser = ({
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onSuccess?.();
     },
+    onError,
   });
 };

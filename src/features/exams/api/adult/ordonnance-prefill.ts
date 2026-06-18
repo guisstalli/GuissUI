@@ -34,6 +34,9 @@ const OrdonnancePrefillRefractionSchema = z.object({
   od: OrdonnancePrefillEyeSchema,
   og: OrdonnancePrefillEyeSchema,
   dp_loin: z.number().nullable(),
+  dp: z.number().nullable().optional(),
+  addition_od: z.number().nullable().optional(),
+  addition_og: z.number().nullable().optional(),
 });
 
 export const OrdonnancePrefillSchema = z.object({
@@ -41,6 +44,10 @@ export const OrdonnancePrefillSchema = z.object({
   od: OrdonnancePrefillEyeSchema,
   og: OrdonnancePrefillEyeSchema,
   dp_loin: z.number().nullable(),
+  // DP unique + addition (vision de près) — formulaire optique simplifié
+  dp: z.number().nullable().optional(),
+  addition_od: z.number().nullable().optional(),
+  addition_og: z.number().nullable().optional(),
   av_od: z.number().nullable(),
   av_og: z.number().nullable(),
   // Forme enrichie — plan §13.c

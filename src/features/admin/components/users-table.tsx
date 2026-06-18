@@ -3,7 +3,7 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge/badge';
 import { Button } from '@/components/ui/button';
@@ -114,10 +114,14 @@ export function UsersTable() {
   const [roleFilter, setRoleFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
 
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleEmailChange = useCallback((value: string) => {
     setEmailFilter(value);
-    clearTimeout((handleEmailChange as any)._timer);
-    (handleEmailChange as any)._timer = setTimeout(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    debounceTimer.current = setTimeout(() => {
       setDebouncedEmail(value);
       setPage(1);
     }, 300);

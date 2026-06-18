@@ -39,6 +39,7 @@ import type { BillingPreferences } from '@/features/billing/types/schemas';
 import { useClinicSettings } from '@/features/clinic/api/get-clinic-settings';
 import { ClinicSettingsForm } from '@/features/clinic/components/clinic-settings-form';
 import { MedicamentsAdminTable } from '@/features/medicaments-admin/components/medicaments-admin-table';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { useUser } from '@/lib/auth';
 
 // ─── Reminder form ────────────────────────────────────────────────────────────
@@ -328,6 +329,12 @@ function BillingPreferencesForm({ prefs }: { prefs: BillingPreferences }) {
 export default function ParametresPage() {
   const { user } = useUser();
   const canManageClinic = user?.role === 'ADMIN' || user?.role === 'SUPERUSER';
+  const [activeTab, setActiveTab] = usePersistentTabState({
+    paramKey: 'tab',
+    storageKey: 'guiss.tab.parametres',
+    defaultValue: 'rappels',
+    allowed: ['rappels', 'facturation', 'clinique', 'medicaments'],
+  });
   const { data: reminderConfig, isLoading: loadingReminder } =
     useReminderConfig();
   const { data: billingPrefs, isLoading: loadingBilling } =
@@ -348,7 +355,7 @@ export default function ParametresPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="rappels">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="rappels" className="gap-2">
               <Bell className="size-4" />

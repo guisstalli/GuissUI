@@ -63,7 +63,8 @@ export function useFacturePdfBlob(
   const isEnabled = enabled && id !== null;
 
   const query = useQuery({
-    queryKey: id !== null ? facturePdfQueryKey(id) : ['factures', 'pdf', null],
+    queryKey:
+      id !== null ? facturePdfQueryKey(id) : ['factures', 'pdf', 'disabled'],
     queryFn: () => getFacturePdfBlob(id as number),
     enabled: isEnabled,
     staleTime: Infinity,

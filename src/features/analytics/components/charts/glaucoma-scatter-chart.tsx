@@ -17,7 +17,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 
-import type { AnalyticsGlaucoma } from '../../types';
+import type { AnalyticsGlaucoma } from '../../types/types';
 
 type GlaucomaScatterChartProps = {
   data: AnalyticsGlaucoma;

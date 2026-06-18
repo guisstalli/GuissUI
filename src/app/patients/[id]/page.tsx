@@ -45,24 +45,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-//import { PatientAnalyticsContext } from '@/features/analytics/components';
-import { useCreateAdultExam, useCreateChildExam } from '@/features/exams/api';
-import {
-  usePatient,
-  usePatientExams,
-  usePatchPatient,
-} from '@/features/patients/api';
+//import { PatientAnalyticsContext } from '@/features/analytics/components/patient-analytics-context';
+import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
+import { useCreateChildExam } from '@/features/exams/api/child/mutations';
+import { usePatient } from '@/features/patients/api/get-patient';
+import { usePatientExams } from '@/features/patients/api/get-patient-exams';
+import { usePatchPatient } from '@/features/patients/api/update-patient';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { SiteSelector } from '@/features/sites/components/site-selector';
+import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
+import { optionalPhoneSchema } from '@/utils/phone';
 
 const editPatientSchema = z.object({
   last_name: z.string().min(1, 'Le nom est requis'),
   name: z.string().min(1, 'Le prénom est requis'),
   date_de_naissance: z.string().min(1, 'La date de naissance est requise'),
   sex: z.enum(['H', 'F', 'A']),
-  phone_number: z.string().nullable().optional(),
+  phone_number: optionalPhoneSchema,
 });
 type EditPatientValues = z.infer<typeof editPatientSchema>;
 
@@ -72,6 +74,13 @@ export default function PatientDetailPage() {
   const searchParams = useSearchParams();
 
   const patientId = Number(params.id);
+
+  const [activeTab, setActiveTab] = usePersistentTabState({
+    paramKey: 'tab',
+    storageKey: `guiss.tab.patient.${patientId}`,
+    defaultValue: 'information',
+    allowed: ['information', 'medical-history', 'exams'],
+  });
 
   const {
     data: patient,
@@ -250,7 +259,7 @@ export default function PatientDetailPage() {
       </div>
 
       {/* Patient Tabs - 3 tabs now */}
-      <Tabs defaultValue="information" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start border-b border-border bg-transparent p-0">
           <TabsTrigger
             value="information"
@@ -643,10 +652,12 @@ export default function PatientDetailPage() {
                   <FormItem>
                     <FormLabel>Téléphone</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        value={field.value ?? ''}
-                        placeholder="+221 XX XXX XX XX"
+                      <PhoneInput
+                        placeholder="77 000 00 00"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                     </FormControl>
                     <FormMessage />

@@ -2,44 +2,25 @@
 
 import { useMutation } from '@tanstack/react-query';
 
-import { clientEnv } from '@/config/env';
+import { api } from '@/lib/api-client';
 
-interface RequestPasswordResetInput {
-  email: string;
-}
+import {
+  type PasswordResetResponse,
+  type RequestPasswordResetInput,
+} from '../types/schemas';
 
-interface RequestPasswordResetResponse {
-  detail: string;
-}
-
-const requestPasswordReset = async (
+// Endpoint public (demande de réinitialisation de mot de passe) : aucun token
+// requis. Le client `api` n'impose pas l'auth — l'en-tête Authorization est
+// simplement omis en l'absence de session.
+const requestPasswordReset = (
   data: RequestPasswordResetInput,
-): Promise<RequestPasswordResetResponse> => {
-  const response = await fetch(
-    `${clientEnv.API_URL}/users/password/reset/request/`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    },
-  );
-
-  if (!response.ok) {
-    let message = 'Une erreur est survenue. Veuillez réessayer.';
-    try {
-      const body = await response.json();
-      if (typeof body?.detail === 'string') message = body.detail;
-    } catch {
-      // ignore
-    }
-    throw new Error(message);
-  }
-
-  return response.json();
-};
+): Promise<PasswordResetResponse> =>
+  api.post<PasswordResetResponse>('/users/password/reset/request/', data, {
+    silentErrors: true,
+  });
 
 export const useRequestPasswordReset = (options?: {
-  onSuccess?: (data: RequestPasswordResetResponse) => void;
+  onSuccess?: (data: PasswordResetResponse) => void;
 }) =>
   useMutation({
     mutationFn: requestPasswordReset,

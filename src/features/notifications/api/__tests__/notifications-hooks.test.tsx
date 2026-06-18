@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
+import { env } from '@/config/env';
 import { server } from '@/testing/mocks/server';
 
 // Suppress next-auth telemetry fetch that causes URLSearchParams errors in jsdom
@@ -51,7 +52,7 @@ describe('useUnreadCount', () => {
 
   test('returns an error state when the API fails', async () => {
     server.use(
-      http.get('http://localhost:8000/api/v1/notifications/unread-count/', () =>
+      http.get(`${env.API_URL}/notifications/unread-count/`, () =>
         HttpResponse.error(),
       ),
     );
@@ -76,7 +77,7 @@ describe('useNotifications', () => {
   test('passes is_read filter in the URL query string', async () => {
     let capturedUrl = '';
     server.use(
-      http.get('http://localhost:8000/api/v1/notifications/', ({ request }) => {
+      http.get(`${env.API_URL}/notifications/`, ({ request }) => {
         capturedUrl = request.url;
         return HttpResponse.json({
           count: 0,
@@ -110,9 +111,7 @@ describe('useNotifications', () => {
 
   test('returns an error when the API fails', async () => {
     server.use(
-      http.get('http://localhost:8000/api/v1/notifications/', () =>
-        HttpResponse.error(),
-      ),
+      http.get(`${env.API_URL}/notifications/`, () => HttpResponse.error()),
     );
     const wrapper = createWrapper();
     const { result } = renderHook(() => useNotifications(), { wrapper });
@@ -126,13 +125,10 @@ describe('useMarkRead', () => {
   test('posts to the correct notification read endpoint', async () => {
     let capturedUrl = '';
     server.use(
-      http.post(
-        'http://localhost:8000/api/v1/notifications/:id/read/',
-        ({ request }) => {
-          capturedUrl = request.url;
-          return HttpResponse.json({ detail: 'Marked as read.' });
-        },
-      ),
+      http.post(`${env.API_URL}/notifications/:id/read/`, ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json({ detail: 'Marked as read.' });
+      }),
     );
 
     const onSuccess = vi.fn();
@@ -145,14 +141,14 @@ describe('useMarkRead', () => {
     result.current.mutate(1);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(capturedUrl).toContain('/api/v1/notifications/1/read/');
+    expect(capturedUrl).toContain('/notifications/1/read/');
     expect(onSuccess).toHaveBeenCalledOnce();
   });
 
   test('enters an error state when the API returns a 500', async () => {
     server.use(
       http.post(
-        'http://localhost:8000/api/v1/notifications/:id/read/',
+        `${env.API_URL}/notifications/:id/read/`,
         () => new HttpResponse(null, { status: 500 }),
       ),
     );
@@ -185,13 +181,10 @@ describe('useMarkAllRead', () => {
   test('calls the read-all endpoint (not the per-notification endpoint)', async () => {
     let capturedUrl = '';
     server.use(
-      http.post(
-        'http://localhost:8000/api/v1/notifications/read-all/',
-        ({ request }) => {
-          capturedUrl = request.url;
-          return HttpResponse.json({ detail: 'All marked.', count: 2 });
-        },
-      ),
+      http.post(`${env.API_URL}/notifications/read-all/`, ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json({ detail: 'All marked.', count: 2 });
+      }),
     );
 
     const wrapper = createWrapper();
@@ -200,6 +193,6 @@ describe('useMarkAllRead', () => {
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(capturedUrl).toContain('/api/v1/notifications/read-all/');
+    expect(capturedUrl).toContain('/notifications/read-all/');
   });
 });

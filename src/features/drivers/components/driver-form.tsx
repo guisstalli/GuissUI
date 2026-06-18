@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 
 import {
   DriverCreateSchema,
@@ -115,7 +116,7 @@ export function DriverForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Section Identité patient */}
         {!isEdit && (
-          <div className="space-y-4 mt-2">
+          <div className="mt-2 space-y-4">
             <h3 className="border-b pb-2 text-lg font-semibold">
               Identité du patient
             </h3>
@@ -200,7 +201,13 @@ export function DriverForm({
                   <FormItem>
                     <FormLabel>Téléphone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+221 XX XXX XX XX" {...field} />
+                      <PhoneInput
+                        placeholder="77 000 00 00"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -211,7 +218,7 @@ export function DriverForm({
         )}
 
         {/* Section Permis */}
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <h3 className="border-b pb-2 text-lg font-semibold">
             Permis de conduire
           </h3>
@@ -314,7 +321,7 @@ export function DriverForm({
         </div>
 
         {/* Section Activité */}
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <h3 className="border-b pb-2 text-lg font-semibold">
             Activité professionnelle
           </h3>
@@ -421,7 +428,7 @@ export function DriverForm({
         </div>
 
         {/* Section Profil */}
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <h3 className="border-b pb-2 text-lg font-semibold">Profil</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField

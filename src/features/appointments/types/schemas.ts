@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { MOTIF_AUTRE_VALUE } from './motifs';
+
 export const RdvStatutSchema = z.enum([
   'en_attente',
   'confirme',
@@ -26,7 +28,31 @@ export const ReservationInputSchema = z.object({
   want_reminder: z.boolean().default(true),
 });
 
+// `motif` est optionnel et libre : soit l'un des MOTIF_OPTIONS, soit le texte
+// saisi via « Autre ». Il n'est jamais une chaîne vide dans le payload (omis
+// si l'utilisateur ne choisit rien). Voir `types/motifs.ts`.
 export type ReservationInput = z.infer<typeof ReservationInputSchema>;
+
+/* ─── motif (formulaire public) ───────────────────────────────────────────── */
+
+/**
+ * Schéma du formulaire de réservation : ajoute `motif_autre`, le champ libre
+ * affiché lorsque l'utilisateur choisit « Autre ». `motif_autre` n'est jamais
+ * envoyé tel quel au backend — il remplace `motif` au moment de la soumission.
+ */
+export const ReservationFormSchema = ReservationInputSchema.extend({
+  motif_autre: z.string().optional(),
+}).superRefine((values, ctx) => {
+  if (values.motif === MOTIF_AUTRE_VALUE && !values.motif_autre?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['motif_autre'],
+      message: 'Veuillez préciser le motif',
+    });
+  }
+});
+
+export type ReservationFormInput = z.infer<typeof ReservationFormSchema>;
 
 export const RendezVousSchema = z.object({
   id: z.number(),
@@ -112,10 +138,14 @@ export const JourFermeSchema = z.object({
 
 export type JourFerme = z.infer<typeof JourFermeSchema>;
 
+// Réponse de GET /rendez-vous/statistiques/ : un compteur par statut. Aligné
+// sur RdvStatutSchema et sur l'usage dans la page gestion (statsData.en_attente…).
 export const RdvStatsSchema = z.object({
-  total: z.number(),
-  par_statut: z.record(z.string(), z.number()),
-  par_jour: z
-    .array(z.object({ date: z.string(), count: z.number() }))
-    .optional(),
+  en_attente: z.number(),
+  confirme: z.number(),
+  present: z.number(),
+  absent: z.number(),
+  annule: z.number(),
 });
+
+export type RdvStats = z.infer<typeof RdvStatsSchema>;

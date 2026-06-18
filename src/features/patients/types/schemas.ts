@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { optionalPhoneSchema } from '@/utils/phone';
+
 // =============================================================================
 // ENUMS
 // =============================================================================
@@ -92,7 +94,7 @@ export const PatientCreateSchema = z.object({
   name: z.string().min(1, 'Le prénom est requis').max(100),
   date_de_naissance: z.string().min(1, 'La date de naissance est requise'),
   sex: SexEnum,
-  phone_number: z.string().max(128).nullable().optional(),
+  phone_number: optionalPhoneSchema,
 });
 
 /**

@@ -11,7 +11,7 @@ import {
   FormMessage,
   Input,
 } from '@/components/ui/form';
-import { PBO_VALUES } from '@/features/exams/types';
+import { PBO_VALUES } from '@/features/exams/types/schemas';
 
 interface PerimetryFormProps {
   namePrefix?: string;

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { optionalPhoneSchema } from '@/utils/phone';
+
 export const UserListItemSchema = z.object({
   id: z.number(),
   email: z.string(),
@@ -35,7 +37,7 @@ export const PaginatedUsersSchema = z.object({
 
 export const CreateUserSchema = z.object({
   email: z.string().email('Email invalide'),
-  phone_number: z.string().min(8, 'Minimum 8 chiffres'),
+  phone_number: optionalPhoneSchema,
   role: z.enum(
     ['ADMIN', 'STAFF', 'DOCTEUR', 'TECHNICIEN', 'DATA_ENTRY', 'SUPERUSER'],
     {

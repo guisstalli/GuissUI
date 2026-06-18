@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { buildPatientAnalyticsFilters } from '../utils';
+import { buildPatientAnalyticsFilters } from '../utils/context-filters';
 
 import { AnalyticsDetailDashboard } from './analytics-detail-dashboard';
 

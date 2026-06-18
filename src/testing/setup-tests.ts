@@ -5,6 +5,20 @@ import { server } from '@/testing/mocks/server';
 
 vi.mock('zustand');
 
+// Neutralize next-auth's client session lookup in jsdom. Without this, the
+// api-client's getAccessToken() → getSession() triggers next-auth's internal
+// logger, which calls fetch() with a URLSearchParams body that the undici
+// Request constructor rejects — producing noisy unhandled rejections in tests.
+vi.mock('next-auth/react', async () => {
+  const actual =
+    await vi.importActual<typeof import('next-auth/react')>('next-auth/react');
+  return {
+    ...actual,
+    getSession: vi.fn().mockResolvedValue(null),
+    signOut: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 // Polyfills requis par les composants Radix UI (Select, Switch) dans jsdom
 if (typeof window !== 'undefined') {
   // Radix UI Select requires hasPointerCapture / releasePointerCapture

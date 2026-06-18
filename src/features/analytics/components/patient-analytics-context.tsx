@@ -3,21 +3,17 @@
 import { useMemo } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  useAnalyticsGlaucoma,
-  useAnalyticsOverview,
-  useAnalyticsRefraction,
-  useAnalyticsVisualAcuity,
-  useAnalyticsOcularTension,
-} from '@/features/analytics/api';
-import {
-  GlaucomaScatterChart,
-  OverviewDonutChart,
-  RefractionDonutChart,
-  VisualAcuityBarChart,
-  OcularTensionBarChart,
-} from '@/features/analytics/components/charts';
-import { buildPatientAnalyticsFilters } from '@/features/analytics/utils';
+import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
+import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
+import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
+import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
+import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
+import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
+import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
+import { OverviewDonutChart } from '@/features/analytics/components/charts/overview-donut-chart';
+import { RefractionDonutChart } from '@/features/analytics/components/charts/refraction-donut-chart';
+import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
+import { buildPatientAnalyticsFilters } from '@/features/analytics/utils/context-filters';
 
 import { AnalyticsCollapsibleContext } from './analytics-collapsible-context';
 import {

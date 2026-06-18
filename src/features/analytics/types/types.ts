@@ -23,6 +23,14 @@ import {
   ExamTypeSchema,
   EyeStrategySchema,
   SexSchema,
+  AcuityCategorySchema,
+  TensionCategorySchema,
+  ConclusionCategorySchema,
+  SymptomCodeSchema,
+  CohortSeveritySchema,
+  CohortPatientItemSchema,
+  CohortSummarySchema,
+  CohortResponseSchema,
 } from './schemas';
 
 export type AnalyticsScope = z.infer<typeof AnalyticsScopeSchema>;
@@ -32,6 +40,27 @@ export type AgeBand = z.infer<typeof AgeBandSchema>;
 export type EyeStrategy = z.infer<typeof EyeStrategySchema>;
 export type ExamScope = z.infer<typeof ExamScopeSchema>;
 export type AnalyticsFilters = z.infer<typeof AnalyticsFiltersSchema>;
+
+export type AcuityCategory = z.infer<typeof AcuityCategorySchema>;
+export type TensionCategory = z.infer<typeof TensionCategorySchema>;
+export type ConclusionCategory = z.infer<typeof ConclusionCategorySchema>;
+export type SymptomCode = z.infer<typeof SymptomCodeSchema>;
+export type CohortSeverity = z.infer<typeof CohortSeveritySchema>;
+export type CohortPatientItem = z.infer<typeof CohortPatientItemSchema>;
+export type CohortSummary = z.infer<typeof CohortSummarySchema>;
+export type CohortResponse = z.infer<typeof CohortResponseSchema>;
+
+/**
+ * Critère clinique cliqué dans un graphique.
+ * `type` est la clé envoyée au backend (acuity/tension/conclusion/symptom),
+ * `value` la valeur du critère, `label` le libellé affiché dans le Sheet.
+ */
+export type CohortCriterion = {
+  type: 'acuity' | 'tension' | 'conclusion' | 'symptom';
+  value: string;
+  label: string;
+};
+
 export const DEFAULT_ANALYTICS_FILTERS: AnalyticsFilters = {
   analytics_scope: 'population',
   exam_type: 'all',

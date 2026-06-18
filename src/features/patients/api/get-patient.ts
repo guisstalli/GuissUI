@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { Patient } from '../types';
+import type { Patient } from '../types/types';
 
 /**
  * Récupère un patient par son ID

@@ -4,41 +4,37 @@ import { useMemo, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Can } from '@/components/ui/can';
+import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
+import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
+import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
+import { useAnalyticsPachymetry } from '@/features/analytics/api/get-analytics-pachymetry';
+import { useAnalyticsRefraction } from '@/features/analytics/api/get-analytics-refraction';
+import { useAnalyticsSites } from '@/features/analytics/api/get-analytics-sites';
+import { useAnalyticsSymptoms } from '@/features/analytics/api/get-analytics-symptoms';
+import { useAnalyticsTimeline } from '@/features/analytics/api/get-analytics-timeline';
+import { useAnalyticsVisualAcuity } from '@/features/analytics/api/get-analytics-visual-acuity';
+import { AnalyticsFiltersBar } from '@/features/analytics/components/analytics-filters';
+import { AnalyticsHeader } from '@/features/analytics/components/analytics-header';
+import { AnalyticsKpiRow } from '@/features/analytics/components/analytics-kpi-row';
 import {
-  useAnalyticsOverview,
-  useAnalyticsTimeline,
-  useAnalyticsSites,
-  useAnalyticsGlaucoma,
-  useAnalyticsVisualAcuity,
-  useAnalyticsRefraction,
-  useAnalyticsOcularTension,
-  useAnalyticsPachymetry,
-  useAnalyticsSymptoms,
-} from '@/features/analytics/api';
-import {
-  AnalyticsFiltersBar,
-  AnalyticsHeader,
-  AnalyticsKpiRow,
   AnalyticsEmptyState,
   AnalyticsErrorState,
   AnalyticsLoadingState,
-} from '@/features/analytics/components';
-import {
-  OverviewDonutChart,
-  TimelineChart,
-  SitesBarChart,
-  GlaucomaScatterChart,
-  VisualAcuityBarChart,
-  RefractionDonutChart,
-  OcularTensionBarChart,
-  PachymetryKpiCard,
-  SymptomsGroupedBar,
-} from '@/features/analytics/components/charts';
+} from '@/features/analytics/components/analytics-states';
+import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
+import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
+import { OverviewDonutChart } from '@/features/analytics/components/charts/overview-donut-chart';
+import { PachymetryKpiCard } from '@/features/analytics/components/charts/pachymetry-kpi-card';
+import { RefractionDonutChart } from '@/features/analytics/components/charts/refraction-donut-chart';
+import { SitesBarChart } from '@/features/analytics/components/charts/sites-bar-chart';
+import { SymptomsGroupedBar } from '@/features/analytics/components/charts/symptoms-grouped-bar';
+import { TimelineChart } from '@/features/analytics/components/charts/timeline-chart';
+import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
 import {
   DEFAULT_ANALYTICS_FILTERS,
   type AnalyticsFilters,
-} from '@/features/analytics/types';
-import { useSites } from '@/features/sites/api';
+} from '@/features/analytics/types/types';
+import { useSites } from '@/features/sites/api/get-sites';
 
 const DRIVER_DEFAULT_FILTERS: AnalyticsFilters = {
   ...DEFAULT_ANALYTICS_FILTERS,

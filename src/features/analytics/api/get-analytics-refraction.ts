@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { AnalyticsFilters, AnalyticsRefraction } from '../types';
+import type { AnalyticsFilters, AnalyticsRefraction } from '../types/types';
 import { normalizeAnalyticsFilters } from '../utils/filters';
 
 const buildRefractionUrl = (filters: AnalyticsFilters) => {

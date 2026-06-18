@@ -1,9 +1,25 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, test } from 'vitest';
 
 import { rtlRender, screen } from '@/testing/test-utils';
 
 import type { Facture } from '../../types/schemas';
 import { FacturesTable } from '../factures-table';
+
+/**
+ * FacturesTable is presentational but renders row actions that use
+ * useDownloadFacturePdf() (a React Query hook), so it needs a QueryClient.
+ */
+function renderTable(factures: Facture[]) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return rtlRender(
+    <QueryClientProvider client={queryClient}>
+      <FacturesTable factures={factures} />
+    </QueryClientProvider>,
+  );
+}
 
 const mockFacture: Facture = {
   id: 1,
@@ -41,7 +57,7 @@ const mockFacture2: Facture = {
 
 describe('FacturesTable', () => {
   test('renders the table column headers', () => {
-    rtlRender(<FacturesTable factures={[]} />);
+    renderTable([]);
     expect(screen.getByText('Numéro')).toBeInTheDocument();
     expect(screen.getByText('Patient')).toBeInTheDocument();
     expect(screen.getByText('Site')).toBeInTheDocument();
@@ -51,45 +67,45 @@ describe('FacturesTable', () => {
   });
 
   test('renders a row for each facture', () => {
-    rtlRender(<FacturesTable factures={[mockFacture, mockFacture2]} />);
+    renderTable([mockFacture, mockFacture2]);
     expect(screen.getByText('FAC-2026-001')).toBeInTheDocument();
     expect(screen.getByText('FAC-2026-002')).toBeInTheDocument();
   });
 
   test('displays the patient full name in each row', () => {
-    rtlRender(<FacturesTable factures={[mockFacture]} />);
+    renderTable([mockFacture]);
     expect(screen.getByText('Alice Dupont')).toBeInTheDocument();
   });
 
   test('displays the phone number when present', () => {
-    rtlRender(<FacturesTable factures={[mockFacture]} />);
+    renderTable([mockFacture]);
     expect(screen.getByText('+223 70 00 00 01')).toBeInTheDocument();
   });
 
   test('displays the site libelle', () => {
-    rtlRender(<FacturesTable factures={[mockFacture]} />);
+    renderTable([mockFacture]);
     expect(screen.getByText('Centre Nord')).toBeInTheDocument();
   });
 
   test('displays the formatted total amount', () => {
-    rtlRender(<FacturesTable factures={[mockFacture]} />);
+    renderTable([mockFacture]);
     expect(screen.getByText('25 000 FCFA')).toBeInTheDocument();
   });
 
   test('renders the status badge for each row', () => {
-    rtlRender(<FacturesTable factures={[mockFacture, mockFacture2]} />);
+    renderTable([mockFacture, mockFacture2]);
     expect(screen.getByText('Émise')).toBeInTheDocument();
     expect(screen.getByText('Payée')).toBeInTheDocument();
   });
 
   test('renders an "Ouvrir" link for each row pointing to the right path', () => {
-    rtlRender(<FacturesTable factures={[mockFacture]} />);
+    renderTable([mockFacture]);
     const link = screen.getByRole('link', { name: /ouvrir/i });
     expect(link).toHaveAttribute('href', '/facturation/1');
   });
 
   test('renders an empty table body when no factures are provided', () => {
-    rtlRender(<FacturesTable factures={[]} />);
+    renderTable([]);
     expect(
       screen.queryByRole('link', { name: /ouvrir/i }),
     ).not.toBeInTheDocument();

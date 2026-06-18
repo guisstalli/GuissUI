@@ -1,9 +1,8 @@
 'use client';
 
-import type { FC } from 'react';
 import { createContext, use, useMemo, useState } from 'react';
 
-import { ID, initialListView, ListViewContextProps } from '@/types';
+import { ID, initialListView, ListViewContextProps } from '@/types/api';
 import {
   calculatedGroupingIsDisabled,
   calculateIsAllDataSelected,
@@ -12,12 +11,18 @@ import {
 } from '@/utils/helpers';
 import { WithChildren } from '@/utils/react18-migration-helpers';
 
+/**
+ * Minimal shape of the items tracked by the list view. Only an optional `id`
+ * is required by the grouping helpers (selection / select-all logic).
+ */
+type ListViewItem = { id?: ID };
+
 const ListViewContext = createContext<ListViewContextProps>(initialListView);
 
-const ListViewProvider: FC<WithChildren> = ({ children }) => {
+function ListViewProvider({ children }: WithChildren) {
   const [selected, setSelected] = useState<Array<ID>>(initialListView.selected);
   const [isLoading] = useState<boolean>(false);
-  const [data] = useState<Array<any>>([]);
+  const [data] = useState<Array<ListViewItem>>([]);
   const [itemIdForUpdate, setItemIdForUpdate] = useState<ID>(
     initialListView.itemIdForUpdate,
   );
@@ -53,7 +58,7 @@ const ListViewProvider: FC<WithChildren> = ({ children }) => {
       {children}
     </ListViewContext.Provider>
   );
-};
+}
 
 const useListView = () => use(ListViewContext);
 

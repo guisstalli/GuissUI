@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { optionalPhoneSchema } from '@/utils/phone';
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export const FACTURE_STATUT_VALUES = [
@@ -125,7 +127,7 @@ export const FactureCreateSchema = z.object({
   site_id: z.number({ required_error: 'Le site est requis' }),
   patient_nom: z.string().optional(),
   patient_prenom: z.string().optional(),
-  patient_phone: z.string().optional(),
+  patient_phone: optionalPhoneSchema,
   rendez_vous_id: z.number().optional(),
   lignes: z
     .array(LigneFactureCreateSchema)

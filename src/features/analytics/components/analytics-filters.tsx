@@ -30,12 +30,12 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 import {
-  type AnalyticsFilters,
   SEX_VALUES,
   AGE_BAND_VALUES,
   EYE_STRATEGY_VALUES,
   EXAM_SCOPE_VALUES,
-} from '../types';
+} from '../types/schemas';
+import { type AnalyticsFilters } from '../types/types';
 
 type Option = { label: string; value: string };
 
@@ -48,8 +48,8 @@ const SEX_OPTIONS: Option[] = [
 
 const AGE_BAND_OPTIONS: Option[] = [
   { label: 'Toutes tranches', value: 'all' },
-  { label: 'Enfants (< 18 ans)', value: 'child' },
-  { label: 'Adultes (18-40 ans)', value: 'adult' },
+  { label: 'Enfants (< 16 ans)', value: 'child' },
+  { label: 'Adultes (16 ans et +)', value: 'adult' },
   { label: 'Séniors (> 40 ans)', value: 'over_40' },
 ];
 

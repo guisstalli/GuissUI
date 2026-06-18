@@ -5,90 +5,64 @@ import {
   AlertCircle,
   ArrowLeft,
   Car,
-  Check,
-  Circle,
   Eye,
-  FileImage,
   FileText,
   Loader2,
-  Paperclip,
-  RotateCcw,
-  Save,
   Stethoscope,
-  Trash2,
-  Upload,
-  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import * as z from 'zod';
 
-import { AppSidebar, Header } from '@/components/layouts';
+import { Header } from '@/components/layouts/header';
+import { AppSidebar } from '@/components/layouts/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/dialog';
-import { Input, Label, Textarea } from '@/components/ui/form';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  useAdultExam,
-  useAddTechnicalData,
-  useAddClinicalData,
-  useCompleteAdultExam,
-  useUncompleteAdultExam,
-  useAttachments,
-  useUploadAttachment,
-  useDeleteAttachment,
-  downloadAttachment,
-} from '@/features/exams/api';
 import {
   useDownloadAdultReport,
   useDownloadAdultConclusion,
 } from '@/features/exams/api/adult/download-report';
+import { useAdultExam } from '@/features/exams/api/adult/get-adult-exams';
+import {
+  useAddTechnicalData,
+  useAddClinicalData,
+  useCompleteAdultExam,
+  useUncompleteAdultExam,
+} from '@/features/exams/api/adult/mutations';
+import { useAttachments } from '@/features/exams/api/attachments';
 import {
   findOrdonnance,
   useDownloadOrdonnance,
   useExamOrdonnances,
 } from '@/features/exams/api/ordonnances';
+import { AdultExamClinicalPanel } from '@/features/exams/components/adult-exam-clinical-panel';
+import { AdultExamConclusionPanel } from '@/features/exams/components/adult-exam-conclusion-panel';
+import { AdultExamExperiencePanel } from '@/features/exams/components/adult-exam-experience-panel';
+import { AdultExamFinalizeDialog } from '@/features/exams/components/adult-exam-finalize-dialog';
+import { AdultExamSidebar } from '@/features/exams/components/adult-exam-sidebar';
+import { AdultExamTechnicalPanel } from '@/features/exams/components/adult-exam-technical-panel';
 import {
-  BiomicroscopyAnteriorForm,
-  BiomicroscopyPosteriorForm,
-  ConclusionForm,
-  DriverExperienceForm,
-  ExamensAdditionelsSection,
-  OcularTensionForm,
-  PachymetryForm,
-  PerimetryForm,
-  PlaintesForm,
-  RefractionForm,
-  VisualAcuityForm,
-} from '@/features/exams/components/forms';
-import { OrdonnanceFormDialog } from '@/features/exams/components/ordonnance-form-dialog';
+  type AdultExamForm,
+  type AdultExamPatient,
+  type SectionStatus,
+} from '@/features/exams/components/adult-exam-types';
 import {
-  BiomicroscopyAnteriorSchema,
-  BiomicroscopyPosteriorSchema,
-  ConclusionSchema,
+  OrdonnanceFormDialog,
+  type PrescriptionData,
+} from '@/features/exams/components/ordonnance-form-dialog';
+import {
+  adultExamSchema,
+  type AdultExamFormValues,
+  type ClinicalSubsection,
+  type Section,
+  type TechnicalSubsection,
+} from '@/features/exams/types/adult-exam';
+import {
   defaultBiomicroscopyAnterior,
   defaultBiomicroscopyPosterior,
-  OcularTensionSchema,
-  PachymetrySchema,
-  PerimetrySchema,
-  PlaintesSchema,
-  RefractionSchema,
-  VisualAcuitySchema,
-} from '@/features/exams/types';
+} from '@/features/exams/types/schemas';
 import {
   mapVisualAcuityApiToForm,
   mapRefractionApiToForm,
@@ -99,9 +73,17 @@ import {
   mapBiomicroscopyPosteriorApiToForm,
   mapPerimetryApiToForm,
   mapConclusionApiToForm,
+} from '@/features/exams/utils/api-to-form-mappers';
+import { hasFilledConclusion } from '@/features/exams/utils/conclusion-status';
+import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
-} from '@/features/exams/utils';
+} from '@/features/exams/utils/form-to-api-mappers';
+import {
+  usePersistentLocalTabState,
+  usePersistentTabState,
+  useUrlParamMirror,
+} from '@/hooks/use-persistent-tab-state';
 import { useUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -115,64 +97,16 @@ import { cn } from '@/lib/utils';
  * - Affichage de l'état de complétion (is_completed)
  */
 
-type Section =
-  | 'technical'
-  | 'clinical'
-  | 'analytics'
-  | 'conclusion'
-  | 'experience';
-type TechnicalSubsection = 'acuity' | 'refraction' | 'tension' | 'pachymetry';
-type ClinicalSubsection =
-  | 'plaintes'
-  | 'biomicroscopy'
-  | 'perimetry'
-  | 'attachments';
-
-interface SectionStatus {
-  technical: {
-    acuity: boolean;
-    refraction: boolean;
-    tension: boolean;
-    pachymetry: boolean;
-  };
-  clinical: {
-    plaintes: boolean;
-    biomicroscopy: boolean;
-    perimetry: boolean;
-    attachments: boolean;
-  };
-  conclusion: boolean;
-}
-
 const BASE_SECTIONS = [
   { id: 'technical' as const, title: 'Examen Technique', icon: Eye },
   { id: 'clinical' as const, title: 'Examen Clinique', icon: Stethoscope },
   { id: 'conclusion' as const, title: 'Conclusion', icon: FileText },
 ];
 
-// Combined schema for adult exam
-const adultExamSchema = z.object({
-  // Technical
-  visualAcuity: VisualAcuitySchema,
-  refraction: RefractionSchema,
-  ocularTension: OcularTensionSchema,
-  pachymetry: PachymetrySchema,
-  // Clinical
-  plaintes: PlaintesSchema,
-  perimetry: PerimetrySchema,
-  od: z.object({
-    bp_sg_anterieur: BiomicroscopyAnteriorSchema,
-    bp_sg_posterieur: BiomicroscopyPosteriorSchema,
-  }),
-  og: z.object({
-    bp_sg_anterieur: BiomicroscopyAnteriorSchema,
-    bp_sg_posterieur: BiomicroscopyPosteriorSchema,
-  }),
-  // Conclusion
-  conclusion: ConclusionSchema,
-});
-
-type AdultExamFormValues = z.infer<typeof adultExamSchema>;
+// Valeurs autorisées (validation URL/localStorage — voir usePersistentTabState).
+const SECTIONS_ALLOWED = ['technical', 'clinical', 'conclusion', 'experience'];
+const TECHNICAL_SUBS = ['acuity', 'refraction', 'tension', 'pachymetry'];
+const CLINICAL_SUBS = ['plaintes', 'biomicroscopy', 'perimetry', 'attachments'];
 
 export default function AdultExamPage() {
   const params = useParams();
@@ -181,11 +115,54 @@ export default function AdultExamPage() {
   const isNewExam = examId === 'new';
   const numericExamId = isNewExam ? 0 : Number(examId);
 
-  const [activeSection, setActiveSection] = useState<Section>('technical');
-  const [technicalSubsection, setTechnicalSubsection] =
-    useState<TechnicalSubsection>('acuity');
-  const [clinicalSubsection, setClinicalSubsection] =
-    useState<ClinicalSubsection>('plaintes');
+  // Persistance section + sous-sections au reload (URL pour la section, et la
+  // sous-section active reflétée dans ?sub= ; mémoire par section en localStorage).
+  const examScope = `guiss.tab.exam.adult.${examId}`;
+  const [activeSectionRaw, setActiveSection] = usePersistentTabState({
+    paramKey: 'section',
+    storageKey: `${examScope}.section`,
+    defaultValue: 'technical',
+    allowed: SECTIONS_ALLOWED,
+  });
+  const activeSection = activeSectionRaw as Section;
+  const [technicalSubsectionRaw, setTechnicalSubsection] =
+    usePersistentLocalTabState({
+      storageKey: `${examScope}.technical.sub`,
+      defaultValue: 'acuity',
+      allowed: TECHNICAL_SUBS,
+    });
+  const technicalSubsection = technicalSubsectionRaw as TechnicalSubsection;
+  const [clinicalSubsectionRaw, setClinicalSubsection] =
+    usePersistentLocalTabState({
+      storageKey: `${examScope}.clinical.sub`,
+      defaultValue: 'plaintes',
+      allowed: CLINICAL_SUBS,
+    });
+  const clinicalSubsection = clinicalSubsectionRaw as ClinicalSubsection;
+
+  // Reflète la sous-section active dans l'URL (?sub=) et restaure depuis l'URL au montage.
+  const activeSub =
+    activeSection === 'technical'
+      ? technicalSubsection
+      : activeSection === 'clinical'
+        ? clinicalSubsection
+        : '';
+  const initialSub = useUrlParamMirror('sub', activeSub);
+  const subAppliedRef = useRef(false);
+  useEffect(() => {
+    if (subAppliedRef.current) return;
+    subAppliedRef.current = true;
+    if (!initialSub) return;
+    if (activeSection === 'technical' && TECHNICAL_SUBS.includes(initialSub)) {
+      setTechnicalSubsection(initialSub);
+    } else if (
+      activeSection === 'clinical' &&
+      CLINICAL_SUBS.includes(initialSub)
+    ) {
+      setClinicalSubsection(initialSub);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [sectionStatus, setSectionStatus] = useState<SectionStatus>({
     technical: {
@@ -214,7 +191,6 @@ export default function AdultExamPage() {
     data: examData,
     isLoading: isLoadingExam,
     isError: isErrorExam,
-    refetch: refetchExam,
   } = useAdultExam({
     id: numericExamId,
     enabled: !isNewExam && numericExamId > 0,
@@ -233,43 +209,10 @@ export default function AdultExamPage() {
   // Pièces jointes - utiliser l'ID de l'examen clinique (clinical_examen.id)
   const clinicalExamId = examData?.clinical_examen?.id;
 
-  const {
-    data: attachmentsData,
-    isLoading: isLoadingAttachments,
-    refetch: refetchAttachments,
-  } = useAttachments({
+  const { data: attachmentsData } = useAttachments({
     clinicalExamId: clinicalExamId ?? 0,
     enabled: !!clinicalExamId,
   });
-
-  const { mutate: uploadAttachment, isPending: isUploading } =
-    useUploadAttachment();
-  const { mutate: deleteAttachment, isPending: isDeleting } =
-    useDeleteAttachment();
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
-
-  const handleDownloadAttachment = async (
-    id: number,
-    originalFilename: string,
-  ) => {
-    try {
-      setDownloadingId(id);
-      const { url } = await downloadAttachment(id);
-
-      // Télécharger via un lien temporaire
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = originalFilename; // Tente de forcer le nom du fichier si cross-origin le permet
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-    } catch (error) {
-      console.error('Erreur lors du téléchargement:', error);
-      // Optionnel: ajouter une notification d'erreur si disponible
-    } finally {
-      setDownloadingId(null);
-    }
-  };
 
   // Données patient depuis l'API
   const patient = examData?.patient
@@ -374,8 +317,6 @@ export default function AdultExamPage() {
         cat: null,
         traitement: null,
         observation: null,
-        //rv: false,
-        //date_prochain_rendez_vous: null,
         diagnostic_cim_11: [],
       },
     },
@@ -402,7 +343,7 @@ export default function AdultExamPage() {
           perimetry: hasClinical,
           attachments: (attachmentsData?.length ?? 0) > 0,
         },
-        conclusion: hasClinical,
+        conclusion: hasFilledConclusion(examData.clinical_examen?.conclusion),
       });
 
       // Charger les données techniques
@@ -474,7 +415,8 @@ export default function AdultExamPage() {
       { id: numericExamId, data: apiData },
       {
         onSuccess: () => {
-          refetchExam();
+          // The mutation already invalidates the exam detail query
+          // (['exams', 'adult', id]); no manual refetch needed.
           setSectionStatus((prev) => ({
             ...prev,
             technical: {
@@ -487,7 +429,7 @@ export default function AdultExamPage() {
         },
       },
     );
-  }, [addTechnical, form, numericExamId, refetchExam]);
+  }, [addTechnical, form, numericExamId]);
 
   const handleSaveClinical = useCallback(() => {
     const data = {
@@ -505,7 +447,8 @@ export default function AdultExamPage() {
       { id: numericExamId, data: apiData },
       {
         onSuccess: () => {
-          refetchExam();
+          // The mutation already invalidates the exam detail query
+          // (['exams', 'adult', id]); no manual refetch needed.
           setSectionStatus((prev) => ({
             ...prev,
             clinical: {
@@ -519,7 +462,7 @@ export default function AdultExamPage() {
         },
       },
     );
-  }, [addClinical, form, numericExamId, refetchExam]);
+  }, [addClinical, form, numericExamId]);
 
   const handleSaveSection = useCallback(
     (section: Section) => {
@@ -561,61 +504,13 @@ export default function AdultExamPage() {
     uncompleteExam({ id: numericExamId });
   }, [uncompleteExam, numericExamId]);
 
-  // Gestion des fichiers joints
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fileDescription, setFileDescription] = useState('');
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
-    }
-  };
-
-  const handleUploadFiles = useCallback(() => {
-    if (!clinicalExamId || selectedFiles.length === 0) return;
-
-    selectedFiles.forEach((file) => {
-      uploadAttachment(
-        {
-          clinicalExamId,
-          file,
-          description: fileDescription.trim(),
-        },
-        {
-          onSuccess: () => {
-            refetchAttachments();
-            setSelectedFiles([]);
-            setFileDescription('');
-            setSectionStatus((prev) => ({
-              ...prev,
-              clinical: { ...prev.clinical, attachments: true },
-            }));
-          },
-        },
-      );
-    });
-  }, [
-    clinicalExamId,
-    selectedFiles,
-    fileDescription,
-    uploadAttachment,
-    refetchAttachments,
-  ]);
-
-  const handleDeleteAttachment = useCallback(
-    (attachmentId: number) => {
-      if (!clinicalExamId) return;
-      deleteAttachment(
-        { id: attachmentId, clinicalExamId },
-        {
-          onSuccess: () => {
-            refetchAttachments();
-          },
-        },
-      );
-    },
-    [deleteAttachment, refetchAttachments, clinicalExamId],
-  );
+  // Marque la sous-section "pièces jointes" comme complétée après un upload.
+  const handleAttachmentUploaded = useCallback(() => {
+    setSectionStatus((prev) => ({
+      ...prev,
+      clinical: { ...prev.clinical, attachments: true },
+    }));
+  }, []);
 
   // Calcul de la progression
   const technicalCompleted = Object.values(sectionStatus.technical).filter(
@@ -697,21 +592,9 @@ export default function AdultExamPage() {
         isSaving={isSaving}
         isCompleting={isCompleting}
         isUncompleting={isUncompleting}
-        // Attachments props
+        // Attachments
         clinicalExamId={clinicalExamId}
-        attachments={attachmentsData ?? []}
-        isLoadingAttachments={isLoadingAttachments}
-        selectedFiles={selectedFiles}
-        setSelectedFiles={setSelectedFiles}
-        fileDescription={fileDescription}
-        setFileDescription={setFileDescription}
-        handleFileSelect={handleFileSelect}
-        handleUploadFiles={handleUploadFiles}
-        handleDeleteAttachment={handleDeleteAttachment}
-        handleDownloadAttachment={handleDownloadAttachment}
-        isUploading={isUploading}
-        isDeleting={isDeleting}
-        downloadingId={downloadingId}
+        onUploaded={handleAttachmentUploaded}
       />
     </SidebarProvider>
   );
@@ -725,17 +608,8 @@ interface AdultExamContentProps {
   examId: string;
   numericExamId: number;
   isNewExam: boolean;
-  patient: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    age: number;
-    sex: string;
-    medicalRecordNumber: string;
-    hasDriver: boolean;
-    driverId: number | null;
-  };
-  form: ReturnType<typeof useForm<AdultExamFormValues>>;
+  patient: AdultExamPatient;
+  form: AdultExamForm;
   activeSection: Section;
   setActiveSection: (s: Section) => void;
   technicalSubsection: TechnicalSubsection;
@@ -758,28 +632,7 @@ interface AdultExamContentProps {
   isUncompleting: boolean;
   // Attachments
   clinicalExamId?: number;
-  attachments: Array<{
-    id: number;
-    original_filename: string;
-    file_url?: string | null;
-    file_size: number;
-    description?: string | null;
-    is_image: boolean;
-    is_pdf: boolean;
-    created: string;
-  }>;
-  isLoadingAttachments: boolean;
-  selectedFiles: File[];
-  setSelectedFiles: (files: File[]) => void;
-  fileDescription: string;
-  setFileDescription: (desc: string) => void;
-  handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleUploadFiles: () => void;
-  handleDeleteAttachment: (id: number) => void;
-  handleDownloadAttachment: (id: number, filename: string) => void;
-  isUploading: boolean;
-  isDeleting: boolean;
-  downloadingId: number | null;
+  onUploaded?: () => void;
 }
 
 function AdultExamContent(props: AdultExamContentProps) {
@@ -810,18 +663,7 @@ function AdultExamContent(props: AdultExamContentProps) {
     isCompleting,
     isUncompleting,
     clinicalExamId,
-    attachments,
-    isLoadingAttachments,
-    selectedFiles,
-    fileDescription,
-    setFileDescription,
-    handleFileSelect,
-    handleUploadFiles,
-    handleDeleteAttachment,
-    handleDownloadAttachment,
-    isUploading,
-    isDeleting,
-    downloadingId,
+    onUploaded,
   } = props;
 
   const { mutate: downloadReport, isPending: isDownloadingReport } =
@@ -864,254 +706,33 @@ function AdultExamContent(props: AdultExamContentProps) {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Left: Section Navigation */}
-          <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 md:block">
-            <div className="mb-4">
-              <h2 className="text-sm font-semibold text-foreground">
-                Sections
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Progression de l&apos;examen
-              </p>
-            </div>
-
-            <nav aria-label="Exam sections">
-              <ul className="space-y-1">
-                {sections.map((section) => {
-                  const isActive = activeSection === section.id;
-                  let statusText = '';
-                  let statusIcon = (
-                    <Circle className="text-muted-foreground/50 size-4" />
-                  );
-
-                  if (section.id === 'technical') {
-                    statusText = `${technicalCompleted}/${totalTechnical}`;
-                    if (technicalCompleted === totalTechnical) {
-                      statusIcon = <Check className="size-4 text-primary" />;
-                    }
-                  } else if (section.id === 'clinical') {
-                    statusText = `${clinicalCompleted}/${totalClinical}`;
-                    if (clinicalCompleted === totalClinical) {
-                      statusIcon = <Check className="size-4 text-primary" />;
-                    }
-                  } else if (section.id === 'conclusion') {
-                    statusText = sectionStatus.conclusion
-                      ? 'Complété'
-                      : 'En attente';
-                    if (sectionStatus.conclusion) {
-                      statusIcon = <Check className="size-4 text-primary" />;
-                    }
-                  } else if (section.id === 'experience') {
-                    statusText = '';
-                  }
-
-                  return (
-                    <li key={section.id}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection(section.id)}
-                        className={cn(
-                          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                        )}
-                        aria-current={isActive ? 'true' : undefined}
-                      >
-                        <section.icon
-                          className="size-4 shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span className="flex-1 text-left">
-                          {section.title}
-                        </span>
-                        <span className="text-xs">{statusText}</span>
-                        {statusIcon}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-
-            {/* Patient Info */}
-            <div className="bg-muted/30 mt-6 rounded-lg border border-border p-3">
-              <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Patient
-              </h3>
-              <p className="mt-1 text-sm font-medium text-foreground">
-                {patient.lastName}, {patient.firstName}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {patient.age} ans, {patient.sex}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-1">
-                <Badge variant="secondary">Adulte</Badge>
-                {patient.hasDriver && (
-                  <Badge variant="secondary">Conducteur</Badge>
-                )}
-                <Badge variant={isComplete ? 'default' : 'outline'}>
-                  {isComplete ? 'Terminé' : 'En cours'}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Finalize / Reopen Button */}
-            <div className="mt-6">
-              {isComplete ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleUncompleteExam}
-                  disabled={isUncompleting}
-                >
-                  {isUncompleting ? (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  ) : (
-                    <RotateCcw className="mr-2 size-4" />
-                  )}
-                  Rouvrir l&apos;examen
-                </Button>
-              ) : (
-                <Button
-                  className="w-full"
-                  onClick={() => setShowSaveDialog(true)}
-                  disabled={isCompleting}
-                >
-                  {isCompleting && (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  )}
-                  Finaliser l&apos;examen
-                </Button>
-              )}
-              {!isComplete && (
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Complétez toutes les sections
-                </p>
-              )}
-            </div>
-
-            {examId !== 'new' && (
-              <div className="mt-4 space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Rapports PDF
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled={isDownloadingReport}
-                  onClick={() => downloadReport(Number(examId))}
-                >
-                  {isDownloadingReport ? (
-                    <Loader2
-                      className="mr-2 size-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Download className="mr-2 size-4" aria-hidden="true" />
-                  )}
-                  Rapport complet
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled={isDownloadingConclusion}
-                  onClick={() => downloadConclusion(Number(examId))}
-                >
-                  {isDownloadingConclusion ? (
-                    <Loader2
-                      className="mr-2 size-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <FileText className="mr-2 size-4" aria-hidden="true" />
-                  )}
-                  Conclusion PDF
-                </Button>
-              </div>
-            )}
-
-            {examId !== 'new' &&
-              (canGenerateOrdonnance ||
-                medicamentOrdonnance ||
-                optiqueOrdonnance) && (
-                <div className="mt-4 space-y-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Ordonnances
-                  </p>
-
-                  {/* Ligne 1 : Ordonnance médicamenteuse */}
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold text-foreground">
-                      Médicamenteuse
-                    </p>
-                    {canGenerateOrdonnance && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setMedicamentDialogOpen(true)}
-                      >
-                        <FileText className="mr-2 size-4" aria-hidden="true" />
-                        {medicamentOrdonnance ? 'Modifier' : 'Rédiger'}
-                      </Button>
-                    )}
-                    {medicamentOrdonnance && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() =>
-                          downloadOrdonnance({
-                            ordonnanceId: medicamentOrdonnance.id,
-                            typeOrdonnance: 'MEDICAMENTEUSE',
-                          })
-                        }
-                      >
-                        <Download className="mr-2 size-3" aria-hidden="true" />
-                        Télécharger
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Ligne 2 : Ordonnance de correction optique */}
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold text-foreground">
-                      Correction optique
-                    </p>
-                    {canGenerateOrdonnance && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setOptiqueDialogOpen(true)}
-                      >
-                        <FileText className="mr-2 size-4" aria-hidden="true" />
-                        {optiqueOrdonnance ? 'Modifier' : 'Rédiger'}
-                      </Button>
-                    )}
-                    {optiqueOrdonnance && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() =>
-                          downloadOrdonnance({
-                            ordonnanceId: optiqueOrdonnance.id,
-                            typeOrdonnance: 'OPTIQUE',
-                          })
-                        }
-                      >
-                        <Download className="mr-2 size-3" aria-hidden="true" />
-                        Télécharger
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-          </aside>
+          <AdultExamSidebar
+            examId={examId}
+            patient={patient}
+            sections={sections}
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+            sectionStatus={sectionStatus}
+            technicalCompleted={technicalCompleted}
+            clinicalCompleted={clinicalCompleted}
+            totalTechnical={totalTechnical}
+            totalClinical={totalClinical}
+            isComplete={isComplete}
+            isCompleting={isCompleting}
+            isUncompleting={isUncompleting}
+            setShowSaveDialog={setShowSaveDialog}
+            handleUncompleteExam={handleUncompleteExam}
+            isDownloadingReport={isDownloadingReport}
+            isDownloadingConclusion={isDownloadingConclusion}
+            downloadReport={downloadReport}
+            downloadConclusion={downloadConclusion}
+            canGenerateOrdonnance={canGenerateOrdonnance}
+            medicamentOrdonnance={medicamentOrdonnance}
+            optiqueOrdonnance={optiqueOrdonnance}
+            setMedicamentDialogOpen={setMedicamentDialogOpen}
+            setOptiqueDialogOpen={setOptiqueDialogOpen}
+            downloadOrdonnance={downloadOrdonnance}
+          />
 
           <OrdonnanceFormDialog
             examId={numericExamId}
@@ -1120,9 +741,8 @@ function AdultExamContent(props: AdultExamContentProps) {
             open={medicamentDialogOpen}
             onClose={() => setMedicamentDialogOpen(false)}
             initialData={
-              (medicamentOrdonnance?.prescription_data as Parameters<
-                typeof OrdonnanceFormDialog
-              >[0]['initialData']) ?? null
+              (medicamentOrdonnance?.prescription_data as PrescriptionData) ??
+              null
             }
           />
           <OrdonnanceFormDialog
@@ -1132,9 +752,7 @@ function AdultExamContent(props: AdultExamContentProps) {
             open={optiqueDialogOpen}
             onClose={() => setOptiqueDialogOpen(false)}
             initialData={
-              (optiqueOrdonnance?.prescription_data as Parameters<
-                typeof OrdonnanceFormDialog
-              >[0]['initialData']) ?? null
+              (optiqueOrdonnance?.prescription_data as PrescriptionData) ?? null
             }
           />
 
@@ -1198,616 +816,53 @@ function AdultExamContent(props: AdultExamContentProps) {
             <FormProvider {...form}>
               {/* Technical Exam Section */}
               {activeSection === 'technical' && (
-                <div className="rounded-lg border border-border bg-card">
-                  <div className="border-b border-border p-4">
-                    <h2 className="flex items-center gap-2 text-lg font-medium text-foreground">
-                      <Eye className="size-5" aria-hidden="true" />
-                      Examen Technique
-                    </h2>
-                  </div>
-
-                  <Tabs
-                    value={technicalSubsection}
-                    onValueChange={(v) =>
-                      setTechnicalSubsection(v as TechnicalSubsection)
-                    }
-                  >
-                    <TabsList className="w-full justify-start overflow-x-auto rounded-none border-b bg-transparent p-0">
-                      <TabsTrigger
-                        value="acuity"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Acuité Visuelle
-                        {sectionStatus.technical.acuity && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="refraction"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Réfraction
-                        {sectionStatus.technical.refraction && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="tension"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Tension Oculaire
-                        {sectionStatus.technical.tension && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="pachymetry"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Pachymétrie
-                        {sectionStatus.technical.pachymetry && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="acuity" className="p-6">
-                      <VisualAcuityForm namePrefix="visualAcuity" />
-                      <div className="mt-6 flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('technical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="refraction" className="p-6">
-                      <RefractionForm namePrefix="refraction" />
-                      <div className="mt-6 flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('technical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="tension" className="p-6">
-                      <OcularTensionForm namePrefix="ocularTension" />
-                      <div className="mt-6 flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('technical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="pachymetry" className="p-6">
-                      <PachymetryForm namePrefix="pachymetry" />
-                      <div className="mt-6 flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('technical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
+                <AdultExamTechnicalPanel
+                  examId={examId}
+                  technicalSubsection={technicalSubsection}
+                  setTechnicalSubsection={setTechnicalSubsection}
+                  sectionStatus={sectionStatus}
+                  handleSaveSection={handleSaveSection}
+                  isSaving={isSaving}
+                />
               )}
 
               {/* Clinical Exam Section */}
               {activeSection === 'clinical' && (
-                <div className="rounded-lg border border-border bg-card">
-                  <div className="border-b border-border p-4">
-                    <h2 className="flex items-center gap-2 text-lg font-medium text-foreground">
-                      <Stethoscope className="size-5" aria-hidden="true" />
-                      Examen Clinique
-                    </h2>
-                  </div>
-
-                  <Tabs
-                    value={clinicalSubsection}
-                    onValueChange={(v) =>
-                      setClinicalSubsection(v as ClinicalSubsection)
-                    }
-                  >
-                    <TabsList className="w-full justify-start overflow-x-auto rounded-none border-b bg-transparent p-0">
-                      <TabsTrigger
-                        value="plaintes"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Plaintes
-                        {sectionStatus.clinical.plaintes && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="biomicroscopy"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Biomicroscopie
-                        {sectionStatus.clinical.biomicroscopy && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="perimetry"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        Examens complementaires
-                        {sectionStatus.clinical.perimetry && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="attachments"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-                      >
-                        <Paperclip className="mr-1 size-3" />
-                        Fichiers joints
-                        {sectionStatus.clinical.attachments && (
-                          <Check className="ml-1 size-3 text-primary" />
-                        )}
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="plaintes" className="p-6">
-                      <PlaintesForm namePrefix="plaintes" />
-                      <div className="mt-6 flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('clinical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent
-                      value="biomicroscopy"
-                      className="space-y-8 p-6"
-                    >
-                      {/* Biomicroscopy with Eye Tabs */}
-                      <Tabs defaultValue="od" className="w-full">
-                        <TabsList className="mb-4 grid w-full grid-cols-2">
-                          <TabsTrigger value="od">OD (Oeil Droit)</TabsTrigger>
-                          <TabsTrigger value="og">OG (Oeil Gauche)</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="od" className="space-y-6">
-                          <Tabs defaultValue="anterior">
-                            <TabsList>
-                              <TabsTrigger value="anterior">
-                                Segment Antérieur
-                              </TabsTrigger>
-                              <TabsTrigger value="posterior">
-                                Segment Postérieur
-                              </TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="anterior" className="pt-4">
-                              <BiomicroscopyAnteriorForm
-                                namePrefix="od.bp_sg_anterieur"
-                                eyeLabel="OD"
-                              />
-                            </TabsContent>
-                            <TabsContent value="posterior" className="pt-4">
-                              <BiomicroscopyPosteriorForm
-                                namePrefix="od.bp_sg_posterieur"
-                                eyeLabel="OD"
-                              />
-                            </TabsContent>
-                          </Tabs>
-                        </TabsContent>
-
-                        <TabsContent value="og" className="space-y-6">
-                          <Tabs defaultValue="anterior">
-                            <TabsList>
-                              <TabsTrigger value="anterior">
-                                Segment Antérieur
-                              </TabsTrigger>
-                              <TabsTrigger value="posterior">
-                                Segment Postérieur
-                              </TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="anterior" className="pt-4">
-                              <BiomicroscopyAnteriorForm
-                                namePrefix="og.bp_sg_anterieur"
-                                eyeLabel="OG"
-                              />
-                            </TabsContent>
-                            <TabsContent value="posterior" className="pt-4">
-                              <BiomicroscopyPosteriorForm
-                                namePrefix="og.bp_sg_posterieur"
-                                eyeLabel="OG"
-                              />
-                            </TabsContent>
-                          </Tabs>
-                        </TabsContent>
-                      </Tabs>
-
-                      <div className="flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('clinical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="perimetry" className="space-y-6 p-6">
-                      <PerimetryForm namePrefix="perimetry" />
-                      <ExamensAdditionelsSection namePrefix="perimetry" />
-                      <div className="mt-6 flex justify-end border-t border-border pt-4">
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveSection('clinical')}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="mr-1.5 size-4 animate-spin" />
-                          ) : (
-                            <Save
-                              className="mr-1.5 size-4"
-                              aria-hidden="true"
-                            />
-                          )}
-                          Sauvegarder
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    {/* NEW: Attachments Tab */}
-                    <TabsContent value="attachments" className="p-6">
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-medium text-foreground">
-                            Fichiers joints
-                          </h3>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Ajoutez des images ou documents liés à cet examen
-                            clinique.
-                          </p>
-                        </div>
-
-                        {/* Message si pas d'ID clinique */}
-                        {!clinicalExamId && (
-                          <div className="border-warning/30 bg-warning/10 flex items-center gap-3 rounded-lg border p-4">
-                            <AlertCircle className="size-5 text-warning" />
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
-                                Enregistrez d&apos;abord les données cliniques
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Vous devez sauvegarder les sections cliniques
-                                avant de pouvoir ajouter des fichiers joints.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Upload Form */}
-                        {clinicalExamId && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-base">
-                                Ajouter des fichiers
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="file-upload">
-                                  Sélectionner des fichiers
-                                </Label>
-                                <Input
-                                  id="file-upload"
-                                  type="file"
-                                  multiple
-                                  accept="image/*,.pdf,.doc,.docx"
-                                  onChange={handleFileSelect}
-                                  className="cursor-pointer"
-                                />
-                              </div>
-
-                              {selectedFiles.length > 0 && (
-                                <div className="space-y-2">
-                                  <Label>Fichiers sélectionnés</Label>
-                                  <ul className="space-y-1">
-                                    {selectedFiles.map((file, idx) => (
-                                      <li
-                                        key={idx}
-                                        className="flex items-center gap-2 text-sm text-muted-foreground"
-                                      >
-                                        <Paperclip className="size-3" />
-                                        {file.name} (
-                                        {(file.size / 1024).toFixed(1)} Ko)
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              <div className="space-y-2">
-                                <Label htmlFor="file-description">
-                                  Titre du document{' '}
-                                  <span className="text-destructive">*</span>
-                                </Label>
-                                <Textarea
-                                  id="file-description"
-                                  value={fileDescription}
-                                  onChange={(e) =>
-                                    setFileDescription(e.target.value)
-                                  }
-                                  placeholder="Ex: Résultat OCT, Fond d'œil OD..."
-                                  rows={2}
-                                />
-                              </div>
-
-                              <Button
-                                type="button"
-                                onClick={handleUploadFiles}
-                                disabled={
-                                  selectedFiles.length === 0 ||
-                                  isUploading ||
-                                  !fileDescription.trim()
-                                }
-                              >
-                                {isUploading ? (
-                                  <Loader2 className="mr-1.5 size-4 animate-spin" />
-                                ) : (
-                                  <Upload className="mr-1.5 size-4" />
-                                )}
-                                Uploader les fichiers
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        )}
-
-                        {/* Liste des fichiers existants */}
-                        {clinicalExamId && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-base">
-                                Fichiers existants
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              {isLoadingAttachments ? (
-                                <div className="flex items-center justify-center py-8">
-                                  <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                                </div>
-                              ) : attachments.length === 0 ? (
-                                <p className="py-8 text-center text-sm text-muted-foreground">
-                                  Aucun fichier joint pour le moment.
-                                </p>
-                              ) : (
-                                <ul className="space-y-3">
-                                  {attachments.map((attachment) => (
-                                    <li
-                                      key={attachment.id}
-                                      className="flex items-center justify-between rounded-lg border p-3"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        {attachment.is_image ? (
-                                          <FileImage className="size-4 text-blue-500" />
-                                        ) : attachment.is_pdf ? (
-                                          <FileText className="size-4 text-red-500" />
-                                        ) : (
-                                          <Paperclip className="size-4 text-muted-foreground" />
-                                        )}
-                                        <div>
-                                          <p className="text-sm font-medium">
-                                            {attachment.original_filename}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {attachment.file_size >= 1024 * 1024
-                                              ? `${(attachment.file_size / (1024 * 1024)).toFixed(1)} Mo`
-                                              : `${(attachment.file_size / 1024).toFixed(1)} Ko`}
-                                            {attachment.description &&
-                                              ` • ${attachment.description}`}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        {attachment.file_url ? (
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            asChild
-                                            title="Télécharger"
-                                          >
-                                            <a
-                                              href={attachment.file_url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              download={
-                                                attachment.original_filename
-                                              }
-                                              aria-label={`Télécharger ${attachment.original_filename}`}
-                                            >
-                                              <Download className="size-4 text-muted-foreground" />
-                                            </a>
-                                          </Button>
-                                        ) : (
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                              handleDownloadAttachment(
-                                                attachment.id,
-                                                attachment.original_filename,
-                                              )
-                                            }
-                                            disabled={
-                                              downloadingId === attachment.id
-                                            }
-                                            title="Télécharger"
-                                          >
-                                            {downloadingId === attachment.id ? (
-                                              <Loader2 className="size-4 animate-spin" />
-                                            ) : (
-                                              <Download className="size-4 text-muted-foreground" />
-                                            )}
-                                          </Button>
-                                        )}
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() =>
-                                            handleDeleteAttachment(
-                                              attachment.id,
-                                            )
-                                          }
-                                          disabled={isDeleting}
-                                          title="Supprimer"
-                                        >
-                                          {isDeleting ? (
-                                            <Loader2 className="size-4 animate-spin" />
-                                          ) : (
-                                            <Trash2 className="size-4 text-destructive" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
+                <AdultExamClinicalPanel
+                  clinicalSubsection={clinicalSubsection}
+                  setClinicalSubsection={setClinicalSubsection}
+                  sectionStatus={sectionStatus}
+                  handleSaveSection={handleSaveSection}
+                  isSaving={isSaving}
+                  clinicalExamId={clinicalExamId}
+                  onUploaded={onUploaded}
+                />
               )}
 
               {/* Conclusion Section */}
               {activeSection === 'conclusion' && (
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <ConclusionForm namePrefix="conclusion" />
-                  <div className="mt-6 flex justify-end border-t border-border pt-4">
-                    <Button
-                      type="button"
-                      onClick={() => handleSaveSection('conclusion')}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? (
-                        <Loader2 className="mr-1.5 size-4 animate-spin" />
-                      ) : (
-                        <Save className="mr-1.5 size-4" aria-hidden="true" />
-                      )}
-                      Sauvegarder
-                    </Button>
-                  </div>
-                </div>
+                <AdultExamConclusionPanel
+                  handleSaveSection={handleSaveSection}
+                  isSaving={isSaving}
+                />
               )}
             </FormProvider>
 
             {/* Driver Experience Section — outside FormProvider, standalone form */}
             {activeSection === 'experience' && patient.hasDriver && (
-              <div className="rounded-lg border border-border bg-card">
-                <div className="border-b border-border p-4">
-                  <h2 className="flex items-center gap-2 text-lg font-medium text-foreground">
-                    <Car className="size-5" aria-hidden="true" />
-                    Expérience conduite
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Suivi de l&apos;expérience de conduite pour cette visite
-                  </p>
-                </div>
-                <div className="p-6">
-                  <DriverExperienceForm examId={numericExamId} />
-                </div>
-              </div>
+              <AdultExamExperiencePanel numericExamId={numericExamId} />
             )}
           </main>
         </div>
       </SidebarInset>
 
       {/* Finalize Confirmation Dialog */}
-      <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Finaliser l&apos;examen</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir finaliser cet examen ? L&apos;examen sera
-              marqué comme terminé et les données ne pourront plus être
-              modifiées.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleFinalizeExam}
-              disabled={isCompleting}
-            >
-              {isCompleting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Finaliser
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <AdultExamFinalizeDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        handleFinalizeExam={handleFinalizeExam}
+        isCompleting={isCompleting}
+      />
     </>
   );
 }

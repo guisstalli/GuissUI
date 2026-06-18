@@ -11,10 +11,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, type TableColumn } from '@/components/ui/table';
 
-import type { AnalyticsSites } from '../../types';
+import type { AnalyticsSites } from '../../types/types';
 
 type SitesBarChartProps = {
   data: AnalyticsSites['sites'];
+};
+
+/**
+ * Ligne du tableau de synthèse par site. Étend l'item analytique avec un `id`
+ * stable (requis par le composant `Table` via `BaseEntity`).
+ */
+type SiteBarChartRow = AnalyticsSites['sites'][number] & {
+  id: string;
 };
 
 export const SitesBarChart = ({ data }: SitesBarChartProps) => {
@@ -34,11 +42,14 @@ export const SitesBarChart = ({ data }: SitesBarChartProps) => {
     );
   }
 
-  const sortedData = [...data].sort(
-    (a, b) => b.examens_total - a.examens_total,
-  );
+  const sortedData: SiteBarChartRow[] = [...data]
+    .sort((a, b) => b.examens_total - a.examens_total)
+    .map((site) => ({
+      ...site,
+      id: site.site_id != null ? String(site.site_id) : site.site_libelle,
+    }));
 
-  const columns: TableColumn<any>[] = [
+  const columns: TableColumn<SiteBarChartRow>[] = [
     { title: 'Site', field: 'site_libelle' },
     {
       title: 'Patients',
@@ -118,7 +129,7 @@ export const SitesBarChart = ({ data }: SitesBarChartProps) => {
               Tableau de synthèse
             </h4>
             <div className="relative overflow-x-auto">
-              <Table data={sortedData as any} columns={columns} />
+              <Table data={sortedData} columns={columns} />
             </div>
           </div>
         </div>

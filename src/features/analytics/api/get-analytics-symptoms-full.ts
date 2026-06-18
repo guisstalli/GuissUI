@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { AnalyticsFilters, AnalyticsSymptomsFull } from '../types';
+import type { AnalyticsFilters, AnalyticsSymptomsFull } from '../types/types';
 import { normalizeAnalyticsFilters } from '../utils/filters';
 
 const buildUrl = (filters: AnalyticsFilters) => {

@@ -30,9 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
-import { useCreatePatient } from '@/features/patients/api';
+import { PhoneInput } from '@/components/ui/form/phone-input';
+import { useCreatePatient } from '@/features/patients/api/create-patient';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';
+import { optionalPhoneSchema } from '@/utils/phone';
 
 export type PatientType = 'adult' | 'child' | null;
 
@@ -44,7 +46,7 @@ const patientFormSchema = z.object({
   sex: z.enum(['H', 'F', 'A'], {
     required_error: 'Le sexe est requis',
   }),
-  phone_number: z.string().optional(),
+  phone_number: optionalPhoneSchema,
 });
 
 export type PatientFormValues = z.infer<typeof patientFormSchema>;
@@ -61,10 +63,13 @@ function calculateAge(dateOfBirth: string): number {
 /**
  * Détermine si le patient est adulte ou enfant basé sur la date de naissance
  */
+// Seuil : adulte à partir de 16 ans (enfant 0–15).
+const ADULT_MIN_AGE = 16;
+
 function getPatientType(dateOfBirth: string): PatientType {
   if (!dateOfBirth) return null;
   const age = calculateAge(dateOfBirth);
-  return age >= 18 ? 'adult' : 'child';
+  return age >= ADULT_MIN_AGE ? 'adult' : 'child';
 }
 
 interface NewPatientModalProps {
@@ -212,7 +217,7 @@ export function NewPatientModal({
                 <div>
                   <p className="font-medium text-foreground">Patient adulte</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    18 ans et plus
+                    16 ans et plus
                   </p>
                 </div>
               </button>
@@ -238,7 +243,7 @@ export function NewPatientModal({
                 <div>
                   <p className="font-medium text-foreground">Patient enfant</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    Moins de 18 ans
+                    Moins de 16 ans
                   </p>
                 </div>
               </button>
@@ -402,10 +407,12 @@ export function NewPatientModal({
                       <FormItem>
                         <FormLabel>Numéro de téléphone</FormLabel>
                         <FormControl>
-                          <Input
-                            type="tel"
-                            placeholder="+221 77 000 00 00"
-                            {...field}
+                          <PhoneInput
+                            placeholder="77 000 00 00"
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
                           />
                         </FormControl>
                         <FormMessage />

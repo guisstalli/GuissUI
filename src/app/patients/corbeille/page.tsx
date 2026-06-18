@@ -25,11 +25,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  useDeletedPatients,
   useHardDeletePatient,
   useRestorePatient,
-} from '@/features/patients/api';
-import type { PatientList } from '@/features/patients/types';
+} from '@/features/patients/api/delete-patient';
+import { useDeletedPatients } from '@/features/patients/api/get-patients';
+import type { PatientList } from '@/features/patients/types/types';
 
 export default function CorbeillePatientPage() {
   const { data, isLoading } = useDeletedPatients();
