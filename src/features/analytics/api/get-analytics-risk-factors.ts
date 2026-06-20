@@ -3,19 +3,13 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
 import type { AnalyticsFilters, AnalyticsRiskFactors } from '../types/types';
-import { normalizeAnalyticsFilters } from '../utils/filters';
+import {
+  analyticsFiltersToSearchParams,
+  normalizeAnalyticsFilters,
+} from '../utils/filters';
 
 const buildUrl = (filters: AnalyticsFilters) => {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return;
-    if (key === 'site_id' && Array.isArray(value)) {
-      value.forEach((id) => params.append('site_id', String(id)));
-      return;
-    }
-    params.set(key, String(value));
-  });
-  const qs = params.toString();
+  const qs = analyticsFiltersToSearchParams(filters).toString();
   return qs ? `/analytics/risk-factors/?${qs}` : '/analytics/risk-factors/';
 };
 

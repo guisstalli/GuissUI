@@ -94,26 +94,29 @@ export const adminHandlers = [
   }),
 
   // POST /users/admin/create/
-  http.post('http://localhost:8000/users/admin/create/', async ({ request }) => {
-    const body = (await request.json()) as Record<string, unknown>;
-    const created = {
-      id: 99,
-      email: body.email as string,
-      phone_number: (body.phone_number as string) ?? '',
-      role: (body.role as string) ?? 'STAFF',
-      is_active: true,
-      is_verified: false,
-      is_admin: false,
-      date_joined: new Date().toISOString(),
-      user_profile: {
-        first_name: (body.first_name as string) ?? '',
-        last_name: (body.last_name as string) ?? '',
-        title: (body.title as string) ?? '',
-        avatar: null,
-      },
-    };
-    return HttpResponse.json(created, { status: 201 });
-  }),
+  http.post(
+    'http://localhost:8000/users/admin/create/',
+    async ({ request }) => {
+      const body = (await request.json()) as Record<string, unknown>;
+      const created = {
+        id: 99,
+        email: body.email as string,
+        phone_number: (body.phone_number as string) ?? '',
+        role: (body.role as string) ?? 'STAFF',
+        is_active: true,
+        is_verified: false,
+        is_admin: false,
+        date_joined: new Date().toISOString(),
+        user_profile: {
+          first_name: (body.first_name as string) ?? '',
+          last_name: (body.last_name as string) ?? '',
+          title: (body.title as string) ?? '',
+          avatar: null,
+        },
+      };
+      return HttpResponse.json(created, { status: 201 });
+    },
+  ),
 
   // DELETE /users/:id/delete/
   http.delete('http://localhost:8000/users/:id/delete/', ({ params }) => {

@@ -45,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form/select';
+import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { Spinner } from '@/components/ui/spinner';
 import {
   TableBody,
@@ -54,7 +55,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { useCreateDriver } from '@/features/drivers/api/create-driver';
 import { useDeleteDriver } from '@/features/drivers/api/delete-driver';
 import { useDrivers } from '@/features/drivers/api/get-drivers';

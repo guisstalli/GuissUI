@@ -21,7 +21,14 @@ import {
   Switch,
 } from '@/components/ui/form';
 
-import { EYE_OPTIONS, EYE_SYMPTOMS, DIPLOPIE_TYPES, EYE_LABELS, STRABISME_TYPES, PTOSIS_TYPES } from '../../types/schemas';
+import {
+  EYE_OPTIONS,
+  EYE_SYMPTOMS,
+  DIPLOPIE_TYPES,
+  EYE_LABELS,
+  STRABISME_TYPES,
+  PTOSIS_TYPES,
+} from '../../types/schemas';
 
 interface PlaintesFormProps {
   namePrefix?: string;

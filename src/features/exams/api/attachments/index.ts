@@ -9,7 +9,10 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 import { MutationConfig } from '@/lib/react-query';
 
-import type { ExamenSupplementaireList, ExamenSupplementaire } from '../../types/types';
+import type {
+  ExamenSupplementaireList,
+  ExamenSupplementaire,
+} from '../../types/types';
 
 // =============================================================================
 // GET ATTACHMENTS

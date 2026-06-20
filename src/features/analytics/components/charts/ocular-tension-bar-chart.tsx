@@ -15,6 +15,8 @@ import type {
   CohortCriterion,
 } from '../../types/types';
 
+import { DrilldownHint } from './drilldown-hint';
+
 type OcularTensionBarChartProps = {
   data: AnalyticsOcularTension;
   onSegmentClick?: (criterion: CohortCriterion) => void;
@@ -86,11 +88,14 @@ export const OcularTensionBarChart = ({
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
             <CardTitle className="text-sm font-medium">
               Tension Oculaire (TO)
             </CardTitle>
+            {onSegmentClick && (
+              <DrilldownHint label="Cliquez sur une tranche pour explorer" />
+            )}
           </div>
           <div className="text-right">
             <div className="text-xs text-muted-foreground">Échantillon</div>
@@ -126,6 +131,7 @@ export const OcularTensionBarChart = ({
                 barSize={40}
                 onClick={onSegmentClick ? handleBarClick : undefined}
                 cursor={onSegmentClick ? 'pointer' : undefined}
+                activeBar={onSegmentClick ? { fillOpacity: 0.8 } : undefined}
               />
             </BarChart>
           </ResponsiveContainer>

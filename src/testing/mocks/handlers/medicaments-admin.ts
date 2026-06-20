@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
 import { env } from '@/config/env';
-
 import type {
   MedicamentAdmin,
   PaginatedMedicaments,

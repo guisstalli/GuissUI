@@ -4,12 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse rounded-md bg-muted ${className || ''}`} />
+  <div
+    aria-hidden="true"
+    className={`animate-pulse rounded-md bg-muted ${className || ''}`}
+  />
 );
 
 export const AnalyticsLoadingState = () => {
   return (
-    <div className="space-y-8 duration-500 animate-in fade-in">
+    <div
+      role="status"
+      aria-label="Chargement des analytiques"
+      className="space-y-8 duration-500 animate-in fade-in"
+    >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-32 w-full rounded-xl" />

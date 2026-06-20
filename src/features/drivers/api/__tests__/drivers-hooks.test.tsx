@@ -12,8 +12,8 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
-import { server } from '@/testing/mocks/server';
 import { driversHandlers } from '@/testing/mocks/handlers/drivers';
+import { server } from '@/testing/mocks/server';
 
 vi.mock('next-auth/react', async () => {
   const actual =
@@ -25,10 +25,10 @@ vi.mock('next-auth/react', async () => {
   };
 });
 
-import { useDrivers } from '../get-drivers';
-import { useDriver } from '../get-driver';
 import { useCreateDriver } from '../create-driver';
 import { useDeleteDriver } from '../delete-driver';
+import { useDriver } from '../get-driver';
+import { useDrivers } from '../get-drivers';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ describe('useDrivers', () => {
     expect(result.current.isLoading).toBe(true);
   });
 
-  test('filtre at_risk=true est transmis à l\'API', async () => {
+  test("filtre at_risk=true est transmis à l'API", async () => {
     server.use(...driversHandlers);
     let capturedUrl = '';
     server.use(
@@ -89,15 +89,12 @@ describe('useDrivers', () => {
     );
 
     const wrapper = createWrapper();
-    renderHook(
-      () => useDrivers({ params: { at_risk: true } }),
-      { wrapper },
-    );
+    renderHook(() => useDrivers({ params: { at_risk: true } }), { wrapper });
 
     await waitFor(() => expect(capturedUrl).toContain('at_risk=true'));
   });
 
-  test('retourne une erreur quand l\'API échoue', async () => {
+  test("retourne une erreur quand l'API échoue", async () => {
     server.use(
       http.get('http://localhost:8000/conducteurs/', () =>
         HttpResponse.error(),
@@ -125,7 +122,7 @@ describe('useDrivers', () => {
 // ─── useDriver (single) ───────────────────────────────────────────────────────
 
 describe('useDriver', () => {
-  test('retourne le détail d\'un conducteur par son id', async () => {
+  test("retourne le détail d'un conducteur par son id", async () => {
     server.use(...driversHandlers);
     const wrapper = createWrapper();
     const { result } = renderHook(() => useDriver(1), { wrapper });
@@ -270,7 +267,7 @@ describe('useCreateDriver', () => {
     expect(capturedUrl).toContain('/conducteurs/create/');
   });
 
-  test('entre en état error quand l\'API retourne 500', async () => {
+  test("entre en état error quand l'API retourne 500", async () => {
     server.use(
       http.post(
         'http://localhost:8000/conducteurs/create/',
@@ -305,7 +302,7 @@ describe('useDeleteDriver', () => {
     expect(onSuccess).toHaveBeenCalledOnce();
   });
 
-  test('appelle l\'endpoint correct DELETE /conducteurs/:id/delete/', async () => {
+  test("appelle l'endpoint correct DELETE /conducteurs/:id/delete/", async () => {
     server.use(...driversHandlers);
     let capturedUrl = '';
     server.use(
@@ -327,7 +324,7 @@ describe('useDeleteDriver', () => {
     expect(capturedUrl).toContain('/conducteurs/3/delete/');
   });
 
-  test('entre en état error si l\'API retourne 500', async () => {
+  test("entre en état error si l'API retourne 500", async () => {
     server.use(
       http.delete(
         'http://localhost:8000/conducteurs/:id/delete/',

@@ -130,11 +130,19 @@ export const mapRefractionFormToApi = (data: Refraction) => {
     avod: toFixedDecimalString(data.od_visual_acuity),
     avog: toFixedDecimalString(data.og_visual_acuity),
     avodg: toFixedDecimalString(data.odg_visual_acuity),
-    od_s_avec_correction_prescrite: toFixedDecimalString(odSphereAvecCorrection),
-    od_c_avec_correction_prescrite: toFixedDecimalString(odCylinderAvecCorrection),
+    od_s_avec_correction_prescrite: toFixedDecimalString(
+      odSphereAvecCorrection,
+    ),
+    od_c_avec_correction_prescrite: toFixedDecimalString(
+      odCylinderAvecCorrection,
+    ),
     od_a_avec_correction_prescrite: toFixedDecimalString(odAxisAvecCorrection),
-    og_s_avec_correction_prescrite: toFixedDecimalString(ogSphereAvecCorrection),
-    og_c_avec_correction_prescrite: toFixedDecimalString(ogCylinderAvecCorrection),
+    og_s_avec_correction_prescrite: toFixedDecimalString(
+      ogSphereAvecCorrection,
+    ),
+    og_c_avec_correction_prescrite: toFixedDecimalString(
+      ogCylinderAvecCorrection,
+    ),
     og_a_avec_correction_prescrite: toFixedDecimalString(ogAxisAvecCorrection),
     avod_avec_correction_prescrite: toFixedDecimalString(avodAvecCorrection),
     avog_avec_correction_prescrite: toFixedDecimalString(avogAvecCorrection),

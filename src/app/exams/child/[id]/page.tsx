@@ -16,6 +16,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Button } from '@/components/ui/button';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
   useDownloadChildReport,
@@ -74,12 +79,14 @@ import {
   mapRefractionFormToApi,
   mapVisualAcuityFormToApi,
 } from '@/features/exams/utils/form-to-api-mappers';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   usePersistentLocalTabState,
   usePersistentTabState,
   useUrlParamMirror,
 } from '@/hooks/use-persistent-tab-state';
 import { useUser } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 
 type Section = 'technical' | 'clinical' | 'complementary' | 'conclusion';
 type TechnicalSubsection = 'acuity' | 'refraction' | 'tension';
@@ -782,6 +789,8 @@ function ChildExamContent(props: ChildExamContentProps) {
   ).length;
   const totalCount = visibleSections.length;
 
+  const isMobile = useIsMobile();
+
   const { mutate: downloadReport, isPending: isDownloadingReport } =
     useDownloadChildReport();
   const { mutate: downloadConclusion, isPending: isDownloadingConclusion } =
@@ -822,35 +831,6 @@ function ChildExamContent(props: ChildExamContentProps) {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Section Navigation */}
-          <ChildExamSidebar
-            examId={examId}
-            patient={patient}
-            visibleSections={visibleSections}
-            completedCount={completedCount}
-            totalCount={totalCount}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            sectionStatus={sectionStatus}
-            handleSaveSection={handleSaveSection}
-            isSaving={isSaving}
-            isComplete={isComplete}
-            isCompleting={isCompleting}
-            isUncompleting={isUncompleting}
-            setShowFinalizeDialog={setShowFinalizeDialog}
-            handleUncompleteExam={handleUncompleteExam}
-            isDownloadingReport={isDownloadingReport}
-            downloadReport={downloadReport}
-            isDownloadingConclusion={isDownloadingConclusion}
-            downloadConclusion={downloadConclusion}
-            canGenerateOrdonnance={canGenerateOrdonnance}
-            medicamentOrdonnance={medicamentOrdonnance}
-            optiqueOrdonnance={optiqueOrdonnance}
-            downloadOrdonnance={downloadOrdonnance}
-            setMedicamentDialogOpen={setMedicamentDialogOpen}
-            setOptiqueDialogOpen={setOptiqueDialogOpen}
-          />
-
           <OrdonnanceFormDialog
             examId={numericExamId}
             examType="child"
@@ -873,57 +853,136 @@ function ChildExamContent(props: ChildExamContentProps) {
             }
           />
 
-          {/* Main Content */}
-          <FormProvider {...form}>
-            <main className="flex-1 overflow-y-auto p-6">
-              {/* TECHNIQUE */}
-              {activeSection === 'technical' && (
-                <ChildExamTechnicalPanel
-                  examId={examId}
-                  technicalSubsection={technicalSubsection}
-                  setTechnicalSubsection={setTechnicalSubsection}
-                  handleSaveTechnical={handleSaveTechnical}
-                  isSaving={isSaving}
-                />
-              )}
+          <ResizablePanelGroup
+            direction="horizontal"
+            autoSaveId="guiss.exam.child.layout"
+            className="flex-1"
+          >
+            {!isMobile && (
+              <>
+                {/* Section Navigation */}
+                <ResizablePanel
+                  id="nav"
+                  order={1}
+                  defaultSize={20}
+                  minSize={14}
+                  maxSize={32}
+                  className="min-w-0"
+                >
+                  <ChildExamSidebar
+                    examId={examId}
+                    patient={patient}
+                    visibleSections={visibleSections}
+                    completedCount={completedCount}
+                    totalCount={totalCount}
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                    sectionStatus={sectionStatus}
+                    handleSaveSection={handleSaveSection}
+                    isSaving={isSaving}
+                    isComplete={isComplete}
+                    isCompleting={isCompleting}
+                    isUncompleting={isUncompleting}
+                    setShowFinalizeDialog={setShowFinalizeDialog}
+                    handleUncompleteExam={handleUncompleteExam}
+                    isDownloadingReport={isDownloadingReport}
+                    downloadReport={downloadReport}
+                    isDownloadingConclusion={isDownloadingConclusion}
+                    downloadConclusion={downloadConclusion}
+                    canGenerateOrdonnance={canGenerateOrdonnance}
+                    medicamentOrdonnance={medicamentOrdonnance}
+                    optiqueOrdonnance={optiqueOrdonnance}
+                    downloadOrdonnance={downloadOrdonnance}
+                    setMedicamentDialogOpen={setMedicamentDialogOpen}
+                    setOptiqueDialogOpen={setOptiqueDialogOpen}
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+              </>
+            )}
 
-              {/* CLINIQUE */}
-              {activeSection === 'clinical' && (
-                <ChildExamClinicalPanel
-                  examId={examId}
-                  clinicalSubsection={clinicalSubsection}
-                  setClinicalSubsection={setClinicalSubsection}
-                  handleSaveClinical={handleSaveClinical}
-                  isSaving={isSaving}
-                  simplifiedClinicalExam={simplifiedClinicalExam}
-                  onToggleSimplifiedClinicalExam={
-                    onToggleSimplifiedClinicalExam
-                  }
-                />
-              )}
+            {/* Main Content */}
+            <ResizablePanel
+              id="content"
+              order={2}
+              defaultSize={80}
+              minSize={50}
+              className="min-w-0"
+            >
+              <FormProvider {...form}>
+                <main className="size-full overflow-y-auto p-6">
+                  {/* Mobile section nav — hidden on md+ */}
+                  {isMobile && (
+                    <div className="mb-4 flex overflow-x-auto rounded-lg border bg-card">
+                      {visibleSections.map((section) => (
+                        <button
+                          key={section.id}
+                          type="button"
+                          onClick={() => setActiveSection(section.id)}
+                          className={cn(
+                            'flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium',
+                            activeSection === section.id
+                              ? 'border-primary text-primary'
+                              : 'border-transparent text-muted-foreground hover:text-foreground',
+                          )}
+                        >
+                          <section.icon className="size-4" aria-hidden="true" />
+                          {section.title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
-              {/* COMPLÉMENTAIRES */}
-              {activeSection === 'complementary' && (
-                <ChildExamComplementaryPanel
-                  examId={examId}
-                  complementarySubsection={complementarySubsection}
-                  setComplementarySubsection={setComplementarySubsection}
-                  handleSaveComplementary={handleSaveComplementary}
-                  isSaving={isSaving}
-                  clinicalExamId={clinicalExamId}
-                />
-              )}
+                  {/* TECHNIQUE */}
+                  {activeSection === 'technical' && (
+                    <ChildExamTechnicalPanel
+                      examId={examId}
+                      technicalSubsection={technicalSubsection}
+                      setTechnicalSubsection={setTechnicalSubsection}
+                      handleSaveTechnical={handleSaveTechnical}
+                      isSaving={isSaving}
+                    />
+                  )}
 
-              {/* CONCLUSION */}
-              {activeSection === 'conclusion' && (
-                <ChildExamConclusionPanel
-                  examId={examId}
-                  isSaving={isSaving}
-                  onRequestSave={() => setShowSaveDialog(true)}
-                />
-              )}
-            </main>
-          </FormProvider>
+                  {/* CLINIQUE */}
+                  {activeSection === 'clinical' && (
+                    <ChildExamClinicalPanel
+                      examId={examId}
+                      clinicalSubsection={clinicalSubsection}
+                      setClinicalSubsection={setClinicalSubsection}
+                      handleSaveClinical={handleSaveClinical}
+                      isSaving={isSaving}
+                      simplifiedClinicalExam={simplifiedClinicalExam}
+                      onToggleSimplifiedClinicalExam={
+                        onToggleSimplifiedClinicalExam
+                      }
+                    />
+                  )}
+
+                  {/* COMPLÉMENTAIRES */}
+                  {activeSection === 'complementary' && (
+                    <ChildExamComplementaryPanel
+                      examId={examId}
+                      complementarySubsection={complementarySubsection}
+                      setComplementarySubsection={setComplementarySubsection}
+                      handleSaveComplementary={handleSaveComplementary}
+                      isSaving={isSaving}
+                      clinicalExamId={clinicalExamId}
+                    />
+                  )}
+
+                  {/* CONCLUSION */}
+                  {activeSection === 'conclusion' && (
+                    <ChildExamConclusionPanel
+                      examId={examId}
+                      isSaving={isSaving}
+                      onRequestSave={() => setShowSaveDialog(true)}
+                    />
+                  )}
+                </main>
+              </FormProvider>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </SidebarInset>
 

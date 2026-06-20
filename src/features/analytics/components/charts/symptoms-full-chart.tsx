@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsSymptomsFull, CohortCriterion } from '../../types/types';
 
+import { DrilldownHint } from './drilldown-hint';
+
 const SYMPTOM_LABELS: Record<string, string> = {
   BAV: 'BAV',
   DOULEUR: 'Douleur',
@@ -90,10 +92,15 @@ export const SymptomsFullChart = ({
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-sm font-medium">
-            Distribution complète des symptômes (12 symptômes)
-          </CardTitle>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <CardTitle className="text-sm font-medium">
+              Distribution complète des symptômes (12 symptômes)
+            </CardTitle>
+            {onSegmentClick && (
+              <DrilldownHint label="Cliquez sur une barre pour explorer" />
+            )}
+          </div>
           <div className="text-right">
             <div className="text-xs text-muted-foreground">Échantillon</div>
             <div className="text-sm font-bold">{data.sample_size} examens</div>

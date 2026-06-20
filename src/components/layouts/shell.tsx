@@ -32,8 +32,8 @@ export function Shell({
           patientName={patientName}
           actions={headerActions}
         />
-        <div className="flex flex-1">
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <div className="flex min-h-0 flex-1">
+          <main className="min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
           {rightPanel}
         </div>
       </SidebarInset>

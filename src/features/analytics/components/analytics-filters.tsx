@@ -246,7 +246,7 @@ export const AnalyticsFiltersBar = ({
   const activeCount = countActiveFilters(draftFilters);
 
   return (
-    <Card className="border-border/60 sticky top-4 z-10 mb-8 shadow-md">
+    <Card className="border-border/60 mb-8 shadow-md">
       <CardContent className="p-5">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">

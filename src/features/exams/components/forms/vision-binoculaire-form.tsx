@@ -16,7 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/form';
-import { COVER_TEST_DIRECTIONS, COVER_TEST_TYPES, HIRSCHBERG_TYPES, HIRSCHBERG_DETAIL_VALUES, LATERALITY_VALUES, REFLEX_VALUES, STEREOSCOPY_LANG_VALUES } from '@/features/exams/types/schemas';
+import {
+  COVER_TEST_DIRECTIONS,
+  COVER_TEST_TYPES,
+  HIRSCHBERG_TYPES,
+  HIRSCHBERG_DETAIL_VALUES,
+  LATERALITY_VALUES,
+  REFLEX_VALUES,
+  STEREOSCOPY_LANG_VALUES,
+} from '@/features/exams/types/schemas';
 
 interface VisionBinoculaireFormProps {
   namePrefix?: string;

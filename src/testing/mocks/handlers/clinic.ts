@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
 import { env } from '@/config/env';
-
 import type { ClinicSettings } from '@/features/clinic/types/schemas';
 
 export const mockClinicSettings: ClinicSettings = {

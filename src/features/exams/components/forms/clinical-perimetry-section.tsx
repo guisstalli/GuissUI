@@ -11,7 +11,10 @@ import {
   FormMessage,
   Input,
 } from '@/components/ui/form';
-import { type ClinicalExamFormValues, PBO_VALUES } from '@/features/exams/types/schemas';
+import {
+  type ClinicalExamFormValues,
+  PBO_VALUES,
+} from '@/features/exams/types/schemas';
 
 const PBO_LABELS: Record<(typeof PBO_VALUES)[number], string> = {
   NORMAL: 'Normal',
@@ -43,8 +46,7 @@ export function PerimetrySection({ form }: PerimetrySectionProps) {
         render={() => (
           <FormItem>
             <FormLabel>
-              Périmétrie binoculaire{' '}
-              <span className="text-destructive">*</span>
+              Périmétrie binoculaire <span className="text-destructive">*</span>
             </FormLabel>
             <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
               {PBO_VALUES.map((value) => (
@@ -89,9 +91,7 @@ export function PerimetrySection({ form }: PerimetrySectionProps) {
           name="perimetry.limite_superieure"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">
-                Limite supérieure (°)
-              </FormLabel>
+              <FormLabel className="text-xs">Limite supérieure (°)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -116,9 +116,7 @@ export function PerimetrySection({ form }: PerimetrySectionProps) {
           name="perimetry.limite_inferieure"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">
-                Limite inférieure (°)
-              </FormLabel>
+              <FormLabel className="text-xs">Limite inférieure (°)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -200,9 +198,7 @@ export function PerimetrySection({ form }: PerimetrySectionProps) {
           name="perimetry.etendue_horizontal"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">
-                Étendue horizontale (°)
-              </FormLabel>
+              <FormLabel className="text-xs">Étendue horizontale (°)</FormLabel>
               <FormControl>
                 <Input
                   type="number"

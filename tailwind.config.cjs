@@ -21,8 +21,8 @@ module.exports = {
         // GUISS Typography Tokens
         'page-title': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }], // text-xl
         'section-title': ['1rem', { lineHeight: '1.5rem', fontWeight: '600' }], // text-base
-        'body': ['0.875rem', { lineHeight: '1.25rem' }], // text-sm
-        'caption': ['0.75rem', { lineHeight: '1rem' }], // text-xs
+        body: ['0.875rem', { lineHeight: '1.25rem' }], // text-sm
+        caption: ['0.75rem', { lineHeight: '1rem' }], // text-xs
       },
       colors: {
         // Base
@@ -132,13 +132,13 @@ module.exports = {
       },
       spacing: {
         // GUISS Spacing Tokens
-        'page': '1.5rem',        // p-6
-        'page-compact': '1rem',  // p-4
-        'section': '1.5rem',     // space-y-6
-        'subsection': '1rem',    // space-y-4
-        'card': '1rem',          // p-4
-        'form': '0.75rem',       // space-y-3
-        'modal': '1.5rem',       // p-6
+        page: '1.5rem', // p-6
+        'page-compact': '1rem', // p-4
+        section: '1.5rem', // space-y-6
+        subsection: '1rem', // space-y-4
+        card: '1rem', // p-4
+        form: '0.75rem', // space-y-3
+        modal: '1.5rem', // p-6
       },
       keyframes: {
         'accordion-down': {
@@ -156,5 +156,9 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/container-queries'),
+  ],
 };

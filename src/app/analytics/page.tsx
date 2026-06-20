@@ -8,6 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Can } from '@/components/ui/can';
 import { useNotifications } from '@/components/ui/notifications';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
 import { useAnalyticsBiomicroscopy } from '@/features/analytics/api/get-analytics-biomicroscopy';
 import { useAnalyticsDriverExperience } from '@/features/analytics/api/get-analytics-driver-experience';
 import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
@@ -47,13 +52,15 @@ import { SymptomsGroupedBar } from '@/features/analytics/components/charts/sympt
 import { TimelineChart } from '@/features/analytics/components/charts/timeline-chart';
 import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
 import { VisualFieldSection } from '@/features/analytics/components/charts/visual-field-section';
-import { CohortSheet } from '@/features/analytics/components/cohort/cohort-sheet';
+import { CohortMobileOverlay } from '@/features/analytics/components/cohort/cohort-mobile-overlay';
+import { CohortPanel } from '@/features/analytics/components/cohort/cohort-panel';
 import {
   DEFAULT_ANALYTICS_FILTERS,
   type AnalyticsFilters,
   type CohortCriterion,
 } from '@/features/analytics/types/types';
 import { useSites } from '@/features/sites/api/get-sites';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const MAX_COHORT_PATIENTS = 200;
 
@@ -68,6 +75,7 @@ export default function AnalyticsPage() {
     useState<CohortCriterion | null>(null);
 
   const { addNotification } = useNotifications();
+  const isMobile = useIsMobile();
 
   const { data: sitesData } = useSites({ params: { limit: 200 } });
   const siteOptions = useMemo(
@@ -201,117 +209,169 @@ export default function AnalyticsPage() {
         ) : isEmpty ? (
           <AnalyticsEmptyState />
         ) : (
-          <div className="space-y-8 duration-500 animate-in fade-in">
-            {reqOverview.data && (
-              <AnalyticsKpiRow data={reqOverview.data.population} />
-            )}
-
-            <div className="grid gap-6 md:grid-cols-12">
-              {/* Colonne gauche (8 colonnes sur Desktop) */}
-              <div className="flex flex-col space-y-6 md:col-span-8">
-                {reqTimeline.data && (
-                  <div className="min-h-[400px] flex-1">
-                    <TimelineChart data={reqTimeline.data.timeline} />
-                  </div>
+          <ResizablePanelGroup
+            direction="horizontal"
+            autoSaveId="analytics-cohort"
+            className="items-stretch"
+            // La lib force height:100%+overflow:hidden en inline, ce qui
+            // tronquerait le dashboard (plus haut que l'écran) dans le <main>
+            // borné. On laisse le groupe grandir et c'est <main> qui scrolle.
+            style={{ height: 'auto', overflow: 'visible' }}
+          >
+            <ResizablePanel
+              id="dashboard"
+              order={1}
+              defaultSize={62}
+              minSize={40}
+              className="min-w-0"
+            >
+              <div className="space-y-8 duration-500 animate-in fade-in @container md:pr-1">
+                {reqOverview.data && (
+                  <AnalyticsKpiRow data={reqOverview.data.population} />
                 )}
 
-                <div className="grid min-h-[300px] flex-1 gap-6 md:grid-cols-2">
-                  {reqVA.data && (
-                    <VisualAcuityBarChart
-                      data={reqVA.data}
-                      onSegmentClick={setCohortCriterion}
-                    />
-                  )}
-                  {reqTension.data && (
-                    <OcularTensionBarChart
-                      data={reqTension.data}
-                      onSegmentClick={setCohortCriterion}
-                    />
-                  )}
+                {/* Grilles pilotées par la largeur DU PANNEAU (container query),
+                    pas du viewport — sinon les charts se chevauchent quand le
+                    panneau cohorte rétrécit le dashboard. */}
+                <div className="grid gap-6 @5xl:grid-cols-12">
+                  {/* Colonne gauche */}
+                  <div className="flex flex-col space-y-6 @5xl:col-span-8">
+                    {reqTimeline.data && (
+                      <div className="min-h-[400px] flex-1">
+                        <TimelineChart data={reqTimeline.data.timeline} />
+                      </div>
+                    )}
+
+                    <div className="grid min-h-[300px] flex-1 gap-6 @3xl:grid-cols-2">
+                      {reqVA.data && (
+                        <VisualAcuityBarChart
+                          data={reqVA.data}
+                          onSegmentClick={setCohortCriterion}
+                        />
+                      )}
+                      {reqTension.data && (
+                        <OcularTensionBarChart
+                          data={reqTension.data}
+                          onSegmentClick={setCohortCriterion}
+                        />
+                      )}
+                    </div>
+
+                    {reqSymptoms.data && (
+                      <div className="min-h-[350px] flex-1">
+                        <SymptomsGroupedBar data={reqSymptoms.data} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Colonne droite */}
+                  <div className="flex flex-col space-y-6 @5xl:col-span-4">
+                    {reqOverview.data && (
+                      <div className="min-h-[300px]">
+                        <OverviewDonutChart
+                          data={reqOverview.data.population.sex_distribution}
+                        />
+                      </div>
+                    )}
+                    {reqOverview.data?.population.conclusion_distribution && (
+                      <div className="min-h-[300px]">
+                        <ConclusionDonutChart
+                          data={
+                            reqOverview.data.population.conclusion_distribution
+                          }
+                          onSegmentClick={setCohortCriterion}
+                        />
+                      </div>
+                    )}
+                    {reqRefrac.data && (
+                      <div className="min-h-[300px]">
+                        <RefractionDonutChart data={reqRefrac.data} />
+                      </div>
+                    )}
+                    {reqGlaucoma.data && (
+                      <div className="min-h-[300px]">
+                        <GlaucomaScatterChart data={reqGlaucoma.data} />
+                      </div>
+                    )}
+                    {reqPachy.data && (
+                      <div className="min-h-[150px]">
+                        <PachymetryKpiCard data={reqPachy.data} />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {reqSymptoms.data && (
-                  <div className="min-h-[350px] flex-1">
-                    <SymptomsGroupedBar data={reqSymptoms.data} />
+                {/* Pleine largeur */}
+                {reqSites.data && (
+                  <div className="min-h-[400px] w-full">
+                    <SitesBarChart data={reqSites.data.sites} />
                   </div>
                 )}
-              </div>
 
-              {/* Colonne droite (4 colonnes sur Desktop) */}
-              <div className="flex flex-col space-y-6 md:col-span-4">
-                {reqOverview.data && (
-                  <div className="min-h-[300px]">
-                    <OverviewDonutChart
-                      data={reqOverview.data.population.sex_distribution}
-                    />
-                  </div>
-                )}
-                {reqOverview.data?.population.conclusion_distribution && (
-                  <div className="min-h-[300px]">
-                    <ConclusionDonutChart
-                      data={reqOverview.data.population.conclusion_distribution}
+                {/* Nouvelles sections analytiques */}
+                <div className="grid grid-cols-1 gap-6">
+                  {reqSymptomsFull.data && (
+                    <SymptomsFullChart
+                      data={reqSymptomsFull.data}
                       onSegmentClick={setCohortCriterion}
                     />
-                  </div>
-                )}
-                {reqRefrac.data && (
-                  <div className="min-h-[300px]">
-                    <RefractionDonutChart data={reqRefrac.data} />
-                  </div>
-                )}
-                {reqGlaucoma.data && (
-                  <div className="min-h-[300px]">
-                    <GlaucomaScatterChart data={reqGlaucoma.data} />
-                  </div>
-                )}
-                {reqPachy.data && (
-                  <div className="min-h-[150px]">
-                    <PachymetryKpiCard data={reqPachy.data} />
-                  </div>
-                )}
+                  )}
+                  {reqRiskFactors.data && (
+                    <RiskFactorsSection data={reqRiskFactors.data} />
+                  )}
+                  {reqBiomicroscopy.data && (
+                    <BiomicroscopySection data={reqBiomicroscopy.data} />
+                  )}
+                  {reqVisualField.data && (
+                    <VisualFieldSection data={reqVisualField.data} />
+                  )}
+                  {reqPediatric.data && (
+                    <PediatricSection data={reqPediatric.data} />
+                  )}
+                  {reqDriverExperience.data && (
+                    <DriverExperienceSection data={reqDriverExperience.data} />
+                  )}
+                </div>
               </div>
-            </div>
+            </ResizablePanel>
 
-            {/* Pleine largeur */}
-            {reqSites.data && (
-              <div className="min-h-[400px] w-full">
-                <SitesBarChart data={reqSites.data.sites} />
-              </div>
+            {!isMobile && cohortCriterion && (
+              <>
+                <ResizableHandle withHandle className="mx-3" />
+                <ResizablePanel
+                  id="cohort"
+                  order={2}
+                  defaultSize={38}
+                  minSize={28}
+                  maxSize={55}
+                  className="min-w-0"
+                  // overflow-visible (au lieu du hidden par défaut de la lib)
+                  // pour que le panneau sticky reste ancré pendant le scroll page.
+                  style={{ overflow: 'visible' }}
+                >
+                  <div className="sticky top-4">
+                    <CohortPanel
+                      criterion={cohortCriterion}
+                      appliedFilters={appliedFilters}
+                      onClose={() => setCohortCriterion(null)}
+                      onAnalyze={handleAnalyzeCohort}
+                      className="max-h-[calc(100vh-6rem)] overflow-hidden rounded-xl border shadow-lg"
+                    />
+                  </div>
+                </ResizablePanel>
+              </>
             )}
-
-            {/* Nouvelles sections analytiques */}
-            <div className="grid grid-cols-1 gap-6">
-              {reqSymptomsFull.data && (
-                <SymptomsFullChart
-                  data={reqSymptomsFull.data}
-                  onSegmentClick={setCohortCriterion}
-                />
-              )}
-              {reqRiskFactors.data && (
-                <RiskFactorsSection data={reqRiskFactors.data} />
-              )}
-              {reqBiomicroscopy.data && (
-                <BiomicroscopySection data={reqBiomicroscopy.data} />
-              )}
-              {reqVisualField.data && (
-                <VisualFieldSection data={reqVisualField.data} />
-              )}
-              {reqPediatric.data && (
-                <PediatricSection data={reqPediatric.data} />
-              )}
-              {reqDriverExperience.data && (
-                <DriverExperienceSection data={reqDriverExperience.data} />
-              )}
-            </div>
-          </div>
+          </ResizablePanelGroup>
         )}
 
-        <CohortSheet
-          criterion={cohortCriterion}
-          appliedFilters={appliedFilters}
-          onClose={() => setCohortCriterion(null)}
-          onAnalyze={handleAnalyzeCohort}
-        />
+        {isMobile && cohortCriterion && (
+          <CohortMobileOverlay
+            criterion={cohortCriterion}
+            appliedFilters={appliedFilters}
+            onClose={() => setCohortCriterion(null)}
+            onAnalyze={handleAnalyzeCohort}
+          />
+        )}
       </Shell>
     </Can>
   );

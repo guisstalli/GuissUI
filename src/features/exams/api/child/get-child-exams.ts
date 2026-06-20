@@ -2,8 +2,11 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 
-import type { PaginatedExamenChildList, ExamsQueryParams } from '../../types/types';
 import type { ExamenChildDetailApi } from '../../types/api-schemas';
+import type {
+  PaginatedExamenChildList,
+  ExamsQueryParams,
+} from '../../types/types';
 
 /**
  * Récupère la liste paginée des examens enfant

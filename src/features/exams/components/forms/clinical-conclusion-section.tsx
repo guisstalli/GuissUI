@@ -16,7 +16,10 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui/form';
-import { type ClinicalExamFormValues, VISION_APTITUDE } from '@/features/exams/types/schemas';
+import {
+  type ClinicalExamFormValues,
+  VISION_APTITUDE,
+} from '@/features/exams/types/schemas';
 
 const VISION_LABELS: Record<(typeof VISION_APTITUDE)[number], string> = {
   compatible: 'Compatible',
@@ -32,9 +35,7 @@ export function ConclusionSection({ form }: ConclusionSectionProps) {
   return (
     <section className="space-y-4">
       <div className="border-b border-border pb-2">
-        <h3 className="text-sm font-semibold text-foreground">
-          Conclusion
-        </h3>
+        <h3 className="text-sm font-semibold text-foreground">Conclusion</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Diagnostic, traitement et recommandations
         </p>

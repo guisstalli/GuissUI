@@ -5,7 +5,6 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
   analyticsHandlers,
-  mockAnalyticsOverview,
   mockAnalyticsSites,
 } from '@/testing/mocks/handlers/analytics';
 import { server } from '@/testing/mocks/server';

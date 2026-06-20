@@ -39,8 +39,8 @@ import {
 } from '@/components/ui/table';
 import { useAddPaiement } from '@/features/billing/api/add-paiement';
 import { useAnnulerFacture } from '@/features/billing/api/annuler-facture';
-import { useDownloadFacturePdf } from '@/features/billing/api/facture-pdf';
 import { useEmettreFacture } from '@/features/billing/api/emettre-facture';
+import { useDownloadFacturePdf } from '@/features/billing/api/facture-pdf';
 import { useFacture } from '@/features/billing/api/get-facture';
 import { FactureStatusBadge } from '@/features/billing/components/facture-status-badge';
 import { PaiementForm } from '@/features/billing/components/paiement-form';

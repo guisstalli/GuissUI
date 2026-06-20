@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { MedicamentSelector } from '@/components/medicament-selector/medicament-selector';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,7 +31,6 @@ import { useGenerateAdultOrdonnance } from '@/features/exams/api/adult/ordonnanc
 import { useAdultOrdonnancePrefill } from '@/features/exams/api/adult/ordonnance-prefill';
 import { useGenerateChildOrdonnance } from '@/features/exams/api/child/ordonnance';
 import { useChildOrdonnancePrefill } from '@/features/exams/api/child/ordonnance-prefill';
-import { MedicamentSelector } from '@/components/medicament-selector/medicament-selector';
 
 type TypeOrdonnance = 'MEDICAMENTEUSE' | 'OPTIQUE';
 type OrdonnanceMode = 'medicamenteuse' | 'optique';

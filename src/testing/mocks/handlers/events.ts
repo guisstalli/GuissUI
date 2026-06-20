@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
 import { env } from '@/config/env';
-
 import type {
   EventPublic,
   EventStaff,
@@ -76,9 +75,8 @@ export const eventsHandlers = [
     return HttpResponse.json(event);
   }),
 
-  http.post(
-    `${env.API_URL}/events/public/:slug/inscrire/`,
-    () => HttpResponse.json(mockInscriptionConfirmation, { status: 201 }),
+  http.post(`${env.API_URL}/events/public/:slug/inscrire/`, () =>
+    HttpResponse.json(mockInscriptionConfirmation, { status: 201 }),
   ),
 
   http.get(`${env.API_URL}/events/`, () =>
@@ -115,10 +113,10 @@ export const eventsHandlers = [
   http.get(`${env.API_URL}/events/:id/qr-code/`, () => {
     // Return a minimal 1×1 PNG blob
     const pngBytes = new Uint8Array([
-      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0,
-      1, 0, 0, 0, 1, 8, 2, 0, 0, 0, 144, 119, 83, 222, 0, 0, 0, 12, 73, 68,
-      65, 84, 8, 215, 99, 248, 15, 0, 0, 1, 1, 0, 5, 24, 212, 221, 0, 0, 0, 0,
-      73, 69, 78, 68, 174, 66, 96, 130,
+      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1,
+      0, 0, 0, 1, 8, 2, 0, 0, 0, 144, 119, 83, 222, 0, 0, 0, 12, 73, 68, 65, 84,
+      8, 215, 99, 248, 15, 0, 0, 1, 1, 0, 5, 24, 212, 221, 0, 0, 0, 0, 73, 69,
+      78, 68, 174, 66, 96, 130,
     ]);
     return new HttpResponse(pngBytes, {
       status: 200,

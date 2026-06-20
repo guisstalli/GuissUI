@@ -5,6 +5,7 @@ import { Loader2, Save, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { MedicamentSelector } from '@/components/medicament-selector/medicament-selector';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,7 +30,6 @@ import {
   Switch,
   Textarea,
 } from '@/components/ui/form';
-import { MedicamentSelector } from '@/components/medicament-selector/medicament-selector';
 import { useNotifications } from '@/components/ui/notifications';
 
 import {

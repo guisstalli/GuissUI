@@ -49,6 +49,4 @@ export const PasswordResetResponseSchema = z.object({
   detail: z.string(),
 });
 
-export type PasswordResetResponse = z.infer<
-  typeof PasswordResetResponseSchema
->;
+export type PasswordResetResponse = z.infer<typeof PasswordResetResponseSchema>;
