@@ -50,7 +50,7 @@ export const SiteSelector = ({
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen} modal>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -74,6 +74,7 @@ export const SiteSelector = ({
         <PopoverContent
           className="w-[var(--radix-popover-trigger-width)] p-0"
           align="start"
+          portal={false}
         >
           <Command shouldFilter={false}>
             <CommandInput
