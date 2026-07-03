@@ -163,7 +163,7 @@ export function UsersTable() {
               setRoleFilter(e.target.value);
               setPage(1);
             }}
-            className="shadow-xs focus:ring-ring/50 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus:border-ring focus:ring"
+            className="focus:ring-ring/50 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus:border-ring focus:ring"
           >
             <option value="">Tous les rôles</option>
             <option value="STAFF">Staff</option>
@@ -179,7 +179,7 @@ export function UsersTable() {
               setActiveFilter(e.target.value);
               setPage(1);
             }}
-            className="shadow-xs focus:ring-ring/50 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus:border-ring focus:ring"
+            className="focus:ring-ring/50 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus:border-ring focus:ring"
           >
             <option value="">Tous les statuts</option>
             <option value="true">Actifs</option>

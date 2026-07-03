@@ -318,62 +318,70 @@ describe('VisionBinoculaireForm', () => {
   // --------------------------------------------------------------------------
 
   describe('soumission avec toutes les branches activées', () => {
-    it('valide et appelle onSubmit quand tous les champs conditionnels sont renseignés', async () => {
-      // Arrange
-      const user = userEvent.setup();
-      const onSubmit = vi.fn();
-      render(<VisionBinoculaireFormWrapper onSubmit={onSubmit} />);
+    // Beaucoup d'interactions Radix Select successives : dépasse parfois
+    // les 5s par défaut sur machine chargée.
+    it(
+      'valide et appelle onSubmit quand tous les champs conditionnels sont renseignés',
+      { timeout: 15000 },
+      async () => {
+        // Arrange
+        const user = userEvent.setup();
+        const onSubmit = vi.fn();
+        render(<VisionBinoculaireFormWrapper onSubmit={onSubmit} />);
 
-      // Act - Hirschberg: esotropie + détail
-      const typeSelects = screen.getAllByRole('combobox', { name: /type/i });
-      await user.click(typeSelects[0]);
-      await user.click(screen.getByRole('option', { name: /ésotropie/i }));
-      const detailSelect = await screen.findByRole('combobox', {
-        name: /détail/i,
-      });
-      await user.click(detailSelect);
-      await user.click(screen.getByRole('option', { name: /iris/i }));
+        // Act - Hirschberg: esotropie + détail
+        const typeSelects = screen.getAllByRole('combobox', { name: /type/i });
+        await user.click(typeSelects[0]);
+        await user.click(screen.getByRole('option', { name: /ésotropie/i }));
+        const detailSelect = await screen.findByRole('combobox', {
+          name: /détail/i,
+        });
+        await user.click(detailSelect);
+        await user.click(screen.getByRole('option', { name: /iris/i }));
 
-      // Reflexe pupillaire: leucocorie + latéralité
-      const reflexeSelect = screen.getByRole('combobox', { name: /réflexe/i });
-      await user.click(reflexeSelect);
-      await user.click(screen.getByRole('option', { name: /leucocorie/i }));
-      const lateraliteSelect = await screen.findByRole('combobox', {
-        name: /latéralité/i,
-      });
-      await user.click(lateraliteSelect);
-      await user.click(screen.getByRole('option', { name: /od \(droit\)/i }));
+        // Reflexe pupillaire: leucocorie + latéralité
+        const reflexeSelect = screen.getByRole('combobox', {
+          name: /réflexe/i,
+        });
+        await user.click(reflexeSelect);
+        await user.click(screen.getByRole('option', { name: /leucocorie/i }));
+        const lateraliteSelect = await screen.findByRole('combobox', {
+          name: /latéralité/i,
+        });
+        await user.click(lateraliteSelect);
+        await user.click(screen.getByRole('option', { name: /od \(droit\)/i }));
 
-      // Cover Test VL: tropie + direction
-      const updatedTypeSelects = screen.getAllByRole('combobox', {
-        name: /type/i,
-      });
-      const vlSelect = updatedTypeSelects[1];
-      await user.click(vlSelect);
-      await user.click(screen.getByRole('option', { name: /^tropie$/i }));
-      const dirSelects = await screen.findAllByRole('combobox', {
-        name: /direction/i,
-      });
-      await user.click(dirSelects[0]);
-      await user.click(screen.getByRole('option', { name: /eso/i }));
+        // Cover Test VL: tropie + direction
+        const updatedTypeSelects = screen.getAllByRole('combobox', {
+          name: /type/i,
+        });
+        const vlSelect = updatedTypeSelects[1];
+        await user.click(vlSelect);
+        await user.click(screen.getByRole('option', { name: /^tropie$/i }));
+        const dirSelects = await screen.findAllByRole('combobox', {
+          name: /direction/i,
+        });
+        await user.click(dirSelects[0]);
+        await user.click(screen.getByRole('option', { name: /eso/i }));
 
-      // Soumettre
-      await user.click(screen.getByRole('button', { name: /soumettre/i }));
+        // Soumettre
+        await user.click(screen.getByRole('button', { name: /soumettre/i }));
 
-      // Assert
-      await waitFor(() => {
-        expect(onSubmit).toHaveBeenCalledWith(
-          expect.objectContaining({
-            hirschberg_type: 'esotropie',
-            hirschberg_detail: 'iris',
-            pupillary_reflex: 'leucocorie',
-            pupillary_reflex_laterality: 'od',
-            cover_test_vl_type: 'tropie',
-            cover_test_vl_direction: 'eso',
-          }),
-          expect.anything(),
-        );
-      });
-    });
+        // Assert
+        await waitFor(() => {
+          expect(onSubmit).toHaveBeenCalledWith(
+            expect.objectContaining({
+              hirschberg_type: 'esotropie',
+              hirschberg_detail: 'iris',
+              pupillary_reflex: 'leucocorie',
+              pupillary_reflex_laterality: 'od',
+              cover_test_vl_type: 'tropie',
+              cover_test_vl_direction: 'eso',
+            }),
+            expect.anything(),
+          );
+        });
+      },
+    );
   });
 });
