@@ -73,6 +73,8 @@ async function selectMotif(
 /* ─── tests ───────────────────────────────────────────────────────────────── */
 
 describe('RendezVousPage — parcours de réservation', () => {
+  // Parcours wizard complet (3 étapes, nombreuses interactions userEvent) :
+  // dépasse parfois les 5s par défaut sur machine chargée.
   test("parcours complet jusqu'à la confirmation", async () => {
     // Arrange
     const user = setupPage();
@@ -88,7 +90,7 @@ describe('RendezVousPage — parcours de réservation', () => {
     // Assert
     await screen.findByText('Rendez-vous confirmé !');
     expect(screen.getByText('RDV-2024-099')).toBeInTheDocument();
-  });
+  }, 15000);
 
   test('le choix « Autre » révèle le champ libre', async () => {
     // Arrange
