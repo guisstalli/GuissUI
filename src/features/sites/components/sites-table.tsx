@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useDebounce } from '@/hooks/use-debounce';
 
 import { useDeleteSite } from '../api/delete-site';
 import { useSites } from '../api/get-sites';
@@ -35,8 +36,10 @@ import { Site } from '../types';
 import { SiteFormModal } from './site-form-modal';
 
 export const SitesTable = ({ search }: { search: string }) => {
+  // La requête API attend 300ms sans frappe (l'input parent reste synchrone)
+  const debouncedSearch = useDebounce(search);
   const { data, isLoading, refetch } = useSites({
-    params: { search: search || undefined },
+    params: { search: debouncedSearch || undefined },
   });
   const deleteSiteMutation = useDeleteSite();
 

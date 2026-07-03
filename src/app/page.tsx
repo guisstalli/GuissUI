@@ -9,6 +9,7 @@ import {
   Truck,
   Users,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
 import { AppShell as Shell } from '@/app/_shell';
@@ -20,9 +21,22 @@ import {
   DismissibleAlert,
   alertSignature,
 } from '@/features/dashboard/components/dismissible-alert';
-import { ExamsChart } from '@/features/dashboard/components/exams-chart';
 import { UpcomingAppointments } from '@/features/dashboard/components/upcoming-appointments';
 import { useUser } from '@/lib/auth';
+
+// recharts chargé en lazy : hors du bundle initial du dashboard.
+const ExamsChart = dynamic(
+  () =>
+    import('@/features/dashboard/components/exams-chart').then(
+      (m) => m.ExamsChart,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 w-full animate-pulse rounded-xl bg-muted" />
+    ),
+  },
+);
 
 dayjs.locale('fr');
 

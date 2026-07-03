@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useDebounce } from '@/hooks/use-debounce';
 import { cn } from '@/lib/utils';
 
 import { useSites } from '../api/get-sites';
@@ -40,9 +41,12 @@ export const SiteSelector = ({
   const [search, setSearch] = React.useState('');
   const [showCreateModal, setShowCreateModal] = React.useState(false);
 
+  // L'input reste synchrone, mais la requête API attend 300ms sans frappe
+  const debouncedSearch = useDebounce(search);
+
   // Fetch sites based on search
   const { data, isLoading } = useSites({
-    params: { search: search || undefined, limit: 10 },
+    params: { search: debouncedSearch || undefined, limit: 10 },
   });
 
   const sites = data?.results ?? [];

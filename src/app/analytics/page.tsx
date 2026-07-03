@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
@@ -36,22 +37,6 @@ import {
   AnalyticsErrorState,
   AnalyticsLoadingState,
 } from '@/features/analytics/components/analytics-states';
-import { BiomicroscopySection } from '@/features/analytics/components/charts/biomicroscopy-section';
-import { ConclusionDonutChart } from '@/features/analytics/components/charts/conclusion-donut-chart';
-import { DriverExperienceSection } from '@/features/analytics/components/charts/driver-experience-section';
-import { GlaucomaScatterChart } from '@/features/analytics/components/charts/glaucoma-scatter-chart';
-import { OcularTensionBarChart } from '@/features/analytics/components/charts/ocular-tension-bar-chart';
-import { OverviewDonutChart } from '@/features/analytics/components/charts/overview-donut-chart';
-import { PachymetryKpiCard } from '@/features/analytics/components/charts/pachymetry-kpi-card';
-import { PediatricSection } from '@/features/analytics/components/charts/pediatric-section';
-import { RefractionDonutChart } from '@/features/analytics/components/charts/refraction-donut-chart';
-import { RiskFactorsSection } from '@/features/analytics/components/charts/risk-factors-section';
-import { SitesBarChart } from '@/features/analytics/components/charts/sites-bar-chart';
-import { SymptomsFullChart } from '@/features/analytics/components/charts/symptoms-full-chart';
-import { SymptomsGroupedBar } from '@/features/analytics/components/charts/symptoms-grouped-bar';
-import { TimelineChart } from '@/features/analytics/components/charts/timeline-chart';
-import { VisualAcuityBarChart } from '@/features/analytics/components/charts/visual-acuity-bar-chart';
-import { VisualFieldSection } from '@/features/analytics/components/charts/visual-field-section';
 import { CohortMobileOverlay } from '@/features/analytics/components/cohort/cohort-mobile-overlay';
 import { CohortPanel } from '@/features/analytics/components/cohort/cohort-panel';
 import {
@@ -61,6 +46,127 @@ import {
 } from '@/features/analytics/types/types';
 import { useSites } from '@/features/sites/api/get-sites';
 import { useIsMobile } from '@/hooks/use-mobile';
+
+// Les 16 sections de graphiques importent recharts (~100 kB gzip) : elles
+// sont chargées en lazy pour sortir recharts du bundle initial de la route.
+const chartLoading = () => (
+  <div className="h-64 w-full animate-pulse rounded-xl bg-muted" />
+);
+
+/* eslint-disable @typescript-eslint/naming-convention */
+const BiomicroscopySection = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/biomicroscopy-section').then(
+      (m) => m.BiomicroscopySection,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const ConclusionDonutChart = dynamic(
+  () =>
+    import(
+      '@/features/analytics/components/charts/conclusion-donut-chart'
+    ).then((m) => m.ConclusionDonutChart),
+  { ssr: false, loading: chartLoading },
+);
+const DriverExperienceSection = dynamic(
+  () =>
+    import(
+      '@/features/analytics/components/charts/driver-experience-section'
+    ).then((m) => m.DriverExperienceSection),
+  { ssr: false, loading: chartLoading },
+);
+const GlaucomaScatterChart = dynamic(
+  () =>
+    import(
+      '@/features/analytics/components/charts/glaucoma-scatter-chart'
+    ).then((m) => m.GlaucomaScatterChart),
+  { ssr: false, loading: chartLoading },
+);
+const OcularTensionBarChart = dynamic(
+  () =>
+    import(
+      '@/features/analytics/components/charts/ocular-tension-bar-chart'
+    ).then((m) => m.OcularTensionBarChart),
+  { ssr: false, loading: chartLoading },
+);
+const OverviewDonutChart = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/overview-donut-chart').then(
+      (m) => m.OverviewDonutChart,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const PachymetryKpiCard = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/pachymetry-kpi-card').then(
+      (m) => m.PachymetryKpiCard,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const PediatricSection = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/pediatric-section').then(
+      (m) => m.PediatricSection,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const RefractionDonutChart = dynamic(
+  () =>
+    import(
+      '@/features/analytics/components/charts/refraction-donut-chart'
+    ).then((m) => m.RefractionDonutChart),
+  { ssr: false, loading: chartLoading },
+);
+const RiskFactorsSection = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/risk-factors-section').then(
+      (m) => m.RiskFactorsSection,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const SitesBarChart = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/sites-bar-chart').then(
+      (m) => m.SitesBarChart,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const SymptomsFullChart = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/symptoms-full-chart').then(
+      (m) => m.SymptomsFullChart,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const SymptomsGroupedBar = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/symptoms-grouped-bar').then(
+      (m) => m.SymptomsGroupedBar,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const TimelineChart = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/timeline-chart').then(
+      (m) => m.TimelineChart,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+const VisualAcuityBarChart = dynamic(
+  () =>
+    import(
+      '@/features/analytics/components/charts/visual-acuity-bar-chart'
+    ).then((m) => m.VisualAcuityBarChart),
+  { ssr: false, loading: chartLoading },
+);
+const VisualFieldSection = dynamic(
+  () =>
+    import('@/features/analytics/components/charts/visual-field-section').then(
+      (m) => m.VisualFieldSection,
+    ),
+  { ssr: false, loading: chartLoading },
+);
+/* eslint-enable @typescript-eslint/naming-convention */
 
 const MAX_COHORT_PATIENTS = 200;
 
