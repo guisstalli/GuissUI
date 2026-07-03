@@ -103,7 +103,7 @@ export function ChildExamSidebar({
   setOptiqueDialogOpen,
 }: ChildExamSidebarProps) {
   return (
-    <aside className="h-full w-full overflow-y-auto border-r border-border bg-card p-4">
+    <aside className="size-full overflow-y-auto border-r border-border bg-card p-4">
       <div className="mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">Sections</h2>

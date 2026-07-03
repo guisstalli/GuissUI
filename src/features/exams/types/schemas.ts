@@ -465,13 +465,33 @@ export const OcularTensionSchema = z.object({
   modified: z.string().datetime().optional(),
 });
 
-/** Pachymétrie (Adult only) - CTO: 300-800 microns */
+/** Pachymétrie (Adult only) - épaisseur cornéenne centrale : 300-800 microns */
 export const PachymetrySchema = z.object({
   id: z.number().optional(),
-  od: z.coerce.number().optional().nullable(),
-  og: z.coerce.number().optional().nullable(),
-  cto_od: z.coerce.number().optional().nullable(),
-  cto_og: z.coerce.number().optional().nullable(),
+  od: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
+  og: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
+  cto_od: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
+  cto_og: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
   created: z.string().datetime().optional(),
   modified: z.string().datetime().optional(),
 });

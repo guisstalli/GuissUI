@@ -472,13 +472,18 @@ export default function AdultExamPage() {
 
   const handleSaveSection = useCallback(
     (section: Section) => {
+      // Un examen finalisé est en lecture seule : il doit être explicitement
+      // rouvert avant toute modification (intégrité du dossier médical).
+      if (examData?.is_completed) {
+        return;
+      }
       if (section === 'technical') {
         handleSaveTechnical();
       } else if (section === 'clinical' || section === 'conclusion') {
         handleSaveClinical();
       }
     },
-    [handleSaveTechnical, handleSaveClinical],
+    [handleSaveTechnical, handleSaveClinical, examData?.is_completed],
   );
 
   const handleFinalizeExam = useCallback(() => {
@@ -847,45 +852,62 @@ function AdultExamContent(props: AdultExamContentProps) {
                   </div>
                 </div>
 
-                <FormProvider {...form}>
-                  {/* Technical Exam Section */}
-                  {activeSection === 'technical' && (
-                    <AdultExamTechnicalPanel
-                      examId={examId}
-                      technicalSubsection={technicalSubsection}
-                      setTechnicalSubsection={setTechnicalSubsection}
-                      sectionStatus={sectionStatus}
-                      handleSaveSection={handleSaveSection}
-                      isSaving={isSaving}
+                {/* Examen finalisé = lecture seule tant qu'il n'est pas rouvert */}
+                {isComplete && (
+                  <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                    <AlertCircle
+                      className="size-4 shrink-0"
+                      aria-hidden="true"
                     />
-                  )}
-
-                  {/* Clinical Exam Section */}
-                  {activeSection === 'clinical' && (
-                    <AdultExamClinicalPanel
-                      clinicalSubsection={clinicalSubsection}
-                      setClinicalSubsection={setClinicalSubsection}
-                      sectionStatus={sectionStatus}
-                      handleSaveSection={handleSaveSection}
-                      isSaving={isSaving}
-                      clinicalExamId={clinicalExamId}
-                      onUploaded={onUploaded}
-                    />
-                  )}
-
-                  {/* Conclusion Section */}
-                  {activeSection === 'conclusion' && (
-                    <AdultExamConclusionPanel
-                      handleSaveSection={handleSaveSection}
-                      isSaving={isSaving}
-                    />
-                  )}
-                </FormProvider>
-
-                {/* Driver Experience Section — outside FormProvider, standalone form */}
-                {activeSection === 'experience' && patient.hasDriver && (
-                  <AdultExamExperiencePanel numericExamId={numericExamId} />
+                    <p>
+                      Examen finalisé — lecture seule. Utilisez «&nbsp;Rouvrir
+                      l&apos;examen&nbsp;» dans la barre latérale pour le
+                      modifier.
+                    </p>
+                  </div>
                 )}
+
+                <fieldset disabled={isComplete} className="min-w-0">
+                  <FormProvider {...form}>
+                    {/* Technical Exam Section */}
+                    {activeSection === 'technical' && (
+                      <AdultExamTechnicalPanel
+                        examId={examId}
+                        technicalSubsection={technicalSubsection}
+                        setTechnicalSubsection={setTechnicalSubsection}
+                        sectionStatus={sectionStatus}
+                        handleSaveSection={handleSaveSection}
+                        isSaving={isSaving}
+                      />
+                    )}
+
+                    {/* Clinical Exam Section */}
+                    {activeSection === 'clinical' && (
+                      <AdultExamClinicalPanel
+                        clinicalSubsection={clinicalSubsection}
+                        setClinicalSubsection={setClinicalSubsection}
+                        sectionStatus={sectionStatus}
+                        handleSaveSection={handleSaveSection}
+                        isSaving={isSaving}
+                        clinicalExamId={clinicalExamId}
+                        onUploaded={onUploaded}
+                      />
+                    )}
+
+                    {/* Conclusion Section */}
+                    {activeSection === 'conclusion' && (
+                      <AdultExamConclusionPanel
+                        handleSaveSection={handleSaveSection}
+                        isSaving={isSaving}
+                      />
+                    )}
+                  </FormProvider>
+
+                  {/* Driver Experience Section — outside FormProvider, standalone form */}
+                  {activeSection === 'experience' && patient.hasDriver && (
+                    <AdultExamExperiencePanel numericExamId={numericExamId} />
+                  )}
+                </fieldset>
               </main>
             </ResizablePanel>
           </ResizablePanelGroup>
