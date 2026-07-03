@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
@@ -50,14 +51,22 @@ export const useLogin = ({ onSuccess }: { onSuccess?: () => void } = {}) => {
 };
 
 export const useLogout = ({ onSuccess }: { onSuccess?: () => void } = {}) => {
+  const queryClient = useQueryClient();
+
   const logout = useCallback(async () => {
     await signOut({ redirect: false });
+    // Purge le cache TanStack Query : sans rechargement de page, les données
+    // patients resteraient en mémoire après déconnexion (poste partagé).
+    queryClient.clear();
     onSuccess?.();
-  }, [onSuccess]);
+  }, [onSuccess, queryClient]);
 
   return {
     logout,
-    logoutWithRedirect: () => signOut({ callbackUrl: '/auth/login' }),
+    logoutWithRedirect: () => {
+      queryClient.clear();
+      return signOut({ callbackUrl: '/auth/login' });
+    },
   };
 };
 

@@ -108,13 +108,23 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
       }
       session.accessToken = token.accessToken as string;
-      session.refreshToken = token.refreshToken as string;
+      // Le refresh token reste dans le JWT httpOnly : ne jamais l'exposer
+      // à la session lisible côté client (surface XSS).
       session.error = token.error as string | undefined;
       return session;
     },
 
     async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? url : baseUrl;
+      // Comparaison stricte d'origine : `startsWith` laisserait passer
+      // https://app.example.com.evil.com (open redirect).
+      try {
+        const target = new URL(url, baseUrl);
+        return target.origin === new URL(baseUrl).origin
+          ? target.toString()
+          : baseUrl;
+      } catch {
+        return baseUrl;
+      }
     },
   },
 
