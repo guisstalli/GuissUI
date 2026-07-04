@@ -66,7 +66,7 @@ jobs:
       - name: Checkout GuissAPI
         uses: actions/checkout@v4
         with:
-          repository: Guiss/GuissAPI
+          repository: guisstalli/GuissAPI
           path: GuissAPI
 
       - name: Setup Python
