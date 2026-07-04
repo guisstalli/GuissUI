@@ -89,6 +89,9 @@ export const PERMISSIONS = {
   // Dossier Patient
   'patient-records:view': 'Voir les dossiers patients',
 
+  // Partage de dossier (lien public à token — staff DOCTEUR/ADMIN côté API)
+  'records:share': "Partager le dossier d'un examen (lien public)",
+
   // Sites
   'sites:view': 'Voir les sites',
   'sites:create': 'Créer un site',
@@ -158,6 +161,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'records:share',
     'drivers:view',
     'billing:view',
     'sites:view',
@@ -252,6 +256,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'records:share',
     'drivers:view',
     'billing:view',
     'sites:view',

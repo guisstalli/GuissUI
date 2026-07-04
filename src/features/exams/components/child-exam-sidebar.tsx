@@ -13,12 +13,15 @@ import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/ui/can/can';
 import { Progress } from '@/components/ui/progress/progress';
 import type {
   OrdonnanceListItem,
   TypeOrdonnance,
 } from '@/features/exams/api/ordonnances';
 import { cn } from '@/lib/utils';
+
+import { ShareRecordDialog } from './share-record-dialog';
 
 type Section = 'technical' | 'clinical' | 'complementary' | 'conclusion';
 
@@ -264,6 +267,17 @@ export function ChildExamSidebar({
             Conclusion PDF
           </Button>
         </div>
+      )}
+
+      {examId !== 'new' && (
+        <Can permission="records:share">
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Partage
+            </p>
+            <ShareRecordDialog examType="enfant" examId={Number(examId)} />
+          </div>
+        </Can>
       )}
 
       {examId !== 'new' &&

@@ -196,10 +196,18 @@ export const paths = {
     publicCancel: {
       getHref: (token: string) => `/rendez-vous/annuler/${token}`,
     },
+    publicRescheduleConfirm: {
+      getHref: (token: string) => `/rendez-vous/replanifier/confirmer/${token}`,
+    },
     staff: {
       agenda: { getHref: () => '/gestion/rendez-vous' },
       config: { getHref: () => '/gestion/rendez-vous/config' },
     },
+  },
+
+  // Dossier partagé (public — accès via token)
+  dossier: {
+    getHref: (token: string) => `/dossier/${token}`,
   },
 
   // Paramètres applicatifs

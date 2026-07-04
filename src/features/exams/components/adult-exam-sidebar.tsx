@@ -12,10 +12,12 @@ import type { LucideIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/ui/can/can';
 import type { Section } from '@/features/exams/types/adult-exam';
 import { cn } from '@/lib/utils';
 
 import type { AdultExamPatient, SectionStatus } from './adult-exam-types';
+import { ShareRecordDialog } from './share-record-dialog';
 
 interface AdultExamSidebarSection {
   id: Section;
@@ -245,6 +247,17 @@ export function AdultExamSidebar({
             Conclusion PDF
           </Button>
         </div>
+      )}
+
+      {examId !== 'new' && (
+        <Can permission="records:share">
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Partage
+            </p>
+            <ShareRecordDialog examType="adulte" examId={Number(examId)} />
+          </div>
+        </Can>
       )}
 
       {examId !== 'new' &&
