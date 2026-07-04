@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # Dependencies JS — l'ecosysteme "npm" gere aussi yarn.lock
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    open-pull-requests-limit: 10
+    ignore:
+      # eslint-plugin-react-hooks v6+ active les regles React Compiler
+      # (set-state-in-effect, incompatible-library) qui cassent le lint sur
+      # du code valide (gardes d'hydratation SSR, matchMedia, WebSocket sync).
+      # L'adoption = migration deliberee (refacto + QA), pas un bump auto :
+      # on bloque les MAJORS de ce plugin (les minor/patch passent toujours).
+      - dependency-name: "eslint-plugin-react-hooks"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # minor + patch regroupes (faible risque) → 1 PR ; les MAJORS restent isolees
+      prod-minor-patch:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-minor-patch:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions epinglees par SHA (checkout, setup-node, build-push-action…)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    target-branch: "develop"
