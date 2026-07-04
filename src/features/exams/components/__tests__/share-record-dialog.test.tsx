@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { useNotifications } from '@/components/ui/notifications/notifications-store';
 import { env } from '@/config/env';
 import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, userEvent, waitFor } from '@/testing/test-utils';
@@ -38,7 +39,68 @@ function setup(
   return user;
 }
 
+async function openAndGenerate(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    screen.getByRole('button', { name: /partager le dossier/i }),
+  );
+  await user.click(
+    await screen.findByRole('button', { name: /générer le lien/i }),
+  );
+  await screen.findByDisplayValue(SHARE_LINK.url);
+}
+
 describe('ShareRecordDialog — partage de dossier', () => {
+  beforeEach(() => {
+    useNotifications.setState({ notifications: [] });
+  });
+
+  test('avertit si le lien est fermé sans avoir été copié', async () => {
+    // Arrange
+    server.use(
+      http.post(`${env.API_URL}/share/create/`, () =>
+        HttpResponse.json(SHARE_LINK, { status: 201 }),
+      ),
+    );
+    const user = setup();
+
+    // Act — générer puis fermer SANS copier
+    await openAndGenerate(user);
+    await user.click(screen.getByRole('button', { name: /fermer/i }));
+
+    // Assert — l'avertissement « lien non copié » est émis
+    const warned = useNotifications
+      .getState()
+      .notifications.some(
+        (n) => n.type === 'warning' && /non copié/i.test(n.title),
+      );
+    expect(warned).toBe(true);
+  });
+
+  test('n’avertit pas si le lien a été copié', async () => {
+    // Arrange — presse-papier qui réussit (clipboard est un getter en jsdom)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+    server.use(
+      http.post(`${env.API_URL}/share/create/`, () =>
+        HttpResponse.json(SHARE_LINK, { status: 201 }),
+      ),
+    );
+    const user = setup();
+
+    // Act — générer, copier, puis fermer
+    await openAndGenerate(user);
+    await user.click(screen.getByRole('button', { name: /copier le lien/i }));
+    await user.click(screen.getByRole('button', { name: /fermer/i }));
+
+    // Assert — aucun avertissement « non copié »
+    const warned = useNotifications
+      .getState()
+      .notifications.some((n) => /non copié/i.test(n.title));
+    expect(warned).toBe(false);
+  });
+
   test('crée un lien et affiche l’URL générée', async () => {
     // Arrange
     let captured: Record<string, unknown> | null = null;

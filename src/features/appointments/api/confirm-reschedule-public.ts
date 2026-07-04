@@ -30,5 +30,4 @@ export const confirmReschedulePublic = (token: string): Promise<RendezVous> =>
 export const useConfirmReschedulePublic = (token: string) =>
   useMutation({
     mutationFn: () => confirmReschedulePublic(token),
-    retry: false,
   });

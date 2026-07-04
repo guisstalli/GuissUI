@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { PublicShell } from '@/components/public/public-shell';
+import { Button } from '@/components/ui/button';
 import { useConfirmReschedulePublic } from '@/features/appointments/api/confirm-reschedule-public';
 import { formatDateFr, formatSlot } from '@/features/appointments/utils/format';
 
@@ -47,15 +48,15 @@ export default function ConfirmerReplanificationPage() {
                 Cliquez ci-dessous pour valider la replanification de votre
                 rendez-vous. Ce lien est valable quelques minutes seulement.
               </p>
-              <button
+              <Button
                 type="button"
                 onClick={() => confirm()}
                 disabled={!token}
-                className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+                className="bg-cyan-500 font-semibold text-white hover:bg-cyan-600"
               >
-                <CheckCircle2 className="size-4" />
+                <CheckCircle2 className="mr-2 size-4" />
                 Confirmer le nouveau créneau
-              </button>
+              </Button>
             </div>
           )}
 

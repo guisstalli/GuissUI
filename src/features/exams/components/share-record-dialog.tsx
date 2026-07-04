@@ -151,6 +151,10 @@ export function ShareRecordDialog({
       setCopiedOnce(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
+      // Le presse-papier a échoué (HTTP non sécurisé / permission refusée) : on
+      // invite à copier manuellement. On considère alors le lien « vu » pour ne
+      // pas déclencher à tort l'avertissement « lien non copié » à la fermeture.
+      setCopiedOnce(true);
       addNotification({
         type: 'error',
         title: 'Copie impossible',
