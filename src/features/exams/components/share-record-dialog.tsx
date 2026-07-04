@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Copy, Loader2, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,25 +21,25 @@ import { Switch } from '@/components/ui/form/switch';
 import { Input } from '@/components/ui/input';
 import { useNotifications } from '@/components/ui/notifications/notifications-store';
 import {
+  shareCreateInputSchema,
   useCreateShareLink,
   type ShareExamType,
   type ShareLink,
 } from '@/features/exams/api/create-share-link';
 
-const shareFormSchema = z.object({
-  ttl_hours: z.coerce
-    .number({ invalid_type_error: 'Durée requise' })
-    .int('Nombre entier requis')
-    .min(1, 'Minimum 1 heure')
-    .max(8760, 'Maximum 8760 heures (1 an)'),
-  to_phone: z.string().optional().or(z.literal('')),
-  to_email: z
-    .string()
-    .email('Adresse email invalide')
-    .optional()
-    .or(z.literal('')),
-  notify: z.boolean(),
-});
+// Dérivé du schéma d'entrée de l'API (source unique) : on réutilise la
+// validation de to_phone/to_email et on ne redéfinit que les champs à
+// coercition/messages spécifiques au formulaire (M15 — plus de schéma dupliqué).
+const shareFormSchema = shareCreateInputSchema
+  .pick({ to_phone: true, to_email: true })
+  .extend({
+    ttl_hours: z.coerce
+      .number({ invalid_type_error: 'Durée requise' })
+      .int('Nombre entier requis')
+      .min(1, 'Minimum 1 heure')
+      .max(8760, 'Maximum 8760 heures (1 an)'),
+    notify: z.boolean(),
+  });
 
 type ShareFormValues = z.infer<typeof shareFormSchema>;
 type ShareFormInput = z.input<typeof shareFormSchema>;
@@ -67,6 +67,9 @@ export function ShareRecordDialog({
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ShareLink | null>(null);
   const [copied, setCopied] = useState(false);
+  // Le lien n'est affiché qu'une fois : on avertit si l'utilisateur ferme sans
+  // jamais l'avoir copié (il ne pourra plus le récupérer).
+  const [copiedOnce, setCopiedOnce] = useState(false);
   const { addNotification } = useNotifications();
 
   const {
@@ -104,6 +107,7 @@ export function ShareRecordDialog({
   function resetAll() {
     setResult(null);
     setCopied(false);
+    setCopiedOnce(false);
     resetMutation();
     reset({
       ttl_hours: DEFAULT_TTL_HOURS,
@@ -114,6 +118,16 @@ export function ShareRecordDialog({
   }
 
   function handleOpenChange(next: boolean) {
+    // Fermeture alors qu'un lien a été généré mais jamais copié → on prévient
+    // que le lien sera perdu (pas de récupération possible ensuite).
+    if (!next && result && !copiedOnce) {
+      addNotification({
+        type: 'warning',
+        title: 'Lien non copié',
+        message:
+          "Le lien n'a pas été copié — il ne pourra plus être récupéré. Régénérez-en un si besoin.",
+      });
+    }
     setOpen(next);
     if (!next) resetAll();
   }
@@ -134,6 +148,7 @@ export function ShareRecordDialog({
     try {
       await navigator.clipboard.writeText(result.url);
       setCopied(true);
+      setCopiedOnce(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       addNotification({

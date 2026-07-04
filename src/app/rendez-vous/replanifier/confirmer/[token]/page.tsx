@@ -3,6 +3,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  CalendarCheck,
   Calendar,
   CheckCircle2,
   Clock,
@@ -20,9 +21,11 @@ export default function ConfirmerReplanificationPage() {
   const token = (params?.token as string) ?? '';
 
   const {
+    mutate: confirm,
     data: rdv,
-    isLoading,
+    isPending: isLoading,
     isError,
+    isIdle,
     error,
   } = useConfirmReschedulePublic(token);
 
@@ -30,6 +33,32 @@ export default function ConfirmerReplanificationPage() {
     <PublicShell>
       <div className="flex min-h-[calc(100vh-72px)] items-center justify-center px-4 py-12">
         <div className="mx-auto w-full max-w-md text-center">
+          {/* État initial : on ne confirme RIEN au chargement (l'appel mute
+              l'état). Le patient déclenche explicitement la confirmation. */}
+          {isIdle && (
+            <div data-testid="confirm-idle">
+              <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full border-2 border-cyan-500/20 bg-cyan-50">
+                <CalendarCheck className="size-10 text-cyan-500" />
+              </div>
+              <h1 className="mb-3 text-2xl font-bold text-slate-900">
+                Confirmer votre nouveau créneau
+              </h1>
+              <p className="mb-8 text-slate-500">
+                Cliquez ci-dessous pour valider la replanification de votre
+                rendez-vous. Ce lien est valable quelques minutes seulement.
+              </p>
+              <button
+                type="button"
+                onClick={() => confirm()}
+                disabled={!token}
+                className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+              >
+                <CheckCircle2 className="size-4" />
+                Confirmer le nouveau créneau
+              </button>
+            </div>
+          )}
+
           {isLoading && (
             <div
               className="flex flex-col items-center gap-3"
