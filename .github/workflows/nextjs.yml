@@ -160,15 +160,25 @@ jobs:
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.DEPLOY_TOKEN }}
+          # Routage par branche :
+          #   develop/stage → Kamal-Fils/infrastructure (serveur staging mutualisé),
+          #     type DEDIE deploy-guiss-frontend (deploy-frontend y est deja consomme
+          #     par le workflow JanguBi — un type partage deploierait les 2 stacks).
+          #   main/v*      → guisstalli/infrastructure (prod, arme a la bascule).
           script: |
             const tag = '${{ steps.tag.outputs.value }}'
             const ref = '${{ github.ref_name }}'
+            const sha = '${{ github.sha }}'
+
+            const isProd = ref === 'main' || ref.startsWith('v')
+            const owner = isProd ? 'guisstalli' : 'Kamal-Fils'
+            const event_type = isProd ? 'deploy-frontend' : 'deploy-guiss-frontend'
 
             await github.rest.repos.createDispatchEvent({
-              owner: 'guisstalli',
+              owner,
               repo: 'infrastructure',
-              event_type: 'deploy-frontend',
-              client_payload: { tag, ref, sha: '${{ github.sha }}' }
+              event_type,
+              client_payload: { tag, ref, sha }
             })
 
-            console.log(`Deploy frontend declenche — tag: ${tag}`)
+            console.log(`Deploy frontend declenche — ${owner}/infrastructure [${event_type}] tag: ${tag}`)
