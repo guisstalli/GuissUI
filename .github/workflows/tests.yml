@@ -69,7 +69,9 @@ jobs:
       # Le job démarre le vrai backend : mêmes variables que le job `build` de django.yml.
       SECRET_KEY: ci-e2e-secret-key-not-for-production
       REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
       CELERY_TASK_ALWAYS_EAGER: "True"
+      CELERY_TASK_EAGER_PROPAGATES: "True"
       MPLCONFIGDIR: /tmp/mpl
 
     steps:
