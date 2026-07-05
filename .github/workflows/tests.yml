@@ -52,11 +52,25 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     env:
       DATABASE_URL: postgres://guiss:guiss@localhost:5432/guiss_test
       DJANGO_SETTINGS_MODULE: backend.django.test
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Le job démarre le vrai backend : mêmes variables que le job `build` de django.yml.
+      SECRET_KEY: ci-e2e-secret-key-not-for-production
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "True"
+      MPLCONFIGDIR: /tmp/mpl
 
     steps:
       - uses: actions/checkout@v4
