@@ -13,7 +13,7 @@ test('liste des conducteurs se charge sans crash', async ({ page }) => {
   ).toBeVisible({ timeout: 8000 });
 });
 
-test('liste conducteurs — menu d'actions par ligne est présent', async ({ page }) => {
+test("liste conducteurs — menu d'actions par ligne est présent", async ({ page }) => {
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
@@ -135,7 +135,7 @@ test('page détail conducteur — onglet Examens a le bouton "Nouvel examen adul
 // Dialog pointer-events — régression W3-BUG-6
 // =============================================================================
 
-test('page est cliquable après fermeture d'un dialog (no pointer-events freeze)', async ({
+test("page est cliquable après fermeture d'un dialog (no pointer-events freeze)", async ({
   page,
 }) => {
   await page.goto('/conducteurs');
