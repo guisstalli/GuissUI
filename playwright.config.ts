@@ -125,6 +125,8 @@ export default defineConfig({
     command: `yarn dev --port ${PORT}`,
     timeout: 120 * 1000,
     port: PORT,
-    reuseExistingServer: !process.env.CI,
+    // Réutilise le serveur déjà démarré (le workflow CI lance `yarn dev` +
+    // attend qu'il réponde) ; en local, Playwright le démarre si absent.
+    reuseExistingServer: true,
   },
 });
