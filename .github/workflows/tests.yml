@@ -83,6 +83,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: guisstalli/GuissAPI
+          ref: develop            # branche compatible (route /api/v1/health/, Daphne…)
           path: GuissAPI
           # Le GITHUB_TOKEN par défaut est limité à ce repo ; il faut un PAT
           # (scope repo) pour cloner le repo privé GuissAPI.
@@ -137,7 +138,8 @@ jobs:
           NEXTAUTH_SECRET: ci-e2e-nextauth-secret
 
       - name: Wait for servers
-        run: npx wait-on http://localhost:8000/api/v1/health/ http://localhost:3000 --timeout 90000
+        # http-get:// force une requête GET (la vue health ne gère pas HEAD → 405).
+        run: npx wait-on http-get://localhost:8000/api/v1/health/ http-get://localhost:3000 --timeout 90000
 
       - name: Dump server logs on failure
         if: failure()
