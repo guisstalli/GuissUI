@@ -108,9 +108,10 @@ jobs:
 
       - name: Start Django server
         working-directory: GuissAPI
-        run: python manage.py runserver 0.0.0.0:8000 &
+        run: python manage.py runserver 0.0.0.0:8000 > /tmp/django.log 2>&1 &
         env:
           DJANGO_SETTINGS_MODULE: backend.django.base
+          DJANGO_DEBUG: "True"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -129,12 +130,20 @@ jobs:
 
       - name: Start Next.js dev server
         working-directory: GuissUI
-        run: yarn dev &
+        run: yarn dev > /tmp/next.log 2>&1 &
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-e2e-nextauth-secret
 
       - name: Wait for servers
-        run: npx wait-on http://localhost:8000/api/v1/health/ http://localhost:3000 --timeout 60000
+        run: npx wait-on http://localhost:8000/api/v1/health/ http://localhost:3000 --timeout 90000
+
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          echo "===== django.log ====="; tail -n 60 /tmp/django.log 2>/dev/null || true
+          echo "===== next.log ====="; tail -n 60 /tmp/next.log 2>/dev/null || true
 
       - name: Run Playwright tests
         working-directory: GuissUI
