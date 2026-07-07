@@ -28,10 +28,8 @@ export const useApproveReport = ({
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: approveReport,
-    onSuccess: (report, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['ai-reports', 'detail', variables.reportId],
-      });
+    onSuccess: (report) => {
+      // Le préfixe couvre liste ET détail (['ai-reports', 'detail', id]).
       queryClient.invalidateQueries({ queryKey: ['ai-reports'] });
       mutationConfig?.onSuccess?.(report);
     },

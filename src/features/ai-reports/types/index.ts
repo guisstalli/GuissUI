@@ -135,6 +135,76 @@ export const rejectReportFormSchema = z.object({
 });
 export type RejectReportFormValues = z.infer<typeof rejectReportFormSchema>;
 
+export const DELIVER_CHANNELS = ['email', 'whatsapp'] as const;
+export type DeliverChannel = (typeof DELIVER_CHANNELS)[number];
+
+export const DELIVER_CHANNEL_LABELS: Record<DeliverChannel, string> = {
+  email: 'Email (PDF en pièce jointe)',
+  whatsapp: 'WhatsApp (lien de téléchargement)',
+};
+
+/** Découpe une saisie libre (virgules, points-virgules, retours ligne) en liste. */
+export const splitRecipients = (raw?: string): string[] =>
+  (raw ?? '')
+    .split(/[\n,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^\+?[0-9][0-9\s.-]{6,20}$/;
+
+export const deliverReportFormSchema = z
+  .object({
+    channels: z
+      .array(z.enum(DELIVER_CHANNELS))
+      .min(1, 'Sélectionner au moins un canal de diffusion'),
+    /** Adresses séparées par virgule / point-virgule / retour ligne */
+    emails: z.string().optional(),
+    /** Numéros au format international, séparés par virgule / retour ligne */
+    phones: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.channels.includes('email')) {
+      const emails = splitRecipients(data.emails);
+      if (emails.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['emails'],
+          message: 'Au moins une adresse email est requise pour ce canal',
+        });
+      } else {
+        const invalid = emails.find((e) => !EMAIL_PATTERN.test(e));
+        if (invalid) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['emails'],
+            message: `Adresse invalide : « ${invalid} »`,
+          });
+        }
+      }
+    }
+    if (data.channels.includes('whatsapp')) {
+      const phones = splitRecipients(data.phones);
+      if (phones.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['phones'],
+          message: 'Au moins un numéro WhatsApp est requis pour ce canal',
+        });
+      } else {
+        const invalid = phones.find((p) => !PHONE_PATTERN.test(p));
+        if (invalid) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['phones'],
+            message: `Numéro invalide : « ${invalid} » (format international attendu, ex. +221771234567)`,
+          });
+        }
+      }
+    }
+  });
+export type DeliverReportFormValues = z.infer<typeof deliverReportFormSchema>;
+
 // =============================================================================
 // Chat — état local de session (jamais persisté côté serveur)
 // =============================================================================
