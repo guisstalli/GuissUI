@@ -2,11 +2,13 @@
 
 import {
   BarChart3,
+  Bot,
   CalendarDays,
   CalendarRange,
   ChevronRight,
   ChevronUp,
   ClipboardList,
+  FileBarChart,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -162,6 +164,18 @@ const navGroups: NavGroup[] = [
         url: paths.analytics.getHref(),
         icon: BarChart3,
         permission: 'analytics:view',
+      },
+      {
+        title: 'Assistant IA',
+        url: paths.aiReports.chat.getHref(),
+        icon: Bot,
+        permission: 'ai-reports:generate',
+      },
+      {
+        title: 'Rapports IA',
+        url: paths.aiReports.list.getHref(),
+        icon: FileBarChart,
+        permission: 'ai-reports:view',
       },
     ],
   },

@@ -55,6 +55,11 @@ module.exports = {
                 except: ['./admin'],
               },
               {
+                target: './src/features/ai-reports',
+                from: './src/features',
+                except: ['./ai-reports'],
+              },
+              {
                 target: './src/features/analytics',
                 from: './src/features',
                 except: ['./analytics'],

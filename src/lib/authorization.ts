@@ -82,6 +82,12 @@ export const PERMISSIONS = {
   // Analytics
   'analytics:view': 'Voir les analytics',
 
+  // IA — assistant analytique + rapports (miroir de AI_REPORT_ROLES backend)
+  'ai-reports:view': 'Voir les rapports IA',
+  'ai-reports:generate': 'Poser une question IA et générer des rapports',
+  'ai-reports:approve': 'Approuver ou rejeter un rapport IA',
+  'ai-reports:deliver': 'Diffuser un rapport IA approuvé',
+
   // Reports
   'reports:view': 'Voir les rapports',
   'reports:export': 'Exporter les rapports',
@@ -176,6 +182,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:restore',
     'drivers:view-deleted',
     'drivers:bulk-import',
+    'ai-reports:view',
+    'ai-reports:generate',
+    'ai-reports:approve',
+    'ai-reports:deliver',
   ],
 
   // STAFF : accès complet, gestion admin incluse
@@ -219,6 +229,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sites:edit',
     'sites:delete',
     'admin:users',
+    // IA : STAFF peut consulter/générer, mais pas approuver ni diffuser
+    // (AI_REPORT_ROLES backend : approve/deliver = ADMIN/SUPERUSER/DOCTEUR)
+    'ai-reports:view',
+    'ai-reports:generate',
   ],
 
   // DOCTEUR : accès complet aux données médicales
@@ -260,6 +274,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:view',
     'billing:view',
     'sites:view',
+    'ai-reports:view',
+    'ai-reports:generate',
+    'ai-reports:approve',
+    'ai-reports:deliver',
   ],
 
   // DATA_ENTRY : accès complet dépistage, pas d'analytics/billing/RDV/sites/admin

@@ -129,6 +129,19 @@ export const paths = {
     getHref: () => '/analytics',
   },
 
+  // IA — assistant analytique + rapports générés
+  aiReports: {
+    chat: {
+      getHref: () => '/assistant-ia',
+    },
+    list: {
+      getHref: () => '/rapports-ia',
+    },
+    detail: {
+      getHref: (id: number | string) => `/rapports-ia/${id}`,
+    },
+  },
+
   // --- Pages non encore implémentées (à activer quand les pages seront créées) ---
   // consultations: { list, detail, create }
   // planning: { calendar, day, week }
@@ -244,6 +257,8 @@ export const activePaths = [
   '/gestion/evenements',
   '/evenements',
   '/analytics',
+  '/assistant-ia',
+  '/rapports-ia',
   '/sites',
   '/parametres',
   '/configuration/prestations',
