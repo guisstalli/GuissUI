@@ -15,9 +15,18 @@ export const REPORT_STATUS = {
 
 export type ReportStatus = (typeof REPORT_STATUS)[keyof typeof REPORT_STATUS];
 
-/** Statuts « en cours » — le polling reste actif tant qu'on est dedans */
-export const REPORT_STATUS_IN_PROGRESS: ReportStatus[] = [
-  REPORT_STATUS.PENDING,
+/**
+ * Statuts TERMINAUX — le polling s'arrête dès qu'on en atteint un. On raisonne
+ * en « terminal » (liste fermée, stable) plutôt qu'en « en cours » : si le
+ * backend ajoute un statut intermédiaire (GENERATING, QUEUED…), le polling
+ * continue au lieu de s'arrêter en silence sur un « En attente » figé.
+ */
+export const REPORT_STATUS_TERMINAL: ReportStatus[] = [
+  REPORT_STATUS.DRAFT,
+  REPORT_STATUS.APPROVED,
+  REPORT_STATUS.REJECTED,
+  REPORT_STATUS.DELIVERED,
+  REPORT_STATUS.FAILED,
 ];
 
 /** Libellés FR (miroir des labels backend) */

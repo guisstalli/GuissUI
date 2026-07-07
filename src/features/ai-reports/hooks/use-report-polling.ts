@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { getReportQueryOptions } from '../api/get-report';
-import { REPORT_STATUS_IN_PROGRESS, type ReportStatus } from '../types';
+import { REPORT_STATUS_TERMINAL, type ReportStatus } from '../types';
 
 const POLL_INTERVAL_MS = 3000;
 
 /**
  * Suit un rapport en cours de génération (202 → PENDING → statut terminal).
- * Polling toutes les 3 s tant que le statut est « en cours », arrêt net dès
- * qu'un statut terminal (DRAFT/APPROVED/REJECTED/DELIVERED/FAILED) arrive.
+ * Polling toutes les 3 s TANT QUE le statut n'est pas terminal — un statut
+ * inconnu (ajouté côté backend) continue donc d'être suivi plutôt que d'être
+ * traité à tort comme terminal.
  */
 export const useReportPolling = (reportId: number | null) =>
   useQuery({
@@ -16,10 +17,8 @@ export const useReportPolling = (reportId: number | null) =>
     enabled: reportId !== null,
     refetchInterval: (query) => {
       const status = query.state.data?.status as ReportStatus | undefined;
-      if (status && REPORT_STATUS_IN_PROGRESS.includes(status)) {
-        return POLL_INTERVAL_MS;
-      }
-      return false;
+      if (status === undefined) return false;
+      return REPORT_STATUS_TERMINAL.includes(status) ? false : POLL_INTERVAL_MS;
     },
     refetchIntervalInBackground: false,
   });
