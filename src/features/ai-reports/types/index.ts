@@ -74,11 +74,59 @@ export const reportDetailSchema = reportListItemSchema.extend({
   updated_at: z.string(),
 });
 
+/**
+ * Carte « source » lisible construite côté backend (services/sources.py) :
+ * libellé FR de l'outil, filtres traduits, effectif du périmètre.
+ */
+export const sourceDisplaySchema = z.object({
+  tool: z.string(),
+  label: z.string(),
+  filters: z.array(z.object({ label: z.string(), value: z.string() })),
+  cell_count: z.number().nullable(),
+});
+
 export const askResponseSchema = z.object({
   answer_markdown: z.string(),
   sources: z.unknown(),
+  sources_display: z.array(sourceDisplaySchema),
   verification: z.unknown(),
   tools_used: z.array(z.string()),
+  /** Conversation créée (1re question) ou continuée — sert à router vers /assistant-ia/[id] */
+  conversation_id: z.number(),
+  message_id: z.number(),
+});
+
+// =============================================================================
+// Conversations — fil persistant de l'assistant (miroir des serializers backend)
+// =============================================================================
+
+export const conversationListItemSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  message_count: z.number(),
+});
+
+export const conversationMessageSchema = z.object({
+  id: z.number(),
+  role: z.enum(['USER', 'ASSISTANT']),
+  content: z.string(),
+  status: z.enum(['SUCCESS', 'FAILED']),
+  error_message: z.string(),
+  sources: z.unknown(),
+  sources_display: z.array(sourceDisplaySchema).nullable(),
+  verification: z.unknown(),
+  tools_used: z.array(z.string()),
+  created_at: z.string(),
+});
+
+export const conversationDetailSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  messages: z.array(conversationMessageSchema),
 });
 
 export const capabilitySchema = z.object({
@@ -90,7 +138,11 @@ export const capabilitySchema = z.object({
 
 export type ReportListItem = z.infer<typeof reportListItemSchema>;
 export type ReportDetail = z.infer<typeof reportDetailSchema>;
+export type SourceDisplay = z.infer<typeof sourceDisplaySchema>;
 export type AskResponse = z.infer<typeof askResponseSchema>;
+export type ConversationListItem = z.infer<typeof conversationListItemSchema>;
+export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
+export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
 export type Capability = z.infer<typeof capabilitySchema>;
 
 /** Réponse du POST generate (202 Accepted — génération asynchrone Celery) */
@@ -206,7 +258,7 @@ export const deliverReportFormSchema = z
 export type DeliverReportFormValues = z.infer<typeof deliverReportFormSchema>;
 
 // =============================================================================
-// Chat — état local de session (jamais persisté côté serveur)
+// Chat — modèle de VUE du fil (dérivé du cache TanStack + bulles en vol)
 // =============================================================================
 
 export type ChatMessage = {
@@ -215,9 +267,28 @@ export type ChatMessage = {
   /** Question (user) ou answer_markdown (assistant) */
   content: string;
   sources?: unknown;
+  sources_display?: SourceDisplay[];
   verification?: unknown;
   tools_used?: string[];
   timestamp: number;
   /** Message d'erreur affiché dans le fil (429, indisponibilité…) */
   isError?: boolean;
+};
+
+/** Projette un message persisté (API) vers le modèle de vue du fil. */
+export const toChatMessage = (message: ConversationMessage): ChatMessage => {
+  const isFailed = message.status === 'FAILED';
+  return {
+    id: String(message.id),
+    role: message.role === 'USER' ? 'user' : 'assistant',
+    content: isFailed
+      ? "L'assistant n'a pas pu répondre à cette question."
+      : message.content,
+    sources: message.sources ?? undefined,
+    sources_display: message.sources_display ?? undefined,
+    verification: message.verification ?? undefined,
+    tools_used: message.tools_used,
+    timestamp: Date.parse(message.created_at),
+    isError: isFailed,
+  };
 };

@@ -12,17 +12,25 @@ import type { AskResponse } from '../types';
  *   de refetch au focus — chaque question est un envoi volontaire.
  * - 429 (throttle 30/h) silencieux : l'erreur est affichée DANS le fil de
  *   conversation par l'appelant, pas en toast global.
+ * - `conversation_id` absent → le backend crée une conversation et retourne
+ *   son id ; présent → continuation du fil (multi-tours).
  */
 export const askQuestion = ({
   question,
   filters,
+  conversation_id,
 }: {
   question: string;
   filters?: Record<string, unknown>;
+  conversation_id?: number;
 }): Promise<AskResponse> =>
   api.post(
     '/ai-reports/ask/',
-    { question, filters: filters ?? {} },
+    {
+      question,
+      filters: filters ?? {},
+      ...(conversation_id !== undefined ? { conversation_id } : {}),
+    },
     { silentStatusCodes: [429] },
   );
 

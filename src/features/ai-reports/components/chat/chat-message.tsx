@@ -50,6 +50,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <MarkdownContent content={message.content} />
         <ChatSourcesAccordion
           sources={message.sources}
+          sources_display={message.sources_display}
           tools_used={message.tools_used}
         />
       </div>

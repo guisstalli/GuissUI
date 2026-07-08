@@ -134,6 +134,9 @@ export const paths = {
     chat: {
       getHref: () => '/assistant-ia',
     },
+    conversation: {
+      getHref: (id: number | string) => `/assistant-ia/${id}`,
+    },
     list: {
       getHref: () => '/rapports-ia',
     },
