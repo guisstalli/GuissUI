@@ -10,7 +10,7 @@ import { canAccessInternalApp } from '@/lib/authorization';
 
 function isPublicPath(pathname: string): boolean {
   return (
-    pathname === '/' || // landing publique
+    pathname.startsWith('/landing') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/unauthorized') ||
     pathname.startsWith('/public') ||

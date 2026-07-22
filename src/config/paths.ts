@@ -1,6 +1,9 @@
 export const paths = {
   home: {
-    getHref: () => '/',
+    // Landing publique (URL donnee a Meta/WhatsApp Business). La racine /
+    // reste l'entree du personnel : redirection vers le tableau de bord,
+    // donc vers le login quand on n'est pas connecte (habitude conservee).
+    getHref: () => '/landing',
   },
 
   // Authentication
