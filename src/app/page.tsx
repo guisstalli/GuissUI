@@ -1,267 +1,356 @@
 'use client';
 
-import dayjs from 'dayjs';
-import 'dayjs/locale/fr';
 import {
-  AlertCircle,
+  ArrowRight,
+  Baby,
   CalendarCheck,
-  ClipboardList,
+  Eye,
+  GraduationCap,
+  HeartHandshake,
+  MapPin,
+  ScanEye,
+  ShieldCheck,
   Truck,
-  Users,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
-import { AppShell as Shell } from '@/app/_shell';
-import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
-import { Spinner } from '@/components/ui/spinner';
-import { useDashboard } from '@/features/dashboard/api/get-dashboard';
-import { ActiveEvents } from '@/features/dashboard/components/active-events';
-import {
-  DismissibleAlert,
-  alertSignature,
-} from '@/features/dashboard/components/dismissible-alert';
-import { UpcomingAppointments } from '@/features/dashboard/components/upcoming-appointments';
-import { useUser } from '@/lib/auth';
+import { PublicShell } from '@/components/public/public-shell';
+import { cn } from '@/lib/utils';
 
-// recharts chargé en lazy : hors du bundle initial du dashboard.
-const ExamsChart = dynamic(
-  () =>
-    import('@/features/dashboard/components/exams-chart').then(
-      (m) => m.ExamsChart,
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-64 w-full animate-pulse rounded-xl bg-muted" />
-    ),
-  },
-);
+/**
+ * Landing publique de Guiss-Talli — Centre de Promotion de la Vision
+ * Madoune Robert Ndiaye (UFR Santé, Université Iba Der Thiam de Thiès).
+ * Racine du site (exigence Meta/WhatsApp Business : URL publique).
+ * Direction : éditorial clinique-humaniste, prolonge le langage des pages
+ * publiques (fond clair, accents cyan, ornements de coin, kickers espacés).
+ */
 
-dayjs.locale('fr');
-
-const RDV_STATUT_BADGES = [
-  {
-    key: 'en_attente',
-    dotClass: 'bg-amber-500',
-    textClass: 'text-amber-700',
-    label: 'En att.',
-  },
-  {
-    key: 'confirme',
-    dotClass: 'bg-blue-600',
-    textClass: 'text-blue-700',
-    label: 'Conf.',
-  },
-  {
-    key: 'present',
-    dotClass: 'bg-emerald-600',
-    textClass: 'text-emerald-700',
-    label: 'Présent',
-  },
-  {
-    key: 'absent',
-    dotClass: 'bg-slate-400',
-    textClass: 'text-slate-500',
-    label: 'Absent',
-  },
-  {
-    key: 'annule',
-    dotClass: 'bg-red-500',
-    textClass: 'text-red-600',
-    label: 'Annulé',
-  },
-] as const;
-
-function DashboardSkeleton() {
+function CornerOrnament({ className }: { className?: string }) {
   return (
-    <div className="flex h-48 items-center justify-center">
-      <Spinner size="lg" />
+    <div
+      className={cn('pointer-events-none absolute size-12', className)}
+      aria-hidden
+    >
+      <div className="absolute left-0 top-0 h-px w-8 bg-slate-900/20" />
+      <div className="absolute left-0 top-0 h-8 w-px bg-slate-900/20" />
+      <div className="absolute left-1.5 top-1.5 size-1.5 rounded-full bg-cyan-500/70" />
     </div>
   );
 }
 
-function getGreeting(): string {
-  const hour = dayjs().hour();
-  if (hour < 12) return 'Bonjour';
-  if (hour < 18) return 'Bon après-midi';
-  return 'Bonsoir';
-}
+const SERVICES = [
+  {
+    icon: Eye,
+    title: 'Dépistage adulte',
+    description:
+      'Acuité visuelle, tension oculaire, réfraction et examen du fond d’œil — un bilan complet de votre santé visuelle.',
+  },
+  {
+    icon: Baby,
+    title: 'Dépistage enfant',
+    description:
+      'Détection précoce des troubles de la vue chez l’enfant, pour un développement scolaire sans obstacle.',
+  },
+  {
+    icon: Truck,
+    title: 'Aptitude visuelle des conducteurs',
+    description:
+      'Qualification médicale de la vue des conducteurs professionnels, au service de la sécurité routière.',
+  },
+] as const;
 
-export default function DashboardPage() {
-  const { data, isLoading } = useDashboard();
-  const { user } = useUser();
+const STEPS = [
+  {
+    number: '01',
+    title: 'Choisissez votre créneau',
+    description:
+      'Réservez en ligne en deux minutes, ou inscrivez-vous à l’une de nos campagnes de dépistage gratuites.',
+  },
+  {
+    number: '02',
+    title: 'Venez au centre',
+    description:
+      'Notre équipe universitaire vous accueille et réalise l’examen — sans ordonnance, sans démarche préalable.',
+  },
+  {
+    number: '03',
+    title: 'Repartez informé',
+    description:
+      'Vos résultats vous sont expliqués sur place, avec une orientation claire si un suivi est nécessaire.',
+  },
+] as const;
 
-  const dateLabel = dayjs().format('dddd D MMMM YYYY');
-  const greeting = getGreeting();
-  const displayName = user?.name || user?.email || 'Utilisateur';
-
+export default function LandingPage() {
   return (
-    <Shell title="Tableau de bord">
-      <div className="space-y-6">
-        {/* Greeting */}
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">
-            {greeting}, {displayName}
-          </h2>
-          <p className="mt-0.5 text-sm capitalize text-muted-foreground">
-            {dateLabel}
+    <PublicShell fullBleed>
+      {/* Séquence de révélation sobre — désactivée si reduced-motion */}
+      <style>{`
+        @keyframes landing-rise {
+          from { opacity: 0; transform: translateY(14px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .landing-rise { animation: landing-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .landing-rise { animation: none; }
+        }
+      `}</style>
+
+      {/* ── Hero ── */}
+      <section
+        aria-labelledby="hero-heading"
+        className="relative overflow-hidden px-4 pb-16 pt-[120px] sm:px-8 sm:pb-24 sm:pt-[150px]"
+      >
+        <CornerOrnament className="left-4 top-24 hidden sm:block" />
+        <CornerOrnament className="right-4 top-24 hidden rotate-90 sm:block" />
+
+        <div className="mx-auto max-w-5xl">
+          <p
+            className="landing-rise text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-700"
+            style={{ animationDelay: '0ms' }}
+          >
+            Centre de Promotion de la Vision · UIDT Thiès · Sénégal
+          </p>
+
+          <h1
+            id="hero-heading"
+            className="landing-rise mt-5 max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-6xl"
+            style={{ animationDelay: '90ms' }}
+          >
+            La santé de vos yeux,
+            <br />
+            <span className="text-cyan-600">notre mission.</span>
+          </h1>
+
+          <p
+            className="landing-rise mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg"
+            style={{ animationDelay: '180ms' }}
+          >
+            Le centre vision Madoune Robert Ndiaye organise des dépistages
+            ophtalmologiques{' '}
+            <strong className="text-slate-900">gratuits</strong>, portés par
+            l’UFR Santé de l’Université Iba Der Thiam de Thiès. Adultes,
+            enfants, conducteurs — prenez soin de votre vue.
+          </p>
+
+          <div
+            className="landing-rise mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
+            style={{ animationDelay: '270ms' }}
+          >
+            <Link
+              href="/public/rendez-vous"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+            >
+              <CalendarCheck className="size-4" aria-hidden />
+              Prendre rendez-vous
+            </Link>
+            <Link
+              href="/public/evenements"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white/70 px-7 py-3.5 text-sm font-semibold text-slate-800 transition-colors hover:border-cyan-400 hover:text-cyan-700"
+            >
+              Voir les campagnes de dépistage
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+
+          <p
+            className="landing-rise mt-6 text-xs font-medium uppercase tracking-[0.18em] text-slate-400"
+            style={{ animationDelay: '360ms' }}
+          >
+            Gratuit · Sans ordonnance · Ouvert à tous
           </p>
         </div>
 
-        {/* Pending RDV alert */}
-        {!isLoading && data && (data.rendez_vous.pending_count ?? 0) > 0 && (
-          <DismissibleAlert
-            storageKey="dashboard.alert.rdv_pending"
-            signature={alertSignature(data.rendez_vous.pending_count)}
-            href="/gestion/rendez-vous?tab=liste&statut=en_attente"
-            className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-400/20 dark:bg-amber-400/[0.06] dark:text-amber-300 dark:hover:bg-amber-400/[0.10]"
-            icon={
-              <AlertCircle className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
-            }
-          >
-            {data.rendez_vous.pending_count} réservation
-            {data.rendez_vous.pending_count > 1 ? 's' : ''} en attente de
-            confirmation
-          </DismissibleAlert>
-        )}
+        {/* Motif œil — grand cercle décoratif décalé (composition asymétrique) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-32 top-16 hidden size-[420px] rounded-full border border-cyan-200/60 lg:block"
+        >
+          <div className="absolute inset-10 rounded-full border border-cyan-200/40" />
+          <div className="absolute inset-24 rounded-full border border-cyan-300/40" />
+          <div className="absolute left-1/2 top-1/2 size-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10" />
+          <ScanEye className="absolute left-1/2 top-1/2 size-9 -translate-x-1/2 -translate-y-1/2 text-cyan-600/70" />
+        </div>
+      </section>
 
-        {/* Pending event inscriptions alert */}
-        {!isLoading && data && (data.evenements.pending_count ?? 0) > 0 && (
-          <DismissibleAlert
-            storageKey="dashboard.alert.events_pending"
-            signature={alertSignature(data.evenements.pending_count)}
-            href="/gestion/evenements?statut=en_cours"
-            className="border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-400/[0.06] dark:text-violet-300 dark:hover:bg-violet-400/[0.10]"
-            icon={
-              <AlertCircle className="size-4 shrink-0 text-violet-500 dark:text-violet-400" />
-            }
-          >
-            {data.evenements.pending_count} inscription
-            {data.evenements.pending_count > 1 ? 's' : ''} à un événement en
-            attente de check-in
-          </DismissibleAlert>
-        )}
+      {/* ── Bandeau de confiance ── */}
+      <section aria-label="Nos engagements" className="px-4 sm:px-8">
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 lg:grid-cols-4">
+          {[
+            { icon: HeartHandshake, label: 'Dépistages gratuits' },
+            { icon: GraduationCap, label: 'Équipe universitaire' },
+            { icon: ShieldCheck, label: 'Adultes & enfants' },
+            { icon: Truck, label: 'Vue des conducteurs' },
+          ].map(({ icon: Icon, label }) => (
+            <div
+              key={label}
+              className="flex items-center gap-3 bg-white px-5 py-4"
+            >
+              <Icon className="size-5 shrink-0 text-cyan-600" aria-hidden />
+              <span className="text-sm font-medium text-slate-800">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        {isLoading ? (
-          <DashboardSkeleton />
-        ) : !data ? (
-          <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Impossible de charger les données du tableau de bord.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* KPI Row */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <KpiCard
-                title="Patients"
-                value={data.patients.total}
-                subtitle={`+${data.patients.today_new} aujourd'hui`}
-                icon={Users}
-                trend={data.patients.today_new}
-              />
-              <KpiCard
-                title="Examens aujourd'hui"
-                value={data.examens.today.total}
-                subtitle={`${data.examens.today.adult} adultes, ${data.examens.today.child} enfants`}
-                icon={ClipboardList}
-              />
-              <KpiCard
-                title="Conducteurs"
-                value={data.conducteurs.total}
-                subtitle={`+${data.conducteurs.today_new} aujourd'hui`}
-                icon={Truck}
-                trend={data.conducteurs.today_new}
-              />
-              <KpiCard
-                title="Rendez-vous aujourd'hui"
-                value={data.rendez_vous.today.total}
-                subtitle="total planifiés"
-                icon={CalendarCheck}
+      {/* ── Services ── */}
+      <section
+        aria-labelledby="services-heading"
+        className="px-4 py-20 sm:px-8 sm:py-28"
+      >
+        <div className="mx-auto max-w-5xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-700">
+            Ce que nous faisons
+          </p>
+          <h2
+            id="services-heading"
+            className="mt-3 max-w-lg text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
+          >
+            Un dépistage pour chaque regard
+          </h2>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {SERVICES.map(({ icon: Icon, title, description }, index) => (
+              <article
+                key={title}
+                className={cn(
+                  'relative rounded-2xl border border-slate-200 bg-white p-7 transition-shadow hover:shadow-lg hover:shadow-cyan-100',
+                  index === 1 && 'md:translate-y-6', // rupture de grille volontaire
+                )}
               >
-                {data.rendez_vous.today.by_statut &&
-                  Object.keys(data.rendez_vous.today.by_statut).length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t pt-2">
-                      {RDV_STATUT_BADGES.filter(
-                        ({ key }) =>
-                          (data.rendez_vous.today.by_statut[key] ?? 0) > 0,
-                      ).map(({ key, dotClass, textClass, label }) => (
-                        <span
-                          key={key}
-                          className={`flex items-center gap-1 text-xs ${textClass}`}
-                        >
-                          <span
-                            className={`inline-block size-1.5 rounded-full ${dotClass}`}
-                          />
-                          {data.rendez_vous.today.by_statut[key]} {label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-              </KpiCard>
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid gap-4 lg:grid-cols-2">
-              <ExamsChart data={data.examens.last_7_days} />
-              <UpcomingAppointments appointments={data.rendez_vous.prochains} />
-            </div>
-
-            {/* Events Section */}
-            {data.evenements.en_cours.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Événements en cours
-                  </h3>
-                  {data.evenements.inscriptions_aujourd_hui > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {data.evenements.inscriptions_aujourd_hui} inscription
-                      {data.evenements.inscriptions_aujourd_hui > 1
-                        ? 's'
-                        : ''}{' '}
-                      aujourd&apos;hui
-                    </span>
-                  )}
+                <div className="inline-flex size-11 items-center justify-center rounded-xl bg-cyan-50">
+                  <Icon className="size-5 text-cyan-600" aria-hidden />
                 </div>
-                <ActiveEvents events={data.evenements.en_cours} />
-              </div>
-            )}
-
-            {/* Planned events in next 7 days */}
-            {data.evenements.planifies_7j.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Événements planifiés (7 prochains jours)
+                <h3 className="mt-5 text-lg font-semibold text-slate-900">
+                  {title}
                 </h3>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {data.evenements.planifies_7j.map((event) => (
-                    <Link
-                      key={event.id}
-                      href={`/gestion/evenements/${event.id}/inscriptions`}
-                      className="group block rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm"
-                    >
-                      <p className="text-sm font-medium text-foreground group-hover:text-primary">
-                        {event.titre}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {dayjs(event.date_event).isValid()
-                          ? `${dayjs(event.date_event).format('DD/MM/YYYY')} — ${event.lieu}`
-                          : event.lieu}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {event.inscrits} inscrits
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </Shell>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Comment ça marche ── */}
+      <section
+        aria-labelledby="steps-heading"
+        className="border-y border-slate-200 bg-white/60 px-4 py-20 sm:px-8 sm:py-28"
+      >
+        <div className="mx-auto max-w-5xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-700">
+            Simple et rapide
+          </p>
+          <h2
+            id="steps-heading"
+            className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
+          >
+            Comment ça marche
+          </h2>
+
+          <ol className="mt-12 grid gap-10 md:grid-cols-3">
+            {STEPS.map(({ number, title, description }) => (
+              <li key={number} className="relative">
+                <span
+                  aria-hidden
+                  className="text-5xl font-bold tracking-tight text-cyan-100"
+                >
+                  {number}
+                </span>
+                <h3 className="mt-2 text-lg font-semibold text-slate-900">
+                  {title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {description}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ── Le centre ── */}
+      <section
+        aria-labelledby="centre-heading"
+        className="px-4 py-20 sm:px-8 sm:py-28"
+      >
+        <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[1.2fr_1fr]">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-700">
+              Qui sommes-nous
+            </p>
+            <h2
+              id="centre-heading"
+              className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
+            >
+              Un centre universitaire au service de la vision
+            </h2>
+            <p className="mt-5 text-base leading-relaxed text-slate-600">
+              Le Centre de Promotion de la Vision Madoune Robert Ndiaye est
+              porté par l’UFR Santé de l’Université Iba Der Thiam de Thiès. Sa
+              mission : rendre le dépistage visuel accessible à tous — au centre
+              comme sur le terrain, lors de campagnes organisées dans les
+              écoles, les entreprises et les communautés.
+            </p>
+            <div className="mt-6 flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+              <MapPin
+                className="mt-0.5 size-5 shrink-0 text-cyan-600"
+                aria-hidden
+              />
+              <p className="text-sm text-slate-700">
+                UFR Santé — Université Iba Der Thiam,
+                <br />
+                Thiès, Sénégal
+              </p>
+            </div>
+          </div>
+
+          {/* Panneau éditorial — citation-mission */}
+          <figure className="relative rounded-3xl bg-slate-900 p-8 text-white sm:p-10">
+            <CornerOrnament className="left-3 top-3 [&>div:last-child]:bg-cyan-400/80 [&>div]:bg-white/30" />
+            <blockquote className="text-xl font-medium leading-snug sm:text-2xl">
+              « Une mauvaise vue non dépistée, c’est une scolarité freinée, un
+              métier fragilisé, une route plus dangereuse. »
+            </blockquote>
+            <figcaption className="mt-6 text-sm text-slate-300">
+              La raison d’être de nos dépistages gratuits.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      {/* ── CTA final ── */}
+      <section aria-label="Prendre rendez-vous" className="px-4 pb-24 sm:px-8">
+        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 to-sky-700 px-8 py-14 text-center sm:py-16">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-10"
+          />
+          <h2 className="relative text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Votre vue mérite deux minutes.
+          </h2>
+          <p className="relative mx-auto mt-3 max-w-md text-sm text-cyan-50">
+            Réservez votre créneau de dépistage gratuit dès maintenant.
+          </p>
+          <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/public/rendez-vous"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-slate-900 transition-transform hover:scale-[1.03]"
+            >
+              <CalendarCheck className="size-4" aria-hidden />
+              Prendre rendez-vous
+            </Link>
+            <Link
+              href="/auth/login"
+              className="text-sm font-medium text-cyan-100 underline-offset-4 hover:underline"
+            >
+              Accès personnel du centre
+            </Link>
+          </div>
+        </div>
+      </section>
+    </PublicShell>
   );
 }

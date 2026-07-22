@@ -24,7 +24,7 @@ export const paths = {
 
   // Dashboard
   dashboard: {
-    getHref: () => '/',
+    getHref: () => '/tableau-de-bord',
   },
 
   // Patients

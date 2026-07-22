@@ -387,7 +387,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href={paths.dashboard.getHref()}>
                 <GuissIcon className="size-8 shrink-0" />
                 <div className="flex flex-col gap-0 leading-none">
                   <span className="text-sm font-bold tracking-wider">
