@@ -9,14 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 
-import { useAsk } from '../../api/ask';
+import { useChat } from '../../api/chat';
 import {
   getConversationQueryOptions,
   useConversation,
 } from '../../api/get-conversation';
 import type {
-  AskResponse,
   ChatMessage,
+  ChatResponse,
   ConversationDetail,
   ConversationMessage,
 } from '../../types';
@@ -43,7 +43,7 @@ const newLocalId = () =>
  *  client) ; le prochain refetch du détail le réconcilie. */
 const forgeTurnMessages = (
   question: string,
-  response: AskResponse,
+  response: ChatResponse,
 ): ConversationMessage[] => {
   const now = new Date().toISOString();
   return [
@@ -65,10 +65,11 @@ const forgeTurnMessages = (
       content: response.answer_markdown,
       status: 'SUCCESS',
       error_message: '',
-      sources: response.sources,
-      sources_display: response.sources_display,
-      verification: response.verification,
+      sources: null,
+      sources_display: null,
+      verification: null,
       tools_used: response.tools_used,
+      trajectory: response.trajectory,
       created_at: now,
     },
   ];
@@ -103,7 +104,7 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [flightError, setFlightError] = useState<ChatMessage | null>(null);
 
-  const askMutation = useAsk({
+  const chatMutation = useChat({
     mutationConfig: {
       onSuccess: (response) => {
         const question = pendingQuestion ?? '';
@@ -142,14 +143,22 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
         queryClient.invalidateQueries({ queryKey: ['ai-conversations'] });
       },
       onError: (error) => {
-        const isQuota =
-          error instanceof Error &&
-          'status' in error &&
-          (error as { status?: number }).status === 429;
+        const status =
+          error instanceof Error && 'status' in error
+            ? (error as { status?: number }).status
+            : undefined;
+        const isQuota = status === 429;
+        // 400 = erreur métier lisible (budget de conversation atteint, pièce
+        // jointe invalide…) : afficher le message du backend tel quel.
+        const content = isQuota
+          ? QUOTA_MESSAGE
+          : status === 400 && error.message
+            ? error.message
+            : GENERIC_ERROR_MESSAGE;
         setFlightError({
           id: newLocalId(),
           role: 'assistant',
-          content: isQuota ? QUOTA_MESSAGE : GENERIC_ERROR_MESSAGE,
+          content,
           timestamp: Date.now(),
           isError: true,
         });
@@ -163,12 +172,13 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
     },
   });
 
-  const handleSend = (question: string) => {
-    if (askMutation.isPending) return;
+  const handleSend = (question: string, attachments: File[]) => {
+    if (chatMutation.isPending) return;
     setFlightError(null);
     setPendingQuestion(question);
-    askMutation.mutate({
+    chatMutation.mutate({
       question,
+      ...(attachments.length > 0 ? { attachments } : {}),
       ...(isExisting ? { conversation_id: conversationId } : {}),
     });
   };
@@ -218,10 +228,10 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
       <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-background">
         <ChatMessageList
           messages={messages}
-          isThinking={askMutation.isPending}
+          isThinking={chatMutation.isPending}
         />
         <div className="border-t border-border p-3">
-          <ChatInput onSend={handleSend} disabled={askMutation.isPending} />
+          <ChatInput onSend={handleSend} disabled={chatMutation.isPending} />
         </div>
       </div>
     </div>

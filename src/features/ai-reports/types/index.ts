@@ -96,6 +96,32 @@ export const askResponseSchema = z.object({
   message_id: z.number(),
 });
 
+/**
+ * Pas de la trajectoire agentique (miroir de AgentStep backend) : pensée,
+ * outils appelés, erreurs d'outils du pas (auto-corrigées par l'agent).
+ */
+export const trajectoryStepSchema = z.object({
+  index: z.number(),
+  text: z.string(),
+  tool_calls: z.array(z.string()),
+  errors: z.array(z.string()),
+});
+
+/** Réponse du POST /ai-reports/chat/ (assistant AGENTIQUE — boucle ReAct). */
+export const chatResponseSchema = z.object({
+  answer_markdown: z.string(),
+  tools_used: z.array(z.string()),
+  conversation_id: z.number(),
+  message_id: z.number(),
+  trajectory: z.array(trajectoryStepSchema),
+});
+
+// Contraintes pièces jointes — miroir de apps/ai_core/agent/attachments.py
+export const CHAT_MAX_ATTACHMENTS = 5;
+export const CHAT_MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024; // 8 Mo
+export const CHAT_ATTACHMENT_ACCEPT =
+  '.png,.jpg,.jpeg,.webp,.gif,.pdf,.docx,.pptx,.xlsx,.txt,.md,.csv';
+
 // =============================================================================
 // Conversations — fil persistant de l'assistant (miroir des serializers backend)
 // =============================================================================
@@ -119,6 +145,9 @@ export const conversationMessageSchema = z.object({
   verification: z.unknown(),
   tools_used: z.array(z.string()),
   created_at: z.string(),
+  /** Trajectoire agentique — présente uniquement sur les tours semés côté
+   *  client depuis /chat/ (le détail serveur ne la renvoie pas). */
+  trajectory: z.array(trajectoryStepSchema).optional(),
 });
 
 export const conversationDetailSchema = z.object({
@@ -140,6 +169,8 @@ export type ReportListItem = z.infer<typeof reportListItemSchema>;
 export type ReportDetail = z.infer<typeof reportDetailSchema>;
 export type SourceDisplay = z.infer<typeof sourceDisplaySchema>;
 export type AskResponse = z.infer<typeof askResponseSchema>;
+export type TrajectoryStep = z.infer<typeof trajectoryStepSchema>;
+export type ChatResponse = z.infer<typeof chatResponseSchema>;
 export type ConversationListItem = z.infer<typeof conversationListItemSchema>;
 export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
 export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
@@ -271,6 +302,8 @@ export type ChatMessage = {
   verification?: unknown;
   tools_used?: string[];
   timestamp: number;
+  /** Trajectoire agentique du tour (pas → outils → erreurs auto-corrigées) */
+  trajectory?: TrajectoryStep[];
   /** Message d'erreur affiché dans le fil (429, indisponibilité…) */
   isError?: boolean;
 };
@@ -289,6 +322,7 @@ export const toChatMessage = (message: ConversationMessage): ChatMessage => {
     verification: message.verification ?? undefined,
     tools_used: message.tools_used,
     timestamp: Date.parse(message.created_at),
+    trajectory: message.trajectory,
     isError: isFailed,
   };
 };

@@ -44,6 +44,23 @@ export const mockConversationListItem = {
   message_count: 2,
 };
 
+/** Réponse du POST /chat/ (agentique) — même contenu, forme trajectoire. */
+export const mockChatResponse = {
+  answer_markdown: mockAskResponse.answer_markdown,
+  tools_used: mockAskResponse.tools_used,
+  conversation_id: mockAskResponse.conversation_id,
+  message_id: mockAskResponse.message_id,
+  trajectory: [
+    {
+      index: 0,
+      text: 'Je consulte la vue d’ensemble.',
+      tool_calls: ['get_overview'],
+      errors: [],
+    },
+    { index: 1, text: 'Voici le résultat.', tool_calls: [], errors: [] },
+  ],
+};
+
 export const mockConversationMessages = [
   {
     id: 1,
@@ -118,6 +135,11 @@ export const aiReportsHandlers = [
   http.post(`${env.API_URL}/ai-reports/ask/`, async () => {
     await networkDelay();
     return HttpResponse.json(mockAskResponse);
+  }),
+
+  http.post(`${env.API_URL}/ai-reports/chat/`, async () => {
+    await networkDelay();
+    return HttpResponse.json(mockChatResponse);
   }),
 
   http.post(`${env.API_URL}/ai-reports/generate/`, async () => {

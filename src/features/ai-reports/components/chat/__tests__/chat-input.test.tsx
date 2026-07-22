@@ -40,7 +40,7 @@ describe('ChatInput', () => {
     await userEvent.click(screen.getByRole('button', { name: /envoyer/i }));
 
     expect(onSend).toHaveBeenCalledOnce();
-    expect(onSend).toHaveBeenCalledWith('Combien de patients ?');
+    expect(onSend).toHaveBeenCalledWith('Combien de patients ?', []);
     expect(textbox).toHaveValue('');
   });
 
@@ -55,7 +55,7 @@ describe('ChatInput', () => {
 
     await userEvent.keyboard('{Enter}');
     expect(onSend).toHaveBeenCalledOnce();
-    expect(onSend).toHaveBeenCalledWith('Ligne 1');
+    expect(onSend).toHaveBeenCalledWith('Ligne 1', []);
   });
 
   test('disabled bloque la saisie et le bouton', () => {
@@ -63,5 +63,59 @@ describe('ChatInput', () => {
 
     expect(screen.getByRole('textbox', { name: /question/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /envoyer/i })).toBeDisabled();
+  });
+});
+
+describe('ChatInput — pièces jointes', () => {
+  test('joint un fichier : puce affichée puis transmis à onSend', async () => {
+    const onSend = vi.fn();
+    render(<ChatInput onSend={onSend} />);
+
+    const file = new File(['contenu'], 'rapport.pdf', {
+      type: 'application/pdf',
+    });
+    await userEvent.upload(
+      screen.getByLabelText(/joindre des fichiers/i),
+      file,
+    );
+
+    expect(screen.getByText('rapport.pdf')).toBeInTheDocument();
+
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /question/i }),
+      'Analyse ce document',
+    );
+    await userEvent.click(screen.getByRole('button', { name: /envoyer/i }));
+
+    expect(onSend).toHaveBeenCalledWith('Analyse ce document', [file]);
+    // La liste de pièces jointes est vidée après envoi
+    expect(screen.queryByText('rapport.pdf')).not.toBeInTheDocument();
+  });
+
+  test('fichier trop lourd (>8 Mo) : refusé avec message', async () => {
+    const onSend = vi.fn();
+    render(<ChatInput onSend={onSend} />);
+
+    const big = new File([''], 'gros.pdf', { type: 'application/pdf' });
+    Object.defineProperty(big, 'size', { value: 9 * 1024 * 1024 });
+    await userEvent.upload(screen.getByLabelText(/joindre des fichiers/i), big);
+
+    expect(screen.getByText(/dépasse la limite de 8 mo/i)).toBeInTheDocument();
+    expect(screen.queryByText('gros.pdf')).not.toBeInTheDocument();
+  });
+
+  test('retirer une pièce jointe via sa puce', async () => {
+    render(<ChatInput onSend={vi.fn()} />);
+
+    const file = new File(['x'], 'photo.png', { type: 'image/png' });
+    await userEvent.upload(
+      screen.getByLabelText(/joindre des fichiers/i),
+      file,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /retirer photo\.png/i }),
+    );
+
+    expect(screen.queryByText('photo.png')).not.toBeInTheDocument();
   });
 });

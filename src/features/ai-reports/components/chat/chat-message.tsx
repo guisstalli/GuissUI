@@ -8,6 +8,7 @@ import type { ChatMessage as ChatMessageType } from '../../types';
 import { MarkdownContent } from '../markdown-content';
 
 import { ChatSourcesAccordion } from './chat-sources-accordion';
+import { ChatTrajectoryAccordion } from './chat-trajectory-accordion';
 
 type ChatMessageProps = {
   message: ChatMessageType;
@@ -53,6 +54,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           sources_display={message.sources_display}
           tools_used={message.tools_used}
         />
+        <ChatTrajectoryAccordion trajectory={message.trajectory} />
       </div>
     </div>
   );
