@@ -124,7 +124,7 @@ function EventActions({ event }: { event: EventStaff }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
-          <Link href={`/evenements/${event.slug}`} target="_blank">
+          <Link href={`/public/evenements/${event.slug}`} target="_blank">
             <ExternalLink className="mr-2 size-4" />
             Page publique
           </Link>
@@ -432,7 +432,7 @@ export default function GestionEvenementsPage() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/evenements" target="_blank">
+              <Link href="/public/evenements" target="_blank">
                 <ExternalLink className="mr-2 size-4" />
                 Page publique
               </Link>

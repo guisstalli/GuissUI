@@ -123,7 +123,7 @@ function EventCard({ event }: { event: EventPublic }) {
 
   return (
     <Link
-      href={`/evenements/${event.slug}`}
+      href={`/public/evenements/${event.slug}`}
       className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 backdrop-blur-sm transition-all duration-200 hover:border-slate-200 hover:bg-white hover:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(34,211,238,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
     >
       {/* badges */}
@@ -345,7 +345,7 @@ export default function EvenementsPage() {
               </span>
             )}
             <Link
-              href="/rendez-vous"
+              href="/public/rendez-vous"
               className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition-all hover:border-slate-200 hover:bg-white hover:text-slate-900"
             >
               Prendre un RDV individuel

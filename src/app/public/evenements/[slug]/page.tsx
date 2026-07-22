@@ -135,7 +135,7 @@ function ConfirmationCard({
       </p>
 
       <Link
-        href="/evenements"
+        href="/public/evenements"
         className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:border-slate-200 hover:text-slate-900"
       >
         <ArrowLeft className="size-4" />
@@ -215,7 +215,7 @@ function RegistrationForm({
           L&apos;inscription pour cet événement n&apos;est plus disponible.
         </p>
         <Link
-          href="/evenements"
+          href="/public/evenements"
           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition-all hover:text-slate-900"
         >
           <ArrowLeft className="size-4" />
@@ -397,7 +397,7 @@ export default function EventDetailPage() {
         {/* back link */}
         <div className="mb-8">
           <Link
-            href="/evenements"
+            href="/public/evenements"
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-800"
           >
             <ArrowLeft className="size-4" />
@@ -416,7 +416,7 @@ export default function EventDetailPage() {
               Cet événement n&apos;existe pas ou n&apos;est plus disponible.
             </p>
             <Link
-              href="/evenements"
+              href="/public/evenements"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
             >
               <ArrowLeft className="size-4" />

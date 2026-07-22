@@ -89,13 +89,13 @@ export function PublicFooter() {
           </p>
           <div className="flex gap-5">
             <Link
-              href="/evenements"
+              href="/public/evenements"
               className="transition-colors hover:text-slate-900"
             >
               Événements
             </Link>
             <Link
-              href="/rendez-vous"
+              href="/public/rendez-vous"
               className="transition-colors hover:text-slate-900"
             >
               Rendez-vous

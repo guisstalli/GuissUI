@@ -36,6 +36,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/((?!api/auth|auth|unauthorized|evenements|rendez-vous|dossier|_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    '/((?!$|api/auth|auth|unauthorized|public|evenements|rendez-vous|dossier|_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 };

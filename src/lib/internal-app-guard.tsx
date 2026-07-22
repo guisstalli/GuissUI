@@ -10,8 +10,12 @@ import { canAccessInternalApp } from '@/lib/authorization';
 
 function isPublicPath(pathname: string): boolean {
   return (
+    pathname === '/' || // landing publique
     pathname.startsWith('/auth') ||
     pathname.startsWith('/unauthorized') ||
+    pathname.startsWith('/public') ||
+    // anciens chemins publics : redirigés vers /public/* par next.config,
+    // gardés ici pour couvrir le premier rendu avant redirection.
     pathname.startsWith('/evenements') ||
     pathname.startsWith('/rendez-vous') ||
     pathname.startsWith('/dossier')

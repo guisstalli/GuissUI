@@ -20,8 +20,9 @@ export function PublicNavbar() {
   }, []);
 
   const isEvents =
-    pathname === '/evenements' || pathname?.startsWith('/evenements/');
-  const isBooking = pathname === '/rendez-vous';
+    pathname === '/public/evenements' ||
+    pathname?.startsWith('/public/evenements/');
+  const isBooking = pathname === '/public/rendez-vous';
 
   return (
     <header
@@ -34,7 +35,10 @@ export function PublicNavbar() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between p-4 sm:px-6">
         {/* Logo */}
-        <Link href="/evenements" className="group flex items-center gap-3">
+        <Link
+          href="/public/evenements"
+          className="group flex items-center gap-3"
+        >
           <div className="relative">
             <GuissIcon className="size-9 shrink-0" />
             <div className="absolute inset-0 rounded-full bg-cyan-400/0 blur-md transition-all duration-300 group-hover:bg-cyan-400/20" />
@@ -52,7 +56,7 @@ export function PublicNavbar() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-2 md:flex">
           <Link
-            href="/evenements"
+            href="/public/evenements"
             className={cn(
               'rounded-lg px-4 py-2 text-sm font-medium transition-all',
               isEvents
@@ -63,7 +67,7 @@ export function PublicNavbar() {
             Événements
           </Link>
           <Link
-            href="/rendez-vous"
+            href="/public/rendez-vous"
             className={cn(
               'rounded-lg px-4 py-2 text-sm font-semibold transition-all',
               isBooking
@@ -90,14 +94,14 @@ export function PublicNavbar() {
         <div className="border-t border-slate-200/60 bg-white/95 backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#060b17] md:hidden">
           <nav className="flex flex-col gap-1 px-4 py-3">
             <Link
-              href="/evenements"
+              href="/public/evenements"
               className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-black/[0.06] hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
               onClick={() => setMobileOpen(false)}
             >
               Événements de dépistage
             </Link>
             <Link
-              href="/rendez-vous"
+              href="/public/rendez-vous"
               className="rounded-lg bg-cyan-500/10 px-3 py-2.5 text-sm font-semibold text-cyan-600 transition-colors hover:bg-cyan-500/20 dark:bg-cyan-400/10 dark:text-cyan-400 dark:hover:bg-cyan-400/20"
               onClick={() => setMobileOpen(false)}
             >

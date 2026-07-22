@@ -93,7 +93,7 @@ export function ConfirmationPage({
           )}
 
           <Link
-            href="/evenements"
+            href="/public/evenements"
             className="hover:border-border/60 inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:text-foreground"
           >
             <ArrowLeft className="size-4" />

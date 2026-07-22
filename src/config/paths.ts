@@ -199,10 +199,10 @@ export const paths = {
   // Events (public + staff)
   events: {
     publicList: {
-      getHref: () => '/evenements',
+      getHref: () => '/public/evenements',
     },
     publicDetail: {
-      getHref: (slug: string) => `/evenements/${slug}`,
+      getHref: (slug: string) => `/public/evenements/${slug}`,
     },
     staff: {
       list: { getHref: () => '/gestion/evenements' },
@@ -214,13 +214,14 @@ export const paths = {
   // Rendez-vous public + staff agenda
   rdv: {
     publicBooking: {
-      getHref: () => '/rendez-vous',
+      getHref: () => '/public/rendez-vous',
     },
     publicCancel: {
-      getHref: (token: string) => `/rendez-vous/annuler/${token}`,
+      getHref: (token: string) => `/public/rendez-vous/annuler/${token}`,
     },
     publicRescheduleConfirm: {
-      getHref: (token: string) => `/rendez-vous/replanifier/confirmer/${token}`,
+      getHref: (token: string) =>
+        `/public/rendez-vous/replanifier/confirmer/${token}`,
     },
     staff: {
       agenda: { getHref: () => '/gestion/rendez-vous' },

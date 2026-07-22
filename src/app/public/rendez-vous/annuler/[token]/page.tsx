@@ -46,7 +46,7 @@ export default function AnnulerRendezVousPage() {
                 à tout moment.
               </p>
               <Link
-                href="/rendez-vous"
+                href="/public/rendez-vous"
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
               >
                 <ArrowLeft className="size-4" />
@@ -86,7 +86,7 @@ export default function AnnulerRendezVousPage() {
                   Confirmer l&apos;annulation
                 </Button>
                 <Link
-                  href="/evenements"
+                  href="/public/evenements"
                   className="text-sm text-slate-500 transition-colors hover:text-slate-900"
                 >
                   Non, garder mon rendez-vous
