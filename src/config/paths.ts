@@ -130,6 +130,13 @@ export const paths = {
   },
 
   // IA — assistant analytique + rapports générés
+  // Canaux de l'assistant (gestion des accès WhatsApp/email)
+  agentChannels: {
+    manage: {
+      getHref: () => '/parametres/canaux-assistant',
+    },
+  },
+
   aiReports: {
     chat: {
       getHref: () => '/assistant-ia',

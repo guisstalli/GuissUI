@@ -4,6 +4,7 @@ import { env } from '@/config/env';
 
 import { networkDelay } from '../utils';
 
+import { agentChannelsHandlers } from './agent-channels';
 import { aiReportsHandlers } from './ai-reports';
 import { appointmentsHandlers } from './appointments';
 import { authHandlers } from './auth';
@@ -16,6 +17,7 @@ import { teamsHandlers } from './teams';
 import { usersHandlers } from './users';
 
 export const handlers = [
+  ...agentChannelsHandlers,
   ...aiReportsHandlers,
   ...appointmentsHandlers,
   ...authHandlers,

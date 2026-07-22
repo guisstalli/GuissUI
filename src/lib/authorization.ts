@@ -119,6 +119,8 @@ export const PERMISSIONS = {
 
   // Admin
   'admin:users': 'Gérer les utilisateurs',
+  'admin:agent-channels':
+    "Gérer les canaux de l'assistant IA (WhatsApp, email)",
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -175,6 +177,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sites:edit',
     'sites:delete',
     'admin:users',
+    'admin:agent-channels',
     'drivers:create',
     'drivers:edit',
     'drivers:delete',

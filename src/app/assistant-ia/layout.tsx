@@ -1,6 +1,6 @@
 'use client';
 
-import { FileBarChart } from 'lucide-react';
+import { FileBarChart, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -32,6 +32,15 @@ export default function AssistantIaLayout({
         <div className="flex h-[calc(100vh-9rem)] gap-3">
           <aside className="hidden w-64 shrink-0 md:flex md:flex-col">
             <ConversationList activeConversationId={activeConversationId} />
+            <Can permission="admin:agent-channels">
+              <Link
+                href={paths.agentChannels.manage.getHref()}
+                className="mt-2 flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <MessageCircle className="size-4" aria-hidden />
+                Canaux (WhatsApp, email)
+              </Link>
+            </Can>
             <Can permission="ai-reports:view">
               <Link
                 href={paths.aiReports.list.getHref()}
