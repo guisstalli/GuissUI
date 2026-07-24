@@ -4,6 +4,7 @@ import { MessageCircle, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
 import { Switch } from '@/components/ui/form';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
@@ -24,6 +25,14 @@ export function SendersTable() {
     return (
       <div className="flex justify-center py-10">
         <Spinner />
+      </div>
+    );
+  }
+
+  if (sendersQuery.isError) {
+    return (
+      <div className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-destructive">
+        Impossible de charger les identités autorisées. Réessayez plus tard.
       </div>
     );
   }
@@ -91,22 +100,39 @@ export function SendersTable() {
                 />
               </td>
               <td className="px-3 py-2 text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Révoquer ${sender.identifier}`}
-                  onClick={() =>
-                    deleteMutation.mutate(sender.id, {
-                      onSuccess: () =>
-                        addNotification({
-                          type: 'success',
-                          title: 'Identité révoquée',
-                        }),
-                    })
+                <ConfirmationDialog
+                  isDone={deleteMutation.isPending}
+                  icon="danger"
+                  title="Révoquer cette identité ?"
+                  body={`${sender.identifier} ne pourra plus discuter avec l'assistant tant qu'elle n'est pas réautorisée.`}
+                  triggerButton={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Révoquer ${sender.identifier}`}
+                    >
+                      <Trash2 className="size-4 text-destructive" aria-hidden />
+                    </Button>
                   }
-                >
-                  <Trash2 className="size-4 text-destructive" aria-hidden />
-                </Button>
+                  confirmButton={
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={deleteMutation.isPending}
+                      onClick={() =>
+                        deleteMutation.mutate(sender.id, {
+                          onSuccess: () =>
+                            addNotification({
+                              type: 'success',
+                              title: 'Identité révoquée',
+                            }),
+                        })
+                      }
+                    >
+                      Révoquer
+                    </Button>
+                  }
+                />
               </td>
             </tr>
           ))}

@@ -381,7 +381,7 @@ export default function PatientDetailPage() {
               {/* Examens Adulte */}
               {patientExams?.adult && patientExams.adult.length > 0 && (
                 <div className="space-y-3">
-                  <div className="overflow-hidden rounded-lg border border-border">
+                  <div className="overflow-x-auto rounded-lg border border-border">
                     <table className="w-full">
                       <thead className="bg-muted/50 border-b border-border">
                         <tr>
@@ -458,7 +458,7 @@ export default function PatientDetailPage() {
               {/* Examens Enfant */}
               {patientExams?.child && patientExams.child.length > 0 && (
                 <div className="space-y-3">
-                  <div className="overflow-hidden rounded-lg border border-border">
+                  <div className="overflow-x-auto rounded-lg border border-border">
                     <table className="w-full">
                       <thead className="bg-muted/50 border-b border-border">
                         <tr>

@@ -10,6 +10,7 @@ import { AppShell as Shell } from '@/app/_shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
 import {
   Form,
   FormControl,
@@ -231,19 +232,37 @@ function PrestationRow({ prestation }: { prestation: Prestation }) {
         >
           <Edit2 className="size-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hover:bg-destructive/10 size-8 text-destructive"
-          disabled={removing}
-          onClick={() => remove(prestation.id)}
-        >
-          {removing ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Trash2 className="size-4" />
-          )}
-        </Button>
+        <ConfirmationDialog
+          isDone={removing}
+          icon="danger"
+          title="Supprimer cette prestation ?"
+          body={`« ${prestation.libelle} » sera retirée du catalogue. Les factures existantes conservent leur libellé.`}
+          triggerButton={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:bg-destructive/10 size-8 text-destructive"
+              disabled={removing}
+              aria-label="Supprimer"
+            >
+              {removing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+            </Button>
+          }
+          confirmButton={
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => remove(prestation.id)}
+              disabled={removing}
+            >
+              Supprimer
+            </Button>
+          }
+        />
       </div>
     </li>
   );
@@ -253,7 +272,7 @@ function PrestationRow({ prestation }: { prestation: Prestation }) {
 
 export default function PrestationsPage() {
   const [showCreate, setShowCreate] = useState(false);
-  const { data: prestations, isLoading } = usePrestations();
+  const { data: prestations, isLoading, isError } = usePrestations();
   const { addNotification } = useNotifications();
 
   const { mutate: create, isPending: creating } = useCreatePrestation({
@@ -324,6 +343,10 @@ export default function PrestationsPage() {
                   <Skeleton key={i} className="h-14 rounded-lg" />
                 ))}
               </div>
+            ) : isError ? (
+              <p className="py-6 text-center text-sm text-destructive">
+                Impossible de charger les prestations. Réessayez plus tard.
+              </p>
             ) : !prestations?.length ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
                 Aucune prestation configurée.

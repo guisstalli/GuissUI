@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ChevronUp,
   ClipboardList,
+  FileText,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -171,6 +172,12 @@ const navGroups: NavGroup[] = [
         icon: Bot,
         permission: 'ai-reports:generate',
       },
+      {
+        title: 'Rapports IA',
+        url: paths.aiReports.list.getHref(),
+        icon: FileText,
+        permission: 'ai-reports:view',
+      },
     ],
   },
   {
@@ -186,13 +193,13 @@ const navGroups: NavGroup[] = [
             title: 'Liste des conducteurs',
             url: paths.drivers.list.getHref(),
             icon: Truck,
-            permission: 'patients:view',
+            permission: 'drivers:view',
           },
           {
             title: 'Corbeille',
             url: paths.drivers.trash.getHref(),
             icon: Trash2,
-            permission: 'patients:view',
+            permission: 'drivers:view',
           },
           {
             title: 'Examens',
@@ -533,7 +540,9 @@ export function AppSidebar() {
                   <UserCircle className="mr-2 size-4" aria-hidden="true" />
                   Mon profil
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem
+                  onClick={() => router.push(paths.parametres.getHref())}
+                >
                   <Settings className="mr-2 size-4" aria-hidden="true" />
                   Paramètres
                 </DropdownMenuItem>
