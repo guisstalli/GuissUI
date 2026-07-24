@@ -185,27 +185,24 @@ export const administrationHandlers = [
   ),
 
   // POST /users/permission-groups/
-  http.post(
-    `${env.API_URL}/users/permission-groups/`,
-    async ({ request }) => {
-      const body = (await request.json()) as {
-        name: string;
-        description?: string;
-        capability_codes?: string[];
-        user_ids?: number[];
-      };
-      const created = {
-        id: 99,
-        name: body.name,
-        description: body.description ?? '',
-        is_system: false,
-        capabilities: body.capability_codes ?? [],
-        user_ids: body.user_ids ?? [],
-        created_at: new Date().toISOString(),
-      };
-      return HttpResponse.json(created, { status: 201 });
-    },
-  ),
+  http.post(`${env.API_URL}/users/permission-groups/`, async ({ request }) => {
+    const body = (await request.json()) as {
+      name: string;
+      description?: string;
+      capability_codes?: string[];
+      user_ids?: number[];
+    };
+    const created = {
+      id: 99,
+      name: body.name,
+      description: body.description ?? '',
+      is_system: false,
+      capabilities: body.capability_codes ?? [],
+      user_ids: body.user_ids ?? [],
+      created_at: new Date().toISOString(),
+    };
+    return HttpResponse.json(created, { status: 201 });
+  }),
 
   // PATCH /users/permission-groups/:id/
   http.patch(
