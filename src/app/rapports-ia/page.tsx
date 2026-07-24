@@ -60,6 +60,11 @@ export default function RapportsIaPage() {
     <Can permission="ai-reports:view">
       <Shell title="Rapports IA">
         <div className="space-y-4">
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            Documents complets (PDF / DOCX) générés par l&apos;IA, validés par
+            un médecin avant diffusion. Pour une question rapide sur les
+            chiffres, utilisez plutôt l&apos;Assistant IA.
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             <Select
               value={statusFilter || ALL_STATUSES}
