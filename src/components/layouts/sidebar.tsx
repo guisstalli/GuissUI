@@ -9,6 +9,7 @@ import {
   ChevronUp,
   ClipboardList,
   FileText,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -16,6 +17,7 @@ import {
   Package,
   Receipt,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Sliders,
   Trash2,
@@ -63,6 +65,13 @@ import {
   hasPermission,
   type Permission,
 } from '@/lib/authorization';
+import {
+  CAPABILITY,
+  type CapabilityCode,
+  hasCapability,
+  type MyCapabilities,
+  useMyCapabilities,
+} from '@/lib/capabilities';
 import { cn } from '@/lib/utils';
 
 type SubNavItem = {
@@ -77,6 +86,8 @@ type NavItem = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   permission: Permission | null;
+  /** Capacité serveur requise en plus de la permission (gating optionnel). */
+  capability?: CapabilityCode;
   children?: SubNavItem[];
 };
 
@@ -171,6 +182,7 @@ const navGroups: NavGroup[] = [
         url: paths.aiReports.chat.getHref(),
         icon: Bot,
         permission: 'ai-reports:generate',
+        capability: CAPABILITY.AI_CHAT_ACCESS,
       },
       {
         title: 'Rapports IA',
@@ -254,14 +266,54 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-const adminItems: NavItem[] = [
+/**
+ * Section Administration : mélange gating par permission client (Utilisateurs)
+ * et par capacité serveur (tableau de bord, sécurité, permissions).
+ */
+type AdminNavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission?: Permission;
+  capability?: CapabilityCode;
+};
+
+const adminItems: AdminNavItem[] = [
   {
     title: 'Utilisateurs',
     url: paths.admin.users.getHref(),
     icon: ShieldCheck,
     permission: 'admin:users',
   },
+  {
+    title: 'Tableau de bord',
+    url: paths.administration.dashboard.getHref(),
+    icon: LayoutDashboard,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
+  },
+  {
+    title: 'Journal de sécurité',
+    url: paths.administration.security.getHref(),
+    icon: ShieldAlert,
+    capability: CAPABILITY.SECURITY_AUDIT_VIEW,
+  },
+  {
+    title: 'Permissions',
+    url: paths.administration.permissions.getHref(),
+    icon: KeyRound,
+    capability: CAPABILITY.PERMISSIONS_MANAGE,
+  },
 ];
+
+function isAdminItemVisible(
+  item: AdminNavItem,
+  user: AuthUser | null | undefined,
+  caps: MyCapabilities | undefined,
+): boolean {
+  if (item.permission && !hasPermission(user, item.permission)) return false;
+  if (item.capability && !hasCapability(caps, item.capability)) return false;
+  return true;
+}
 
 const roleColors: Record<string, string> = {
   ADMIN: 'bg-red-500',
@@ -354,10 +406,13 @@ function CollapsibleNavItem({
 function isNavItemVisible(
   item: NavItem,
   user: AuthUser | null | undefined,
+  caps: MyCapabilities | undefined,
 ): boolean {
   const selfVisible =
     item.permission === null || hasPermission(user, item.permission);
   if (!selfVisible) return false;
+  // Gating par capacité serveur en surcouche (ex. Assistant IA / ai.chat.access).
+  if (item.capability && !hasCapability(caps, item.capability)) return false;
   if (!item.children || item.children.length === 0) return true;
   return item.children.some(
     (child) => !child.permission || hasPermission(user, child.permission),
@@ -368,6 +423,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
+  const { data: myCapabilities } = useMyCapabilities();
 
   const isActive = (url: string) => {
     if (url === '/') return pathname === '/';
@@ -382,10 +438,20 @@ export function AppSidebar() {
       navGroups
         .map((group) => ({
           ...group,
-          items: group.items.filter((item) => isNavItemVisible(item, user)),
+          items: group.items.filter((item) =>
+            isNavItemVisible(item, user, myCapabilities),
+          ),
         }))
         .filter((group) => group.items.length > 0),
-    [user],
+    [user, myCapabilities],
+  );
+
+  const visibleAdminItems = React.useMemo(
+    () =>
+      adminItems.filter((item) =>
+        isAdminItemVisible(item, user, myCapabilities),
+      ),
+    [user, myCapabilities],
   );
 
   const initials = user ? getInitials(user.name ?? '', user.email ?? '') : 'U';
@@ -474,13 +540,14 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {/* Admin section */}
-        <Can permission="admin:users">
+        {/* Admin section — visible dès qu'au moins un item l'est (permission
+            client admin:users OU capacité serveur d'administration). */}
+        {visibleAdminItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) => (
+                {visibleAdminItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
@@ -497,7 +564,7 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        </Can>
+        )}
       </SidebarContent>
 
       {/* Footer — User menu */}

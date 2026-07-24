@@ -199,6 +199,19 @@ export const paths = {
     },
   },
 
+  // Administration (capacités serveur : tableau de bord, sécurité, permissions)
+  administration: {
+    dashboard: {
+      getHref: () => '/administration',
+    },
+    security: {
+      getHref: () => '/administration/securite',
+    },
+    permissions: {
+      getHref: () => '/administration/permissions',
+    },
+  },
+
   // Events (public + staff)
   events: {
     publicList: {
@@ -277,6 +290,9 @@ export const activePaths = [
   '/parametres',
   '/configuration/prestations',
   '/profil',
+  '/administration',
+  '/administration/securite',
+  '/administration/permissions',
   '/unauthorized',
   '/maintenance',
 ] as const;
