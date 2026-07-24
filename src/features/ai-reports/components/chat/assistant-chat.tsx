@@ -3,13 +3,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 
 import { useChat } from '../../api/chat';
+import { streamChat } from '../../api/chat-stream';
 import {
   getConversationQueryOptions,
   useConversation,
@@ -103,44 +104,53 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
   // Bulles en vol (question envoyée / erreur du tour) — état de VUE uniquement.
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [flightError, setFlightError] = useState<ChatMessage | null>(null);
+  // Streaming (SSE) : progression affichée + drapeau d'envoi en cours.
+  const [streaming, setStreaming] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<string | null>(null);
+
+  // Réconciliation du cache après un tour réussi — partagée par le streaming
+  // (événement `done`) et le repli synchrone (mutation onSuccess).
+  const applyTurn = useCallback(
+    (question: string, response: ChatResponse) => {
+      const turn = forgeTurnMessages(question, response);
+      if (isExisting) {
+        queryClient.setQueryData<ConversationDetail>(
+          getConversationQueryOptions(conversationId).queryKey,
+          (old) =>
+            old
+              ? {
+                  ...old,
+                  updated_at: new Date().toISOString(),
+                  messages: [...old.messages, ...turn],
+                }
+              : old,
+        );
+      } else {
+        const now = new Date().toISOString();
+        queryClient.setQueryData<ConversationDetail>(
+          getConversationQueryOptions(response.conversation_id).queryKey,
+          {
+            id: response.conversation_id,
+            title: question.slice(0, TITLE_MAX_LENGTH),
+            created_at: now,
+            updated_at: now,
+            messages: turn,
+          },
+        );
+        router.replace(
+          paths.aiReports.conversation.getHref(response.conversation_id),
+        );
+      }
+      setPendingQuestion(null);
+      queryClient.invalidateQueries({ queryKey: ['ai-conversations'] });
+    },
+    [isExisting, conversationId, queryClient, router],
+  );
 
   const chatMutation = useChat({
     mutationConfig: {
       onSuccess: (response) => {
-        const question = pendingQuestion ?? '';
-        const turn = forgeTurnMessages(question, response);
-        if (isExisting) {
-          queryClient.setQueryData<ConversationDetail>(
-            getConversationQueryOptions(conversationId).queryKey,
-            (old) =>
-              old
-                ? {
-                    ...old,
-                    updated_at: new Date().toISOString(),
-                    messages: [...old.messages, ...turn],
-                  }
-                : old,
-          );
-        } else {
-          // Semer le cache AVANT la redirection : la page [id] monte chaud.
-          const now = new Date().toISOString();
-          queryClient.setQueryData<ConversationDetail>(
-            getConversationQueryOptions(response.conversation_id).queryKey,
-            {
-              id: response.conversation_id,
-              title: question.slice(0, TITLE_MAX_LENGTH),
-              created_at: now,
-              updated_at: now,
-              messages: turn,
-            },
-          );
-          router.replace(
-            paths.aiReports.conversation.getHref(response.conversation_id),
-          );
-        }
-        setPendingQuestion(null);
-        // Tri par activité + message_count de la sidebar.
-        queryClient.invalidateQueries({ queryKey: ['ai-conversations'] });
+        applyTurn(pendingQuestion ?? '', response);
       },
       onError: (error) => {
         const status =
@@ -172,15 +182,56 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
     },
   });
 
-  const handleSend = (question: string, attachments: File[]) => {
-    if (chatMutation.isPending) return;
+  const showBusinessError = (message: string) => {
+    setFlightError({
+      id: newLocalId(),
+      role: 'assistant',
+      content: message || GENERIC_ERROR_MESSAGE,
+      timestamp: Date.now(),
+      isError: true,
+    });
+    queryClient.invalidateQueries({ queryKey: ['ai-conversations'] });
+  };
+
+  const handleSend = async (question: string, attachments: File[]) => {
+    if (chatMutation.isPending || streaming) return;
     setFlightError(null);
     setPendingQuestion(question);
-    chatMutation.mutate({
-      question,
-      ...(attachments.length > 0 ? { attachments } : {}),
-      ...(isExisting ? { conversation_id: conversationId } : {}),
-    });
+    setStreaming(true);
+    setStreamStatus('L’assistant réfléchit…');
+    try {
+      const response = await streamChat({
+        question,
+        ...(attachments.length > 0 ? { attachments } : {}),
+        ...(isExisting ? { conversation_id: conversationId } : {}),
+        onEvent: (e) => {
+          if (e.type === 'tools' && e.tools.length) {
+            setStreamStatus(`Analyse en cours : ${e.tools.join(', ')}…`);
+          } else if (e.type === 'step') {
+            setStreamStatus('L’assistant réfléchit…');
+          }
+        },
+      });
+      applyTurn(question, response);
+    } catch (err) {
+      const business =
+        err instanceof Error &&
+        (err as Error & { business?: boolean }).business === true;
+      if (business) {
+        // Erreur métier (budget/quota/indispo) : afficher, ne PAS relancer.
+        showBusinessError((err as Error).message);
+      } else {
+        // Streaming indisponible (réseau/proxy) : repli sur le chat synchrone.
+        chatMutation.mutate({
+          question,
+          ...(attachments.length > 0 ? { attachments } : {}),
+          ...(isExisting ? { conversation_id: conversationId } : {}),
+        });
+      }
+    } finally {
+      setStreaming(false);
+      setStreamStatus(null);
+    }
   };
 
   if (isExisting && conversationQuery.isLoading) {
@@ -228,10 +279,19 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
       <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-background">
         <ChatMessageList
           messages={messages}
-          isThinking={chatMutation.isPending}
+          isThinking={chatMutation.isPending || streaming}
         />
         <div className="border-t border-border p-3">
-          <ChatInput onSend={handleSend} disabled={chatMutation.isPending} />
+          {streaming && streamStatus && (
+            <p className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <Spinner className="size-3" />
+              {streamStatus}
+            </p>
+          )}
+          <ChatInput
+            onSend={handleSend}
+            disabled={chatMutation.isPending || streaming}
+          />
         </div>
       </div>
     </div>
