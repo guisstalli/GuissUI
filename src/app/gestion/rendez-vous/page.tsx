@@ -34,6 +34,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs/tabs';
+import { paths } from '@/config/paths';
 import { useRdvList } from '@/features/appointments/api/get-rdv-list';
 import { useRdvStats } from '@/features/appointments/api/get-rdv-stats';
 import {
@@ -264,11 +265,11 @@ function RdvDetailPanel({
               {linkedFacture.numero}
             </span>
             <a
-              href={`/facturation`}
+              href={paths.billing.detail.getHref(linkedFacture.id)}
               className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
             >
               <ExternalLink className="size-3" />
-              Voir
+              Voir le détail
             </a>
           </div>
         ) : (
