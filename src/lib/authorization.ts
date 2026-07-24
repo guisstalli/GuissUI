@@ -131,7 +131,7 @@ export type Permission = keyof typeof PERMISSIONS;
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   // ADMIN n'a pas accès à l'application interne — géré via interface admin dédiée
-  ADMIN: ['admin:users'],
+  ADMIN: ['admin:users', 'admin:agent-channels'],
 
   // SUPERUSER : toutes les permissions sans restriction (pour tests)
   SUPERUSER: [

@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   MapPin,
+  MessageSquare,
   Package,
   Receipt,
   Settings,
@@ -229,6 +230,12 @@ const navGroups: NavGroup[] = [
         url: paths.configuration.prestations.getHref(),
         icon: Package,
         permission: 'sites:view',
+      },
+      {
+        title: 'Canaux IA',
+        url: paths.agentChannels.manage.getHref(),
+        icon: MessageSquare,
+        permission: 'admin:agent-channels',
       },
       {
         title: 'Paramètres',
