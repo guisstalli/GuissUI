@@ -47,7 +47,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       >
         <Bot className="size-4" />
       </div>
-      <div className="max-w-[85%] space-y-1 rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-2.5 shadow-sm">
+      <div className="min-w-0 max-w-[85%] space-y-1 rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-2.5 shadow-sm">
         <MarkdownContent content={message.content} />
         <ChatSourcesAccordion
           sources={message.sources}

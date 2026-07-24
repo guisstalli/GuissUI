@@ -24,7 +24,12 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
   return (
     <div
       className={cn(
-        'prose prose-sm dark:prose-invert max-w-none break-words',
+        'prose prose-sm dark:prose-invert min-w-0 max-w-none break-words',
+        // Les blocs à largeur intrinsèque (code, tableaux GFM) forcent sinon la
+        // largeur de la bulle → scroll horizontal de toute la page. On les
+        // borne pour qu'ils scrollent DANS leur propre conteneur.
+        '[&_pre]:max-w-full [&_pre]:overflow-x-auto',
+        '[&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto',
         className,
       )}
     >
