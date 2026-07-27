@@ -215,6 +215,13 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sites:edit',
     'sites:delete',
     'admin:users',
+    'drivers:create',
+    'drivers:edit',
+    'drivers:delete',
+    'drivers:hard-delete',
+    'drivers:restore',
+    'drivers:view-deleted',
+    'drivers:bulk-import'
   ],
 
   // DOCTEUR : accès complet aux données médicales
