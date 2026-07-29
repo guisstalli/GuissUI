@@ -15,6 +15,14 @@ import { Badge } from '@/components/ui/badge/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -152,51 +160,61 @@ function SitesMultiSelect({
             </button>
           )}
         </div>
-        <div className="max-h-56 overflow-y-auto">
-          {sites.length === 0 ? (
-            <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-              Aucun site disponible
-            </p>
-          ) : (
-            sites.map((site) => {
-              const checked = selectedIds.includes(site.id);
-              return (
-                <button
-                  key={site.id}
-                  type="button"
-                  onClick={() => toggle(site.id)}
-                  className={cn(
-                    'flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    checked && 'bg-primary/10 text-primary font-medium',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'flex size-4 shrink-0 items-center justify-center rounded border',
-                      checked
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-input bg-background',
-                    )}
-                  >
-                    {checked && (
-                      <svg
-                        className="size-2.5"
-                        fill="none"
-                        viewBox="0 0 10 10"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
+        {/* Palette de commande : au-delà d'une poignée de sites, une liste
+            déroulante devient un mur à parcourir à l'œil. La recherche filtre
+            à la frappe et la liste reste bornée en hauteur. */}
+        {sites.length === 0 ? (
+          <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+            Aucun site disponible
+          </p>
+        ) : (
+          <Command>
+            <CommandInput placeholder="Rechercher un site…" />
+            <CommandList className="max-h-56">
+              <CommandEmpty>Aucun site ne correspond.</CommandEmpty>
+              <CommandGroup>
+                {sites.map((site) => {
+                  const checked = selectedIds.includes(site.id);
+                  return (
+                    <CommandItem
+                      key={site.id}
+                      // `value` porte la recherche : le libellé, pas l'id,
+                      // sinon taper « Thiès » ne trouverait rien.
+                      value={site.libelle}
+                      onSelect={() => toggle(site.id)}
+                      className={cn(
+                        'gap-3',
+                        checked && 'bg-primary/10 font-medium text-primary',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex size-4 shrink-0 items-center justify-center rounded border',
+                          checked
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-input bg-background',
+                        )}
                       >
-                        <polyline points="1.5,5 4,7.5 8.5,2.5" />
-                      </svg>
-                    )}
-                  </span>
-                  <span className="truncate text-left">{site.libelle}</span>
-                </button>
-              );
-            })
-          )}
-        </div>
+                        {checked && (
+                          <svg
+                            className="size-2.5"
+                            fill="none"
+                            viewBox="0 0 10 10"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <polyline points="1.5,5 4,7.5 8.5,2.5" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="truncate text-left">{site.libelle}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        )}
       </PopoverContent>
     </Popover>
   );

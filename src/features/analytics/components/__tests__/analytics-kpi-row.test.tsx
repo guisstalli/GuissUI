@@ -23,7 +23,9 @@ describe('AnalyticsKpiRow', () => {
   test('renders the four KPI card titles', () => {
     rtlRender(<AnalyticsKpiRow data={mockPopulation} />);
 
-    expect(screen.getByText('Total Patients')).toBeInTheDocument();
+    // « Patients examinés », pas « Total Patients » : la cohorte analytique
+    // part des examens et exclut donc les patients jamais examinés.
+    expect(screen.getByText('Patients examinés')).toBeInTheDocument();
     expect(screen.getByText('Total Examens')).toBeInTheDocument();
     expect(screen.getByText('Âge Moyen')).toBeInTheDocument();
     expect(screen.getByText('Activité')).toBeInTheDocument();
@@ -70,7 +72,9 @@ describe('AnalyticsKpiRow', () => {
 
   test('renders descriptive subtitles for each KPI card', () => {
     rtlRender(<AnalyticsKpiRow data={mockPopulation} />);
-    expect(screen.getByText('Dans la base de données')).toBeInTheDocument();
+    expect(
+      screen.getByText('Ayant au moins un examen sur la période filtrée'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Consultations enregistrées')).toBeInTheDocument();
     expect(screen.getByText('Examens par patient')).toBeInTheDocument();
   });
