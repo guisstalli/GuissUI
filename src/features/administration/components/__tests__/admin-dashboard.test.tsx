@@ -35,28 +35,63 @@ function renderDashboard() {
 // =============================================================================
 
 describe('AdminDashboard', () => {
-  test('renders user KPI card titles after data loads', async () => {
+  test('met les indicateurs de flux en tête, avec leur comparateur', async () => {
     server.use(...administrationHandlers);
 
     renderDashboard();
 
-    await screen.findByText('Total');
-    expect(screen.getByText('Actifs')).toBeInTheDocument();
-    expect(screen.getByText('Vérifiés')).toBeInTheDocument();
+    await screen.findByText('Examens réalisés');
+    expect(screen.getByText('Exécutions IA')).toBeInTheDocument();
+    expect(screen.getByText('Incidents de sécurité (7 j)')).toBeInTheDocument();
+    expect(screen.getByText('Nouveaux comptes (30 j)')).toBeInTheDocument();
   });
 
-  test('renders user KPI values from the mocked payload', async () => {
+  test('chiffre la variation par rapport à la période précédente', async () => {
     server.use(...administrationHandlers);
 
     renderDashboard();
 
-    // total=42, active=35, verified=38 all appear as text
-    await screen.findByText('42');
-    expect(screen.getByText('35')).toBeInTheDocument();
-    expect(screen.getByText('38')).toBeInTheDocument();
+    // examens : 64 sur la fenêtre contre 50 avant → +28 %
+    await screen.findByText('64');
+    expect(screen.getByText('+28 %')).toBeInTheDocument();
+    // le point de comparaison est affiché, pas seulement le pourcentage
+    expect(screen.getAllByText(/vs 14 j préc\./).length).toBeGreaterThan(0);
   });
 
-  test('renders system volumetry section', async () => {
+  test('une baisse des incidents de sécurité se lit comme une amélioration', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard();
+
+    // incidents : 4 contre 9 → −56 %, affiché en vert (higherIsBetter=false)
+    const variation = await screen.findByText('−56 %');
+    expect(variation.className).toMatch(/emerald/);
+  });
+
+  test('affiche les libellés français des événements, jamais les clés techniques', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard();
+
+    await screen.findByText('Échec de connexion');
+    expect(screen.getByText('Accès refusé (403)')).toBeInTheDocument();
+    expect(screen.queryByText('LOGIN_FAILED')).not.toBeInTheDocument();
+    expect(screen.queryByText('ACCESS_DENIED')).not.toBeInTheDocument();
+  });
+
+  test('exprime les comptes actifs et vérifiés en proportion du total', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard();
+
+    await screen.findByText('État des comptes');
+    expect(screen.getByText('42 comptes au total')).toBeInTheDocument();
+    // 35/42 = 83 %, 38/42 = 90 %
+    expect(screen.getByText('83 %')).toBeInTheDocument();
+    expect(screen.getByText('90 %')).toBeInTheDocument();
+  });
+
+  test('rend la volumétrie système', async () => {
     server.use(...administrationHandlers);
 
     renderDashboard();
@@ -66,42 +101,32 @@ describe('AdminDashboard', () => {
     expect(screen.getByText('Rapports IA')).toBeInTheDocument();
   });
 
-  test('renders security KPI for failed logins', async () => {
+  test('affiche la fenêtre issue du payload', async () => {
     server.use(...administrationHandlers);
 
     renderDashboard();
 
-    await screen.findByText('Connexions échouées (7 j)');
-    expect(screen.getByText('3')).toBeInTheDocument(); // login_failed_7d
-  });
-
-  test('shows the window days label from the payload', async () => {
-    server.use(...administrationHandlers);
-
-    renderDashboard();
-
-    // window_days=14 → text contains "14 derniers jours"
     await screen.findByText(/14 derniers jours/i);
   });
 
-  test('the days selector buttons are rendered', async () => {
+  test('les boutons de fenêtre sont rendus', async () => {
     server.use(...administrationHandlers);
 
     renderDashboard();
 
-    await screen.findByText('42'); // wait for data
+    await screen.findByText('Examens réalisés');
 
     expect(screen.getByRole('button', { name: /7 j/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /14 j/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /30 j/i })).toBeInTheDocument();
   });
 
-  test('14j button has aria-pressed=true by default', async () => {
+  test('14 j est la fenêtre active par défaut', async () => {
     server.use(...administrationHandlers);
 
     renderDashboard();
 
-    await screen.findByText('42');
+    await screen.findByText('Examens réalisés');
 
     expect(screen.getByRole('button', { name: /14 j/i })).toHaveAttribute(
       'aria-pressed',
@@ -113,7 +138,7 @@ describe('AdminDashboard', () => {
     );
   });
 
-  test('clicking a different days button triggers a refetch with new days param', async () => {
+  test('changer de fenêtre relance la requête avec le nouveau paramètre', async () => {
     const user = userEvent.setup();
 
     let capturedDays: string | null = null;
@@ -127,19 +152,16 @@ describe('AdminDashboard', () => {
 
     renderDashboard();
 
-    // Wait for first render (default days=14)
     await screen.findByText(/derniers jours/i);
 
-    // Click the 7j button
     await user.click(screen.getByRole('button', { name: /7 j/i }));
 
-    // The request should have been made with days=7
     await waitFor(() => {
       expect(capturedDays).toBe('7');
     });
   });
 
-  test('shows error state when the API returns a 500', async () => {
+  test("affiche un état d'erreur quand l'API renvoie un 500", async () => {
     server.use(
       http.get(`${env.API_URL}/analytics/admin-dashboard/`, () =>
         HttpResponse.json({ detail: 'Server error' }, { status: 500 }),

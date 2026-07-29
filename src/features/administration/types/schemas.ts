@@ -4,6 +4,13 @@ import { z } from 'zod';
 // TABLEAU DE BORD ADMINISTRATEUR — GET /analytics/admin-dashboard/?days=
 // =============================================================================
 
+/** Ligne d'une répartition : le backend fournit le libellé, jamais la clé seule. */
+export type LabelledCount = {
+  key: string;
+  label: string;
+  count: number;
+};
+
 export type AdminDashboardUsers = {
   total: number;
   active: number;
@@ -11,24 +18,41 @@ export type AdminDashboardUsers = {
   verified: number;
   unverified: number;
   new_last_30d: number;
-  by_role: Record<string, number>;
+  new_previous_30d: number;
+  by_role: LabelledCount[];
+};
+
+/** Activité clinique — le pouls métier, distinct du trafic IA. */
+export type AdminDashboardActivity = {
+  examens_window: number;
+  examens_previous_window: number;
+  adultes_window: number;
+  enfants_window: number;
+  examens_per_day: { date: string; adultes: number; enfants: number }[];
 };
 
 export type AdminDashboardAiTraffic = {
   total_runs: number;
   success: number;
   failed: number;
+  /** null quand aucune exécution — pas 0 %, qui suggérerait un échec total. */
+  success_rate: number | null;
+  runs_window: number;
+  runs_previous_window: number;
   tokens_in: number;
   tokens_out: number;
   cost_usd: number;
-  by_capability: Record<string, number>;
+  cost_usd_window: number;
+  by_capability: { key: string; count: number }[];
   runs_per_day: { date: string; runs: number }[];
 };
 
 export type AdminDashboardSecurity = {
   login_failed_7d: number;
   access_denied_7d: number;
-  by_event_30d: Record<string, number>;
+  incidents_7d: number;
+  incidents_previous_7d: number;
+  events_30d: LabelledCount[];
 };
 
 export type AdminDashboardSystem = {
@@ -42,6 +66,7 @@ export type AdminDashboardSystem = {
 
 export type AdminDashboard = {
   users: AdminDashboardUsers;
+  activity: AdminDashboardActivity;
   ai_traffic: AdminDashboardAiTraffic;
   security: AdminDashboardSecurity;
   system: AdminDashboardSystem;

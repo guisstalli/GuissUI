@@ -86,16 +86,38 @@ export const mockAdminDashboard: AdminDashboard = {
     verified: 38,
     unverified: 4,
     new_last_30d: 5,
-    by_role: { DOCTEUR: 10, STAFF: 20, TECHNICIEN: 12 },
+    new_previous_30d: 4,
+    by_role: [
+      { key: 'STAFF', label: 'Staff', count: 20 },
+      { key: 'TECHNICIEN', label: 'Technicien', count: 12 },
+      { key: 'DOCTEUR', label: 'Docteur', count: 10 },
+    ],
+  },
+  activity: {
+    examens_window: 64,
+    examens_previous_window: 50,
+    adultes_window: 48,
+    enfants_window: 16,
+    examens_per_day: [
+      { date: '2024-04-01', adultes: 5, enfants: 2 },
+      { date: '2024-04-02', adultes: 3, enfants: 0 },
+    ],
   },
   ai_traffic: {
     total_runs: 1200,
     success: 1150,
     failed: 50,
+    success_rate: 95.8,
+    runs_window: 215,
+    runs_previous_window: 180,
     tokens_in: 500000,
     tokens_out: 250000,
     cost_usd: 12.5,
-    by_capability: { 'ai.chat.access': 800, 'ai.reports.view': 400 },
+    cost_usd_window: 3.4,
+    by_capability: [
+      { key: 'ai.chat.access', count: 800 },
+      { key: 'ai.reports.view', count: 400 },
+    ],
     runs_per_day: [
       { date: '2024-04-01', runs: 120 },
       { date: '2024-04-02', runs: 95 },
@@ -104,7 +126,12 @@ export const mockAdminDashboard: AdminDashboard = {
   security: {
     login_failed_7d: 3,
     access_denied_7d: 1,
-    by_event_30d: { LOGIN_FAILED: 10, ACCESS_DENIED: 5 },
+    incidents_7d: 4,
+    incidents_previous_7d: 9,
+    events_30d: [
+      { key: 'LOGIN_FAILED', label: 'Échec de connexion', count: 10 },
+      { key: 'ACCESS_DENIED', label: 'Accès refusé (403)', count: 5 },
+    ],
   },
   system: {
     patients: 500,
