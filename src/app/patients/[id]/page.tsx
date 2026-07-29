@@ -11,6 +11,7 @@ import {
   ClipboardList,
   ExternalLink,
   Loader2,
+  MessageSquare,
   Plus,
   User,
 } from 'lucide-react';
@@ -50,6 +51,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 //import { PatientAnalyticsContext } from '@/features/analytics/components/patient-analytics-context';
 import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { useCreateChildExam } from '@/features/exams/api/child/mutations';
+import { CommentThread } from '@/features/exams/components/comment-thread';
+import { PreviousExamSelector } from '@/features/exams/components/previous-exam-selector';
 import { usePatient } from '@/features/patients/api/get-patient';
 import { usePatientExams } from '@/features/patients/api/get-patient-exams';
 import { usePatchPatient } from '@/features/patients/api/update-patient';
@@ -130,6 +133,15 @@ export default function PatientDetailPage() {
   // Modal State for Exam Creation + Site Selection
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
+  // Examen auquel le nouvel examen fait suite — null = examen indépendant.
+  const [selectedPreviousExamId, setSelectedPreviousExamId] = useState<
+    number | null
+  >(null);
+  // Examen dont on consulte le fil de commentaires depuis la liste.
+  const [commentedExam, setCommentedExam] = useState<{
+    id: number;
+    numero: string;
+  } | null>(null);
 
   // Mutations pour créer un examen - sélection automatique basée sur patient.is_adult
   const createAdultExamMutation = useCreateAdultExam({
@@ -163,6 +175,11 @@ export default function PatientDetailPage() {
       createAdultExamMutation.mutate({
         patient_id: patientId,
         site_id: selectedSiteId,
+        // Omis plutôt qu'envoyé à null : un examen indépendant n'a pas de
+        // référence, il ne « référence pas rien ».
+        ...(selectedPreviousExamId !== null && {
+          examen_precedent_id: selectedPreviousExamId,
+        }),
       });
     } else {
       createChildExamMutation.mutate({
@@ -175,6 +192,7 @@ export default function PatientDetailPage() {
   const handleOpenExamModal = () => {
     setIsExamModalOpen(true);
     setSelectedSiteId(null);
+    setSelectedPreviousExamId(null);
   };
 
   if (isLoading) {
@@ -440,6 +458,22 @@ export default function PatientDetailPage() {
                               })}
                             </td>
                             <td className="px-4 py-3 text-right">
+                              {/* Commenter sans quitter le dossier : depuis
+                                  cette liste, on relit plusieurs examens de
+                                  suite et l'aller-retour coûte cher. */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setCommentedExam({
+                                    id: exam.id,
+                                    numero: exam.numero_examen,
+                                  })
+                                }
+                              >
+                                <MessageSquare className="mr-1.5 size-4" />
+                                Commenter
+                              </Button>
                               <Button variant="ghost" size="sm" asChild>
                                 <Link href={`/exams/adult/${exam.id}`}>
                                   <ExternalLink className="mr-1.5 size-4" />
@@ -554,6 +588,24 @@ export default function PatientDetailPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Fil de commentaires d'un examen, ouvert depuis la liste */}
+      <Dialog
+        open={commentedExam !== null}
+        onOpenChange={(open) => !open && setCommentedExam(null)}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-screen-sm">
+          <DialogHeader>
+            <DialogTitle>Commentaires</DialogTitle>
+            <DialogDescription>
+              Examen {commentedExam?.numero}
+            </DialogDescription>
+          </DialogHeader>
+          {commentedExam && (
+            <CommentThread examenType="adult" examenId={commentedExam.id} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Patient Dialog */}
       <Dialog
@@ -718,6 +770,24 @@ export default function PatientDetailPage() {
                 onChange={(id: number | null) => setSelectedSiteId(id)}
               />
             </div>
+
+            {/* Rattachement à un examen antérieur — proposé pour l'adulte,
+                où le suivi (contrôle, post-opératoire) a un sens clinique. */}
+            {patient?.is_adult && (
+              <div className="grid gap-2">
+                <span className="text-sm font-medium leading-none">
+                  Fait suite à un examen
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    (facultatif)
+                  </span>
+                </span>
+                <PreviousExamSelector
+                  patientId={patientId}
+                  value={selectedPreviousExamId}
+                  onChange={setSelectedPreviousExamId}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsExamModalOpen(false)}>

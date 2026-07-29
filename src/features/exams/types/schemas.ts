@@ -969,6 +969,9 @@ export const ExamenAdultSchema = z.object({
 export const ExamenAdultCreateSchema = z.object({
   patient_id: z.number(),
   site_id: z.number().optional(),
+  /** Examen auquel celui-ci fait suite. Le backend vérifie qu'il appartient
+   *  au même patient. */
+  examen_precedent_id: z.number().optional(),
 });
 
 /** Patient nested schema */
