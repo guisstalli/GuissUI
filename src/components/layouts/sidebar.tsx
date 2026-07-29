@@ -260,7 +260,9 @@ const navGroups: NavGroup[] = [
         title: 'Paramètres',
         url: paths.parametres.getHref(),
         icon: Sliders,
-        permission: 'sites:view',
+        // Gaté auparavant sur `sites:view` — « voir les sites » n'a aucun
+        // rapport avec les rappels, la facturation ou la clinique.
+        permission: 'settings:view',
       },
     ],
   },

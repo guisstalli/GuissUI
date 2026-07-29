@@ -102,6 +102,14 @@ export const PERMISSIONS = {
   'sites:view': 'Voir les sites',
   'sites:create': 'Créer un site',
   'sites:edit': 'Modifier un site',
+  // Paramètres de la plateforme (rappels, facturation, clinique, médicaments).
+  // Calqué sur le backend : lecture large, écriture réservée à IsAnyAdmin.
+  // Sans ce découpage, l'écran était gaté sur `sites:view` — un STAFF ou un
+  // DOCTEUR pouvait modifier le formulaire des rappels et n'obtenait qu'un 403
+  // à l'enregistrement.
+  'settings:view': 'Consulter les paramètres de la plateforme',
+  'settings:manage': 'Modifier les paramètres de la plateforme',
+
   // L'endpoint DELETE ne supprime pas : il désactive. Le libellé le dit.
   'sites:delete': 'Désactiver un site',
   // Irréversible, et le backend la réserve à IsAnyAdmin (ADMIN/SUPERUSER).
@@ -177,6 +185,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:view',
     'billing:view',
     'sites:view',
+    'settings:view',
+    'settings:manage',
     'sites:create',
     'sites:edit',
     'sites:delete',
@@ -233,6 +243,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:view',
     'billing:view',
     'sites:view',
+    'settings:view',
     'sites:create',
     'sites:edit',
     'sites:delete',
@@ -282,6 +293,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:view',
     'billing:view',
     'sites:view',
+    'settings:view',
     'ai-reports:view',
     'ai-reports:generate',
     'ai-reports:approve',

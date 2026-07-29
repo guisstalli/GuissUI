@@ -41,6 +41,7 @@ import { ClinicSettingsForm } from '@/features/clinic/components/clinic-settings
 import { MedicamentsAdminTable } from '@/features/medicaments-admin/components/medicaments-admin-table';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { useUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/authorization';
 
 // ─── Reminder form ────────────────────────────────────────────────────────────
 
@@ -52,7 +53,21 @@ const ReminderSchema = z.object({
   message_template: z.string().min(1),
 });
 
-function ReminderConfigForm({ config }: { config: ReminderConfig }) {
+/**
+ * Configuration des rappels.
+ *
+ * `readOnly` reflète le backend : `PUT /rendez-vous/config/rappels/` est gardé
+ * par `IsAnyAdmin`. Sans ce mode, STAFF et DOCTEUR voyaient un formulaire
+ * modifiable dont l'enregistrement renvoyait systématiquement 403 — mesuré.
+ * Ils gardent la lecture : connaître la politique de rappel leur est utile.
+ */
+function ReminderConfigForm({
+  config,
+  readOnly = false,
+}: {
+  config: ReminderConfig;
+  readOnly?: boolean;
+}) {
   const { addNotification } = useNotifications();
   const { mutate: update, isPending } = useUpdateReminderConfig({
     onSuccess: () =>
@@ -98,6 +113,7 @@ function ReminderConfigForm({ config }: { config: ReminderConfig }) {
                 <Switch
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  disabled={readOnly}
                 />
               )}
             />
@@ -110,7 +126,12 @@ function ReminderConfigForm({ config }: { config: ReminderConfig }) {
                 <FormItem>
                   <FormLabel>Heure d&apos;envoi</FormLabel>
                   <FormControl>
-                    <Input type="time" className="w-32" {...field} />
+                    <Input
+                      type="time"
+                      className="w-32"
+                      disabled={readOnly}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,7 +152,11 @@ function ReminderConfigForm({ config }: { config: ReminderConfig }) {
             control={form.control}
             name="rappel_h2_actif"
             render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={readOnly}
+              />
             )}
           />
         </div>
@@ -154,6 +179,7 @@ function ReminderConfigForm({ config }: { config: ReminderConfig }) {
                   <button
                     key={opt.value}
                     type="button"
+                    disabled={readOnly}
                     onClick={() => field.onChange(opt.value)}
                     className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
                       field.value === opt.value
@@ -178,7 +204,7 @@ function ReminderConfigForm({ config }: { config: ReminderConfig }) {
             <FormItem>
               <FormLabel>Modèle de message</FormLabel>
               <FormControl>
-                <Textarea rows={3} {...field} />
+                <Textarea rows={3} disabled={readOnly} {...field} />
               </FormControl>
               <p className="mt-1 text-xs text-muted-foreground">
                 Variables disponibles : {'{date}'}, {'{heure}'},{' '}
@@ -189,16 +215,23 @@ function ReminderConfigForm({ config }: { config: ReminderConfig }) {
           )}
         />
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isPending} className="gap-2">
-            {isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            Enregistrer
-          </Button>
-        </div>
+        {readOnly ? (
+          <p className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+            Ces réglages sont consultables ici, mais leur modification est
+            réservée aux administrateurs.
+          </p>
+        ) : (
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isPending} className="gap-2">
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              Enregistrer
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   );
@@ -328,12 +361,20 @@ function BillingPreferencesForm({ prefs }: { prefs: BillingPreferences }) {
 
 export default function ParametresPage() {
   const { user } = useUser();
-  const canManageClinic = user?.role === 'ADMIN' || user?.role === 'SUPERUSER';
+  // Le test de rôle en ligne (`role === 'ADMIN' || 'SUPERUSER'`) contournait le
+  // registre de permissions, et sa branche ADMIN était morte : ADMIN n'accède
+  // pas à l'application interne (voir INTERNAL_APP_ROLES).
+  const canManage = hasPermission(user, 'settings:manage');
+  // Les onglets réservés ne doivent pas figurer dans `allowed` : sinon
+  // `?tab=clinique` sur un compte non autorisé sélectionne un onglet dont ni
+  // le déclencheur ni le contenu ne sont rendus — panneau vide, sans message.
   const [activeTab, setActiveTab] = usePersistentTabState({
     paramKey: 'tab',
     storageKey: 'guiss.tab.parametres',
     defaultValue: 'rappels',
-    allowed: ['rappels', 'facturation', 'clinique', 'medicaments'],
+    allowed: canManage
+      ? ['rappels', 'facturation', 'clinique', 'medicaments']
+      : ['rappels', 'facturation'],
   });
   const { data: reminderConfig, isLoading: loadingReminder } =
     useReminderConfig();
@@ -351,7 +392,8 @@ export default function ParametresPage() {
             Paramètres
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configuration des rappels et de la facturation.
+            Rappels de rendez-vous, facturation, informations de la clinique et
+            référentiel des médicaments.
           </p>
         </div>
 
@@ -365,13 +407,13 @@ export default function ParametresPage() {
               <CreditCard className="size-4" />
               Facturation
             </TabsTrigger>
-            {canManageClinic && (
+            {canManage && (
               <TabsTrigger value="clinique" className="gap-2">
                 <Building2 className="size-4" />
                 Clinique
               </TabsTrigger>
             )}
-            {canManageClinic && (
+            {canManage && (
               <TabsTrigger value="medicaments" className="gap-2">
                 <Pill className="size-4" />
                 Médicaments
@@ -394,7 +436,10 @@ export default function ParametresPage() {
                     ))}
                   </div>
                 ) : reminderConfig ? (
-                  <ReminderConfigForm config={reminderConfig} />
+                  <ReminderConfigForm
+                    config={reminderConfig}
+                    readOnly={!canManage}
+                  />
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Impossible de charger la configuration.
@@ -429,7 +474,7 @@ export default function ParametresPage() {
             </Card>
           </TabsContent>
 
-          {canManageClinic && (
+          {canManage && (
             <TabsContent value="clinique" className="mt-4">
               <Card>
                 <CardHeader>
@@ -456,7 +501,7 @@ export default function ParametresPage() {
             </TabsContent>
           )}
 
-          {canManageClinic && (
+          {canManage && (
             <TabsContent value="medicaments" className="mt-4">
               <Card>
                 <CardHeader>
