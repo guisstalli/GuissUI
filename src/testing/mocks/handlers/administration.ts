@@ -103,6 +103,27 @@ export const mockAdminDashboard: AdminDashboard = {
       { date: '2024-04-02', adultes: 3, enfants: 0 },
     ],
   },
+  pipeline: {
+    adultes: {
+      total: 48,
+      complets: 25,
+      attente_clinique: 18,
+      a_completer: 5,
+    },
+    enfants: { total: 16, finalises: 11, en_cours: 5 },
+  },
+  appointments: {
+    passes: 40,
+    presents: 35,
+    absents: 5,
+    annules: 3,
+    taux_presence: 87.5,
+    a_venir: 12,
+  },
+  sites_activity: [
+    { key: 'Dakar - Plateau', label: 'Dakar - Plateau', count: 41 },
+    { key: 'Thiès Centre', label: 'Thiès Centre', count: 23 },
+  ],
   ai_traffic: {
     total_runs: 1200,
     success: 1150,

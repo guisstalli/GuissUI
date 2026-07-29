@@ -35,6 +35,42 @@ function renderDashboard() {
 // =============================================================================
 
 describe('AdminDashboard', () => {
+  test('ouvre sur le travail en souffrance, pas sur un volume', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard();
+
+    // 18 examens adultes : technique faite, clinique à saisir. Le chiffre
+    // apparaît deux fois (héro + légende de la barre), d'où getAllByText.
+    await screen.findByText('En attente de lecture');
+    expect(screen.getAllByText('18').length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('link', { name: /voir les examens/i }),
+    ).toBeInTheDocument();
+  });
+
+  test('ne fusionne jamais examens adultes et enfants', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard();
+
+    // Complétion dérivée chez l'adulte, déclarée chez l'enfant : deux barres.
+    await screen.findByText('Examens adultes');
+    expect(screen.getByText('Examens enfants')).toBeInTheDocument();
+    expect(screen.getByText('Attente clinique')).toBeInTheDocument();
+  });
+
+  test('affiche le taux de présence avec ce qui le compose', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard();
+
+    await screen.findByText('Présence aux rendez-vous');
+    expect(screen.getByText('87.5 %')).toBeInTheDocument();
+    // Un taux sans son dénominateur n'est pas interprétable.
+    expect(screen.getByText('35 honorés · 5 manqués')).toBeInTheDocument();
+  });
+
   test('met les indicateurs de flux en tête, avec leur comparateur', async () => {
     server.use(...administrationHandlers);
 

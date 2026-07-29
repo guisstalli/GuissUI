@@ -20,12 +20,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAdminDashboard } from '../api/get-admin-dashboard';
 import {
   DASHBOARD_WINDOWS,
+  type AdminDashboardAppointments,
   type AdminDashboardUsers,
   type DashboardWindow,
 } from '../types/schemas';
 
 import { ActivityChart } from './activity-chart';
 import { BreakdownBars } from './breakdown-bars';
+import { PipelineBand } from './pipeline-band';
 import { RunsPerDayChart } from './runs-per-day-chart';
 import { TrendStat } from './trend-stat';
 
@@ -103,6 +105,49 @@ function AccountsHealthCard({ users }: { users: AdminDashboardUsers }) {
             </div>
           );
         })}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Taux de présence aux rendez-vous.
+ *
+ * Pas un `TrendStat` : c'est un RATIO, pas un flux. Le comparer à la période
+ * précédente supposerait un volume de rendez-vous stable, ce qui est faux. On
+ * l'affiche donc avec ce qui le compose — honorés et manqués — pour qu'un taux
+ * bâti sur trois rendez-vous ne se lise pas comme un taux bâti sur trois cents.
+ */
+function AttendanceCard({
+  appointments,
+}: {
+  appointments: AdminDashboardAppointments;
+}) {
+  const { taux_presence, presents, absents, a_venir } = appointments;
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-medium text-muted-foreground">
+            Présence aux rendez-vous
+          </p>
+          <CalendarClock
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </div>
+        <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">
+          {taux_presence === null ? '—' : `${taux_presence} %`}
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {taux_presence === null
+            ? 'Aucun rendez-vous passé n’a encore été pointé.'
+            : `${formatNumber(presents)} honorés · ${formatNumber(absents)} manqués`}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {formatNumber(a_venir)} à venir
+        </p>
       </CardContent>
     </Card>
   );
@@ -201,14 +246,20 @@ export function AdminDashboard() {
         </div>
       ) : (
         <>
-          {/* Ce qui a bougé : uniquement des FLUX, tous comparés à la période
-              précédente de même longueur. C'est la ligne que l'admin lit en
-              premier le matin. */}
+          {/* Ouverture : ce sur quoi on peut AGIR aujourd'hui, avant tout
+              chiffre de volume. */}
+          <PipelineBand
+            pipeline={data.pipeline}
+            windowDays={data.window_days}
+          />
+
+          {/* Ce qui a bougé : des FLUX, comparés à la période précédente de
+              même longueur — plus le taux de présence, qui est un ratio. */}
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Ce qui a bougé
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               <TrendStat
                 label="Examens réalisés"
                 value={data.activity.examens_window}
@@ -234,6 +285,7 @@ export function AdminDashboard() {
                 higherIsBetter={false}
                 hint={`${formatNumber(data.security.login_failed_7d)} échecs de connexion · ${formatNumber(data.security.access_denied_7d)} accès refusés`}
               />
+              <AttendanceCard appointments={data.appointments} />
               <TrendStat
                 label="Nouveaux comptes (30 j)"
                 value={data.users.new_last_30d}
@@ -252,10 +304,16 @@ export function AdminDashboard() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Comptes et accès
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Où et par qui
             </h2>
             <div className="grid gap-4 lg:grid-cols-3">
+              <BreakdownBars
+                title="Activité par site"
+                description={`Examens réalisés sur ${data.window_days} jours.`}
+                entries={data.sites_activity}
+                emptyMessage="Aucun examen rattaché à un site."
+              />
               <AccountsHealthCard users={data.users} />
               <BreakdownBars
                 title="Répartition par rôle"
@@ -263,6 +321,14 @@ export function AdminDashboard() {
                 entries={data.users.by_role}
                 emptyMessage="Aucun compte enregistré."
               />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Sécurité
+            </h2>
+            <div className="grid gap-4 lg:grid-cols-3">
               <BreakdownBars
                 title="Événements de sécurité (30 j)"
                 description="Journal d'audit agrégé."
@@ -273,7 +339,7 @@ export function AdminDashboard() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Volumétrie et usage de l&apos;IA
             </h2>
             <VolumetryCard
@@ -285,12 +351,12 @@ export function AdminDashboard() {
                   icon: Truck,
                 },
                 {
-                  label: 'Examens adultes',
+                  label: 'Adultes (cumul)',
                   value: data.system.examens_adultes,
                   icon: Stethoscope,
                 },
                 {
-                  label: 'Examens enfants',
+                  label: 'Enfants (cumul)',
                   value: data.system.examens_enfants,
                   icon: Stethoscope,
                 },

@@ -31,6 +31,39 @@ export type AdminDashboardActivity = {
   examens_per_day: { date: string; adultes: number; enfants: number }[];
 };
 
+/**
+ * État d'avancement des examens.
+ *
+ * Adultes et enfants restent séparés : chez l'adulte la complétion est DÉRIVÉE
+ * (technique + clinique remplis), chez l'enfant elle est DÉCLARÉE par une
+ * action de finalisation. Un taux global mélangeant les deux ne voudrait rien
+ * dire.
+ */
+export type AdminDashboardPipeline = {
+  adultes: {
+    total: number;
+    complets: number;
+    /** Technique faite, clinique en attente — du travail en souffrance. */
+    attente_clinique: number;
+    a_completer: number;
+  };
+  enfants: {
+    total: number;
+    finalises: number;
+    en_cours: number;
+  };
+};
+
+export type AdminDashboardAppointments = {
+  passes: number;
+  presents: number;
+  absents: number;
+  annules: number;
+  /** null quand aucun rendez-vous passé n'a été pointé — pas 0 %. */
+  taux_presence: number | null;
+  a_venir: number;
+};
+
 export type AdminDashboardAiTraffic = {
   total_runs: number;
   success: number;
@@ -67,6 +100,9 @@ export type AdminDashboardSystem = {
 export type AdminDashboard = {
   users: AdminDashboardUsers;
   activity: AdminDashboardActivity;
+  pipeline: AdminDashboardPipeline;
+  appointments: AdminDashboardAppointments;
+  sites_activity: LabelledCount[];
   ai_traffic: AdminDashboardAiTraffic;
   security: AdminDashboardSecurity;
   system: AdminDashboardSystem;
