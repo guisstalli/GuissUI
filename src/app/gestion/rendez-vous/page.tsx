@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import type { View } from 'react-big-calendar';
@@ -46,10 +47,7 @@ import {
 import type { RdvEvent } from '@/features/appointments/components/rdv-calendar';
 import type { RendezVous } from '@/features/appointments/types/schemas';
 import { STATUT_COLORS } from '@/features/appointments/utils/statut-colors';
-import { useCreateFacture } from '@/features/billing/api/create-facture';
 import { useFactures } from '@/features/billing/api/get-factures';
-import { CreateFactureForm } from '@/features/billing/components/create-facture-form';
-import { useSites } from '@/features/sites/api/get-sites';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { cn } from '@/lib/utils';
 
@@ -128,7 +126,6 @@ function RdvDetailPanel({
   onClose: () => void;
 }) {
   const styles = STATUT_STYLES[rdv.statut] ?? STATUT_STYLES.en_attente;
-  const [showCreateFacture, setShowCreateFacture] = useState(false);
 
   const { mutate: confirm, isPending: confirming } = useConfirmRdv(rdv.id, {
     onSuccess: onClose,
@@ -149,15 +146,6 @@ function RdvDetailPanel({
     params: { rendez_vous_id: rdv.id, limit: 1 },
   });
   const linkedFacture = factureData?.results?.[0] ?? null;
-
-  const { data: sitesData } = useSites({ params: { limit: 100 } });
-  const sites = sitesData?.results ?? [];
-
-  const createFactureMutation = useCreateFacture({
-    mutationConfig: {
-      onSuccess: () => setShowCreateFacture(false),
-    },
-  });
 
   return (
     <div className="space-y-5">
@@ -273,32 +261,22 @@ function RdvDetailPanel({
             </a>
           </div>
         ) : (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-1.5 text-slate-700"
-              onClick={() => setShowCreateFacture(true)}
-            >
+          /* Le formulaire de facture était rendu DANS le panneau latéral du
+             rendez-vous : une dizaine de champs et une liste de prestations
+             compressés dans une colonne étroite. On redirige vers la page
+             Facturation, qui l'affiche à sa taille. Seul l'id du rendez-vous
+             passe par l'URL ; l'identité du patient est résolue côté page. */
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5 text-slate-700"
+            asChild
+          >
+            <Link href={`${paths.billing.list.getHref()}?rdv=${rdv.id}`}>
               <Plus className="size-3.5" />
               Créer une facture
-            </Button>
-            {showCreateFacture && (
-              <div className="mt-3 rounded-lg border bg-white p-3">
-                <CreateFactureForm
-                  isPending={createFactureMutation.isPending}
-                  sites={sites}
-                  defaultValues={{
-                    patient_nom: rdv.patient_nom,
-                    patient_prenom: rdv.patient_prenom,
-                    patient_phone: rdv.patient_phone,
-                    rendez_vous_id: rdv.id,
-                  }}
-                  onSubmit={(data) => createFactureMutation.mutate(data)}
-                />
-              </div>
-            )}
-          </>
+            </Link>
+          </Button>
         )}
       </div>
     </div>

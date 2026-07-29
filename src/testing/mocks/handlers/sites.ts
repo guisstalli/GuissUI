@@ -82,6 +82,37 @@ export const sitesHandlers = [
     },
   ),
 
+  http.post(`${env.API_URL}/depistage/sites/:id/reactivate/`, ({ params }) => {
+    const id = Number(params.id);
+    const site = mockSites.find((s) => s.id === id);
+    if (!site) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json({ ...site, is_active: true });
+  }),
+
+  // Déclaré AVANT `DELETE /:id/`, sinon le pattern plus large l'intercepte.
+  // Le site 1 sert de cas « référencé » : le backend répond alors 409.
+  http.delete(
+    `${env.API_URL}/depistage/sites/:id/hard-delete/`,
+    ({ params }) => {
+      const id = Number(params.id);
+      const site = mockSites.find((s) => s.id === id);
+      if (!site) return new HttpResponse(null, { status: 404 });
+      if (id === 1) {
+        return HttpResponse.json(
+          {
+            detail:
+              'Ce site ne peut pas être supprimé définitivement : il est ' +
+              'référencé par 3 examens adultes. Désactivez-le pour le retirer ' +
+              "des sélections tout en conservant l'historique.",
+            references: { 'examens adultes': 3 },
+          },
+          { status: 409 },
+        );
+      }
+      return new HttpResponse(null, { status: 204 });
+    },
+  ),
+
   http.delete(`${env.API_URL}/depistage/sites/:id/`, ({ params }) => {
     const id = Number(params.id);
     const site = mockSites.find((s) => s.id === id);

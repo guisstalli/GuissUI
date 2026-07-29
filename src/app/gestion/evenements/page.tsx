@@ -109,65 +109,90 @@ function formatDate(d: string) {
   });
 }
 
+/**
+ * Actions d'un événement.
+ *
+ * Les deux gestes du quotidien — pointer les inscrits et faire avancer le
+ * statut — étaient enfouis dans le menu « … », donc invisibles : depuis la
+ * liste, rien ne montrait qu'on pouvait faire un check-in. Ils passent en
+ * boutons explicites ; le menu ne garde que le secondaire et le destructif.
+ */
 function EventActions({ event }: { event: EventStaff }) {
-  const { mutate: start } = useStartEvent(event.id);
-  const { mutate: close } = useCloseEvent(event.id);
+  const { mutate: start, isPending: starting } = useStartEvent(event.id);
+  const { mutate: close, isPending: closing } = useCloseEvent(event.id);
   const { mutate: cancel } = useCancelEvent(event.id);
   const { mutate: del } = useDeleteEvent(event.id);
 
+  const isClosed = event.statut === 'annule' || event.statut === 'termine';
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
+    <div className="flex shrink-0 items-center gap-2">
+      {/* Le check-in se fait sur l'écran Inscriptions : on y mène directement. */}
+      <Button variant="outline" size="sm" asChild>
+        <Link href={`/gestion/evenements/${event.id}/inscriptions`}>
+          <Users className="mr-1.5 size-4" />
+          Inscrits
+        </Link>
+      </Button>
+
+      {event.statut === 'planifie' && (
+        <Button
+          size="sm"
+          onClick={() => start()}
+          disabled={starting}
+          className="bg-emerald-600 hover:bg-emerald-700"
+        >
+          <Play className="mr-1.5 size-4" />
+          Démarrer
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem asChild>
-          <Link href={`/public/evenements/${event.slug}`} target="_blank">
-            <ExternalLink className="mr-2 size-4" />
-            Page publique
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href={`/gestion/evenements/${event.id}/inscriptions`}>
-            <Users className="mr-2 size-4" />
-            Inscriptions
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {event.statut === 'planifie' && (
-          <DropdownMenuItem
-            onClick={() => start()}
-            className="text-emerald-700"
-          >
-            <Play className="mr-2 size-4" />
-            Démarrer
+      )}
+      {event.statut === 'en_cours' && (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => close()}
+          disabled={closing}
+        >
+          <CheckCircle className="mr-1.5 size-4" />
+          Clôturer
+        </Button>
+      )}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">Autres actions</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem asChild>
+            <Link href={`/public/evenements/${event.slug}`} target="_blank">
+              <ExternalLink className="mr-2 size-4" />
+              Page publique
+            </Link>
           </DropdownMenuItem>
-        )}
-        {event.statut === 'en_cours' && (
-          <DropdownMenuItem onClick={() => close()} className="text-slate-700">
-            <CheckCircle className="mr-2 size-4" />
-            Clôturer
-          </DropdownMenuItem>
-        )}
-        {event.statut !== 'annule' && event.statut !== 'termine' && (
-          <DropdownMenuItem onClick={() => cancel({})} className="text-red-600">
-            <XCircle className="mr-2 size-4" />
-            Annuler
-          </DropdownMenuItem>
-        )}
-        {event.statut === 'planifie' && (
-          <>
-            <DropdownMenuSeparator />
+          {!isClosed && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => cancel({})}
+                className="text-red-600"
+              >
+                <XCircle className="mr-2 size-4" />
+                Annuler l&apos;événement
+              </DropdownMenuItem>
+            </>
+          )}
+          {event.statut === 'planifie' && (
             <DropdownMenuItem onClick={() => del()} className="text-red-600">
               <Trash2 className="mr-2 size-4" />
               Supprimer
             </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 

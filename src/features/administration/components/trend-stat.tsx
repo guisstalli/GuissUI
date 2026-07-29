@@ -76,7 +76,7 @@ export function TrendStat({
             />
           )}
         </div>
-        <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-foreground">
+        <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">
           {format(value)}
         </p>
         <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">

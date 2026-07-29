@@ -18,8 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 
 import { useAdminDashboard } from '../api/get-admin-dashboard';
-import type { AdminDashboardUsers } from '../types/schemas';
-import { DASHBOARD_WINDOWS, type DashboardWindow } from '../types/schemas';
+import {
+  DASHBOARD_WINDOWS,
+  type AdminDashboardUsers,
+  type DashboardWindow,
+} from '../types/schemas';
 
 import { ActivityChart } from './activity-chart';
 import { BreakdownBars } from './breakdown-bars';
@@ -118,7 +121,9 @@ function VolumetryCard({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">Volumétrie cumulée</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          Volumétrie cumulée
+        </CardTitle>
         <p className="text-xs text-muted-foreground">
           Totaux depuis la mise en service, hors éléments supprimés.
         </p>

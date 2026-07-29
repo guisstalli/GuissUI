@@ -102,7 +102,11 @@ export const PERMISSIONS = {
   'sites:view': 'Voir les sites',
   'sites:create': 'Créer un site',
   'sites:edit': 'Modifier un site',
-  'sites:delete': 'Supprimer un site',
+  // L'endpoint DELETE ne supprime pas : il désactive. Le libellé le dit.
+  'sites:delete': 'Désactiver un site',
+  // Irréversible, et le backend la réserve à IsAnyAdmin (ADMIN/SUPERUSER).
+  // ADMIN n'accédant pas à l'application interne, seul SUPERUSER la voit ici.
+  'sites:hard-delete': 'Supprimer définitivement un site',
 
   // Conducteurs
   'drivers:view': 'Voir les conducteurs',
@@ -176,6 +180,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sites:create',
     'sites:edit',
     'sites:delete',
+    'sites:hard-delete',
     'admin:users',
     'admin:agent-channels',
     'drivers:create',

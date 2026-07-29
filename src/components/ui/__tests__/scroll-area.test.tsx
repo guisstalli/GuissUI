@@ -14,13 +14,17 @@ import { ScrollArea } from '../scroll-area';
  */
 describe('ScrollArea', () => {
   it('force le wrapper interne de Radix en block pour ne pas suivre le contenu', () => {
-    render(
+    const { container } = render(
       <ScrollArea>
         <div>contenu</div>
       </ScrollArea>,
     );
 
-    const viewport = document.querySelector(
+    // Le viewport est un nœud de MISE EN PAGE : ni rôle, ni texte, ni libellé
+    // accessible. Aucune requête Testing Library ne peut l'atteindre, et c'est
+    // précisément ce nœud dont on doit vérifier les classes.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const viewport = container.querySelector(
       '[data-slot="scroll-area-viewport"]',
     );
     expect(viewport).not.toBeNull();
