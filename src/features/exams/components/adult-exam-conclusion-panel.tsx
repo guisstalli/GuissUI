@@ -8,15 +8,18 @@ import { ConclusionForm } from '@/features/exams/components/forms/conclusion-for
 interface AdultExamConclusionPanelProps {
   handleSaveSection: (section: 'conclusion') => void;
   isSaving: boolean;
+  /** Dérivé de `patient.has_driver` — conditionne l'aptitude visuelle. */
+  isDriver?: boolean;
 }
 
 export function AdultExamConclusionPanel({
   handleSaveSection,
   isSaving,
+  isDriver = false,
 }: AdultExamConclusionPanelProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-6">
-      <ConclusionForm namePrefix="conclusion" />
+      <ConclusionForm namePrefix="conclusion" isDriver={isDriver} />
       <div className="mt-6 flex justify-end border-t border-border pt-4">
         <Button
           type="button"

@@ -33,7 +33,11 @@ export function Shell({
           actions={headerActions}
         />
         <div className="flex min-h-0 flex-1">
-          <main className="min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
+          {/* `overflow-auto` et non `overflow-y-auto` : un contenu trop large
+              (tableau, graphe) doit defiler DANS cette zone. Avec un
+              debordement uniquement vertical, l'excedent horizontal remontait
+              jusqu'au <body> et la barre traversait toute la fenetre. */}
+          <main className="min-w-0 flex-1 overflow-auto p-6">{children}</main>
           {rightPanel}
         </div>
       </SidebarInset>

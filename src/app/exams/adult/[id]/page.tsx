@@ -899,6 +899,7 @@ function AdultExamContent(props: AdultExamContentProps) {
                       <AdultExamConclusionPanel
                         handleSaveSection={handleSaveSection}
                         isSaving={isSaving}
+                        isDriver={patient.hasDriver}
                       />
                     )}
                   </FormProvider>

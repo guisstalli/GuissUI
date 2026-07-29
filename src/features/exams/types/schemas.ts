@@ -749,7 +749,11 @@ export type ExamenAdditionel = z.infer<typeof ExamenAdditionelSchema>;
 
 export const PerimetrySchema = z.object({
   id: z.number().optional(),
-  pbo: z.array(PboEnum).min(1, 'Veuillez sélectionner au moins un élément'),
+  // Aucune case cochée par défaut, et le vide est valide : le modèle backend
+  // déclare `ArrayField(blank=True, default=list)`. Le `.min(1)` qui figurait
+  // ici rendait le front PLUS strict que la base et bloquait l'enregistrement
+  // d'un examen complémentaire dont la périmétrie n'a pas été réalisée.
+  pbo: z.array(PboEnum),
   limite_superieure: z.coerce.number().min(0).max(90).optional().nullable(),
   limite_inferieure: z.coerce.number().min(0).max(90).optional().nullable(),
   limite_temporale_droit: z.coerce

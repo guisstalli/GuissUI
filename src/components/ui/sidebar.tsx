@@ -306,7 +306,12 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        'relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
+        // `min-w-0` : cet element est un enfant flex de SidebarProvider, dont
+        // le `min-width: auto` par defaut l'empeche de retrecir sous la largeur
+        // intrinseque de son contenu. Un tableau large le poussait alors au-dela
+        // du viewport et le debordement remontait au <body> — d'ou une barre de
+        // defilement horizontale traversant toute la fenetre, sidebar comprise.
+        'relative flex w-full min-w-0 flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
         className,
       )}
       {...props}
