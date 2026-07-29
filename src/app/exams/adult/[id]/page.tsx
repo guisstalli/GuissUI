@@ -53,6 +53,7 @@ import {
   type AdultExamPatient,
   type SectionStatus,
 } from '@/features/exams/components/adult-exam-types';
+import { CommentThread } from '@/features/exams/components/comment-thread';
 import {
   OrdonnanceFormDialog,
   type PrescriptionData,
@@ -907,6 +908,18 @@ function AdultExamContent(props: AdultExamContentProps) {
                   {/* Driver Experience Section — outside FormProvider, standalone form */}
                   {activeSection === 'experience' && patient.hasDriver && (
                     <AdultExamExperiencePanel numericExamId={numericExamId} />
+                  )}
+
+                  {/* Fil de commentaires — hors formulaire, et seulement sur un
+                      examen déjà enregistré : un examen non créé n'a pas encore
+                      d'identifiant auquel rattacher une observation. */}
+                  {!isNewExam && (
+                    <div className="mt-8 border-t border-border pt-6">
+                      <CommentThread
+                        examenType="adult"
+                        examenId={numericExamId}
+                      />
+                    </div>
                   )}
                 </fieldset>
               </main>

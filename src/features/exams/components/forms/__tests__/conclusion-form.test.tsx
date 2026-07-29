@@ -45,7 +45,7 @@ describe('ConclusionForm — aptitude visuelle', () => {
     render(<Wrapper isDriver vision={null} />);
 
     expect(screen.getByText(APTITUDE)).toBeInTheDocument();
-    expect(screen.getByRole('combobox')).not.toBeDisabled();
+    expect(screen.getByRole('combobox')).toBeEnabled();
   });
 
   it('disparaît pour un non-conducteur sans valeur saisie', () => {
