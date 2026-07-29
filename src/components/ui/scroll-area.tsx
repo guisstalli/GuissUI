@@ -16,9 +16,17 @@ function ScrollArea({
       className={cn('relative', className)}
       {...props}
     >
+      {/*
+        `[&>div]:!block` : Radix rend un wrapper interne en `display: table`, qui
+        se DIMENSIONNE SUR SON CONTENU au lieu de le rogner. Mesuré sur
+        /assistant-ia : 1768 px de contenu dans un conteneur de 256 px, d'où un
+        scroll horizontal parasite — et un `truncate` enfant rendu inopérant
+        (une cellule de tableau s'élargit, elle ne tronque pas). On force `block`
+        pour que la largeur vienne du parent et non du contenu.
+      */}
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
-        className="focus-visible:ring-ring/50 size-full rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring"
+        className="focus-visible:ring-ring/50 size-full min-w-0 rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring [&>div]:!block [&>div]:!min-w-0"
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
