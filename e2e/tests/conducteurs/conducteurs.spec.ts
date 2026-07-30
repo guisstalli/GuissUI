@@ -1,4 +1,26 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from '../../fixtures/auth-request';
+
+/**
+ * Ouvre la fiche du premier conducteur.
+ *
+ * Le lien vers le détail n'est PAS dans la ligne : il vit dans le menu
+ * d'actions (voir src/app/conducteurs/page.tsx). Les tests cherchaient donc un
+ * `a[href]` visible qui n'existe pas, et s'ignoraient silencieusement — un
+ * échec déguisé en succès. On navigue désormais comme un utilisateur : ouvrir
+ * le menu de la ligne, puis cliquer « Voir ».
+ */
+async function ouvrirPremiereFiche(page: Page): Promise<void> {
+  const menu = page
+    .getByRole('row')
+    .getByRole('button', { name: 'Actions' })
+    .first();
+  await expect(menu).toBeVisible({ timeout: 8000 });
+  await menu.click();
+  await page.getByRole('menuitem', { name: /voir/i }).first().click();
+  await page.waitForLoadState('networkidle');
+}
 
 // =============================================================================
 // Liste conducteurs
@@ -62,15 +84,7 @@ test('page détail conducteur — 3 onglets présents (État civil, Examens, Ant
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  // Restreint au TABLEAU (voir ci-dessus) : sinon on suit un lien du menu.
-  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
-  if (!(await firstLink.isVisible({ timeout: 5000 }))) {
-    test.skip();
-    return;
-  }
-
-  await firstLink.click();
-  await page.waitForLoadState('networkidle');
+  await ouvrirPremiereFiche(page);
   await expect(page).toHaveURL(/\/conducteurs\/\d+/, { timeout: 8000 });
 
   await expect(
@@ -90,15 +104,7 @@ test('page détail conducteur — onglet Examens ne propose pas de créer un exa
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  // Restreint au TABLEAU (voir ci-dessus) : sinon on suit un lien du menu.
-  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
-  if (!(await firstLink.isVisible({ timeout: 5000 }))) {
-    test.skip();
-    return;
-  }
-
-  await firstLink.click();
-  await page.waitForLoadState('networkidle');
+  await ouvrirPremiereFiche(page);
 
   const examsTab = page.getByRole('tab', { name: /examens/i });
   if (await examsTab.isVisible({ timeout: 8000 })) {
@@ -116,15 +122,7 @@ test('page détail conducteur — onglet Examens a le bouton "Nouvel examen adul
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  // Restreint au TABLEAU (voir ci-dessus) : sinon on suit un lien du menu.
-  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
-  if (!(await firstLink.isVisible({ timeout: 5000 }))) {
-    test.skip();
-    return;
-  }
-
-  await firstLink.click();
-  await page.waitForLoadState('networkidle');
+  await ouvrirPremiereFiche(page);
 
   const examsTab = page.getByRole('tab', { name: /examens/i });
   if (await examsTab.isVisible({ timeout: 8000 })) {
