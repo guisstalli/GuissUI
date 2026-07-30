@@ -18,7 +18,14 @@ test("liste conducteurs — menu d'actions par ligne est présent", async ({ pag
   await page.waitForLoadState('networkidle');
 
   // Cherche le premier bouton d'actions (3 points verticaux)
-  const actionButton = page.locator('button[aria-label="Actions"], button:has(svg)').first();
+  // `button:has(svg)` sur toute la page attrapait le repli de la barre
+  // latérale, pas le menu de ligne. Le déclencheur porte un `sr-only`
+  // « Actions » : c'est son NOM ACCESSIBLE, pas un attribut aria-label — d'où
+  // l'échec du sélecteur CSS. On le cible par rôle, et dans le tableau.
+  const actionButton = page
+    .getByRole('row')
+    .getByRole('button', { name: 'Actions' })
+    .first();
   if (await actionButton.isVisible({ timeout: 5000 })) {
     await actionButton.click();
     await expect(page.getByText(/voir/i).first()).toBeVisible({ timeout: 3000 });
@@ -31,9 +38,10 @@ test('liste conducteurs — "Voir" navigue vers la page détail', async ({ page 
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('table a[href*="/conducteurs/"], a[href*="/conducteurs/"]')
-    .first();
+  // Restreint au TABLEAU : `a[href*="/conducteurs/"]` sur toute la page
+  // capturait aussi les liens de la barre latérale (/conducteurs/corbeille,
+  // /conducteurs/examens…), d'où une navigation vers la corbeille.
+  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
   if (await firstLink.isVisible({ timeout: 5000 })) {
     const href = await firstLink.getAttribute('href');
     if (href) {
@@ -54,9 +62,8 @@ test('page détail conducteur — 3 onglets présents (État civil, Examens, Ant
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('a[href*="/conducteurs/"]')
-    .first();
+  // Restreint au TABLEAU (voir ci-dessus) : sinon on suit un lien du menu.
+  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
   if (!(await firstLink.isVisible({ timeout: 5000 }))) {
     test.skip();
     return;
@@ -83,9 +90,8 @@ test('page détail conducteur — onglet Examens ne propose pas de créer un exa
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('a[href*="/conducteurs/"]')
-    .first();
+  // Restreint au TABLEAU (voir ci-dessus) : sinon on suit un lien du menu.
+  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
   if (!(await firstLink.isVisible({ timeout: 5000 }))) {
     test.skip();
     return;
@@ -110,9 +116,8 @@ test('page détail conducteur — onglet Examens a le bouton "Nouvel examen adul
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('a[href*="/conducteurs/"]')
-    .first();
+  // Restreint au TABLEAU (voir ci-dessus) : sinon on suit un lien du menu.
+  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
   if (!(await firstLink.isVisible({ timeout: 5000 }))) {
     test.skip();
     return;
@@ -148,7 +153,13 @@ test("page est cliquable après fermeture d'un dialog (no pointer-events freeze)
     await page.waitForTimeout(300);
 
     // Fermer le dialog
-    const closeBtn = page.locator('button[aria-label="Close"], button:has(svg)').first();
+    // Même piège : le bouton de fermeture Radix expose « Close » via un
+    // `sr-only`. Le sélecteur CSS ne le trouvait pas et cliquait ailleurs —
+    // le dialogue restait ouvert, ce que montrent les captures d'échec.
+    const closeBtn = page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Close' })
+      .first();
     if (await closeBtn.isVisible({ timeout: 3000 })) {
       await closeBtn.click();
       await page.waitForTimeout(500);
