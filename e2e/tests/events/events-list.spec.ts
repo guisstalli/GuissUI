@@ -31,18 +31,24 @@ test('filtre par statut fonctionne', async ({ page }) => {
   }
 });
 
-test('bouton Nouvel événement navigue vers formulaire', async ({ page }) => {
+test('bouton Nouvel événement ouvre le formulaire de création', async ({
+  page,
+}) => {
   await page.goto('/gestion/evenements');
   await page.waitForLoadState('networkidle');
-  const newBtn = page
-    .getByRole('link', { name: /nouvel|créer|nouveau/i })
-    .or(page.getByRole('button', { name: /nouvel|créer|nouveau/i }));
-  if (await newBtn.isVisible()) {
-    await newBtn.click();
-    await expect(page).toHaveURL(/evenements\/(nouveau|creer|create)/, {
-      timeout: 8000,
-    });
-  }
+
+  // La création se fait dans un DIALOGUE, pas sur une page dédiée : l'URL ne
+  // change donc jamais. Le test attendait `/evenements/nouveau` et ne passait
+  // que parce qu'il partait d'une route morte où le bouton était introuvable,
+  // ce qui court-circuitait son `if`. On vérifie désormais ce qui se produit.
+  await page
+    .getByRole('button', { name: /nouvel événement|créer un événement/i })
+    .first()
+    .click();
+
+  await expect(
+    page.getByRole('dialog').getByText('Créer un événement'),
+  ).toBeVisible({ timeout: 8000 });
 });
 
 test('clic événement navigue vers détail', async ({ page }) => {
