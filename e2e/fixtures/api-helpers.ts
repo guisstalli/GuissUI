@@ -1,6 +1,6 @@
 import { APIRequestContext, expect } from '@playwright/test';
 
-const apiUrl = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const apiUrl = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
 export const createPatientViaApi = async (
   request: APIRequestContext,
@@ -29,7 +29,7 @@ export const createEventViaApi = async (
   request: APIRequestContext,
   overrides: Record<string, unknown> = {},
 ) => {
-  const res = await request.post(`${apiUrl()}/api/v1/events/creer/`, {
+  const res = await request.post(`${apiUrl()}/events/creer/`, {
     data: {
       titre: 'Dépistage Test Fixture',
       description: 'Créé par fixture de test',
@@ -52,7 +52,7 @@ export const createFactureViaApi = async (
   request: APIRequestContext,
   overrides: Record<string, unknown> = {},
 ) => {
-  const res = await request.post(`${apiUrl()}/api/v1/billing/factures/`, {
+  const res = await request.post(`${apiUrl()}/billing/factures/`, {
     data: {
       patient_id: 1,
       site_id: 1,

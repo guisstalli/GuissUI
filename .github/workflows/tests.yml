@@ -73,7 +73,7 @@ jobs:
       # seed annonçait « Utilisateurs : 7 ». Les deux doivent partager les
       # mêmes settings.
       DJANGO_SETTINGS_MODULE: backend.django.base
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
       # Le job démarre le vrai backend : mêmes variables que le job `build` de django.yml.
       SECRET_KEY: ci-e2e-secret-key-not-for-production
       REDIS_URL: redis://localhost:6379/0
@@ -141,7 +141,7 @@ jobs:
         working-directory: GuissUI
         run: yarn dev > /tmp/next.log 2>&1 &
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: ci-e2e-nextauth-secret
 

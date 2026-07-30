@@ -6,7 +6,7 @@ import { randFloat, randNumber } from '@ngneat/falso';
 import type { APIRequestContext } from '@playwright/test';
 import { expect } from '@playwright/test';
 
-const apiUrl = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const apiUrl = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
 // ---------------------------------------------------------------------------
 // API helpers
