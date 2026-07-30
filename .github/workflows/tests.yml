@@ -160,6 +160,15 @@ jobs:
         working-directory: GuissUI
         run: yarn playwright test --project=staff
 
+      # `analytics:view` est refusé à STAFF : le balayage ci-dessus ignore donc
+      # ces tests, et l'analytique n'était couverte par personne. On la vérifie
+      # sous un rôle qui y a droit. Passe CIBLÉE et non second balayage complet :
+      # rejouer les 46 specs sous `docteur` doublerait la durée et exposerait
+      # d'autres écrans gouvernés par les rôles, sans rapport avec l'objectif.
+      - name: Run Playwright analytics tests (rôle docteur)
+        working-directory: GuissUI
+        run: yarn playwright test --project=docteur tests/analytics
+
       # APRÈS Playwright, et non avant : placée plus haut, cette étape ne
       # pouvait se déclencher que si le démarrage des serveurs échouait —
       # jamais pour l'échec qu'elle est censée diagnostiquer. C'est ce qui a
