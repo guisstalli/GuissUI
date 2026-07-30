@@ -230,7 +230,7 @@ export function ChildExamSidebar({
       {examId !== 'new' && (
         <div className="mt-4 space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Rapports PDF
+            Dossier PDF
           </p>
           <Button
             variant="outline"
@@ -247,7 +247,7 @@ export function ChildExamSidebar({
             ) : (
               <Download className="mr-2 size-4" aria-hidden="true" />
             )}
-            Rapport complet
+            Dossier complet
           </Button>
           <Button
             variant="outline"

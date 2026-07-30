@@ -64,7 +64,15 @@ jobs:
 
     env:
       DATABASE_URL: postgres://guiss:guiss@localhost:5432/guiss_test
-      DJANGO_SETTINGS_MODULE: backend.django.test
+      # `base` et NON `test` : ce job démarre un VRAI serveur, il ne lance pas
+      # pytest. Or `backend.django.test` force
+      # PASSWORD_HASHERS = ["MD5PasswordHasher"] pour accélérer les tests.
+      # Le seed hachait donc les mots de passe en MD5 pendant que le serveur
+      # (démarré sous `base`) ne connaît que PBKDF2/Argon2 : check_password
+      # renvoyait False et TOUTE connexion E2E échouait, alors même que le
+      # seed annonçait « Utilisateurs : 7 ». Les deux doivent partager les
+      # mêmes settings.
+      DJANGO_SETTINGS_MODULE: backend.django.base
       NEXT_PUBLIC_API_URL: http://localhost:8000
       # Le job démarre le vrai backend : mêmes variables que le job `build` de django.yml.
       SECRET_KEY: ci-e2e-secret-key-not-for-production
@@ -141,15 +149,19 @@ jobs:
         # http-get:// force une requête GET (la vue health ne gère pas HEAD → 405).
         run: npx wait-on http-get://localhost:8000/api/v1/health/ http-get://localhost:3000 --timeout 90000
 
-      - name: Dump server logs on failure
-        if: failure()
-        run: |
-          echo "===== django.log ====="; tail -n 60 /tmp/django.log 2>/dev/null || true
-          echo "===== next.log ====="; tail -n 60 /tmp/next.log 2>/dev/null || true
-
       - name: Run Playwright tests
         working-directory: GuissUI
         run: yarn playwright test --project=staff
+
+      # APRÈS Playwright, et non avant : placée plus haut, cette étape ne
+      # pouvait se déclencher que si le démarrage des serveurs échouait —
+      # jamais pour l'échec qu'elle est censée diagnostiquer. C'est ce qui a
+      # rendu la panne d'authentification E2E opaque si longtemps.
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          echo "===== django.log ====="; tail -n 80 /tmp/django.log 2>/dev/null || true
+          echo "===== next.log ====="; tail -n 80 /tmp/next.log 2>/dev/null || true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

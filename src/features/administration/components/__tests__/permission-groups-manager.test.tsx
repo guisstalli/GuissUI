@@ -184,10 +184,16 @@ describe('PermissionGroupsManager', () => {
     await user.type(screen.getByLabelText('Nom'), 'Analystes');
     await user.click(screen.getByRole('button', { name: /créer/i }));
 
+    // On n'attend QUE l'arrivée de la requête ; l'assertion sur son contenu
+    // vient après. Deux assertions dans un `waitFor` masquent laquelle a
+    // échoué et font retenter la seconde inutilement.
     await waitFor(() => {
       expect(postedBody).not.toBeNull();
-      expect(postedBody?.name).toBe('Analystes');
     });
+    // `toMatchObject` plutôt que `postedBody?.name` : hors du `waitFor`, le
+    // rétrécissement de type de TypeScript ramène la variable à `null`
+    // (elle n'est affectée que dans une closure).
+    expect(postedBody).toMatchObject({ name: 'Analystes' });
   });
 
   test('delete confirmation dialog appears when delete button is clicked', async () => {

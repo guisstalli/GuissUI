@@ -88,7 +88,7 @@ export function ConfirmationPage({
 
           {wantReminder && (
             <p className="mb-8 text-sm text-muted-foreground">
-              💬 Un rappel SMS vous sera envoyé avant votre rendez-vous.
+              💬 Un message Whatsapp vous sera envoyé avant votre rendez-vous.
             </p>
           )}
 

@@ -187,7 +187,7 @@ export function InfoStep({
                 <Phone className="mt-0.5 size-4 shrink-0 text-cyan-500/70 dark:text-cyan-400/70" />
                 <div>
                   <FormLabel className="text-sm font-medium text-foreground">
-                    Rappel SMS
+                    Rappel Whatsapp
                   </FormLabel>
                   <p className="text-xs text-muted-foreground">
                     Recevez un rappel avant votre rendez-vous
