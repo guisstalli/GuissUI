@@ -160,8 +160,15 @@ jobs:
       - name: Dump server logs on failure
         if: failure()
         run: |
-          echo "===== django.log ====="; tail -n 80 /tmp/django.log 2>/dev/null || true
-          echo "===== next.log ====="; tail -n 80 /tmp/next.log 2>/dev/null || true
+          # Les reponses NON-2xx d'abord : c'est ce qu'on cherche, et un
+          # `tail` seul ne couvre que le dernier test de la serie.
+          echo "===== reponses non-2xx (django) ====="
+          grep -oE "'path': '[^']+'\}, 'response': \{'status_code': [45][0-9][0-9]" \
+            /tmp/django.log 2>/dev/null | sort | uniq -c | sort -rn | head -30 || true
+          echo "===== traces d'exception (django) ====="
+          grep -A 15 "Traceback" /tmp/django.log 2>/dev/null | head -60 || true
+          echo "===== django.log (fin) ====="; tail -n 200 /tmp/django.log 2>/dev/null || true
+          echo "===== next.log (fin) ====="; tail -n 120 /tmp/next.log 2>/dev/null || true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
