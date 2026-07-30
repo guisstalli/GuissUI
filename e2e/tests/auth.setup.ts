@@ -56,6 +56,13 @@ setup('authenticate', async ({ page, request }) => {
     user: unknown;
   };
 
+  // `e2e/.auth/` est dans .gitignore : il existe sur un poste de développeur,
+  // JAMAIS sur un checkout CI neuf. Or `fs.writeFileSync` ne crée pas le
+  // répertoire parent — d'où un ENOENT qui faisait échouer l'authentification,
+  // et avec elle les 45 tests qui en dépendent. (Playwright, lui, crée les
+  // répertoires pour `storageState` plus bas : d'où l'asymétrie trompeuse.)
+  fs.mkdirSync(path.dirname(tokenFile), { recursive: true });
+
   fs.writeFileSync(
     tokenFile,
     JSON.stringify({ access, savedAt: Date.now() }),
