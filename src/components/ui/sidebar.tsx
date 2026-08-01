@@ -147,7 +147,17 @@ function SidebarProvider({
           // rejoint le conteneur qui doit le faire defiler.
           // Les menus et popovers Radix sont rendus par portail dans <body>,
           // hors de ce wrapper : ils ne sont pas rognes.
-          'group/sidebar-wrapper flex h-dvh w-full overflow-hidden has-data-[variant=inset]:bg-sidebar',
+          // `overflow-clip` et NON `overflow-hidden` : `hidden` cree malgre tout
+          // un conteneur DEFILABLE, simplement sans barre. Quand un champ
+          // conditionnel apparait et prend le focus (« Autre » -> « Precisez
+          // l'antecedent familial »), le navigateur fait defiler l'ancetre
+          // defilable le plus proche pour le reveler : c'etait ce wrapper.
+          // Mesure sur staging : wrapper.scrollTop passait a 375, l'entete et
+          // les onglets sortaient de l'ecran et plus rien ne permettait de
+          // revenir — l'ecran paraissait fige. `clip` ne cree AUCUN conteneur
+          // de defilement : le navigateur remonte alors au <main>, qui est le
+          // bon. Verifie : wrapper.scrollTop 0, inset a y=0, main.scrollTop 480.
+          'group/sidebar-wrapper flex h-dvh w-full overflow-clip has-data-[variant=inset]:bg-sidebar',
           className,
         )}
         {...props}
