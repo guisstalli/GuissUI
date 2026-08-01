@@ -48,7 +48,8 @@ setup('authenticate', async ({ page, request }) => {
   // avec une variable mal formée et MASQUAIT le problème : NextAuth, lui,
   // postait sur `/auth/jwt/login/` et récoltait un 404, d'où l'absence de
   // redirection et le timeout de `waitForURL` plus bas.
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
   // Obtain a raw access token via the backend API for the auth-request fixture
   // (used for direct API calls in tests, independent of the browser session).

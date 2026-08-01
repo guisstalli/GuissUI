@@ -378,7 +378,10 @@ export default function ChildExamPage() {
         ptosis_eye: null,
       },
       perimetry: {
-        pbo: ['NORMAL'],
+        // Voir la page adulte : rien n'est coché tant que la périmétrie n'a
+        // pas été réalisée. Pré-cocher « Normal » affirmerait un résultat
+        // clinique jamais constaté.
+        pbo: [],
         limite_superieure: null,
         limite_inferieure: null,
         limite_temporale_droit: null,

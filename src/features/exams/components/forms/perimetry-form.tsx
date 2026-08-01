@@ -55,10 +55,11 @@ export function PerimetryForm({ namePrefix = '' }: PerimetryFormProps) {
         name={`${prefix}pbo`}
         render={() => (
           <FormItem>
-            <FormLabel>
-              Champ visuel binoculaire{' '}
-              <span className="text-destructive">*</span>
-            </FormLabel>
+            {/* Pas d'astérisque : `PerimetrySchema` ne pose aucun `.min(1)` et
+                le modèle Django déclare `ArrayField(blank=True, default=list)`.
+                Le marquer obligatoire annonçait une contrainte inexistante et
+                poussait à cocher une case pour « débloquer » l'enregistrement. */}
+            <FormLabel>Champ visuel binoculaire</FormLabel>
             <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
               {PBO_VALUES.map((value) => (
                 <FormField

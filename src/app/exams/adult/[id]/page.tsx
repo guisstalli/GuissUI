@@ -302,7 +302,13 @@ export default function AdultExamPage() {
         ptosis_eye: null,
       },
       perimetry: {
-        pbo: ['NORMAL'],
+        // Aucune case cochée tant que la périmétrie n'a pas été réalisée :
+        // pré-cocher « Normal » affirme un résultat clinique jamais constaté,
+        // et le soignant qui n'ouvre pas cette section l'enregistre sans le
+        // savoir. Le vide est valide — `PerimetrySchema` ne pose pas de
+        // `.min(1)` et le modèle Django déclare
+        // `ArrayField(blank=True, default=list)`.
+        pbo: [],
         limite_superieure: null,
         limite_inferieure: null,
         limite_temporale_droit: null,
