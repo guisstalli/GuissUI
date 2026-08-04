@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ReportDetail } from '../types';
 import { formatCost } from '../utils/format-cost';
 
+import { MarkdownContent } from './markdown-content';
 import { ReportStatusBadge } from './report-status-badge';
 
 interface ReportDetailSummaryProps {
@@ -113,6 +114,21 @@ export function ReportDetailSummary({ report }: ReportDetailSummaryProps) {
           <p className="font-medium">Erreur de génération</p>
           <p className="mt-1 whitespace-pre-wrap">{report.error_message}</p>
         </div>
+      )}
+
+      {/* Lecture directe. Le contenu était stocké mais servi uniquement sous
+          forme de PDF : il fallait télécharger pour lire. `MarkdownContent`
+          neutralise le HTML brut et bloque les images distantes — le texte
+          vient d'un modèle de langage, il n'est pas de confiance. */}
+      {report.markdown && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Rapport</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MarkdownContent content={report.markdown} />
+          </CardContent>
+        </Card>
       )}
 
       {(report.pdf_url || report.docx_url) && (
