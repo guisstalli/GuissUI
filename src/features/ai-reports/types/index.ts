@@ -58,6 +58,11 @@ export const reportDetailSchema = reportListItemSchema.extend({
   risk_tier: z.string().nullable(),
   filters: z.record(z.unknown()),
   prompt: z.string().nullable(),
+  // Contenu du rapport, rendu directement dans l'espace de travail plutôt que
+  // téléchargé. Absent de `reportListItemSchema` : le backend ne l'expose que
+  // sur le détail, pour ne pas transporter le texte intégral dans une liste.
+  // Vide tant que le rapport est en PENDING, et en cas d'échec.
+  markdown: z.string().nullable(),
   pdf_url: z.string().nullable(),
   docx_url: z.string().nullable(),
   llm_backend: z.string(),

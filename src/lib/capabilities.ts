@@ -20,6 +20,17 @@ export const CAPABILITY = {
   PERMISSIONS_MANAGE: 'permissions.manage',
   USERS_MANAGE: 'users.manage',
   AI_REPORTS_VIEW: 'ai.reports.view',
+  // Capacités métier — miroir de apps/users/capabilities.py. Les codes doivent
+  // rester identiques des deux côtés : le serveur fait autorité, le client ne
+  // fait qu'afficher ou masquer en conséquence.
+  PATIENTS_READ: 'patients.read',
+  PATIENTS_WRITE: 'patients.write',
+  PATIENTS_DELETE: 'patients.delete',
+  PATIENTS_EGRESS: 'patients.egress',
+  EXAMS_READ: 'exams.read',
+  EXAMS_TECHNICAL_WRITE: 'exams.technical.write',
+  EXAMS_CLINICAL_WRITE: 'exams.clinical.write',
+  EXAMS_CONCLUSION_WRITE: 'exams.conclusion.write',
 } as const;
 
 export type CapabilityCode = string;
@@ -41,8 +52,13 @@ export const getMyCapabilitiesQueryOptions = () =>
     staleTime: 5 * 60 * 1000,
   });
 
-export const useMyCapabilities = () =>
-  useQuery(getMyCapabilitiesQueryOptions());
+/**
+ * `enabled` permet aux appelants montés sur des pages PUBLIQUES de ne pas
+ * déclencher un appel voué au 401. Sans argument, le comportement est
+ * inchangé pour les appelants existants.
+ */
+export const useMyCapabilities = (options?: { enabled?: boolean }) =>
+  useQuery({ ...getMyCapabilitiesQueryOptions(), ...options });
 
 /**
  * Vérifie si un jeu de capacités couvre `code`.

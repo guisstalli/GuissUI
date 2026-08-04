@@ -9,6 +9,8 @@ import {
   hasAnyPermission,
   hasAllPermissions,
 } from '@/lib/authorization';
+import { useMyCapabilities } from '@/lib/capabilities';
+import { PERMISSION_TO_CAPABILITY } from '@/lib/permission-capability-map';
 
 export interface CanProps {
   /** Permission unique à vérifier */
@@ -58,19 +60,53 @@ export function Can({
   fallback = null,
 }: CanProps) {
   const { user } = useUser();
+  // `enabled: !!user` : sans ce garde, `Can` interrogeait
+  // /users/me/capabilities/ même sur une page PUBLIQUE sans session — la prise
+  // de rendez-vous en ligne, notamment. Une requête vouée au 401, sur un écran
+  // qui n'a aucun droit à arbitrer.
+  const { data: mesCapacites } = useMyCapabilities({ enabled: !!user });
+
+  /**
+   * Le serveur arbitre dès qu'une capacité correspond à la permission ; sinon
+   * on retombe sur le rôle statique.
+   *
+   * Sans cela, accorder ou retirer une capacité à UN utilisateur ne changeait
+   * rien à ce qu'il voyait : le client décidait seul, à partir du seul rôle.
+   *
+   * Tant que la requête n'a pas répondu, on s'en tient au rôle statique —
+   * c'est l'ancien comportement, et cela évite de faire clignoter l'interface.
+   * Le serveur reste de toute façon la seule barrière réelle : ceci ne
+   * gouverne que l'affichage.
+   */
+  const estAutorise = (p: Permission): boolean => {
+    const capacite = PERMISSION_TO_CAPABILITY[p];
+    if (capacite && mesCapacites) {
+      return mesCapacites.capabilities.includes(capacite);
+    }
+    return hasPermission(user, p);
+  };
 
   // Vérification d'une permission unique
   if (permission) {
-    const isAllowed = hasPermission(user, permission);
-    return isAllowed ? <>{children}</> : <>{fallback}</>;
+    return estAutorise(permission) ? <>{children}</> : <>{fallback}</>;
   }
 
   // Vérification de plusieurs permissions
   if (permissions && permissions.length > 0) {
+    const toutesMappees = permissions.every(
+      (p) => p in PERMISSION_TO_CAPABILITY,
+    );
+    // Un lot MIXTE (permissions mappées et non mappées) ne peut pas être
+    // arbitré de façon cohérente : on garde alors le chemin statique entier,
+    // plutôt que de mêler deux sources de vérité dans une même décision.
     const isAllowed =
-      mode === 'all'
-        ? hasAllPermissions(user, permissions)
-        : hasAnyPermission(user, permissions);
+      toutesMappees && mesCapacites
+        ? mode === 'all'
+          ? permissions.every(estAutorise)
+          : permissions.some(estAutorise)
+        : mode === 'all'
+          ? hasAllPermissions(user, permissions)
+          : hasAnyPermission(user, permissions);
     return isAllowed ? <>{children}</> : <>{fallback}</>;
   }
 
