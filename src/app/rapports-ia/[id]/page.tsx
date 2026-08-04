@@ -17,6 +17,7 @@ import { ReportRejectDialog } from '@/features/ai-reports/components/report-reje
 import { useReportPolling } from '@/features/ai-reports/hooks/use-report-polling';
 import { REPORT_STATUS } from '@/features/ai-reports/types';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
+import { useReportProgress } from '@/stores/report-progress-store';
 
 export default function RapportIaDetailPage() {
   const params = useParams<{ id: string }>();
@@ -34,6 +35,11 @@ export default function RapportIaDetailPage() {
     isLoading,
     isError,
   } = useReportPolling(validId ? reportId : null);
+
+  // Étape en cours, poussée par le WebSocket. Le sondage de `useReportPolling`
+  // reste en place comme filet : si la socket est coupée, la page finit par se
+  // mettre à jour quand même.
+  const progression = useReportProgress(validId ? reportId : null);
 
   const backLink = (
     <Button asChild variant="ghost" size="sm" className="w-fit">
@@ -118,7 +124,13 @@ export default function RapportIaDetailPage() {
           {report.status === REPORT_STATUS.PENDING && (
             <div className="flex items-center gap-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300">
               <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-              Génération en cours — cette page se met à jour automatiquement.
+              {/* Le libellé vient du SERVEUR : c'est lui qui sait à quelle
+                  étape il en est. Tant qu'aucune étape n'est parvenue — socket
+                  pas encore connectée, ou génération démarrée avant
+                  l'ouverture de la page — on garde le message générique. */}
+              {progression
+                ? `${progression.label}…`
+                : 'Génération en cours — cette page se met à jour automatiquement.'}
             </div>
           )}
 
