@@ -31,6 +31,10 @@ export const CAPABILITY = {
   EXAMS_TECHNICAL_WRITE: 'exams.technical.write',
   EXAMS_CLINICAL_WRITE: 'exams.clinical.write',
   EXAMS_CONCLUSION_WRITE: 'exams.conclusion.write',
+  APPOINTMENTS_MANAGE: 'appointments.manage',
+  EVENTS_MANAGE: 'events.manage',
+  CONFIG_VIEW: 'config.view',
+  CONFIG_MANAGE: 'config.manage',
 } as const;
 
 export type CapabilityCode = string;
