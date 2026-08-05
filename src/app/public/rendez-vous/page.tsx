@@ -70,13 +70,16 @@ export default function RendezVousPage() {
 
   function handleSubmit(values: ReservationFormInput) {
     const { motif_autre, motif, ...rest } = values;
+    // « Autre » remplace le motif par le texte libre saisi juste en dessous.
     const finalMotif =
-      motif === MOTIF_AUTRE_VALUE ? (motif_autre?.trim() ?? '') : (motif ?? '');
+      motif === MOTIF_AUTRE_VALUE ? (motif_autre?.trim() ?? '') : motif;
 
-    // `motif` est optionnel : on l'omet plutôt que d'envoyer une chaîne vide.
-    const payload: ReservationInput = finalMotif
-      ? { ...rest, motif: finalMotif }
-      : rest;
+    // `motif` est OBLIGATOIRE et toujours transmis. Il était auparavant omis
+    // quand il était vide : le rendez-vous se créait alors sans motif, et sa
+    // confirmation WhatsApp échouait ensuite en silence (Meta refuse un modèle
+    // dont une variable est vide — erreur Twilio 21656).
+    // La validation Zod garantit qu'on n'arrive pas ici avec une chaîne vide.
+    const payload: ReservationInput = { ...rest, motif: finalMotif };
 
     setConfirmedReminder(values.want_reminder);
     bookAppointment(payload);
