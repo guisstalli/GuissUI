@@ -17,6 +17,7 @@ import {
   Package,
   Receipt,
   Settings,
+  FileClock,
   ShieldAlert,
   ShieldCheck,
   Sliders,
@@ -300,6 +301,16 @@ const adminItems: AdminNavItem[] = [
     capability: CAPABILITY.SECURITY_AUDIT_VIEW,
   },
   {
+    // Entrée distincte du « Journal de sécurité » ci-dessus : celui-ci porte
+    // les MODIFICATIONS (quelles valeurs ont changé), l'autre les
+    // CONSULTATIONS (qui a ouvert quel dossier). Même capacité d'accès, deux
+    // sources et deux volumétries sans rapport.
+    title: 'Journal des modifications',
+    url: paths.administration.changeLog.getHref(),
+    icon: FileClock,
+    capability: CAPABILITY.SECURITY_AUDIT_VIEW,
+  },
+  {
     title: 'Permissions',
     url: paths.administration.permissions.getHref(),
     icon: KeyRound,
@@ -535,8 +546,13 @@ export function AppSidebar() {
 
       {/* Main navigation */}
       <SidebarContent>
-        {visibleGroups.map((group, i) => (
-          <SidebarGroup key={i}>
+        {/* Clé sur une identité STABLE, pas sur l'index : `visibleGroups` est
+            filtré par les capacités, qui arrivent après le premier rendu. La
+            liste change alors de longueur et un index ferait réutiliser le
+            mauvais nœud. Repli sur le premier lien du groupe quand il n'a pas
+            d'intitulé (le groupe principal). */}
+        {visibleGroups.map((group) => (
+          <SidebarGroup key={group.label ?? group.items[0]?.url ?? 'principal'}>
             {group.label && (
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             )}

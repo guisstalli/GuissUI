@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { paths } from '@/config/paths';
 import { ConversationList } from '@/features/ai-reports/components/chat/conversation-list';
+import { CAPABILITY } from '@/lib/capabilities';
 
 /**
  * Layout du segment /assistant-ia : la sidebar des conversations persiste
@@ -62,8 +63,16 @@ export default function AssistantIaLayout({
     </>
   );
 
+  // `capability` explicite : le backend garde le chat par `ai.chat.access`,
+  // pas par la génération de rapports. Sans elle, `Can` retombait sur le rôle
+  // statique — la barre latérale masquait bien l'entrée après révocation, mais
+  // l'URL saisie directement affichait quand même la coquille du chat, les
+  // appels API échouant ensuite en 403.
   return (
-    <Can permission="ai-reports:generate">
+    <Can
+      permission="ai-reports:generate"
+      capability={CAPABILITY.AI_CHAT_ACCESS}
+    >
       <Shell title="Assistant IA">
         {/* `h-full` et non `h-[calc(100vh-9rem)]` : cette hauteur était une
             DEVINETTE — 9rem censés couvrir l'en-tête et les marges du shell,

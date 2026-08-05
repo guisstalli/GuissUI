@@ -207,6 +207,13 @@ export const paths = {
     security: {
       getHref: () => '/administration/securite',
     },
+    /**
+     * Journal des MODIFICATIONS — volontairement distinct de `security`, qui
+     * journalise les CONSULTATIONS. Sources et volumétries sans rapport.
+     */
+    changeLog: {
+      getHref: () => '/administration/journal',
+    },
     permissions: {
       getHref: () => '/administration/permissions',
     },
