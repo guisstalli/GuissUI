@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { GuissIcon } from '@/components/ui/logo/guiss-logo';
+import { UniversiteLogo } from '@/components/ui/logo/universite-logo';
 import { cn } from '@/lib/utils';
 
 export function PublicNavbar() {
@@ -40,7 +40,7 @@ export function PublicNavbar() {
           className="group flex items-center gap-3"
         >
           <div className="relative">
-            <GuissIcon className="size-9 shrink-0" />
+            <UniversiteLogo className="size-9 shrink-0" size={36} />
             <div className="absolute inset-0 rounded-full bg-cyan-400/0 blur-md transition-all duration-300 group-hover:bg-cyan-400/20" />
           </div>
           <div className="flex flex-col leading-none">

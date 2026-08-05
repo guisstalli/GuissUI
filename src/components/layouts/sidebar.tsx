@@ -42,7 +42,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown/dropdown';
-import { GuissIcon } from '@/components/ui/logo/guiss-logo';
+import { UniversiteLogo } from '@/components/ui/logo/universite-logo';
 import {
   Sidebar,
   SidebarContent,
@@ -307,6 +307,37 @@ const adminItems: AdminNavItem[] = [
   },
 ];
 
+/** Toutes les URL navigables, racine exclue. */
+export function allNavUrls(): string[] {
+  return [
+    ...navGroups.flatMap((g) =>
+      g.items.flatMap((i) => [i.url, ...(i.children?.map((c) => c.url) ?? [])]),
+    ),
+    ...adminItems.map((i) => i.url),
+  ].filter((url) => url && url !== '/');
+}
+
+/**
+ * L'URL la plus PRÉCISE qui corresponde au chemin courant.
+ *
+ * La règle précédente marquait actif tout lien dont l'URL préfixait le chemin.
+ * Sur `/administration/securite`, « Tableau de bord » (`/administration`) ET
+ * « Journal de sécurité » s'allumaient donc ensemble : l'utilisateur ne savait
+ * plus où il se trouvait.
+ *
+ * On retient la plus longue correspondance, et elle seule. Une entrée parente
+ * reste signalée par `isParentActive`, qui teste ses enfants — jamais par sa
+ * propre URL.
+ */
+export function resolveActiveUrl(
+  pathname: string,
+  candidats: string[],
+): string | undefined {
+  return candidats
+    .filter((url) => pathname === url || pathname.startsWith(url + '/'))
+    .sort((a, b) => b.length - a.length)[0];
+}
+
 function isAdminItemVisible(
   item: AdminNavItem,
   user: AuthUser | null | undefined,
@@ -427,9 +458,26 @@ export function AppSidebar() {
   const { user } = useUser();
   const { data: myCapabilities } = useMyCapabilities();
 
+  /**
+   * Seul le chemin le PLUS PRÉCIS s'allume.
+   *
+   * L'ancienne règle marquait actif tout lien dont l'URL préfixait le chemin
+   * courant. Sur `/administration/securite`, « Tableau de bord »
+   * (`/administration`) ET « Journal de sécurité » s'allumaient donc
+   * ensemble : l'utilisateur ne savait plus où il se trouvait.
+   *
+   * On retient la plus longue URL connue qui préfixe le chemin, et elle seule
+   * est active. Une entrée parente reste signalée par `isParentActive`, qui
+   * teste ses enfants — pas par sa propre URL.
+   */
+  const meilleureCorrespondance = React.useMemo(
+    () => resolveActiveUrl(pathname, allNavUrls()),
+    [pathname],
+  );
+
   const isActive = (url: string) => {
     if (url === '/') return pathname === '/';
-    return pathname === url || pathname.startsWith(url + '/');
+    return url === meilleureCorrespondance;
   };
 
   // Filtre les groupes : on ne rend ni le label ni le bloc si AUCUN item du
@@ -470,7 +518,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href={paths.dashboard.getHref()}>
-                <GuissIcon className="size-8 shrink-0" />
+                <UniversiteLogo className="size-8 shrink-0" size={32} />
                 <div className="flex flex-col gap-0 leading-none">
                   <span className="text-sm font-bold tracking-wider">
                     GUISS

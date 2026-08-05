@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { GuissIcon } from '@/components/ui/logo/guiss-logo';
+import { UniversiteLogo } from '@/components/ui/logo/universite-logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle/theme-toggle';
 import { cn } from '@/utils/cn';
 
@@ -39,7 +39,7 @@ function CornerOrnament({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
 function GuissLogo() {
   return (
     <div className="relative mx-auto size-14 rounded-full shadow-[0_0_28px_rgba(34,211,238,0.4)]">
-      <GuissIcon className="size-14" />
+      <UniversiteLogo className="size-14" size={56} />
     </div>
   );
 }
