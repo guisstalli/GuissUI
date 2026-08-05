@@ -121,7 +121,7 @@ export function InfoStep({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs font-medium text-muted-foreground">
-                Motif (optionnel)
+                Motif *
               </FormLabel>
               <Select
                 value={field.value ?? ''}
