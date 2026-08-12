@@ -1,6 +1,8 @@
 import { ArrowRight, Stethoscope } from 'lucide-react';
 import Link from 'next/link';
 
+import { useUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/authorization';
 import { cn } from '@/lib/utils';
 
 import type { AdminDashboardPipeline } from '../types/schemas';
@@ -79,6 +81,11 @@ export function PipelineBand({
   windowDays: number;
 }) {
   const { adultes, enfants } = pipeline;
+  // Un ADMIN n'a pas `exams:view` et ne peut pas atteindre /exams : le routage
+  // le renverrait ici même. Proposer le lien sur SA page d'accueil était donc
+  // un appel à l'action mort — constaté en préproduction.
+  const { user } = useUser();
+  const peutVoirLesExamens = hasPermission(user, 'exams:view');
 
   const adultSegments: Segment[] = [
     {
@@ -148,7 +155,7 @@ export function PipelineBand({
               ? 'Aucun examen adulte en attente de la partie clinique.'
               : `${bloques === 1 ? 'Examen adulte dont' : 'Examens adultes dont'} la partie technique est faite et la partie clinique reste à saisir.`}
           </p>
-          {bloques > 0 && (
+          {bloques > 0 && peutVoirLesExamens && (
             <Link
               href="/exams"
               className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"

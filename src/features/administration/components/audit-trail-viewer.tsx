@@ -45,6 +45,28 @@ const ACTIONS = [
   { code: 3, label: 'Accès' },
 ] as const;
 
+/**
+ * Traduction du libellé d'action renvoyé par le serveur.
+ *
+ * Le commentaire ci-dessus affirmait que « le backend renvoie déjà le
+ * libellé » — exact, mais django-auditlog produit des libellés ANGLAIS
+ * (`create`, `update`…). La colonne affichait donc « update » juste sous un
+ * filtre proposant « Modification » : traduit d'un côté, brut de l'autre.
+ *
+ * Repli sur la valeur reçue plutôt qu'un tiret : une action inconnue doit
+ * rester lisible, pas disparaître.
+ */
+const ACTION_LABELS: Record<string, string> = {
+  create: 'Création',
+  update: 'Modification',
+  delete: 'Suppression',
+  access: 'Accès',
+};
+
+function actionLabel(action: string): string {
+  return ACTION_LABELS[action.toLowerCase()] ?? action;
+}
+
 function actionVariant(action: string): 'default' | 'outline' | 'destructive' {
   if (action === 'delete') return 'destructive';
   if (action === 'create') return 'default';
@@ -344,7 +366,9 @@ function AuditRow({
           {format(new Date(row.timestamp), 'dd MMM yyyy HH:mm', { locale: fr })}
         </TableCell>
         <TableCell>
-          <Badge variant={actionVariant(row.action)}>{row.action}</Badge>
+          <Badge variant={actionVariant(row.action)}>
+            {actionLabel(row.action)}
+          </Badge>
         </TableCell>
         <TableCell className="text-sm">
           <span className="font-medium">{row.object_repr || '—'}</span>

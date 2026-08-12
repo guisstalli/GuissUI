@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
+import { SessionProvider } from 'next-auth/react';
 import { describe, expect, test } from 'vitest';
 
 import { env } from '@/config/env';
@@ -22,11 +23,38 @@ function createQueryClient() {
   });
 }
 
-function renderDashboard() {
+/**
+ * L'application enveloppe TOUT dans `SessionProvider` (voir `app/provider.tsx`).
+ * Le harnais ne montait que `QueryClientProvider` : un composant lisant la
+ * session — pour masquer un lien que le rôle courant ne peut pas suivre —
+ * échouait ici alors qu'il fonctionne en production. C'était le harnais qui
+ * n'était pas représentatif, pas le composant.
+ *
+ * Session ADMIN : c'est le destinataire de ce tableau de bord.
+ */
+const SESSION_ADMIN = {
+  user: {
+    id: '1',
+    name: 'admin@guiss.sn',
+    email: 'admin@guiss.sn',
+    role: 'ADMIN',
+  },
+  expires: '2999-01-01T00:00:00.000Z',
+};
+
+/** SUPERUSER : porte `exams:view`, donc peut suivre les liens cliniques. */
+const SESSION_SUPERUSER = {
+  ...SESSION_ADMIN,
+  user: { ...SESSION_ADMIN.user, role: 'SUPERUSER' },
+};
+
+function renderDashboard(session: typeof SESSION_ADMIN = SESSION_ADMIN) {
   return rtlRender(
-    <QueryClientProvider client={createQueryClient()}>
-      <AdminDashboard />
-    </QueryClientProvider>,
+    <SessionProvider session={session}>
+      <QueryClientProvider client={createQueryClient()}>
+        <AdminDashboard />
+      </QueryClientProvider>
+    </SessionProvider>,
   );
 }
 
@@ -44,9 +72,32 @@ describe('AdminDashboard', () => {
     // apparaît deux fois (héro + légende de la barre), d'où getAllByText.
     await screen.findByText('En attente de lecture');
     expect(screen.getAllByText('18').length).toBeGreaterThan(0);
+  });
+
+  test('propose d agir sur le retard a qui peut ouvrir les examens', async () => {
+    server.use(...administrationHandlers);
+
+    renderDashboard(SESSION_SUPERUSER);
+
+    await screen.findByText('En attente de lecture');
     expect(
       screen.getByRole('link', { name: /voir les examens/i }),
     ).toBeInTheDocument();
+  });
+
+  test('ne propose pas un lien que l administrateur ne peut pas suivre', async () => {
+    // REGRESSION : ADMIN n'a pas `exams:view` et le routage le renvoie vers
+    // /administration. Le lien figurait pourtant sur SA page d'accueil —
+    // cliquer ne faisait rien. Un appel à l'action mort, constaté en
+    // préproduction.
+    server.use(...administrationHandlers);
+
+    renderDashboard(SESSION_ADMIN);
+
+    await screen.findByText('En attente de lecture');
+    expect(
+      screen.queryByRole('link', { name: /voir les examens/i }),
+    ).not.toBeInTheDocument();
   });
 
   test('ne fusionne jamais examens adultes et enfants', async () => {
