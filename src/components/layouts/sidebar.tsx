@@ -64,7 +64,9 @@ import { type AuthUser, signOut, useUser } from '@/lib/auth';
 import {
   getRoleLabel,
   hasPermission,
+  isAdminAreaPath,
   type Permission,
+  ROLES,
 } from '@/lib/authorization';
 import {
   CAPABILITY,
@@ -289,7 +291,11 @@ const adminItems: AdminNavItem[] = [
     permission: 'admin:users',
   },
   {
-    title: 'Tableau de bord',
+    // Intitulé distinct de celui de l'application (« Tableau de bord », vers
+    // `/`) : un SUPERUSER voit légitimement les deux, et deux entrées de même
+    // nom et même icône vers des destinations différentes sont indéchiffrables.
+    // Reprend le titre de la page elle-même.
+    title: "Vue d'ensemble",
     url: paths.administration.dashboard.getHref(),
     icon: LayoutDashboard,
     capability: CAPABILITY.ANALYTICS_ADMIN,
@@ -452,6 +458,13 @@ function isNavItemVisible(
   user: AuthUser | null | undefined,
   caps: MyCapabilities | undefined,
 ): boolean {
+  // ADMIN ne peut atteindre que l'espace d'administration : lui proposer un
+  // lien hors de cet espace est un piège, il en serait renvoyé aussitôt.
+  // « Tableau de bord » (permission: null, donc visible de tous) apparaissait
+  // ainsi DEUX fois — vers `/`, injoignable, et vers `/administration`. La
+  // règle est dérivée de celle des gardes plutôt que traitée au cas par cas.
+  if (user?.role === ROLES.ADMIN && !isAdminAreaPath(item.url)) return false;
+
   const selfVisible =
     item.permission === null || hasPermission(user, item.permission);
   if (!selfVisible) return false;
