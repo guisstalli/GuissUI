@@ -141,6 +141,56 @@ export type SecurityAuditEvent = {
 };
 
 // =============================================================================
+// JOURNAL DES MODIFICATIONS — /logs/audit/
+// =============================================================================
+
+/**
+ * Auteur d'un changement.
+ *
+ * `id` est nul pour les écritures hors requête HTTP (commande de gestion,
+ * tâche planifiée, migration) : le backend renvoie alors le libellé
+ * « Système ». `email` survit à la suppression du compte — c'est ce qui rend
+ * le journal opposable après le départ d'un utilisateur.
+ */
+export type AuditActor = {
+  id: number | null;
+  email: string | null;
+  label: string;
+};
+
+/**
+ * Une entrée du journal des modifications.
+ *
+ * `changes` associe à chaque champ modifié le couple [ancienne, nouvelle].
+ * Quand `changes_redacted` vaut `true`, le backend a remplacé les VALEURS par
+ * des points — l'appelant n'a pas la capacité `patients.read` — mais les NOMS
+ * DE CHAMPS restent exacts. Ne jamais présenter ces points comme la valeur
+ * réellement enregistrée : voir `audit-trail-viewer`.
+ */
+export type AuditTrailEntry = {
+  id: number;
+  timestamp: string;
+  /** Libellé déjà résolu par le backend : « create », « update », … */
+  action: string;
+  actor: AuditActor;
+  ip_address: string | null;
+  app_label: string;
+  model: string;
+  model_label: string;
+  object_id: string;
+  object_repr: string;
+  changes: Record<string, [string, string]>;
+  changes_redacted: boolean;
+};
+
+/** Entrée du référentiel alimentant le filtre « type d'objet ». */
+export type AuditedModel = {
+  app_label: string;
+  model: string;
+  label: string;
+};
+
+// =============================================================================
 // GROUPES DE PERMISSIONS — /users/permission-groups/
 // =============================================================================
 

@@ -176,7 +176,7 @@ export function ConversationList({
   activeConversationId,
 }: ConversationListProps) {
   const router = useRouter();
-  const { data, isLoading } = useConversations({
+  const { data, isLoading, isError, refetch, isFetching } = useConversations({
     params: { limit: SIDEBAR_PAGE_SIZE },
   });
 
@@ -193,6 +193,23 @@ export function ConversationList({
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
           <Spinner size="sm" />
+        </div>
+      ) : isError ? (
+        /* Un échec réseau tombait jusqu'ici dans la branche « Aucune
+           conversation » : l'utilisateur croyait son historique vide alors
+           que la requête avait échoué. */
+        <div className="flex flex-col items-start gap-2 px-2 py-4">
+          <p className="text-xs text-muted-foreground">
+            Historique indisponible — la requête a échoué.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            Réessayer
+          </Button>
         </div>
       ) : conversations.length === 0 ? (
         <p className="px-2 py-4 text-xs text-muted-foreground">

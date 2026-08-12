@@ -19,6 +19,22 @@ export interface CanProps {
   permissions?: Permission[];
   /** Mode de vérification: 'any' (au moins une) ou 'all' (toutes) */
   mode?: 'any' | 'all';
+  /**
+   * Capacité serveur arbitrant cet écran, quand elle ne se déduit pas de la
+   * permission.
+   *
+   * `PERMISSION_TO_CAPABILITY` suffit quand la correspondance est de un à un.
+   * Elle ne l'est pas toujours : `ai-reports:generate` couvre à la fois
+   * l'accès au chat (`ai.chat.access`) et la génération de rapports
+   * (`ai.reports.generate`). Mapper la permission trancherait pour l'une au
+   * détriment de l'autre ; cette prop laisse l'appelant nommer la bonne.
+   *
+   * Les entrées de la barre latérale portaient déjà ce couple
+   * permission + capability — `Can` ne savait simplement pas le lire, si bien
+   * qu'une navigation directe vers l'URL affichait un écran que le menu
+   * masquait pourtant.
+   */
+  capability?: string;
   /** Contenu à afficher si autorisé */
   children: ReactNode;
   /** Contenu alternatif si non autorisé */
@@ -55,6 +71,7 @@ export interface CanProps {
 export function Can({
   permission,
   permissions,
+  capability,
   mode = 'any',
   children,
   fallback = null,
@@ -85,6 +102,24 @@ export function Can({
     }
     return hasPermission(user, p);
   };
+
+  // Capacité nommée explicitement : elle prime, car l'appelant en sait plus
+  // que la table de correspondance. Tant que la requête n'a pas répondu on
+  // retombe sur la permission, pour ne pas faire clignoter l'écran.
+  if (capability) {
+    if (mesCapacites) {
+      return mesCapacites.capabilities.includes(capability) ? (
+        <>{children}</>
+      ) : (
+        <>{fallback}</>
+      );
+    }
+    return permission && hasPermission(user, permission) ? (
+      <>{children}</>
+    ) : (
+      <>{fallback}</>
+    );
+  }
 
   // Vérification d'une permission unique
   if (permission) {

@@ -1,18 +1,20 @@
 'use client';
 
 import { MessageCircle, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
 import { Switch } from '@/components/ui/form';
+import { Input } from '@/components/ui/form/input';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
 
 import { useDeleteSender } from '../api/delete-sender';
 import { useSenders } from '../api/get-senders';
 import { useUpdateSender } from '../api/update-sender';
-import { CHANNEL_LABELS } from '../types';
+import { CHANNEL_LABELS, type AllowedSender } from '../types';
 
 /** Table des identités autorisées : droits modifiables en place, révocation. */
 export function SendersTable() {
@@ -20,6 +22,10 @@ export function SendersTable() {
   const updateMutation = useUpdateSender();
   const deleteMutation = useDeleteSender();
   const { addNotification } = useNotifications();
+  // Filtrage CÔTÉ CLIENT, à dessein : la liste des identités autorisées se
+  // compte en dizaines, pas en milliers. Un aller-retour serveur par frappe
+  // coûterait plus qu'il ne rapporte.
+  const [recherche, setRecherche] = useState('');
 
   if (sendersQuery.isLoading) {
     return (
@@ -31,13 +37,32 @@ export function SendersTable() {
 
   if (sendersQuery.isError) {
     return (
-      <div className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-destructive">
-        Impossible de charger les identités autorisées. Réessayez plus tard.
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-10 text-center">
+        <p className="text-sm text-destructive">
+          Impossible de charger les identités autorisées.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => sendersQuery.refetch()}
+          disabled={sendersQuery.isFetching}
+        >
+          Réessayer
+        </Button>
       </div>
     );
   }
 
   const senders = sendersQuery.data ?? [];
+  const terme = recherche.trim().toLowerCase();
+  const sendersFiltres = terme
+    ? senders.filter(
+        (s) =>
+          s.identifier.toLowerCase().includes(terme) ||
+          s.user_email.toLowerCase().includes(terme),
+      )
+    : senders;
+
   if (senders.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-10 text-center">
@@ -50,6 +75,57 @@ export function SendersTable() {
     );
   }
 
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="recherche-identite"
+          className="text-xs text-muted-foreground"
+        >
+          Rechercher une identité
+        </label>
+        <Input
+          id="recherche-identite"
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
+          placeholder="Numéro, adresse email ou compte lié"
+          className="h-9 max-w-md"
+        />
+      </div>
+
+      {sendersFiltres.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+          Aucune identité ne correspond à « {recherche} ».
+        </p>
+      ) : (
+        <SendersTableBody
+          senders={sendersFiltres}
+          updateMutation={updateMutation}
+          deleteMutation={deleteMutation}
+          addNotification={addNotification}
+        />
+      )}
+    </div>
+  );
+}
+
+type SendersTableBodyProps = {
+  senders: AllowedSender[];
+  updateMutation: ReturnType<typeof useUpdateSender>;
+  deleteMutation: ReturnType<typeof useDeleteSender>;
+  addNotification: (notification: {
+    type: 'info' | 'warning' | 'success' | 'error';
+    title: string;
+    message?: string;
+  }) => void;
+};
+
+function SendersTableBody({
+  senders,
+  updateMutation,
+  deleteMutation,
+  addNotification,
+}: SendersTableBodyProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full text-sm">

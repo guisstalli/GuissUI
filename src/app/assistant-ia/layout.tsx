@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { paths } from '@/config/paths';
 import { ConversationList } from '@/features/ai-reports/components/chat/conversation-list';
+import { CAPABILITY } from '@/lib/capabilities';
 
 /**
  * Layout du segment /assistant-ia : la sidebar des conversations persiste
@@ -62,12 +63,35 @@ export default function AssistantIaLayout({
     </>
   );
 
+  // `capability` explicite : le backend garde le chat par `ai.chat.access`,
+  // pas par la génération de rapports. Sans elle, `Can` retombait sur le rôle
+  // statique — la barre latérale masquait bien l'entrée après révocation, mais
+  // l'URL saisie directement affichait quand même la coquille du chat, les
+  // appels API échouant ensuite en 403.
   return (
-    <Can permission="ai-reports:generate">
+    <Can
+      permission="ai-reports:generate"
+      capability={CAPABILITY.AI_CHAT_ACCESS}
+    >
       <Shell title="Assistant IA">
-        <div className="flex h-[calc(100vh-9rem)] gap-3">
-          {/* Desktop : aside persistant. */}
-          <aside className="hidden w-64 shrink-0 md:flex md:flex-col">
+        {/* `h-full` et non `h-[calc(100vh-9rem)]` : cette hauteur était une
+            DEVINETTE — 9rem censés couvrir l'en-tête et les marges du shell,
+            qui valent en réalité 6,5rem (56px d'en-tête + 48px de `p-6`).
+            Le conteneur ne coïncidait donc jamais avec l'espace disponible :
+            trop court, il laissait un vide sous la discussion, et le moindre
+            écart faisait défiler le conteneur entier au lieu du seul fil.
+            Le `main` du shell a une hauteur définie (`flex-1` dans une colonne
+            contrainte, shell.tsx:35-40) : `h-full` s'y ajuste exactement et
+            suivra toute modification future de l'en-tête sans recalcul. */}
+        <div className="flex h-full min-h-0 gap-3">
+          {/* Desktop : aside persistant.
+              `min-h-0 overflow-y-auto` est indispensable, pas cosmétique :
+              sans lui la liste des conversations grandit sans limite et pousse
+              le conteneur au-delà de sa boîte, ce qui fait défiler tout le
+              shell au lieu du seul fil de discussion. La version mobile de
+              cette même liste (dans le SheetContent ci-dessous) avait déjà son
+              propre scroll — l'aside desktop était le seul à en manquer. */}
+          <aside className="hidden min-h-0 w-64 shrink-0 overflow-y-auto md:flex md:flex-col">
             {asideContent}
           </aside>
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">

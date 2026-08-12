@@ -24,13 +24,18 @@ export const ReservationInputSchema = z.object({
   patient_prenom: z.string().min(1, 'Prénom requis'),
   patient_phone: z.string().min(9, 'Téléphone invalide'),
   patient_email: z.string().email().optional().or(z.literal('')),
-  motif: z.string().optional(),
+  motif: z.string().min(1, 'Motif requis'),
   want_reminder: z.boolean().default(true),
 });
 
-// `motif` est optionnel et libre : soit l'un des MOTIF_OPTIONS, soit le texte
-// saisi via « Autre ». Il n'est jamais une chaîne vide dans le payload (omis
-// si l'utilisateur ne choisit rien). Voir `types/motifs.ts`.
+// `motif` est OBLIGATOIRE : soit l'un des MOTIF_OPTIONS, soit le texte saisi
+// via « Autre ». Voir `types/motifs.ts`.
+//
+// Il l'est devenu parce que le modèle WhatsApp de confirmation l'attend comme
+// variable, et que Meta rejette tout modèle dont une variable est vide (erreur
+// Twilio 21656) : le message n'est alors jamais remis. Un motif facultatif
+// revenait donc à ne pas confirmer certains rendez-vous, en silence.
+// Le backend le refuse également — cette règle n'est qu'un retour immédiat.
 export type ReservationInput = z.infer<typeof ReservationInputSchema>;
 
 /* ─── motif (formulaire public) ───────────────────────────────────────────── */
