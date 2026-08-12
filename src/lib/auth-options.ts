@@ -50,12 +50,37 @@ function clientIpDepuisEnTetes(
   return headers['x-real-ip'] ?? null;
 }
 
+/**
+ * En-tetes obligatoires pour tout appel serveur-a-serveur vers l'API.
+ *
+ * Django tourne avec `SECURE_SSL_REDIRECT=True` et
+ * `SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https")`. En clair sur
+ * le reseau interne, une requete dont le Host est AUTORISE recoit donc un 301
+ * vers `https://<host>:8000/...`. Le client suit la redirection, tente une
+ * poignee de main TLS contre Daphne — qui ne parle que HTTP — et attend
+ * indefiniment : `UND_ERR_CONNECT_TIMEOUT`.
+ *
+ * Le piege de diagnostic : par ADRESSE IP, le Host n'est pas dans
+ * ALLOWED_HOSTS, Django repond 400 AVANT d'arriver a la redirection. Ce 400
+ * ressemble a une preuve que la liaison fonctionne, alors qu'il prouve
+ * l'inverse — la requete n'atteint jamais le reste de la pile.
+ *
+ * Le trafic public ne rencontre pas ce probleme : Traefik termine le TLS et
+ * pose lui-meme cet en-tete. Ici, personne ne le pose a notre place.
+ */
+function enTetesProxyInterne(): Record<string, string> {
+  return { 'X-Forwarded-Proto': 'https' };
+}
+
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     // Egalement serveur-a-serveur : meme raison de passer par le reseau interne.
     const response = await fetch(`${API_URL_INTERNE}/auth/jwt/refresh/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...enTetesProxyInterne(),
+      },
       body: JSON.stringify({ refresh: token.refreshToken }),
     });
 
@@ -102,6 +127,7 @@ export const authOptions: NextAuthOptions = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...enTetesProxyInterne(),
             // La requete part de CE serveur, pas du navigateur : sans cet
             // en-tete le journal de securite enregistrait la passerelle Docker
             // pour toute connexion, alors que les consultations d'examen —
