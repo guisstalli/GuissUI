@@ -355,15 +355,10 @@ export function resolveActiveUrl(
     .sort((a, b) => b.length - a.length)[0];
 }
 
-function isAdminItemVisible(
-  item: AdminNavItem,
-  user: AuthUser | null | undefined,
-  caps: MyCapabilities | undefined,
-): boolean {
-  if (item.permission && !hasPermission(user, item.permission)) return false;
-  if (item.capability && !hasCapability(caps, item.capability)) return false;
-  return true;
-}
+// `isAdminItemVisible` a ete retiree : les entrees d'administration passent
+// desormais par `isNavItemVisible`, qui applique exactement les memes regles
+// (permission cliente puis capacite serveur) apres normalisation de
+// `permission` a `null`. Une seule fonction, donc une seule regle a maintenir.
 
 const roleColors: Record<string, string> = {
   ADMIN: 'bg-red-500',
@@ -507,26 +502,35 @@ export function AppSidebar() {
   // Filtre les groupes : on ne rend ni le label ni le bloc si AUCUN item du
   // groupe n'est visible pour le rôle courant. Évite les labels orphelins
   // (ex. « Analyse » seul quand l'utilisateur n'a pas 'analytics:view').
-  const visibleGroups = React.useMemo(
-    () =>
-      navGroups
-        .map((group) => ({
-          ...group,
-          items: group.items.filter((item) =>
-            isNavItemVisible(item, user, myCapabilities),
-          ),
-        }))
-        .filter((group) => group.items.length > 0),
-    [user, myCapabilities],
-  );
+  const visibleGroups = React.useMemo(() => {
+    // « Administration » etait rendu dans un bloc separe, donc TOUJOURS en
+    // dernier — un administrateur voyait « Configuration » avant son propre
+    // espace. Les deux groupes n'ont que des liens simples : on les rend par le
+    // meme chemin, en inserant Administration JUSTE AVANT Configuration.
+    // `navGroups` n'est pas modifie, donc `allNavUrls()` reste exact.
+    const groupeAdministration: NavGroup = {
+      label: 'Administration',
+      items: adminItems.map((item) => ({
+        ...item,
+        permission: item.permission ?? null,
+      })),
+    };
 
-  const visibleAdminItems = React.useMemo(
-    () =>
-      adminItems.filter((item) =>
-        isAdminItemVisible(item, user, myCapabilities),
-      ),
-    [user, myCapabilities],
-  );
+    const ordonnes: NavGroup[] = [];
+    for (const group of navGroups) {
+      if (group.label === 'Configuration') ordonnes.push(groupeAdministration);
+      ordonnes.push(group);
+    }
+
+    return ordonnes
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          isNavItemVisible(item, user, myCapabilities),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [user, myCapabilities]);
 
   const initials = user ? getInitials(user.name ?? '', user.email ?? '') : 'U';
   const avatarBg = roleColors[user?.role ?? ''] ?? 'bg-muted';
@@ -619,31 +623,8 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {/* Admin section — visible dès qu'au moins un item l'est (permission
-            client admin:users OU capacité serveur d'administration). */}
-        {visibleAdminItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {visibleAdminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={item.title}
-                    >
-                      <Link href={item.url}>
-                        <item.icon className="size-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {/* La section Administration n'a plus de bloc dedie : elle est fusionnee
+            dans `visibleGroups` ci-dessus pour passer AVANT Configuration. */}
       </SidebarContent>
 
       {/* Footer — User menu */}
