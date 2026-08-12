@@ -169,7 +169,11 @@ export function UsersTable() {
             <option value="STAFF">Staff</option>
             <option value="DOCTEUR">Médecin</option>
             <option value="TECHNICIEN">Technicien</option>
-            <option value="ADMIN">Admin</option>
+            <option value="ADMIN">Administrateur</option>
+            {/* Non créables via l'interface, mais ces comptes EXISTENT en base :
+                sans ces deux entrées ils restaient introuvables par filtrage. */}
+            <option value="DATA_ENTRY">Saisie</option>
+            <option value="SUPERUSER">Superutilisateur</option>
           </select>
 
           {/* Active filter */}

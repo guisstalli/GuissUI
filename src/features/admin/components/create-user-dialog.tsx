@@ -177,6 +177,10 @@ export function CreateUserDialog() {
                       <option value="STAFF">Staff</option>
                       <option value="DOCTEUR">Médecin</option>
                       <option value="TECHNICIEN">Technicien</option>
+                      {/* Le backend accepte ADMIN depuis toujours ; seule
+                          l'option manquait ici. SUPERUSER reste absent : le
+                          serveur le refuse (garde anti-escalade). */}
+                      <option value="ADMIN">Administrateur</option>
                     </select>
                   </FormControl>
                   <FormMessage />

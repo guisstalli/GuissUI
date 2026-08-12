@@ -6,7 +6,11 @@ import { type ReactNode, useEffect } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
-import { canAccessInternalApp } from '@/lib/authorization';
+import {
+  ROLES,
+  canAccessInternalApp,
+  isAdminAreaPath,
+} from '@/lib/authorization';
 
 function isPublicPath(pathname: string): boolean {
   return (
@@ -27,9 +31,15 @@ interface InternalAppGuardProps {
 }
 
 /**
- * Garde d'accès pour l'application interne
- * Vérifie que l'utilisateur a un rôle autorisé (STAFF, DOCTEUR, TECHNICIEN)
- * Redirige vers /unauthorized si l'utilisateur est ADMIN ou n'a pas de rôle autorisé
+ * Garde d'accès pour l'application interne.
+ *
+ * Doublon volontaire du middleware : celui-ci protège la navigation serveur,
+ * celle-ci le rendu client. Les deux DOIVENT appliquer la même règle — sinon la
+ * correction de l'un est annulée par l'autre.
+ *
+ * Rôles internes (STAFF, DOCTEUR, TECHNICIEN, DATA_ENTRY, SUPERUSER) : accès
+ * complet. ADMIN, rôle technique sans accès clinique : uniquement l'espace
+ * d'administration. Les autres : /unauthorized.
  */
 export function InternalAppGuard({ children }: InternalAppGuardProps) {
   const pathname = usePathname();
@@ -49,14 +59,21 @@ export function InternalAppGuard({ children }: InternalAppGuardProps) {
       }
     : null;
 
-  const hasAccess = canAccessInternalApp(user);
+  // Un ADMIN sur une route d'administration est légitime : on le laisse passer
+  // et on le renvoie vers SON tableau de bord ailleurs, plutôt que vers
+  // /unauthorized qui lui affirmait ne pas avoir le rôle Administrateur.
+  const estAdmin = user?.role === ROLES.ADMIN;
+  const hasAccess =
+    canAccessInternalApp(user) || (estAdmin && isAdminAreaPath(pathname));
 
   useEffect(() => {
     if (isPublic || isLoading || !isAuthenticated) return;
     if (!hasAccess) {
-      router.replace(paths.unauthorized.getHref());
+      router.replace(
+        estAdmin ? '/administration' : paths.unauthorized.getHref(),
+      );
     }
-  }, [isPublic, isLoading, isAuthenticated, hasAccess, router]);
+  }, [isPublic, isLoading, isAuthenticated, hasAccess, estAdmin, router]);
 
   // Radix UI Dialog leaves pointer-events:none on body when unmounted during navigation.
   // Clean up on every route change.

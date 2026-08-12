@@ -15,6 +15,33 @@ export const ROLES = {
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
+/**
+ * Préfixes de l'espace réservé au rôle ADMIN.
+ *
+ * ADMIN est un rôle TECHNIQUE : comptes, permissions et supervision, sans accès
+ * aux dossiers patients. Il est donc absent de INTERNAL_APP_ROLES ci-dessous —
+ * mais l'administration reste son domaine. Sans cette liste, les deux gardes
+ * (middleware et InternalAppGuard) le renvoyaient vers /unauthorized sur TOUTES
+ * les routes, y compris les cinq pages d'administration bâties pour lui.
+ */
+export const ADMIN_AREA_PREFIXES = [
+  '/administration',
+  '/admin',
+  '/parametres',
+] as const;
+
+/**
+ * Le chemin appartient-il à l'espace d'administration ?
+ *
+ * Compare sur une frontière de segment : `/administration-secret` ne doit pas
+ * passer parce qu'il commence par `/administration`.
+ */
+export function isAdminAreaPath(pathname: string): boolean {
+  return ADMIN_AREA_PREFIXES.some(
+    (prefixe) => pathname === prefixe || pathname.startsWith(`${prefixe}/`),
+  );
+}
+
 /** Rôles autorisés pour l'application interne (tout sauf ADMIN) */
 export const INTERNAL_APP_ROLES: Role[] = [
   ROLES.STAFF,
