@@ -285,12 +285,6 @@ type AdminNavItem = {
 
 const adminItems: AdminNavItem[] = [
   {
-    title: 'Utilisateurs',
-    url: paths.admin.users.getHref(),
-    icon: ShieldCheck,
-    permission: 'admin:users',
-  },
-  {
     // Intitulé distinct de celui de l'application (« Tableau de bord », vers
     // `/`) : un SUPERUSER voit légitimement les deux, et deux entrées de même
     // nom et même icône vers des destinations différentes sont indéchiffrables.
@@ -299,6 +293,12 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.dashboard.getHref(),
     icon: LayoutDashboard,
     capability: CAPABILITY.ANALYTICS_ADMIN,
+  },
+  {
+    title: 'Utilisateurs',
+    url: paths.admin.users.getHref(),
+    icon: ShieldCheck,
+    permission: 'admin:users',
   },
   {
     title: 'Journal de sécurité',
