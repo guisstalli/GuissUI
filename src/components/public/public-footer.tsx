@@ -1,7 +1,7 @@
 import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 
-import { GuissIcon } from '@/components/ui/logo/guiss-logo';
+import { UniversiteLogo } from '@/components/ui/logo/universite-logo';
 
 export function PublicFooter() {
   const year = new Date().getFullYear();
@@ -13,7 +13,7 @@ export function PublicFooter() {
           {/* Brand */}
           <div>
             <div className="mb-5 flex items-center gap-3">
-              <GuissIcon className="size-11 shrink-0" />
+              <UniversiteLogo className="size-11 shrink-0" size={44} />
               <div className="flex flex-col leading-none">
                 <span className="text-base font-extrabold tracking-wider text-slate-900">
                   GUISS
@@ -89,13 +89,13 @@ export function PublicFooter() {
           </p>
           <div className="flex gap-5">
             <Link
-              href="/evenements"
+              href="/public/evenements"
               className="transition-colors hover:text-slate-900"
             >
               Événements
             </Link>
             <Link
-              href="/rendez-vous"
+              href="/public/rendez-vous"
               className="transition-colors hover:text-slate-900"
             >
               Rendez-vous

@@ -28,7 +28,7 @@ export function LoginForm() {
     onSuccess: () => {
       const safePath = returnTo?.startsWith('/')
         ? returnTo
-        : paths.home.getHref();
+        : paths.dashboard.getHref();
       router.push(safePath);
     },
   });

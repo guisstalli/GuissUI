@@ -137,7 +137,27 @@ function SidebarProvider({
           } as React.CSSProperties
         }
         className={cn(
-          'group/sidebar-wrapper flex h-dvh w-full has-data-[variant=inset]:bg-sidebar',
+          // `overflow-hidden` : ce conteneur fait EXACTEMENT une hauteur de
+          // fenetre (h-dvh), mais son debordement restait visible. Du contenu
+          // s'echappait donc du <main> interne et faisait grandir le document,
+          // d'ou DEUX barres de defilement — celle du document par-dessus celle
+          // de la zone de contenu. Mesure avant/apres sur la fiche patient
+          // (onglet antecedents) : debordement du document 295px -> 0, et le
+          // <main> recupere exactement ces 295px. Rien n'est perdu : le contenu
+          // rejoint le conteneur qui doit le faire defiler.
+          // Les menus et popovers Radix sont rendus par portail dans <body>,
+          // hors de ce wrapper : ils ne sont pas rognes.
+          // `overflow-clip` et NON `overflow-hidden` : `hidden` cree malgre tout
+          // un conteneur DEFILABLE, simplement sans barre. Quand un champ
+          // conditionnel apparait et prend le focus (« Autre » -> « Precisez
+          // l'antecedent familial »), le navigateur fait defiler l'ancetre
+          // defilable le plus proche pour le reveler : c'etait ce wrapper.
+          // Mesure sur staging : wrapper.scrollTop passait a 375, l'entete et
+          // les onglets sortaient de l'ecran et plus rien ne permettait de
+          // revenir — l'ecran paraissait fige. `clip` ne cree AUCUN conteneur
+          // de defilement : le navigateur remonte alors au <main>, qui est le
+          // bon. Verifie : wrapper.scrollTop 0, inset a y=0, main.scrollTop 480.
+          'group/sidebar-wrapper flex h-dvh w-full overflow-clip has-data-[variant=inset]:bg-sidebar',
           className,
         )}
         {...props}
@@ -306,7 +326,12 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        'relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
+        // `min-w-0` : cet element est un enfant flex de SidebarProvider, dont
+        // le `min-width: auto` par defaut l'empeche de retrecir sous la largeur
+        // intrinseque de son contenu. Un tableau large le poussait alors au-dela
+        // du viewport et le debordement remontait au <body> — d'ou une barre de
+        // defilement horizontale traversant toute la fenetre, sidebar comprise.
+        'relative flex w-full min-w-0 flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
         className,
       )}
       {...props}

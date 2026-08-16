@@ -230,7 +230,7 @@ test('re-soumettre la même section écrase les données précédentes', async (
 }) => {
   const patient = await createPatientViaApi(apiRequest);
   const exam = await createAdultExamViaApi(apiRequest, patient.id);
-  const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+  const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
   await patchExamSectionViaApi(apiRequest, exam.id, 'visual_acuity', {
     avsc_od: '5.000',

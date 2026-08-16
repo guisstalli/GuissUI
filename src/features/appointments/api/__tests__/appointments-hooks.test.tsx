@@ -54,6 +54,9 @@ function BookingComponent({ onSuccess }: { onSuccess: (nr: string) => void }) {
           patient_nom: 'Test',
           patient_prenom: 'Patient',
           patient_phone: '+221770000000',
+          // Obligatoire depuis que le modèle WhatsApp de confirmation l'attend
+          // comme variable : Meta refuse un modèle à variable vide.
+          motif: 'Consultation nouveau malade',
           want_reminder: true,
         })
       }

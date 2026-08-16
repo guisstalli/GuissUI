@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const AUTH_DIR = path.resolve(__dirname, '../.auth');
 
-const apiUrl = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const apiUrl = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
 function readAccessToken(projectName: string): string {
   const name = projectName.replace(/^setup:/, '');

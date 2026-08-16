@@ -6,6 +6,10 @@ import { useEffect, useRef } from 'react';
 
 import { useNotifications as useToastStore } from '@/components/ui/notifications';
 import { env } from '@/config/env';
+import {
+  useReportProgressStore,
+  type ReportProgress,
+} from '@/stores/report-progress-store';
 
 import type { AppNotification } from '../types/schemas';
 
@@ -116,13 +120,33 @@ export function useNotificationSocket() {
       };
 
       socket.onmessage = (event) => {
-        let payload: AppNotification | null = null;
+        let brut: unknown = null;
         try {
-          payload = JSON.parse(event.data) as AppNotification;
+          brut = JSON.parse(event.data);
         } catch {
           return;
         }
-        if (!payload) return;
+        if (!brut || typeof brut !== 'object') return;
+
+        // La socket transporte désormais deux natures de messages. Sans ce
+        // routage, chaque étape de génération produirait une bulle de
+        // notification VIDE — `title` et `message` étant absents du payload de
+        // progression.
+        if ((brut as { type?: string }).type === 'report_progress') {
+          const progression = brut as ReportProgress;
+          useReportProgressStore.getState().publier(progression);
+          // Génération terminée (ou échouée) : rafraîchir pour récupérer le
+          // contenu et les fichiers. C'est ce qui remplace le sondage à 3 s.
+          if (progression.status !== 'running') {
+            queryClient.invalidateQueries({
+              queryKey: ['ai-reports', 'detail', progression.report_id],
+            });
+            queryClient.invalidateQueries({ queryKey: ['ai-reports', 'list'] });
+          }
+          return;
+        }
+
+        const payload = brut as AppNotification;
 
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
         queryClient.invalidateQueries({

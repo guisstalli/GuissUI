@@ -46,3 +46,9 @@ mocked-db.json
 tsconfig.tsbuildinfo
 
 *.txt
+# Artefacts locaux de debug/capture (ne jamais committer)
+rapport.json
+image.png
+/index.html
+take_screenshots*.js
+take_screenshots*.cjs

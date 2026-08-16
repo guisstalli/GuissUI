@@ -465,13 +465,33 @@ export const OcularTensionSchema = z.object({
   modified: z.string().datetime().optional(),
 });
 
-/** Pachymétrie (Adult only) - CTO: 300-800 microns */
+/** Pachymétrie (Adult only) - épaisseur cornéenne centrale : 300-800 microns */
 export const PachymetrySchema = z.object({
   id: z.number().optional(),
-  od: z.coerce.number().optional().nullable(),
-  og: z.coerce.number().optional().nullable(),
-  cto_od: z.coerce.number().optional().nullable(),
-  cto_og: z.coerce.number().optional().nullable(),
+  od: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
+  og: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
+  cto_od: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
+  cto_og: z.coerce
+    .number()
+    .min(300, 'Valeur hors plage plausible (300-800 µm)')
+    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .optional()
+    .nullable(),
   created: z.string().datetime().optional(),
   modified: z.string().datetime().optional(),
 });
@@ -729,7 +749,11 @@ export type ExamenAdditionel = z.infer<typeof ExamenAdditionelSchema>;
 
 export const PerimetrySchema = z.object({
   id: z.number().optional(),
-  pbo: z.array(PboEnum).min(1, 'Veuillez sélectionner au moins un élément'),
+  // Aucune case cochée par défaut, et le vide est valide : le modèle backend
+  // déclare `ArrayField(blank=True, default=list)`. Le `.min(1)` qui figurait
+  // ici rendait le front PLUS strict que la base et bloquait l'enregistrement
+  // d'un examen complémentaire dont la périmétrie n'a pas été réalisée.
+  pbo: z.array(PboEnum),
   limite_superieure: z.coerce.number().min(0).max(90).optional().nullable(),
   limite_inferieure: z.coerce.number().min(0).max(90).optional().nullable(),
   limite_temporale_droit: z.coerce
@@ -945,6 +969,9 @@ export const ExamenAdultSchema = z.object({
 export const ExamenAdultCreateSchema = z.object({
   patient_id: z.number(),
   site_id: z.number().optional(),
+  /** Examen auquel celui-ci fait suite. Le backend vérifie qu'il appartient
+   *  au même patient. */
+  examen_precedent_id: z.number().optional(),
 });
 
 /** Patient nested schema */

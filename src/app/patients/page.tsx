@@ -64,6 +64,7 @@ import { NewPatientModal } from '@/features/patients/components/new-patient-moda
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import type { Sex } from '@/features/patients/types/types';
 import { SiteSelector } from '@/features/sites/components/site-selector';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 
 const ITEMS_PER_PAGE = 10;
@@ -106,8 +107,11 @@ export default function PatientsPage() {
     return sexFilter as Sex;
   };
 
+  // Ne déclenche la requête API qu'après 300ms sans frappe
+  const debouncedSearch = useDebounce(searchQuery);
+
   const queryParams = {
-    search: searchQuery || undefined,
+    search: debouncedSearch || undefined,
     is_adult: getIsAdultFilter(),
     is_driver: false as const,
     sex: getSexFilter(),

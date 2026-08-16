@@ -1,0 +1,184 @@
+name: CI/CD Guiss Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - stage
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+      - stage
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ================================================================
+  # JOB 1 : Qualite du code
+  # Lint + TypeScript + Build check
+  # ================================================================
+  lint-and-typecheck:
+    runs-on: ubuntu-24.04
+    # Secrets NEXT_PUBLIC_* par environnement : staging (develop/stage) pointe
+    # api-guiss.kamalfils.app, production (main/v*) retombe sur les secrets
+    # repo (app.guisstalli.com). L'environnement fusionne ses secrets avec
+    # ceux du repo — les jobs continuent de lire `secrets.NEXT_PUBLIC_*`.
+    environment: ${{ (github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v')) && 'production' || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e #v4.3.0
+        with:
+          node-version: '22'
+
+      - name: Install yarn
+        run: npm install -g yarn
+        # npm est toujours disponible avec Node.
+        # Simple, fiable, compatible avec act et GitHub Actions.
+
+      - name: Cache yarn
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
+        with:
+          path: /.cache/yarn
+          key: yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run ESLint
+        run: yarn lint
+
+      - name: TypeScript check
+        run: yarn check-types
+
+      - name: Build Next.js
+        # NEXT_PUBLIC_* bakes into the client bundle — must be present here.
+        # NEXTAUTH_URL/SECRET are server-only at runtime but env.ts validates
+        # them at module import time during `next build`. Provide them from
+        # secrets so the Zod check passes.
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
+          NEXT_PUBLIC_ENABLE_API_MOCKING: 'false'
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXT_TELEMETRY_DISABLED: 1
+        run: yarn build
+
+  # ================================================================
+  # JOB 2 : Build image Docker + Push DockerHub
+  # Uniquement sur push (pas sur PR : secrets indisponibles,
+  # {{branch}} vide sur PR → tag invalide).
+  # ================================================================
+  build-docker:
+    needs: lint-and-typecheck
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    # Même sélection d'environnement que lint-and-typecheck : l'image develop/
+    # stage est buildée avec les URLs staging (NEXT_PUBLIC_* bakées au build).
+    environment: ${{ (github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v')) && 'production' || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@22b48a429f10e1de233237b5c534c9c3d2e41597 #v4.1.0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@946f94de75ea52995b6aa1e54fd3e0aeed6cc573 #v4.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker metadata (tags + labels)
+        id: meta
+        uses: docker/metadata-action@3caf19fbe3db1a1a6a8bdce189e09ac0ed35d513 #v6.1.0
+        with:
+          images: soszaboss/guiss-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+
+      - name: Build and push
+        uses: docker/build-push-action@f72b3cf665d7d5fe435407befecb40d10b4266d2 #v7.2.0
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # NEXT_PUBLIC_* doivent etre passes en build-arg : Next.js les
+          # integre (bakes) dans le bundle JS au moment du build.
+          # NEXTAUTH_* sont server-only : le Dockerfile a des ARG avec des
+          # valeurs par defaut qui satisfont la validation Zod ; on ne les
+          # passe pas ici car ce sont des secrets de runtime injectes au
+          # demarrage du conteneur.
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}
+            NEXT_PUBLIC_ENABLE_API_MOCKING=false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ================================================================
+  # JOB 3 : Declenchement du deploy cote infra
+  # Uniquement sur push (branches + tags).
+  # Tag = nom de branche (develop/stage/main) — seul tag mouvant
+  # commun aux images frontend ET backend (les SHA different entre
+  # les deux repos).
+  # ================================================================
+  trigger-deploy:
+    needs: build-docker
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Calculer le tag de deploy
+        id: tag
+        # Le compose infra deploie frontend ET backend avec le meme ${TAG}.
+        # Seul le tag de branche (develop/stage/main) existe dans les deux
+        # registres au meme moment. On envoie donc github.ref_name, jamais
+        # un sha (qui differe entre les deux repos).
+        run: echo "value=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+
+      - name: Declencher le deploy infrastructure
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DEPLOY_TOKEN }}
+          # Routage par branche :
+          #   develop/stage → Kamal-Fils/infrastructure (serveur staging mutualisé),
+          #     type DEDIE deploy-guiss-frontend (deploy-frontend y est deja consomme
+          #     par le workflow JanguBi — un type partage deploierait les 2 stacks).
+          #   main/v*      → guisstalli/infrastructure (prod, arme a la bascule).
+          script: |
+            const tag = '${{ steps.tag.outputs.value }}'
+            const ref = '${{ github.ref_name }}'
+            const sha = '${{ github.sha }}'
+
+            const isProd = ref === 'main' || ref.startsWith('v')
+            const owner = isProd ? 'guisstalli' : 'Kamal-Fils'
+            const event_type = isProd ? 'deploy-frontend' : 'deploy-guiss-frontend'
+
+            await github.rest.repos.createDispatchEvent({
+              owner,
+              repo: 'infrastructure',
+              event_type,
+              client_payload: { tag, ref, sha }
+            })
+
+            console.log(`Deploy frontend declenche — ${owner}/infrastructure [${event_type}] tag: ${tag}`)

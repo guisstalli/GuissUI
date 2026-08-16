@@ -1,4 +1,10 @@
-import { queryOptions, useQuery, useMutation } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
@@ -58,10 +64,23 @@ export const useTaskStatus = ({
   taskId,
   enabled = true,
 }: UseTaskStatusOptions) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     ...getTaskStatusQueryOptions(taskId),
     enabled: enabled && !!taskId,
   });
+
+  // L'import est asynchrone (Celery) : la liste patients n'est à jour
+  // qu'à la fin de la tâche, pas au lancement de la mutation.
+  const status = query.data?.status;
+  useEffect(() => {
+    if (status === 'SUCCESS') {
+      queryClient.invalidateQueries({ queryKey: ['patients'] });
+    }
+  }, [status, queryClient]);
+
+  return query;
 };
 
 type UseBulkImportPatientsOptions = {

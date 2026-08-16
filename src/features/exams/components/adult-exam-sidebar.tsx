@@ -12,10 +12,12 @@ import type { LucideIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/ui/can/can';
 import type { Section } from '@/features/exams/types/adult-exam';
 import { cn } from '@/lib/utils';
 
 import type { AdultExamPatient, SectionStatus } from './adult-exam-types';
+import { ShareRecordDialog } from './share-record-dialog';
 
 interface AdultExamSidebarSection {
   id: Section;
@@ -88,7 +90,7 @@ export function AdultExamSidebar({
   downloadOrdonnance,
 }: AdultExamSidebarProps) {
   return (
-    <aside className="h-full w-full overflow-y-auto border-r border-border bg-card p-4">
+    <aside className="size-full overflow-y-auto border-r border-border bg-card p-4">
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-foreground">Sections</h2>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -208,7 +210,7 @@ export function AdultExamSidebar({
       {examId !== 'new' && (
         <div className="mt-4 space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Rapports PDF
+            Dossier PDF
           </p>
           <Button
             variant="outline"
@@ -225,7 +227,7 @@ export function AdultExamSidebar({
             ) : (
               <Download className="mr-2 size-4" aria-hidden="true" />
             )}
-            Rapport complet
+            Dossier complet
           </Button>
           <Button
             variant="outline"
@@ -245,6 +247,17 @@ export function AdultExamSidebar({
             Conclusion PDF
           </Button>
         </div>
+      )}
+
+      {examId !== 'new' && (
+        <Can permission="records:share">
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Partage
+            </p>
+            <ShareRecordDialog examType="adulte" examId={Number(examId)} />
+          </div>
+        </Can>
       )}
 
       {examId !== 'new' &&

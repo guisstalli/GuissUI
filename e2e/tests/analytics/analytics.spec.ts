@@ -1,5 +1,19 @@
 import { test, expect } from '../../fixtures/auth-request';
 
+// `analytics:view` n'appartient qu'à SUPERUSER, DOCTEUR et ADMIN — STAFF et
+// TECHNICIEN en sont volontairement exclus (voir src/lib/authorization.ts).
+// Or tous les projets Playwright exécutent toutes les specs : sous `staff`,
+// ces tests visaient un écran auquel le rôle n'a pas accès et échouaient sur
+// une redirection parfaitement légitime.
+const ROLES_SANS_ANALYTIQUE = ['staff', 'technicien'];
+
+test.beforeEach(({}, testInfo) => {
+  test.skip(
+    ROLES_SANS_ANALYTIQUE.includes(testInfo.project.name),
+    `Le rôle « ${testInfo.project.name} » n'a pas la permission analytics:view.`,
+  );
+});
+
 test('page analytics chargée', async ({ page }) => {
   await page.goto('/analytics');
   await page.waitForLoadState('networkidle');

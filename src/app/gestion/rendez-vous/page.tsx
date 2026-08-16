@@ -1,12 +1,9 @@
 'use client';
 
-import { format, getDay, parse, startOfWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format } from 'date-fns';
 import {
   Calendar as CalendarIcon,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   ExternalLink,
   Loader2,
@@ -16,27 +13,15 @@ import {
   User,
   X,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Calendar,
-  dateFnsLocalizer,
-  type Event,
-  type View,
-} from 'react-big-calendar';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts';
+import type { View } from 'react-big-calendar';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +35,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs/tabs';
+import { paths } from '@/config/paths';
 import { useRdvList } from '@/features/appointments/api/get-rdv-list';
 import { useRdvStats } from '@/features/appointments/api/get-rdv-stats';
 import {
@@ -58,21 +44,36 @@ import {
   useMarkAbsent,
   useMarkPresent,
 } from '@/features/appointments/api/rdv-actions';
+import type { RdvEvent } from '@/features/appointments/components/rdv-calendar';
 import type { RendezVous } from '@/features/appointments/types/schemas';
-import { useCreateFacture } from '@/features/billing/api/create-facture';
+import { STATUT_COLORS } from '@/features/appointments/utils/statut-colors';
 import { useFactures } from '@/features/billing/api/get-factures';
-import { CreateFactureForm } from '@/features/billing/components/create-facture-form';
-import { useSites } from '@/features/sites/api/get-sites';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { cn } from '@/lib/utils';
 
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: (date: Date) => startOfWeek(date, { locale: fr }),
-  getDay,
-  locales: { fr },
-});
+// react-big-calendar et recharts sont lourds : chargés seulement quand
+// l'onglet correspondant est affiché, hors du bundle initial de la route.
+const RdvCalendar = dynamic(
+  () =>
+    import('@/features/appointments/components/rdv-calendar').then(
+      (m) => m.RdvCalendar,
+    ),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[620px] rounded-xl" />,
+  },
+);
+
+const RdvStatsDonut = dynamic(
+  () =>
+    import('@/features/appointments/components/rdv-stats-donut').then(
+      (m) => m.RdvStatsDonut,
+    ),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[380px] rounded-xl" />,
+  },
+);
 
 const STATUT_STYLES: Record<
   string,
@@ -101,14 +102,6 @@ const STATUT_STYLES: Record<
   annule: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
 };
 
-const STATUT_COLORS: Record<string, string> = {
-  en_attente: '#d97706',
-  confirme: '#2563eb',
-  present: '#059669',
-  absent: '#94a3b8',
-  annule: '#dc2626',
-};
-
 const STATUT_DOT_CLASS: Record<string, string> = {
   en_attente: 'bg-amber-500',
   confirme: 'bg-blue-600',
@@ -125,10 +118,6 @@ const STATUT_LABELS: Record<string, string> = {
   annule: 'Annulé',
 };
 
-interface RdvEvent extends Event {
-  rdv: RendezVous;
-}
-
 function RdvDetailPanel({
   rdv,
   onClose,
@@ -137,7 +126,6 @@ function RdvDetailPanel({
   onClose: () => void;
 }) {
   const styles = STATUT_STYLES[rdv.statut] ?? STATUT_STYLES.en_attente;
-  const [showCreateFacture, setShowCreateFacture] = useState(false);
 
   const { mutate: confirm, isPending: confirming } = useConfirmRdv(rdv.id, {
     onSuccess: onClose,
@@ -158,15 +146,6 @@ function RdvDetailPanel({
     params: { rendez_vous_id: rdv.id, limit: 1 },
   });
   const linkedFacture = factureData?.results?.[0] ?? null;
-
-  const { data: sitesData } = useSites({ params: { limit: 100 } });
-  const sites = sitesData?.results ?? [];
-
-  const createFactureMutation = useCreateFacture({
-    mutationConfig: {
-      onSuccess: () => setShowCreateFacture(false),
-    },
-  });
 
   return (
     <div className="space-y-5">
@@ -274,110 +253,31 @@ function RdvDetailPanel({
               {linkedFacture.numero}
             </span>
             <a
-              href={`/facturation`}
+              href={paths.billing.detail.getHref(linkedFacture.id)}
               className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
             >
               <ExternalLink className="size-3" />
-              Voir
+              Voir le détail
             </a>
           </div>
         ) : (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-1.5 text-slate-700"
-              onClick={() => setShowCreateFacture(true)}
-            >
+          /* Le formulaire de facture était rendu DANS le panneau latéral du
+             rendez-vous : une dizaine de champs et une liste de prestations
+             compressés dans une colonne étroite. On redirige vers la page
+             Facturation, qui l'affiche à sa taille. Seul l'id du rendez-vous
+             passe par l'URL ; l'identité du patient est résolue côté page. */
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5 text-slate-700"
+            asChild
+          >
+            <Link href={`${paths.billing.list.getHref()}?rdv=${rdv.id}`}>
               <Plus className="size-3.5" />
               Créer une facture
-            </Button>
-            {showCreateFacture && (
-              <div className="mt-3 rounded-lg border bg-white p-3">
-                <CreateFactureForm
-                  isPending={createFactureMutation.isPending}
-                  sites={sites}
-                  defaultValues={{
-                    patient_nom: rdv.patient_nom,
-                    patient_prenom: rdv.patient_prenom,
-                    patient_phone: rdv.patient_phone,
-                    rendez_vous_id: rdv.id,
-                  }}
-                  onSubmit={(data) => createFactureMutation.mutate(data)}
-                />
-              </div>
-            )}
-          </>
+            </Link>
+          </Button>
         )}
-      </div>
-    </div>
-  );
-}
-
-function CustomToolbar({
-  date,
-  view,
-  onNavigate,
-  onView,
-}: {
-  date: Date;
-  view: View;
-  onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY') => void;
-  onView: (view: View) => void;
-}) {
-  const label = format(
-    date,
-    view === 'day' ? 'EEEE d MMMM yyyy' : "'Semaine du' d MMMM yyyy",
-    { locale: fr },
-  );
-
-  return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onNavigate('PREV')}
-          className="size-8 p-0"
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onNavigate('TODAY')}
-          className="px-3"
-        >
-          Aujourd&apos;hui
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onNavigate('NEXT')}
-          className="size-8 p-0"
-        >
-          <ChevronRight className="size-4" />
-        </Button>
-        <h2 className="ml-2 text-base font-semibold capitalize text-foreground">
-          {label}
-        </h2>
-      </div>
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
-        {(['week', 'day', 'agenda'] as View[]).map((v) => (
-          <button
-            type="button"
-            key={v}
-            onClick={() => onView(v)}
-            className={cn(
-              'rounded-md px-3 py-1 text-sm font-medium transition-colors',
-              view === v
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {v === 'week' ? 'Semaine' : v === 'day' ? 'Jour' : 'Agenda'}
-          </button>
-        ))}
       </div>
     </div>
   );
@@ -427,7 +327,12 @@ export default function GestionRendezVousPage() {
   });
   const listRdv: RendezVous[] = listData?.results ?? [];
 
-  const rdvList: RendezVous[] = data?.results ?? [];
+  // Mémoïsé depuis data?.results : un tableau recréé à chaque render
+  // invaliderait le useMemo des events en permanence.
+  const rdvList: RendezVous[] = useMemo(
+    () => data?.results ?? [],
+    [data?.results],
+  );
 
   const events: RdvEvent[] = useMemo(
     () =>
@@ -444,21 +349,6 @@ export default function GestionRendezVousPage() {
       }),
     [rdvList],
   );
-
-  const eventStyleGetter = useCallback((event: RdvEvent) => {
-    const color = STATUT_COLORS[event.rdv.statut] ?? '#94a3b8';
-    return {
-      style: {
-        backgroundColor: `${color}20`,
-        borderLeft: `3px solid ${color}`,
-        color: color,
-        borderRadius: '6px',
-        fontSize: '12px',
-        fontWeight: '600',
-        padding: '2px 6px',
-      },
-    };
-  }, []);
 
   const handleSelectEvent = useCallback((event: RdvEvent) => {
     setSelectedRdv(event.rdv);
@@ -539,94 +429,14 @@ export default function GestionRendezVousPage() {
           {isLoading ? (
             <Skeleton className="h-[600px] rounded-xl" />
           ) : (
-            <div className="overflow-x-auto">
-              <div
-                className={cn(
-                  'min-w-[600px] rounded-xl border border-border bg-card p-4',
-                  // Base react-big-calendar tweaks
-                  '[&_.rbc-calendar]:font-sans',
-                  '[&_.rbc-event]:border-0',
-                  '[&_.rbc-header]:py-2 [&_.rbc-header]:text-sm [&_.rbc-header]:font-medium',
-                  // Light mode colors
-                  '[&_.rbc-header]:text-slate-600',
-                  '[&_.rbc-off-range-bg]:bg-slate-50/50',
-                  '[&_.rbc-time-slot]:border-slate-100',
-                  '[&_.rbc-timeslot-group]:border-slate-100',
-                  '[&_.rbc-today]:bg-blue-50/40',
-                  '[&_.rbc-time-view]:border-slate-200',
-                  '[&_.rbc-time-content]:border-slate-200',
-                  '[&_.rbc-time-header]:border-slate-200',
-                  '[&_.rbc-time-header-content]:border-slate-200',
-                  '[&_.rbc-day-slot_.rbc-time-slot]:border-slate-100',
-                  '[&_.rbc-time-gutter]:text-slate-500',
-                  '[&_.rbc-label]:text-slate-500',
-                  // Dark mode overrides
-                  'dark:[&_.rbc-header]:text-slate-300',
-                  'dark:[&_.rbc-header]:border-white/10',
-                  'dark:[&_.rbc-off-range-bg]:bg-white/[0.02]',
-                  'dark:[&_.rbc-time-slot]:border-white/[0.06]',
-                  'dark:[&_.rbc-timeslot-group]:border-white/[0.08]',
-                  'dark:[&_.rbc-today]:bg-blue-500/10',
-                  'dark:[&_.rbc-time-view]:border-white/10',
-                  'dark:[&_.rbc-time-content]:border-white/10',
-                  'dark:[&_.rbc-time-header]:border-white/10',
-                  'dark:[&_.rbc-time-header-content]:border-white/10',
-                  'dark:[&_.rbc-day-slot_.rbc-time-slot]:border-white/[0.06]',
-                  'dark:[&_.rbc-time-gutter]:text-slate-400',
-                  'dark:[&_.rbc-label]:text-slate-400',
-                  'dark:[&_.rbc-day-bg]:border-white/[0.06]',
-                  'dark:[&_.rbc-month-view]:border-white/10',
-                  'dark:[&_.rbc-month-row]:border-white/[0.06]',
-                  'dark:[&_.rbc-date-cell]:text-slate-300',
-                  'dark:[&_.rbc-off-range]:text-slate-600',
-                  'dark:[&_.rbc-agenda-view_table]:text-slate-300',
-                  'dark:[&_.rbc-agenda-view_table.rbc-agenda-table_thead_>_tr_>_th]:border-white/10',
-                  'dark:[&_.rbc-agenda-view_table.rbc-agenda-table_tbody_>_tr_>_td]:border-white/[0.06]',
-                )}
-              >
-                <Calendar
-                  localizer={localizer}
-                  events={events}
-                  startAccessor="start"
-                  endAccessor="end"
-                  style={{ height: 620 }}
-                  view={view}
-                  date={currentDate}
-                  onNavigate={setCurrentDate}
-                  onView={setView}
-                  onSelectEvent={handleSelectEvent}
-                  eventPropGetter={eventStyleGetter}
-                  culture="fr"
-                  messages={{
-                    today: "Aujourd'hui",
-                    previous: 'Précédent',
-                    next: 'Suivant',
-                    month: 'Mois',
-                    week: 'Semaine',
-                    day: 'Jour',
-                    agenda: 'Agenda',
-                    date: 'Date',
-                    time: 'Heure',
-                    event: 'Événement',
-                    noEventsInRange: 'Aucun rendez-vous cette période.',
-                  }}
-                  components={{
-                    toolbar: (props) => (
-                      <CustomToolbar
-                        date={props.date}
-                        view={props.view}
-                        onNavigate={
-                          props.onNavigate as (
-                            action: 'PREV' | 'NEXT' | 'TODAY',
-                          ) => void
-                        }
-                        onView={props.onView}
-                      />
-                    ),
-                  }}
-                />
-              </div>
-            </div>
+            <RdvCalendar
+              events={events}
+              view={view}
+              date={currentDate}
+              onNavigate={setCurrentDate}
+              onView={setView}
+              onSelectEvent={handleSelectEvent}
+            />
           )}
         </TabsContent>
 
@@ -662,7 +472,7 @@ export default function GestionRendezVousPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
@@ -792,39 +602,7 @@ export default function GestionRendezVousPage() {
 
               {/* Donut chart */}
               {statsChartData.length > 0 ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Répartition par statut
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={statsChartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={70}
-                            outerRadius={110}
-                            paddingAngle={3}
-                            dataKey="value"
-                          >
-                            {statsChartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value) => [value, 'RDV']}
-                            contentStyle={{ borderRadius: '8px' }}
-                          />
-                          <Legend verticalAlign="bottom" height={36} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
+                <RdvStatsDonut data={statsChartData} />
               ) : (
                 <Card>
                   <CardContent className="py-12 text-center text-sm text-muted-foreground">

@@ -1,4 +1,26 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from '../../fixtures/auth-request';
+
+/**
+ * Ouvre la fiche du premier conducteur.
+ *
+ * Le lien vers le détail n'est PAS dans la ligne : il vit dans le menu
+ * d'actions (voir src/app/conducteurs/page.tsx). Les tests cherchaient donc un
+ * `a[href]` visible qui n'existe pas, et s'ignoraient silencieusement — un
+ * échec déguisé en succès. On navigue désormais comme un utilisateur : ouvrir
+ * le menu de la ligne, puis cliquer « Voir ».
+ */
+async function ouvrirPremiereFiche(page: Page): Promise<void> {
+  const menu = page
+    .getByRole('row')
+    .getByRole('button', { name: 'Actions' })
+    .first();
+  await expect(menu).toBeVisible({ timeout: 8000 });
+  await menu.click();
+  await page.getByRole('menuitem', { name: /voir/i }).first().click();
+  await page.waitForLoadState('networkidle');
+}
 
 // =============================================================================
 // Liste conducteurs
@@ -13,12 +35,19 @@ test('liste des conducteurs se charge sans crash', async ({ page }) => {
   ).toBeVisible({ timeout: 8000 });
 });
 
-test('liste conducteurs — menu d'actions par ligne est présent', async ({ page }) => {
+test("liste conducteurs — menu d'actions par ligne est présent", async ({ page }) => {
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
   // Cherche le premier bouton d'actions (3 points verticaux)
-  const actionButton = page.locator('button[aria-label="Actions"], button:has(svg)').first();
+  // `button:has(svg)` sur toute la page attrapait le repli de la barre
+  // latérale, pas le menu de ligne. Le déclencheur porte un `sr-only`
+  // « Actions » : c'est son NOM ACCESSIBLE, pas un attribut aria-label — d'où
+  // l'échec du sélecteur CSS. On le cible par rôle, et dans le tableau.
+  const actionButton = page
+    .getByRole('row')
+    .getByRole('button', { name: 'Actions' })
+    .first();
   if (await actionButton.isVisible({ timeout: 5000 })) {
     await actionButton.click();
     await expect(page.getByText(/voir/i).first()).toBeVisible({ timeout: 3000 });
@@ -31,9 +60,10 @@ test('liste conducteurs — "Voir" navigue vers la page détail', async ({ page 
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('table a[href*="/conducteurs/"], a[href*="/conducteurs/"]')
-    .first();
+  // Restreint au TABLEAU : `a[href*="/conducteurs/"]` sur toute la page
+  // capturait aussi les liens de la barre latérale (/conducteurs/corbeille,
+  // /conducteurs/examens…), d'où une navigation vers la corbeille.
+  const firstLink = page.locator('table a[href*="/conducteurs/"]').first();
   if (await firstLink.isVisible({ timeout: 5000 })) {
     const href = await firstLink.getAttribute('href');
     if (href) {
@@ -54,16 +84,7 @@ test('page détail conducteur — 3 onglets présents (État civil, Examens, Ant
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('a[href*="/conducteurs/"]')
-    .first();
-  if (!(await firstLink.isVisible({ timeout: 5000 }))) {
-    test.skip();
-    return;
-  }
-
-  await firstLink.click();
-  await page.waitForLoadState('networkidle');
+  await ouvrirPremiereFiche(page);
   await expect(page).toHaveURL(/\/conducteurs\/\d+/, { timeout: 8000 });
 
   await expect(
@@ -83,16 +104,7 @@ test('page détail conducteur — onglet Examens ne propose pas de créer un exa
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('a[href*="/conducteurs/"]')
-    .first();
-  if (!(await firstLink.isVisible({ timeout: 5000 }))) {
-    test.skip();
-    return;
-  }
-
-  await firstLink.click();
-  await page.waitForLoadState('networkidle');
+  await ouvrirPremiereFiche(page);
 
   const examsTab = page.getByRole('tab', { name: /examens/i });
   if (await examsTab.isVisible({ timeout: 8000 })) {
@@ -110,16 +122,7 @@ test('page détail conducteur — onglet Examens a le bouton "Nouvel examen adul
   await page.goto('/conducteurs');
   await page.waitForLoadState('networkidle');
 
-  const firstLink = page
-    .locator('a[href*="/conducteurs/"]')
-    .first();
-  if (!(await firstLink.isVisible({ timeout: 5000 }))) {
-    test.skip();
-    return;
-  }
-
-  await firstLink.click();
-  await page.waitForLoadState('networkidle');
+  await ouvrirPremiereFiche(page);
 
   const examsTab = page.getByRole('tab', { name: /examens/i });
   if (await examsTab.isVisible({ timeout: 8000 })) {
@@ -135,7 +138,7 @@ test('page détail conducteur — onglet Examens a le bouton "Nouvel examen adul
 // Dialog pointer-events — régression W3-BUG-6
 // =============================================================================
 
-test('page est cliquable après fermeture d'un dialog (no pointer-events freeze)', async ({
+test("page est cliquable après fermeture d'un dialog (no pointer-events freeze)", async ({
   page,
 }) => {
   await page.goto('/conducteurs');
@@ -148,7 +151,13 @@ test('page est cliquable après fermeture d'un dialog (no pointer-events freeze)
     await page.waitForTimeout(300);
 
     // Fermer le dialog
-    const closeBtn = page.locator('button[aria-label="Close"], button:has(svg)').first();
+    // Même piège : le bouton de fermeture Radix expose « Close » via un
+    // `sr-only`. Le sélecteur CSS ne le trouvait pas et cliquait ailleurs —
+    // le dialogue restait ouvert, ce que montrent les captures d'échec.
+    const closeBtn = page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Close' })
+      .first();
     if (await closeBtn.isVisible({ timeout: 3000 })) {
       await closeBtn.click();
       await page.waitForTimeout(500);

@@ -20,6 +20,11 @@ import { VISION_APTITUDE } from '@/features/exams/types/schemas';
 
 interface ConclusionFormProps {
   namePrefix?: string;
+  /**
+   * L'aptitude visuelle est un verdict de qualification à la CONDUITE : elle
+   * n'a pas de sens pour un patient qui n'est pas conducteur.
+   */
+  isDriver?: boolean;
 }
 
 const VISION_LABELS: Record<(typeof VISION_APTITUDE)[number], string> = {
@@ -41,9 +46,23 @@ const VISION_LABELS: Record<(typeof VISION_APTITUDE)[number], string> = {
  *
  * DESIGN: Final report style, Readable summary
  */
-export function ConclusionForm({ namePrefix = '' }: ConclusionFormProps) {
+export function ConclusionForm({
+  namePrefix = '',
+  isDriver = false,
+}: ConclusionFormProps) {
   const form = useFormContext();
   const prefix = namePrefix ? `${namePrefix}.` : '';
+
+  // Règle d'affichage de l'aptitude visuelle :
+  //   conducteur                        → saisissable ;
+  //   non-conducteur, champ vide        → masqué (le cas normal désormais) ;
+  //   non-conducteur, valeur DÉJÀ saisie → affiché en lecture seule.
+  // Le troisième cas n'est pas théorique : 140 conclusions de non-conducteurs
+  // portent une aptitude en base. Les masquer effacerait de la vue une donnée
+  // clinique enregistrée, sans que personne ne sache qu'elle existe encore.
+  const visionValue = form.watch(`${prefix}vision`);
+  const showVision = isDriver || Boolean(visionValue);
+  const visionReadOnly = !isDriver && Boolean(visionValue);
 
   //const rv = useWatch({ control: form.control, name: `${prefix}rv` });
   //const diagnostics =
@@ -60,34 +79,44 @@ export function ConclusionForm({ namePrefix = '' }: ConclusionFormProps) {
       </div>
 
       <div className="bg-muted/30 space-y-6 rounded-md border border-border p-6">
-        {/* Vision Status */}
-        <FormField
-          control={form.control}
-          name={`${prefix}vision`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Aptitude visuelle</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value ?? undefined}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Sélectionner le statut..." />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {VISION_APTITUDE.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {VISION_LABELS[v]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Vision Status — conducteurs uniquement (voir la règle ci-dessus) */}
+        {showVision && (
+          <FormField
+            control={form.control}
+            name={`${prefix}vision`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Aptitude visuelle</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value ?? undefined}
+                  disabled={visionReadOnly}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Sélectionner le statut..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VISION_APTITUDE.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {VISION_LABELS[v]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {visionReadOnly && (
+                  <p className="text-xs text-muted-foreground">
+                    Ce patient n&apos;est pas enregistré comme conducteur. Cette
+                    aptitude a été saisie auparavant et reste consultable, mais
+                    n&apos;est plus modifiable.
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* CAT */}
         <FormField

@@ -42,11 +42,18 @@ setup('authenticate', async ({ page, request }) => {
   const { email, password, authFile, tokenFile } =
     ROLES[projectName] ?? ROLES['setup:staff'];
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+  // `NEXT_PUBLIC_API_URL` inclut DÉJÀ `/api/v1` partout ailleurs (.env.example,
+  // .env.local, secrets CI) — `auth-options.ts` compose `${API_URL}/auth/...`.
+  // Ce fichier ajoutait le préfixe lui-même, ce qui le faisait fonctionner
+  // avec une variable mal formée et MASQUAIT le problème : NextAuth, lui,
+  // postait sur `/auth/jwt/login/` et récoltait un 404, d'où l'absence de
+  // redirection et le timeout de `waitForURL` plus bas.
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
   // Obtain a raw access token via the backend API for the auth-request fixture
   // (used for direct API calls in tests, independent of the browser session).
-  const loginRes = await request.post(`${apiUrl}/api/v1/auth/jwt/login/`, {
+  const loginRes = await request.post(`${apiUrl}/auth/jwt/login/`, {
     data: { email, password },
   });
   expect(loginRes.ok()).toBeTruthy();
@@ -55,6 +62,13 @@ setup('authenticate', async ({ page, request }) => {
     refresh: string;
     user: unknown;
   };
+
+  // `e2e/.auth/` est dans .gitignore : il existe sur un poste de développeur,
+  // JAMAIS sur un checkout CI neuf. Or `fs.writeFileSync` ne crée pas le
+  // répertoire parent — d'où un ENOENT qui faisait échouer l'authentification,
+  // et avec elle les 45 tests qui en dépendent. (Playwright, lui, crée les
+  // répertoires pour `storageState` plus bas : d'où l'asymétrie trompeuse.)
+  fs.mkdirSync(path.dirname(tokenFile), { recursive: true });
 
   fs.writeFileSync(
     tokenFile,

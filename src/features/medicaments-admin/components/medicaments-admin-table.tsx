@@ -176,7 +176,7 @@ export function MedicamentsAdminTable() {
       ) : (
         <div
           className={cn(
-            'overflow-hidden rounded-md border border-border bg-card',
+            'overflow-x-auto rounded-md border border-border bg-card',
             isFetching && 'opacity-70',
           )}
         >

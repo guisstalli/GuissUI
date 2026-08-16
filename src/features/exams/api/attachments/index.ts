@@ -97,12 +97,27 @@ export const useAttachment = (id: number, enabled = true) => {
 // =============================================================================
 
 /**
- * Télécharge une pièce jointe (récupère l'URL signée ou le fichier)
+ * Télécharge une pièce jointe (récupère l'URL signée du fichier).
+ *
+ * La route backend est `/depistage/attachments/<pk>/download/` (et non
+ * `/examens-supplementaires/...` qui n'existe pas → 404), et elle renvoie
+ * `{ download_url, filename, content_type, file_size }`. On mappe vers
+ * `{ url }` pour préserver le contrat attendu par les appelants.
  */
-export const downloadAttachment = (id: number): Promise<{ url: string }> => {
-  return api.get<{ url: string }>(
-    `/depistage/examens-supplementaires/${id}/download/`,
+type AttachmentDownloadResponse = {
+  download_url: string;
+  filename: string;
+  content_type: string;
+  file_size: number;
+};
+
+export const downloadAttachment = async (
+  id: number,
+): Promise<{ url: string }> => {
+  const res = await api.get<AttachmentDownloadResponse>(
+    `/depistage/attachments/${id}/download/`,
   );
+  return { url: res.download_url };
 };
 
 // =============================================================================

@@ -15,6 +15,33 @@ export const ROLES = {
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
+/**
+ * Préfixes de l'espace réservé au rôle ADMIN.
+ *
+ * ADMIN est un rôle TECHNIQUE : comptes, permissions et supervision, sans accès
+ * aux dossiers patients. Il est donc absent de INTERNAL_APP_ROLES ci-dessous —
+ * mais l'administration reste son domaine. Sans cette liste, les deux gardes
+ * (middleware et InternalAppGuard) le renvoyaient vers /unauthorized sur TOUTES
+ * les routes, y compris les cinq pages d'administration bâties pour lui.
+ */
+export const ADMIN_AREA_PREFIXES = [
+  '/administration',
+  '/admin',
+  '/parametres',
+] as const;
+
+/**
+ * Le chemin appartient-il à l'espace d'administration ?
+ *
+ * Compare sur une frontière de segment : `/administration-secret` ne doit pas
+ * passer parce qu'il commence par `/administration`.
+ */
+export function isAdminAreaPath(pathname: string): boolean {
+  return ADMIN_AREA_PREFIXES.some(
+    (prefixe) => pathname === prefixe || pathname.startsWith(`${prefixe}/`),
+  );
+}
+
 /** Rôles autorisés pour l'application interne (tout sauf ADMIN) */
 export const INTERNAL_APP_ROLES: Role[] = [
   ROLES.STAFF,
@@ -82,6 +109,12 @@ export const PERMISSIONS = {
   // Analytics
   'analytics:view': 'Voir les analytics',
 
+  // IA — assistant analytique + rapports (miroir de AI_REPORT_ROLES backend)
+  'ai-reports:view': 'Voir les rapports IA',
+  'ai-reports:generate': 'Poser une question IA et générer des rapports',
+  'ai-reports:approve': 'Approuver ou rejeter un rapport IA',
+  'ai-reports:deliver': 'Diffuser un rapport IA approuvé',
+
   // Reports
   'reports:view': 'Voir les rapports',
   'reports:export': 'Exporter les rapports',
@@ -89,11 +122,26 @@ export const PERMISSIONS = {
   // Dossier Patient
   'patient-records:view': 'Voir les dossiers patients',
 
+  // Partage de dossier (lien public à token — staff DOCTEUR/ADMIN côté API)
+  'records:share': "Partager le dossier d'un examen (lien public)",
+
   // Sites
   'sites:view': 'Voir les sites',
   'sites:create': 'Créer un site',
   'sites:edit': 'Modifier un site',
-  'sites:delete': 'Supprimer un site',
+  // Paramètres de la plateforme (rappels, facturation, clinique, médicaments).
+  // Calqué sur le backend : lecture large, écriture réservée à IsAnyAdmin.
+  // Sans ce découpage, l'écran était gaté sur `sites:view` — un STAFF ou un
+  // DOCTEUR pouvait modifier le formulaire des rappels et n'obtenait qu'un 403
+  // à l'enregistrement.
+  'settings:view': 'Consulter les paramètres de la plateforme',
+  'settings:manage': 'Modifier les paramètres de la plateforme',
+
+  // L'endpoint DELETE ne supprime pas : il désactive. Le libellé le dit.
+  'sites:delete': 'Désactiver un site',
+  // Irréversible, et le backend la réserve à IsAnyAdmin (ADMIN/SUPERUSER).
+  // ADMIN n'accédant pas à l'application interne, seul SUPERUSER la voit ici.
+  'sites:hard-delete': 'Supprimer définitivement un site',
 
   // Conducteurs
   'drivers:view': 'Voir les conducteurs',
@@ -110,6 +158,8 @@ export const PERMISSIONS = {
 
   // Admin
   'admin:users': 'Gérer les utilisateurs',
+  'admin:agent-channels':
+    "Gérer les canaux de l'assistant IA (WhatsApp, email)",
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -120,7 +170,7 @@ export type Permission = keyof typeof PERMISSIONS;
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   // ADMIN n'a pas accès à l'application interne — géré via interface admin dédiée
-  ADMIN: ['admin:users'],
+  ADMIN: ['admin:users', 'admin:agent-channels'],
 
   // SUPERUSER : toutes les permissions sans restriction (pour tests)
   SUPERUSER: [
@@ -158,13 +208,18 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'records:share',
     'drivers:view',
     'billing:view',
     'sites:view',
+    'settings:view',
+    'settings:manage',
     'sites:create',
     'sites:edit',
     'sites:delete',
+    'sites:hard-delete',
     'admin:users',
+    'admin:agent-channels',
     'drivers:create',
     'drivers:edit',
     'drivers:delete',
@@ -172,6 +227,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:restore',
     'drivers:view-deleted',
     'drivers:bulk-import',
+    'ai-reports:view',
+    'ai-reports:generate',
+    'ai-reports:approve',
+    'ai-reports:deliver',
   ],
 
   // STAFF : accès complet, gestion admin incluse
@@ -211,10 +270,15 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:view',
     'billing:view',
     'sites:view',
+    'settings:view',
     'sites:create',
     'sites:edit',
     'sites:delete',
     'admin:users',
+    // IA : STAFF peut consulter/générer, mais pas approuver ni diffuser
+    // (AI_REPORT_ROLES backend : approve/deliver = ADMIN/SUPERUSER/DOCTEUR)
+    'ai-reports:view',
+    'ai-reports:generate',
   ],
 
   // DOCTEUR : accès complet aux données médicales
@@ -252,9 +316,15 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports:view',
     'reports:export',
     'patient-records:view',
+    'records:share',
     'drivers:view',
     'billing:view',
     'sites:view',
+    'settings:view',
+    'ai-reports:view',
+    'ai-reports:generate',
+    'ai-reports:approve',
+    'ai-reports:deliver',
   ],
 
   // DATA_ENTRY : accès complet dépistage, pas d'analytics/billing/RDV/sites/admin

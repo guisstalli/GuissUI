@@ -52,11 +52,42 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     env:
       DATABASE_URL: postgres://guiss:guiss@localhost:5432/guiss_test
-      DJANGO_SETTINGS_MODULE: backend.django.test
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # `base` et NON `test` : ce job démarre un VRAI serveur, il ne lance pas
+      # pytest. Or `backend.django.test` force
+      # PASSWORD_HASHERS = ["MD5PasswordHasher"] pour accélérer les tests.
+      # Le seed hachait donc les mots de passe en MD5 pendant que le serveur
+      # (démarré sous `base`) ne connaît que PBKDF2/Argon2 : check_password
+      # renvoyait False et TOUTE connexion E2E échouait, alors même que le
+      # seed annonçait « Utilisateurs : 7 ». Les deux doivent partager les
+      # mêmes settings.
+      DJANGO_SETTINGS_MODULE: backend.django.base
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      # Le navigateur appelle :8000 depuis :3000 — donc en cross-origin.
+      # `CORS_ALLOWED_ORIGINS` vaut [] par défaut (backend/settings/cors.py) et
+      # n'était défini nulle part ici : Django répondait bien 200, mais SANS
+      # l'en-tête d'autorisation, si bien que le navigateur jetait la réponse.
+      # D'où des `net::ERR_FAILED` côté client et AUCUNE erreur côté serveur —
+      # tout écran dépendant de données restait vide ou en erreur.
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      # Le job démarre le vrai backend : mêmes variables que le job `build` de django.yml.
+      SECRET_KEY: ci-e2e-secret-key-not-for-production
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_TASK_ALWAYS_EAGER: "True"
+      CELERY_TASK_EAGER_PROPAGATES: "True"
+      MPLCONFIGDIR: /tmp/mpl
 
     steps:
       - uses: actions/checkout@v4
@@ -66,8 +97,12 @@ jobs:
       - name: Checkout GuissAPI
         uses: actions/checkout@v4
         with:
-          repository: Guiss/GuissAPI
+          repository: guisstalli/GuissAPI
+          ref: develop            # branche compatible (route /api/v1/health/, Daphne…)
           path: GuissAPI
+          # Le GITHUB_TOKEN par défaut est limité à ce repo ; il faut un PAT
+          # (scope repo) pour cloner le repo privé GuissAPI.
+          token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -89,9 +124,10 @@ jobs:
 
       - name: Start Django server
         working-directory: GuissAPI
-        run: python manage.py runserver 0.0.0.0:8000 &
+        run: python manage.py runserver 0.0.0.0:8000 > /tmp/django.log 2>&1 &
         env:
           DJANGO_SETTINGS_MODULE: backend.django.base
+          DJANGO_DEBUG: "True"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -110,16 +146,45 @@ jobs:
 
       - name: Start Next.js dev server
         working-directory: GuissUI
-        run: yarn dev &
+        run: yarn dev > /tmp/next.log 2>&1 &
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-e2e-nextauth-secret
 
       - name: Wait for servers
-        run: npx wait-on http://localhost:8000/api/v1/health/ http://localhost:3000 --timeout 60000
+        # http-get:// force une requête GET (la vue health ne gère pas HEAD → 405).
+        run: npx wait-on http-get://localhost:8000/api/v1/health/ http-get://localhost:3000 --timeout 90000
 
       - name: Run Playwright tests
         working-directory: GuissUI
         run: yarn playwright test --project=staff
+
+      # `analytics:view` est refusé à STAFF : le balayage ci-dessus ignore donc
+      # ces tests, et l'analytique n'était couverte par personne. On la vérifie
+      # sous un rôle qui y a droit. Passe CIBLÉE et non second balayage complet :
+      # rejouer les 46 specs sous `docteur` doublerait la durée et exposerait
+      # d'autres écrans gouvernés par les rôles, sans rapport avec l'objectif.
+      - name: Run Playwright analytics tests (rôle docteur)
+        working-directory: GuissUI
+        run: yarn playwright test --project=docteur tests/analytics
+
+      # APRÈS Playwright, et non avant : placée plus haut, cette étape ne
+      # pouvait se déclencher que si le démarrage des serveurs échouait —
+      # jamais pour l'échec qu'elle est censée diagnostiquer. C'est ce qui a
+      # rendu la panne d'authentification E2E opaque si longtemps.
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          # Les reponses NON-2xx d'abord : c'est ce qu'on cherche, et un
+          # `tail` seul ne couvre que le dernier test de la serie.
+          echo "===== reponses non-2xx (django) ====="
+          grep -oE "'path': '[^']+'\}, 'response': \{'status_code': [45][0-9][0-9]" \
+            /tmp/django.log 2>/dev/null | sort | uniq -c | sort -rn | head -30 || true
+          echo "===== traces d'exception (django) ====="
+          grep -A 15 "Traceback" /tmp/django.log 2>/dev/null | head -60 || true
+          echo "===== django.log (fin) ====="; tail -n 200 /tmp/django.log 2>/dev/null || true
+          echo "===== next.log (fin) ====="; tail -n 120 /tmp/next.log 2>/dev/null || true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

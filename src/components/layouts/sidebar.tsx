@@ -2,17 +2,23 @@
 
 import {
   BarChart3,
+  Bot,
   CalendarDays,
   CalendarRange,
   ChevronRight,
   ChevronUp,
   ClipboardList,
+  FileText,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   MapPin,
+  MessageSquare,
   Package,
   Receipt,
   Settings,
+  FileClock,
+  ShieldAlert,
   ShieldCheck,
   Sliders,
   Trash2,
@@ -37,7 +43,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown/dropdown';
-import { GuissIcon } from '@/components/ui/logo/guiss-logo';
+import { UniversiteLogo } from '@/components/ui/logo/universite-logo';
 import {
   Sidebar,
   SidebarContent,
@@ -58,8 +64,17 @@ import { type AuthUser, signOut, useUser } from '@/lib/auth';
 import {
   getRoleLabel,
   hasPermission,
+  isAdminAreaPath,
   type Permission,
+  ROLES,
 } from '@/lib/authorization';
+import {
+  CAPABILITY,
+  type CapabilityCode,
+  hasCapability,
+  type MyCapabilities,
+  useMyCapabilities,
+} from '@/lib/capabilities';
 import { cn } from '@/lib/utils';
 
 type SubNavItem = {
@@ -74,6 +89,8 @@ type NavItem = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   permission: Permission | null;
+  /** Capacité serveur requise en plus de la permission (gating optionnel). */
+  capability?: CapabilityCode;
   children?: SubNavItem[];
 };
 
@@ -163,6 +180,19 @@ const navGroups: NavGroup[] = [
         icon: BarChart3,
         permission: 'analytics:view',
       },
+      {
+        title: 'Assistant IA',
+        url: paths.aiReports.chat.getHref(),
+        icon: Bot,
+        permission: 'ai-reports:generate',
+        capability: CAPABILITY.AI_CHAT_ACCESS,
+      },
+      {
+        title: 'Rapports IA',
+        url: paths.aiReports.list.getHref(),
+        icon: FileText,
+        permission: 'ai-reports:view',
+      },
     ],
   },
   {
@@ -178,13 +208,13 @@ const navGroups: NavGroup[] = [
             title: 'Liste des conducteurs',
             url: paths.drivers.list.getHref(),
             icon: Truck,
-            permission: 'patients:view',
+            permission: 'drivers:view',
           },
           {
             title: 'Corbeille',
             url: paths.drivers.trash.getHref(),
             icon: Trash2,
-            permission: 'patients:view',
+            permission: 'drivers:view',
           },
           {
             title: 'Examens',
@@ -224,23 +254,111 @@ const navGroups: NavGroup[] = [
         permission: 'sites:view',
       },
       {
+        title: 'Canaux IA',
+        url: paths.agentChannels.manage.getHref(),
+        icon: MessageSquare,
+        permission: 'admin:agent-channels',
+      },
+      {
         title: 'Paramètres',
         url: paths.parametres.getHref(),
         icon: Sliders,
-        permission: 'sites:view',
+        // Gaté auparavant sur `sites:view` — « voir les sites » n'a aucun
+        // rapport avec les rappels, la facturation ou la clinique.
+        permission: 'settings:view',
       },
     ],
   },
 ];
 
-const adminItems: NavItem[] = [
+/**
+ * Section Administration : mélange gating par permission client (Utilisateurs)
+ * et par capacité serveur (tableau de bord, sécurité, permissions).
+ */
+type AdminNavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission?: Permission;
+  capability?: CapabilityCode;
+};
+
+const adminItems: AdminNavItem[] = [
   {
     title: 'Utilisateurs',
     url: paths.admin.users.getHref(),
     icon: ShieldCheck,
     permission: 'admin:users',
   },
+  {
+    // Intitulé distinct de celui de l'application (« Tableau de bord », vers
+    // `/`) : un SUPERUSER voit légitimement les deux, et deux entrées de même
+    // nom et même icône vers des destinations différentes sont indéchiffrables.
+    // Reprend le titre de la page elle-même.
+    title: "Vue d'ensemble",
+    url: paths.administration.dashboard.getHref(),
+    icon: LayoutDashboard,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
+  },
+  {
+    title: 'Journal de sécurité',
+    url: paths.administration.security.getHref(),
+    icon: ShieldAlert,
+    capability: CAPABILITY.SECURITY_AUDIT_VIEW,
+  },
+  {
+    // Entrée distincte du « Journal de sécurité » ci-dessus : celui-ci porte
+    // les MODIFICATIONS (quelles valeurs ont changé), l'autre les
+    // CONSULTATIONS (qui a ouvert quel dossier). Même capacité d'accès, deux
+    // sources et deux volumétries sans rapport.
+    title: 'Journal des modifications',
+    url: paths.administration.changeLog.getHref(),
+    icon: FileClock,
+    capability: CAPABILITY.SECURITY_AUDIT_VIEW,
+  },
+  {
+    title: 'Permissions',
+    url: paths.administration.permissions.getHref(),
+    icon: KeyRound,
+    capability: CAPABILITY.PERMISSIONS_MANAGE,
+  },
 ];
+
+/** Toutes les URL navigables, racine exclue. */
+export function allNavUrls(): string[] {
+  return [
+    ...navGroups.flatMap((g) =>
+      g.items.flatMap((i) => [i.url, ...(i.children?.map((c) => c.url) ?? [])]),
+    ),
+    ...adminItems.map((i) => i.url),
+  ].filter((url) => url && url !== '/');
+}
+
+/**
+ * L'URL la plus PRÉCISE qui corresponde au chemin courant.
+ *
+ * La règle précédente marquait actif tout lien dont l'URL préfixait le chemin.
+ * Sur `/administration/securite`, « Tableau de bord » (`/administration`) ET
+ * « Journal de sécurité » s'allumaient donc ensemble : l'utilisateur ne savait
+ * plus où il se trouvait.
+ *
+ * On retient la plus longue correspondance, et elle seule. Une entrée parente
+ * reste signalée par `isParentActive`, qui teste ses enfants — jamais par sa
+ * propre URL.
+ */
+export function resolveActiveUrl(
+  pathname: string,
+  candidats: string[],
+): string | undefined {
+  return candidats
+    .filter((url) => pathname === url || pathname.startsWith(url + '/'))
+    .sort((a, b) => b.length - a.length)[0];
+}
+
+// `isAdminItemVisible` a ete retiree : les entrees d'administration passent
+// desormais par `isNavItemVisible`, qui applique exactement les memes regles
+// (permission cliente puis capacite serveur) apres normalisation de
+// `permission` a `null`. Une seule fonction, donc une seule regle a maintenir.
 
 const roleColors: Record<string, string> = {
   ADMIN: 'bg-red-500',
@@ -333,10 +451,20 @@ function CollapsibleNavItem({
 function isNavItemVisible(
   item: NavItem,
   user: AuthUser | null | undefined,
+  caps: MyCapabilities | undefined,
 ): boolean {
+  // ADMIN ne peut atteindre que l'espace d'administration : lui proposer un
+  // lien hors de cet espace est un piège, il en serait renvoyé aussitôt.
+  // « Tableau de bord » (permission: null, donc visible de tous) apparaissait
+  // ainsi DEUX fois — vers `/`, injoignable, et vers `/administration`. La
+  // règle est dérivée de celle des gardes plutôt que traitée au cas par cas.
+  if (user?.role === ROLES.ADMIN && !isAdminAreaPath(item.url)) return false;
+
   const selfVisible =
     item.permission === null || hasPermission(user, item.permission);
   if (!selfVisible) return false;
+  // Gating par capacité serveur en surcouche (ex. Assistant IA / ai.chat.access).
+  if (item.capability && !hasCapability(caps, item.capability)) return false;
   if (!item.children || item.children.length === 0) return true;
   return item.children.some(
     (child) => !child.permission || hasPermission(user, child.permission),
@@ -347,25 +475,62 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
+  const { data: myCapabilities } = useMyCapabilities();
+
+  /**
+   * Seul le chemin le PLUS PRÉCIS s'allume.
+   *
+   * L'ancienne règle marquait actif tout lien dont l'URL préfixait le chemin
+   * courant. Sur `/administration/securite`, « Tableau de bord »
+   * (`/administration`) ET « Journal de sécurité » s'allumaient donc
+   * ensemble : l'utilisateur ne savait plus où il se trouvait.
+   *
+   * On retient la plus longue URL connue qui préfixe le chemin, et elle seule
+   * est active. Une entrée parente reste signalée par `isParentActive`, qui
+   * teste ses enfants — pas par sa propre URL.
+   */
+  const meilleureCorrespondance = React.useMemo(
+    () => resolveActiveUrl(pathname, allNavUrls()),
+    [pathname],
+  );
 
   const isActive = (url: string) => {
     if (url === '/') return pathname === '/';
-    return pathname === url || pathname.startsWith(url + '/');
+    return url === meilleureCorrespondance;
   };
 
   // Filtre les groupes : on ne rend ni le label ni le bloc si AUCUN item du
   // groupe n'est visible pour le rôle courant. Évite les labels orphelins
   // (ex. « Analyse » seul quand l'utilisateur n'a pas 'analytics:view').
-  const visibleGroups = React.useMemo(
-    () =>
-      navGroups
-        .map((group) => ({
-          ...group,
-          items: group.items.filter((item) => isNavItemVisible(item, user)),
-        }))
-        .filter((group) => group.items.length > 0),
-    [user],
-  );
+  const visibleGroups = React.useMemo(() => {
+    // « Administration » etait rendu dans un bloc separe, donc TOUJOURS en
+    // dernier — un administrateur voyait « Configuration » avant son propre
+    // espace. Les deux groupes n'ont que des liens simples : on les rend par le
+    // meme chemin, en inserant Administration JUSTE AVANT Configuration.
+    // `navGroups` n'est pas modifie, donc `allNavUrls()` reste exact.
+    const groupeAdministration: NavGroup = {
+      label: 'Administration',
+      items: adminItems.map((item) => ({
+        ...item,
+        permission: item.permission ?? null,
+      })),
+    };
+
+    const ordonnes: NavGroup[] = [];
+    for (const group of navGroups) {
+      if (group.label === 'Configuration') ordonnes.push(groupeAdministration);
+      ordonnes.push(group);
+    }
+
+    return ordonnes
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          isNavItemVisible(item, user, myCapabilities),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [user, myCapabilities]);
 
   const initials = user ? getInitials(user.name ?? '', user.email ?? '') : 'U';
   const avatarBg = roleColors[user?.role ?? ''] ?? 'bg-muted';
@@ -380,8 +545,8 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <GuissIcon className="size-8 shrink-0" />
+              <Link href={paths.dashboard.getHref()}>
+                <UniversiteLogo className="size-8 shrink-0" size={32} />
                 <div className="flex flex-col gap-0 leading-none">
                   <span className="text-sm font-bold tracking-wider">
                     GUISS
@@ -398,8 +563,13 @@ export function AppSidebar() {
 
       {/* Main navigation */}
       <SidebarContent>
-        {visibleGroups.map((group, i) => (
-          <SidebarGroup key={i}>
+        {/* Clé sur une identité STABLE, pas sur l'index : `visibleGroups` est
+            filtré par les capacités, qui arrivent après le premier rendu. La
+            liste change alors de longueur et un index ferait réutiliser le
+            mauvais nœud. Repli sur le premier lien du groupe quand il n'a pas
+            d'intitulé (le groupe principal). */}
+        {visibleGroups.map((group) => (
+          <SidebarGroup key={group.label ?? group.items[0]?.url ?? 'principal'}>
             {group.label && (
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             )}
@@ -453,30 +623,8 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {/* Admin section */}
-        <Can permission="admin:users">
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={item.title}
-                    >
-                      <Link href={item.url}>
-                        <item.icon className="size-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </Can>
+        {/* La section Administration n'a plus de bloc dedie : elle est fusionnee
+            dans `visibleGroups` ci-dessus pour passer AVANT Configuration. */}
       </SidebarContent>
 
       {/* Footer — User menu */}
@@ -519,7 +667,9 @@ export function AppSidebar() {
                   <UserCircle className="mr-2 size-4" aria-hidden="true" />
                   Mon profil
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem
+                  onClick={() => router.push(paths.parametres.getHref())}
+                >
                   <Settings className="mr-2 size-4" aria-hidden="true" />
                   Paramètres
                 </DropdownMenuItem>

@@ -13,12 +13,15 @@ import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/ui/can/can';
 import { Progress } from '@/components/ui/progress/progress';
 import type {
   OrdonnanceListItem,
   TypeOrdonnance,
 } from '@/features/exams/api/ordonnances';
 import { cn } from '@/lib/utils';
+
+import { ShareRecordDialog } from './share-record-dialog';
 
 type Section = 'technical' | 'clinical' | 'complementary' | 'conclusion';
 
@@ -103,7 +106,7 @@ export function ChildExamSidebar({
   setOptiqueDialogOpen,
 }: ChildExamSidebarProps) {
   return (
-    <aside className="h-full w-full overflow-y-auto border-r border-border bg-card p-4">
+    <aside className="size-full overflow-y-auto border-r border-border bg-card p-4">
       <div className="mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">Sections</h2>
@@ -227,7 +230,7 @@ export function ChildExamSidebar({
       {examId !== 'new' && (
         <div className="mt-4 space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Rapports PDF
+            Dossier PDF
           </p>
           <Button
             variant="outline"
@@ -244,7 +247,7 @@ export function ChildExamSidebar({
             ) : (
               <Download className="mr-2 size-4" aria-hidden="true" />
             )}
-            Rapport complet
+            Dossier complet
           </Button>
           <Button
             variant="outline"
@@ -264,6 +267,17 @@ export function ChildExamSidebar({
             Conclusion PDF
           </Button>
         </div>
+      )}
+
+      {examId !== 'new' && (
+        <Can permission="records:share">
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Partage
+            </p>
+            <ShareRecordDialog examType="enfant" examId={Number(examId)} />
+          </div>
+        </Can>
       )}
 
       {examId !== 'new' &&

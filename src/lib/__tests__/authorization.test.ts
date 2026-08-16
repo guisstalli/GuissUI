@@ -11,6 +11,7 @@ import {
   isDataEntry,
   isSuperuser,
   getRoleLabel,
+  isAdminAreaPath,
 } from '../authorization';
 
 // =============================================================================
@@ -36,6 +37,48 @@ describe('INTERNAL_APP_ROLES', () => {
 
   it('does not include ADMIN (admin has a separate portal)', () => {
     expect(INTERNAL_APP_ROLES).not.toContain(ROLES.ADMIN);
+  });
+});
+
+// =============================================================================
+// isAdminAreaPath — frontière de sécurité
+// =============================================================================
+//
+// ADMIN est exclu de INTERNAL_APP_ROLES ci-dessus, donc le middleware ET
+// InternalAppGuard le renvoyaient vers /unauthorized sur TOUTES les routes —
+// y compris le « separate portal » que le test précédent invoque. Ces cas
+// verrouillent le périmètre exact du portail.
+
+describe('isAdminAreaPath', () => {
+  it.each(['/administration', '/admin', '/parametres'])(
+    'autorise la racine %s',
+    (chemin) => {
+      expect(isAdminAreaPath(chemin)).toBe(true);
+    },
+  );
+
+  it.each([
+    '/administration/journal',
+    '/administration/permissions',
+    '/administration/securite',
+    '/admin/utilisateurs',
+  ])('autorise la sous-page %s', (chemin) => {
+    expect(isAdminAreaPath(chemin)).toBe(true);
+  });
+
+  it.each(['/patients', '/examens', '/conducteurs', '/rapports-ia', '/'])(
+    'refuse l ecran clinique %s',
+    (chemin) => {
+      expect(isAdminAreaPath(chemin)).toBe(false);
+    },
+  );
+
+  it('compare sur une frontiere de segment, pas un simple prefixe', () => {
+    // Sans cette garde, /administration-secret passerait parce qu'il commence
+    // par /administration.
+    expect(isAdminAreaPath('/administration-secret')).toBe(false);
+    expect(isAdminAreaPath('/adminis')).toBe(false);
+    expect(isAdminAreaPath('/parametres-cliniques')).toBe(false);
   });
 });
 

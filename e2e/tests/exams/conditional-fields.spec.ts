@@ -19,7 +19,7 @@ import {
   createChildExamViaApi,
 } from '../../fixtures/exam-data';
 
-const base = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const base = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
 // ---------------------------------------------------------------------------
 // Helpers

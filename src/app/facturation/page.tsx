@@ -10,6 +10,7 @@ import {
   Search,
   TrendingUp,
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/form/select';
 import { KpiCard } from '@/components/ui/kpi-card/kpi-card';
 import { Spinner } from '@/components/ui/spinner';
+import { useRdv } from '@/features/appointments/api/get-rdv';
 import { useCreateFacture } from '@/features/billing/api/create-facture';
 import { useFactureStats } from '@/features/billing/api/get-facture-stats';
 import { useFactures } from '@/features/billing/api/get-factures';
@@ -58,6 +60,19 @@ export default function FacturationPage() {
   const [dateEnd, setDateEnd] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Arrivée depuis l'agenda : « Créer une facture » sur un rendez-vous mène
+  // ici avec `?rdv=<id>`. Seul l'identifiant circule dans l'URL ; l'identité
+  // du patient est récupérée par l'API, jamais exposée dans la barre
+  // d'adresse ni dans l'historique du navigateur.
+  const searchParams = useSearchParams();
+  const rdvParam = searchParams.get('rdv');
+  const rdvId = rdvParam && /^\d+$/.test(rdvParam) ? Number(rdvParam) : null;
+  const { data: rdv } = useRdv(rdvId);
+
+  useEffect(() => {
+    if (rdvId !== null) setShowCreateDialog(true);
+  }, [rdvId]);
 
   useDialogCleanup([showCreateDialog]);
 
@@ -272,10 +287,23 @@ export default function FacturationPage() {
               Créer une nouvelle facture de prestations.
             </DialogDescription>
           </DialogHeader>
+          {/* La clé force un remontage quand le rendez-vous arrive : sans
+              elle, react-hook-form garde les valeurs initiales vides. */}
           <CreateFactureForm
+            key={rdv?.id ?? 'vierge'}
             onSubmit={(data) => createMutation.mutate(data)}
             isPending={createMutation.isPending}
             sites={sites}
+            defaultValues={
+              rdv
+                ? {
+                    patient_nom: rdv.patient_nom,
+                    patient_prenom: rdv.patient_prenom,
+                    patient_phone: rdv.patient_phone,
+                    rendez_vous_id: rdv.id,
+                  }
+                : undefined
+            }
           />
         </DialogContent>
       </Dialog>

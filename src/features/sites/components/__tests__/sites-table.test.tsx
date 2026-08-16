@@ -1,12 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { sitesHandlers } from '@/testing/mocks/handlers/sites';
 import { server } from '@/testing/mocks/server';
-import { rtlRender, screen, waitFor } from '@/testing/test-utils';
+import { rtlRender, screen, userEvent, waitFor } from '@/testing/test-utils';
 
 import { SitesTable } from '../sites-table';
+
+// Rôle courant du test — `<Can>` s'appuie dessus via useUser/useSession.
+let currentRole: string | null = null;
 
 // Prevent next-auth from firing async fetch calls that cause errors in jsdom
 vi.mock('next-auth/react', async () => {
@@ -14,9 +17,27 @@ vi.mock('next-auth/react', async () => {
     await vi.importActual<typeof import('next-auth/react')>('next-auth/react');
   return {
     ...actual,
+    useSession: () =>
+      currentRole
+        ? {
+            data: {
+              user: {
+                id: '1',
+                email: 'test@guiss.sn',
+                name: 'Test',
+                role: currentRole,
+              },
+            },
+            status: 'authenticated',
+          }
+        : { data: null, status: 'unauthenticated' },
     getSession: vi.fn().mockResolvedValue(null),
     signOut: vi.fn().mockResolvedValue(undefined),
   };
+});
+
+beforeEach(() => {
+  currentRole = null;
 });
 
 function renderSitesTable(search = '') {
@@ -159,4 +180,66 @@ describe('SitesTable', () => {
       ).not.toBeInTheDocument();
     });
   });
+});
+
+/**
+ * Le menu d'actions n'était couvert par aucun test, alors qu'il portait le
+ * bug le plus coûteux : « Supprimer » ne faisait que désactiver, et aucune
+ * réactivation n'était exposée — un site désactivé restait bloqué, son code
+ * unique pris, d'où la recréation d'un doublon.
+ */
+describe('SitesTable — menu d’actions', () => {
+  async function openMenuOf(libelle: string) {
+    server.use(...sitesHandlers);
+    renderSitesTable();
+    const row = (await screen.findByText(libelle)).closest('tr');
+    const trigger = row!.querySelector('button')!;
+    await userEvent.click(trigger);
+  }
+
+  test('un site actif propose « Désactiver », pas « Supprimer »', async () => {
+    currentRole = 'STAFF';
+
+    await openMenuOf('Dakar - Plateau');
+
+    expect(await screen.findByText('Désactiver')).toBeInTheDocument();
+    expect(screen.queryByText('Réactiver')).not.toBeInTheDocument();
+  });
+
+  test('un site inactif propose « Réactiver »', async () => {
+    currentRole = 'STAFF';
+
+    await openMenuOf('Ziguinchor');
+
+    expect(await screen.findByText('Réactiver')).toBeInTheDocument();
+    expect(screen.queryByText('Désactiver')).not.toBeInTheDocument();
+  });
+
+  test('la suppression définitive est cachée au staff', async () => {
+    currentRole = 'STAFF';
+
+    await openMenuOf('Dakar - Plateau');
+
+    await screen.findByText('Désactiver');
+    expect(
+      screen.queryByText('Supprimer définitivement'),
+    ).not.toBeInTheDocument();
+  });
+
+  test('la suppression définitive est offerte au superutilisateur', async () => {
+    currentRole = 'SUPERUSER';
+
+    await openMenuOf('Dakar - Plateau');
+
+    expect(
+      await screen.findByText('Supprimer définitivement'),
+    ).toBeInTheDocument();
+  });
+
+  // NON COUVERT ICI : l'affichage du refus 409. Ouvrir le dialogue Radix
+  // depuis l'élément de menu fait diverger le worker Vitest en jsdom (OOM du
+  // compilateur de regex sur les requêtes par rôle, blocage sur findByRole
+  // ('dialog')). Le comportement est prouvé côté backend par un vrai appel
+  // HTTP : apps/depistage/tests/test_site_delete.py
+  // ::test_lapi_renvoie_409_et_le_detail_des_references.
 });

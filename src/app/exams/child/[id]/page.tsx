@@ -378,7 +378,10 @@ export default function ChildExamPage() {
         ptosis_eye: null,
       },
       perimetry: {
-        pbo: ['NORMAL'],
+        // Voir la page adulte : rien n'est coché tant que la périmétrie n'a
+        // pas été réalisée. Pré-cocher « Normal » affirmerait un résultat
+        // clinique jamais constaté.
+        pbo: [],
         limite_superieure: null,
         limite_inferieure: null,
         limite_temporale_droit: null,
@@ -814,6 +817,9 @@ function ChildExamContent(props: ChildExamContentProps) {
   const [optiqueDialogOpen, setOptiqueDialogOpen] = useState(false);
 
   const handleSaveSection = () => {
+    // Un examen finalisé est en lecture seule : il doit être explicitement
+    // rouvert avant toute modification (intégrité du dossier médical).
+    if (isComplete) return;
     if (activeSection === 'technical') handleSaveTechnical();
     else if (activeSection === 'clinical') handleSaveClinical();
     else if (activeSection === 'complementary') handleSaveComplementary();
@@ -933,52 +939,69 @@ function ChildExamContent(props: ChildExamContentProps) {
                     </div>
                   )}
 
-                  {/* TECHNIQUE */}
-                  {activeSection === 'technical' && (
-                    <ChildExamTechnicalPanel
-                      examId={examId}
-                      technicalSubsection={technicalSubsection}
-                      setTechnicalSubsection={setTechnicalSubsection}
-                      handleSaveTechnical={handleSaveTechnical}
-                      isSaving={isSaving}
-                    />
+                  {/* Examen finalisé = lecture seule tant qu'il n'est pas rouvert */}
+                  {isComplete && (
+                    <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                      <AlertCircle
+                        className="size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <p>
+                        Examen finalisé — lecture seule. Utilisez «&nbsp;Rouvrir
+                        l&apos;examen&nbsp;» dans la barre latérale pour le
+                        modifier.
+                      </p>
+                    </div>
                   )}
 
-                  {/* CLINIQUE */}
-                  {activeSection === 'clinical' && (
-                    <ChildExamClinicalPanel
-                      examId={examId}
-                      clinicalSubsection={clinicalSubsection}
-                      setClinicalSubsection={setClinicalSubsection}
-                      handleSaveClinical={handleSaveClinical}
-                      isSaving={isSaving}
-                      simplifiedClinicalExam={simplifiedClinicalExam}
-                      onToggleSimplifiedClinicalExam={
-                        onToggleSimplifiedClinicalExam
-                      }
-                    />
-                  )}
+                  <fieldset disabled={isComplete} className="min-w-0">
+                    {/* TECHNIQUE */}
+                    {activeSection === 'technical' && (
+                      <ChildExamTechnicalPanel
+                        examId={examId}
+                        technicalSubsection={technicalSubsection}
+                        setTechnicalSubsection={setTechnicalSubsection}
+                        handleSaveTechnical={handleSaveTechnical}
+                        isSaving={isSaving}
+                      />
+                    )}
 
-                  {/* COMPLÉMENTAIRES */}
-                  {activeSection === 'complementary' && (
-                    <ChildExamComplementaryPanel
-                      examId={examId}
-                      complementarySubsection={complementarySubsection}
-                      setComplementarySubsection={setComplementarySubsection}
-                      handleSaveComplementary={handleSaveComplementary}
-                      isSaving={isSaving}
-                      clinicalExamId={clinicalExamId}
-                    />
-                  )}
+                    {/* CLINIQUE */}
+                    {activeSection === 'clinical' && (
+                      <ChildExamClinicalPanel
+                        examId={examId}
+                        clinicalSubsection={clinicalSubsection}
+                        setClinicalSubsection={setClinicalSubsection}
+                        handleSaveClinical={handleSaveClinical}
+                        isSaving={isSaving}
+                        simplifiedClinicalExam={simplifiedClinicalExam}
+                        onToggleSimplifiedClinicalExam={
+                          onToggleSimplifiedClinicalExam
+                        }
+                      />
+                    )}
 
-                  {/* CONCLUSION */}
-                  {activeSection === 'conclusion' && (
-                    <ChildExamConclusionPanel
-                      examId={examId}
-                      isSaving={isSaving}
-                      onRequestSave={() => setShowSaveDialog(true)}
-                    />
-                  )}
+                    {/* COMPLÉMENTAIRES */}
+                    {activeSection === 'complementary' && (
+                      <ChildExamComplementaryPanel
+                        examId={examId}
+                        complementarySubsection={complementarySubsection}
+                        setComplementarySubsection={setComplementarySubsection}
+                        handleSaveComplementary={handleSaveComplementary}
+                        isSaving={isSaving}
+                        clinicalExamId={clinicalExamId}
+                      />
+                    )}
+
+                    {/* CONCLUSION */}
+                    {activeSection === 'conclusion' && (
+                      <ChildExamConclusionPanel
+                        examId={examId}
+                        isSaving={isSaving}
+                        onRequestSave={() => setShowSaveDialog(true)}
+                      />
+                    )}
+                  </fieldset>
                 </main>
               </FormProvider>
             </ResizablePanel>

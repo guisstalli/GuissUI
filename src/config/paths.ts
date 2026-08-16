@@ -1,6 +1,9 @@
 export const paths = {
   home: {
-    getHref: () => '/',
+    // Landing publique (URL donnee a Meta/WhatsApp Business). La racine /
+    // reste l'entree du personnel : redirection vers le tableau de bord,
+    // donc vers le login quand on n'est pas connecte (habitude conservee).
+    getHref: () => '/landing',
   },
 
   // Authentication
@@ -24,7 +27,7 @@ export const paths = {
 
   // Dashboard
   dashboard: {
-    getHref: () => '/',
+    getHref: () => '/tableau-de-bord',
   },
 
   // Patients
@@ -129,6 +132,29 @@ export const paths = {
     getHref: () => '/analytics',
   },
 
+  // IA — assistant analytique + rapports générés
+  // Canaux de l'assistant (gestion des accès WhatsApp/email)
+  agentChannels: {
+    manage: {
+      getHref: () => '/parametres/canaux-assistant',
+    },
+  },
+
+  aiReports: {
+    chat: {
+      getHref: () => '/assistant-ia',
+    },
+    conversation: {
+      getHref: (id: number | string) => `/assistant-ia/${id}`,
+    },
+    list: {
+      getHref: () => '/rapports-ia',
+    },
+    detail: {
+      getHref: (id: number | string) => `/rapports-ia/${id}`,
+    },
+  },
+
   // --- Pages non encore implémentées (à activer quand les pages seront créées) ---
   // consultations: { list, detail, create }
   // planning: { calendar, day, week }
@@ -173,13 +199,33 @@ export const paths = {
     },
   },
 
+  // Administration (capacités serveur : tableau de bord, sécurité, permissions)
+  administration: {
+    dashboard: {
+      getHref: () => '/administration',
+    },
+    security: {
+      getHref: () => '/administration/securite',
+    },
+    /**
+     * Journal des MODIFICATIONS — volontairement distinct de `security`, qui
+     * journalise les CONSULTATIONS. Sources et volumétries sans rapport.
+     */
+    changeLog: {
+      getHref: () => '/administration/journal',
+    },
+    permissions: {
+      getHref: () => '/administration/permissions',
+    },
+  },
+
   // Events (public + staff)
   events: {
     publicList: {
-      getHref: () => '/evenements',
+      getHref: () => '/public/evenements',
     },
     publicDetail: {
-      getHref: (slug: string) => `/evenements/${slug}`,
+      getHref: (slug: string) => `/public/evenements/${slug}`,
     },
     staff: {
       list: { getHref: () => '/gestion/evenements' },
@@ -191,15 +237,24 @@ export const paths = {
   // Rendez-vous public + staff agenda
   rdv: {
     publicBooking: {
-      getHref: () => '/rendez-vous',
+      getHref: () => '/public/rendez-vous',
     },
     publicCancel: {
-      getHref: (token: string) => `/rendez-vous/annuler/${token}`,
+      getHref: (token: string) => `/public/rendez-vous/annuler/${token}`,
+    },
+    publicRescheduleConfirm: {
+      getHref: (token: string) =>
+        `/public/rendez-vous/replanifier/confirmer/${token}`,
     },
     staff: {
       agenda: { getHref: () => '/gestion/rendez-vous' },
       config: { getHref: () => '/gestion/rendez-vous/config' },
     },
+  },
+
+  // Dossier partagé (public — accès via token)
+  dossier: {
+    getHref: (token: string) => `/dossier/${token}`,
   },
 
   // Paramètres applicatifs
@@ -236,10 +291,15 @@ export const activePaths = [
   '/gestion/evenements',
   '/evenements',
   '/analytics',
+  '/assistant-ia',
+  '/rapports-ia',
   '/sites',
   '/parametres',
   '/configuration/prestations',
   '/profil',
+  '/administration',
+  '/administration/securite',
+  '/administration/permissions',
   '/unauthorized',
   '/maintenance',
 ] as const;

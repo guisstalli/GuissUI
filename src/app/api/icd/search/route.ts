@@ -33,11 +33,22 @@ async function getAccessToken(): Promise<string> {
     throw new Error(`Token request failed: ${response.status}`);
   }
 
-  const data = await response.json();
-  cachedToken = data.access_token;
+  const data: unknown = await response.json();
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    typeof (data as { access_token?: unknown }).access_token !== 'string'
+  ) {
+    throw new Error('ICD token response missing access_token');
+  }
+  const { access_token, expires_in } = data as {
+    access_token: string;
+    expires_in?: number;
+  };
+  cachedToken = access_token;
   // Expire 60s before actual expiry to avoid edge cases
-  tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
-  return cachedToken!;
+  tokenExpiresAt = Date.now() + ((expires_in ?? 3600) - 60) * 1000;
+  return access_token;
 }
 
 export async function GET(request: NextRequest) {

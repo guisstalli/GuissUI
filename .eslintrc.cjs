@@ -48,26 +48,81 @@ module.exports = {
           {
             zones: [
               // disables cross-feature imports:
-              // eg. src/features/discussions should not import from src/features/comments, etc.
+              // eg. src/features/exams should not import from src/features/patients, etc.
+              {
+                target: './src/features/admin',
+                from: './src/features',
+                except: ['./admin'],
+              },
+              {
+                target: './src/features/ai-reports',
+                from: './src/features',
+                except: ['./ai-reports'],
+              },
+              {
+                target: './src/features/analytics',
+                from: './src/features',
+                except: ['./analytics'],
+              },
+              {
+                target: './src/features/appointments',
+                from: './src/features',
+                except: ['./appointments'],
+              },
               {
                 target: './src/features/auth',
                 from: './src/features',
                 except: ['./auth'],
               },
               {
-                target: './src/features/comments',
+                target: './src/features/billing',
                 from: './src/features',
-                except: ['./comments'],
+                except: ['./billing'],
               },
               {
-                target: './src/features/discussions',
+                target: './src/features/clinic',
                 from: './src/features',
-                except: ['./discussions'],
+                except: ['./clinic'],
               },
               {
-                target: './src/features/teams',
+                target: './src/features/dashboard',
                 from: './src/features',
-                except: ['./teams'],
+                except: ['./dashboard'],
+              },
+              {
+                target: './src/features/drivers',
+                from: './src/features',
+                except: ['./drivers'],
+              },
+              {
+                target: './src/features/events',
+                from: './src/features',
+                except: ['./events'],
+              },
+              {
+                target: './src/features/exams',
+                from: './src/features',
+                except: ['./exams'],
+              },
+              {
+                target: './src/features/medicaments-admin',
+                from: './src/features',
+                except: ['./medicaments-admin'],
+              },
+              {
+                target: './src/features/notifications',
+                from: './src/features',
+                except: ['./notifications'],
+              },
+              {
+                target: './src/features/patients',
+                from: './src/features',
+                except: ['./patients'],
+              },
+              {
+                target: './src/features/sites',
+                from: './src/features',
+                except: ['./sites'],
               },
               {
                 target: './src/features/users',

@@ -104,7 +104,7 @@ export function ProfileInfoForm({ user }: ProfileInfoFormProps) {
                 <FormControl>
                   <select
                     {...field}
-                    className="shadow-xs focus:ring-ring/50 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus:border-ring focus:ring"
+                    className="focus:ring-ring/50 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus:border-ring focus:ring"
                   >
                     <option value="">Non spécifié</option>
                     <option value="MR">M.</option>
