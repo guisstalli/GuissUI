@@ -97,7 +97,7 @@ jobs:
         uses: docker/setup-buildx-action@22b48a429f10e1de233237b5c534c9c3d2e41597 #v4.1.0
 
       - name: Login to DockerHub
-        uses: docker/login-action@946f94de75ea52995b6aa1e54fd3e0aeed6cc573 #v4.2.0
+        uses: docker/login-action@af63523ba5f55733d817da0fdb813e660152c72c #v4.2.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
