@@ -18,6 +18,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { CreateExamDialog } from '@/app/create-exam-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,7 +51,6 @@ import {
   useDownloadAdultConclusion,
   useDownloadAdultReport,
 } from '@/features/exams/api/adult/download-report';
-import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { usePatientExams } from '@/features/patients/api/get-patient-exams';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
@@ -83,17 +83,23 @@ const SEX_LABELS: Record<string, string> = {
   A: 'Anonyme',
 };
 
-function ExamsTab({ patientId }: { patientId: number }) {
+function ExamsTab({
+  patientId,
+  patientFullName,
+}: {
+  patientId: number;
+  patientFullName: string;
+}) {
   const router = useRouter();
   const { data: exams, isLoading } = usePatientExams({ patientId });
   const downloadReport = useDownloadAdultReport();
   const downloadConclusion = useDownloadAdultConclusion();
 
-  const createAdultMutation = useCreateAdultExam({
-    mutationConfig: {
-      onSuccess: (data) => router.push(`/exams/adult/${data.id}`),
-    },
-  });
+  // Le bouton creait l'examen SANS RIEN DEMANDER : ni site, ni rattachement.
+  // L'examen naissait donc sans site et la colonne « Site » du tableau juste
+  // en dessous affichait « — » definitivement. La modale existait deja sur la
+  // fiche patient ; elle est desormais partagee.
+  const [dialogueOuvert, setDialogueOuvert] = useState(false);
 
   const adultExams = exams?.adult ?? [];
 
@@ -103,18 +109,19 @@ function ExamsTab({ patientId }: { patientId: number }) {
         <p className="text-sm text-muted-foreground">
           {adultExams.length} examen{adultExams.length !== 1 ? 's' : ''}
         </p>
-        <Button
-          size="sm"
-          onClick={() => createAdultMutation.mutate({ patient_id: patientId })}
-          disabled={createAdultMutation.isPending}
-        >
-          {createAdultMutation.isPending ? (
-            <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-          ) : (
-            <Plus className="mr-1.5 size-3.5" />
-          )}
+        <Button size="sm" onClick={() => setDialogueOuvert(true)}>
+          <Plus className="mr-1.5 size-3.5" />
           Nouvel examen adulte
         </Button>
+
+        <CreateExamDialog
+          open={dialogueOuvert}
+          onOpenChange={setDialogueOuvert}
+          patientId={patientId}
+          patientFullName={patientFullName}
+          isAdult
+          onCreated={(exam) => router.push(`/exams/adult/${exam.id}`)}
+        />
       </div>
 
       {isLoading && (
@@ -599,7 +606,10 @@ export default function DriverDetailPage() {
 
         {/* Tab: Examens réalisés */}
         <TabsContent value="examens" className="mt-6">
-          <ExamsTab patientId={driver.patient.id} />
+          <ExamsTab
+            patientId={driver.patient.id}
+            patientFullName={driver.patient.full_name}
+          />
         </TabsContent>
       </Tabs>
 
