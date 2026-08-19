@@ -114,6 +114,11 @@ export default function ConducteursPage() {
   const queryParams = {
     limit: ITEMS_PER_PAGE,
     offset: (currentPage - 1) * ITEMS_PER_PAGE,
+    // `debouncedSearch` était calculé, alimentait le bouton « Réinitialiser »…
+    // et n'entrait jamais ici : la barre de recherche était donc purement
+    // décorative. Le serveur cherche sur nom, prénom, numéro d'identifiant et
+    // numéro de permis.
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(serviceFilter ? { service: serviceFilter } : {}),
     ...(typePermisFilter ? { type_permis: typePermisFilter } : {}),
     ...(regionFilter ? { zone_de_residence: regionFilter } : {}),
