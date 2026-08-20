@@ -18,13 +18,13 @@ interface PachymetryFormProps {
 
 /**
  * Pachymetry Form Component
- * Adult exam ONLY
+ * Partage entre les examens ADULTE (donc conducteurs) et ENFANT
  *
  * FIELDS:
  * - OD / OG (microns)
- * - CTO OD / CTO OG (300–800)
+ * - TO OD / TO OG : tension oculaire, 0–100 mmHg
  *
- * DESIGN: Highlight abnormal values (<400 or >600)
+ * DESIGN: Highlight abnormal values (<400 or >600) — sur l'EPAISSEUR
  */
 export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
   const form = useFormContext();
@@ -35,7 +35,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
 
   const isAbnormal = (value: number | null | undefined) => {
     if (value === null || value === undefined) return false;
-    return value < 400 || value > 600;
+    return value <= 100 || value > 0;
   };
 
   return (
@@ -62,7 +62,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     step="1"
                     min="300"
                     max="800"
-                    placeholder="300-800"
+                    placeholder="0-100"
                     className="pr-10"
                     {...field}
                     value={field.value ?? ''}
@@ -94,7 +94,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     step="1"
                     min="300"
                     max="800"
-                    placeholder="300-800"
+                    placeholder="0-100"
                     className="pr-10"
                     {...field}
                     value={field.value ?? ''}
@@ -115,11 +115,10 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
         />
       </div>
 
-      {/* CTO values with abnormal highlighting */}
+      {/* Tension oculaire (TO) — mmHg, distincte de l'épaisseur ci-dessus. */}
       <div className="space-y-3">
         <p className="text-xs font-medium text-muted-foreground">
-          Correction Tension Oculaire (CTO) — en mmHg, valeur libre (peut être
-          négative : une cornée épaisse surestime la tension mesurée)
+          Tension Oculaire (TO) — 0 à 100 mmHg
         </p>
         <div className="grid w-full grid-cols-2 gap-6">
           <FormField
@@ -127,13 +126,15 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
             name={`${prefix}cto_od`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>CTO OD</FormLabel>
+                <FormLabel>TO OD</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type="number"
                       step="1"
-                      placeholder="300-800"
+                      min="0"
+                      max="100"
+                      placeholder="0-100"
                       className={cn(
                         'pr-10',
                         isAbnormal(ctoOd) &&
@@ -164,13 +165,15 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
             name={`${prefix}cto_og`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>CTO OG</FormLabel>
+                <FormLabel>TO OG</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type="number"
                       step="1"
-                      placeholder="300-800"
+                      min="0"
+                      max="100"
+                      placeholder="0-100"
                       className={cn(
                         'pr-10',
                         isAbnormal(ctoOg) &&

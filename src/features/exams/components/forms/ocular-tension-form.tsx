@@ -20,8 +20,8 @@ interface OcularTensionFormProps {
  * Shared between Child and Adult exams
  *
  * FIELDS:
- * - OD (0–50 mmHg)
- * - OG (0–50 mmHg)
+ * - OD (0–100 mmHg)
+ * - OG (0–100 mmHg)
  *
  * IMPORTANT: NO "Traitement hypotonisant" per specs
  *
@@ -38,7 +38,7 @@ export function OcularTensionForm({ namePrefix = '' }: OcularTensionFormProps) {
           Tension Oculaire
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Pression intraoculaire (0-50 mmHg)
+          Pression intraoculaire (0-100 mmHg)
         </p>
       </div>
 
@@ -55,8 +55,8 @@ export function OcularTensionForm({ namePrefix = '' }: OcularTensionFormProps) {
                     type="number"
                     step="1"
                     min="0"
-                    max="50"
-                    placeholder="0-50"
+                    max="100"
+                    placeholder="0-100"
                     className="pr-12"
                     {...field}
                     value={field.value ?? ''}
@@ -87,8 +87,8 @@ export function OcularTensionForm({ namePrefix = '' }: OcularTensionFormProps) {
                     type="number"
                     step="1"
                     min="0"
-                    max="50"
-                    placeholder="0-50"
+                    max="100"
+                    placeholder="0-100"
                     className="pr-12"
                     {...field}
                     value={field.value ?? ''}
