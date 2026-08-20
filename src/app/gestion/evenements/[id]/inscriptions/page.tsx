@@ -10,6 +10,7 @@ import {
   MoreVertical,
   QrCode,
   Search,
+  Truck,
   UserPlus,
   Users,
   XCircle,
@@ -35,6 +36,10 @@ import {
 } from '@/components/ui/dropdown/dropdown';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DriverRecordDialog,
+  type DriverEssentials,
+} from '@/features/drivers/components/driver-record-dialog';
 import { useCheckin } from '@/features/events/api/checkin';
 import { useConvertToPatient } from '@/features/events/api/convert-to-patient';
 import { useEvent } from '@/features/events/api/get-event';
@@ -56,6 +61,10 @@ interface Inscription {
   sex: 'H' | 'F' | 'A' | null;
   statut: 'inscrit' | 'present' | 'absent' | 'annule';
   patient_id: number | null;
+  // Servis par l'API depuis toujours, jamais lus par cet écran : le staff
+  // ressaisissait donc des données déjà fournies en ligne.
+  pour_conducteurs: boolean;
+  driver_data: DriverEssentials | null;
   inscrit_at: string;
   presente_at: string | null;
 }
@@ -203,6 +212,8 @@ export default function EventInscriptionsPage() {
   const [checkinError, setCheckinError] = useState('');
   const [convertingId, setConvertingId] = useState<number | null>(null);
   const [checkinRowId, setCheckinRowId] = useState<number | null>(null);
+  const [dossierConducteur, setDossierConducteur] =
+    useState<Inscription | null>(null);
 
   // Debounce ~300ms de la recherche pour limiter les requêtes serveur.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -581,6 +592,20 @@ export default function EventInscriptionsPage() {
                                       : 'Créer patient'}
                                   </DropdownMenuItem>
                                 )}
+                                {/* Le dossier conducteur se greffe sur un
+                                    patient DÉJÀ créé : proposé seulement une
+                                    fois le check-in fait. */}
+                                {ins.pour_conducteurs && !!ins.patient_id && (
+                                  <DropdownMenuItem
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      setDossierConducteur(ins);
+                                    }}
+                                  >
+                                    <Truck className="mr-2 size-3.5" />
+                                    Dossier conducteur
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           );
@@ -594,6 +619,17 @@ export default function EventInscriptionsPage() {
           )}
         </div>
       </div>
+
+      {dossierConducteur?.patient_id && (
+        <DriverRecordDialog
+          open
+          onOpenChange={(ouvert) => !ouvert && setDossierConducteur(null)}
+          patientId={dossierConducteur.patient_id}
+          patientNom={`${dossierConducteur.prenom} ${dossierConducteur.nom}`}
+          driverData={dossierConducteur.driver_data}
+          onCreated={() => setDossierConducteur(null)}
+        />
+      )}
     </Shell>
   );
 }
