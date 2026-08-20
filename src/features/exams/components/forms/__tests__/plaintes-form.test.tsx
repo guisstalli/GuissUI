@@ -332,3 +332,87 @@ describe('PlaintesForm', () => {
     });
   });
 });
+
+// =============================================================================
+// Exclusivité de « Aucun »
+// =============================================================================
+//
+// « Aucun » était une case comme les autres : cocher un symptôme ET « aucun
+// symptôme » décrivait un état impossible, que rien n'empêchait et qui partait
+// tel quel en base. Le formulaire sert les panneaux adulte ET enfant.
+
+describe('PlaintesForm — exclusivité de « Aucun »', () => {
+  /** Rend le formulaire et expose les symptômes cochés à chaque instant. */
+  function monterFormulaire() {
+    const suivi = { symptomes: [] as string[] };
+
+    function Suivi() {
+      const form = useForm<PlaintesFormValues>({
+        resolver: zodResolver(PlaintesSchema),
+        defaultValues,
+      });
+      suivi.symptomes = (form.watch('eye_symptom') as string[]) ?? [];
+      return (
+        <FormProvider {...form}>
+          <PlaintesForm />
+        </FormProvider>
+      );
+    }
+
+    render(<Suivi />);
+    return suivi;
+  }
+
+  const cocher = async (libelle: string) => {
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('checkbox', { name: libelle }));
+  };
+
+  it('cocher un symptôme retire « Aucun »', async () => {
+    const suivi = monterFormulaire();
+
+    await cocher('Aucun');
+    expect(suivi.symptomes).toEqual(['AUCUN']);
+
+    await cocher('Rougeur');
+
+    expect(suivi.symptomes).not.toContain('AUCUN');
+    expect(suivi.symptomes).toContain('ROUGEUR');
+  });
+
+  it('cocher « Aucun » efface les symptômes déjà sélectionnés', async () => {
+    // Sens inverse : corriger d'un seul côté laisserait l'état incohérent
+    // atteignable par l'autre.
+    const suivi = monterFormulaire();
+
+    await cocher('Rougeur');
+    await cocher('Douleur');
+    expect(suivi.symptomes).toHaveLength(2);
+
+    await cocher('Aucun');
+
+    expect(suivi.symptomes).toEqual(['AUCUN']);
+  });
+
+  it('plusieurs symptômes réels restent cumulables', async () => {
+    // L'exclusivité ne concerne QUE « Aucun ».
+    const suivi = monterFormulaire();
+
+    await cocher('Rougeur');
+    await cocher('Douleur');
+
+    expect(suivi.symptomes).toContain('ROUGEUR');
+    expect(suivi.symptomes).toContain('DOULEUR');
+  });
+
+  it('décocher un symptôme ne rétablit pas « Aucun »', async () => {
+    // Une liste vide n'est pas « aucun symptôme constaté » : c'est une saisie
+    // non faite. Les deux ne se valent pas cliniquement.
+    const suivi = monterFormulaire();
+
+    await cocher('Rougeur');
+    await cocher('Rougeur');
+
+    expect(suivi.symptomes).toEqual([]);
+  });
+});
