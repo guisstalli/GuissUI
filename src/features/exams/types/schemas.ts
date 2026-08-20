@@ -480,18 +480,13 @@ export const PachymetrySchema = z.object({
     .max(800, 'Valeur hors plage plausible (300-800 µm)')
     .optional()
     .nullable(),
-  cto_od: z.coerce
-    .number()
-    .min(300, 'Valeur hors plage plausible (300-800 µm)')
-    .max(800, 'Valeur hors plage plausible (300-800 µm)')
-    .optional()
-    .nullable(),
-  cto_og: z.coerce
-    .number()
-    .min(300, 'Valeur hors plage plausible (300-800 µm)')
-    .max(800, 'Valeur hors plage plausible (300-800 µm)')
-    .optional()
-    .nullable(),
+  // CTO = Correction de la Tension Oculaire, en mmHg — PAS une épaisseur.
+  // Une cornée épaisse surestime la tension mesurée : la correction est alors
+  // NÉGATIVE. Les bornes 300-800 µm héritées de `od`/`og` rendaient donc le
+  // champ inutilisable pour ce qu'il mesure. Aucune borne : la valeur est libre,
+  // signée, et l'ordre de grandeur n'a rien de commun avec une épaisseur.
+  cto_od: z.coerce.number().optional().nullable(),
+  cto_og: z.coerce.number().optional().nullable(),
   created: z.string().datetime().optional(),
   modified: z.string().datetime().optional(),
 });

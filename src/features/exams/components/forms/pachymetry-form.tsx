@@ -118,7 +118,8 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
       {/* CTO values with abnormal highlighting */}
       <div className="space-y-3">
         <p className="text-xs font-medium text-muted-foreground">
-          Correction Tension Oculaire (CTO) - Plage normale: 400-600 µm
+          Correction Tension Oculaire (CTO) — en mmHg, valeur libre (peut être
+          négative : une cornée épaisse surestime la tension mesurée)
         </p>
         <div className="grid w-full grid-cols-2 gap-6">
           <FormField
@@ -132,8 +133,6 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     <Input
                       type="number"
                       step="1"
-                      min="300"
-                      max="800"
                       placeholder="300-800"
                       className={cn(
                         'pr-10',
@@ -149,7 +148,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                       }
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                      µm
+                      mmHg
                     </span>
                   </div>
                 </FormControl>
@@ -171,8 +170,6 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     <Input
                       type="number"
                       step="1"
-                      min="300"
-                      max="800"
                       placeholder="300-800"
                       className={cn(
                         'pr-10',
@@ -188,7 +185,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                       }
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                      µm
+                      mmHg
                     </span>
                   </div>
                 </FormControl>
