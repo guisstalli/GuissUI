@@ -36,6 +36,12 @@ interface DriverFormProps {
   onSubmit: (data: DriverCreate) => void;
   isPending?: boolean;
   isEdit?: boolean;
+  /** Masque l'état civil : le patient existe déjà (ex. après un check-in
+   *  d'événement, où le dossier conducteur se greffe sur un patient créé). */
+  hidePatientSection?: boolean;
+  /** Libellé du bouton. `isEdit` afficherait « Mettre à jour », trompeur
+   *  quand on CRÉE le dossier d'un patient existant. */
+  submitLabel?: string;
 }
 
 const SEX_LABELS = { H: 'Homme', F: 'Femme', A: 'Anonyme' } as const;
@@ -103,6 +109,8 @@ export function DriverForm({
   onSubmit,
   isPending,
   isEdit,
+  hidePatientSection,
+  submitLabel,
 }: DriverFormProps) {
   const form = useForm<DriverCreate>({
     resolver: zodResolver(DriverCreateSchema),
@@ -115,7 +123,7 @@ export function DriverForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Section Identité patient */}
-        {!isEdit && (
+        {!isEdit && !hidePatientSection && (
           <div className="mt-2 space-y-4">
             <h3 className="border-b pb-2 text-lg font-semibold">
               Identité du patient
@@ -553,9 +561,8 @@ export function DriverForm({
           >
             {isPending
               ? 'Enregistrement…'
-              : isEdit
-                ? 'Mettre à jour'
-                : 'Créer le conducteur'}
+              : (submitLabel ??
+                (isEdit ? 'Mettre à jour' : 'Créer le conducteur'))}
           </button>
         </div>
       </form>
