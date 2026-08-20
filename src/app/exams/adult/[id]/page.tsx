@@ -112,7 +112,10 @@ const BASE_SECTIONS = [
 
 // Valeurs autorisées (validation URL/localStorage — voir usePersistentTabState).
 const SECTIONS_ALLOWED = ['technical', 'clinical', 'conclusion', 'experience'];
-const TECHNICAL_SUBS = ['acuity', 'refraction', 'tension', 'pachymetry'];
+// `pachymetry` retiré : l'onglet est fusionné dans `tension`. Le laisser
+// autorisé ferait sélectionner un onglet inexistant depuis une URL ou un
+// localStorage d'avant la fusion — panneau vide, sans message.
+const TECHNICAL_SUBS = ['acuity', 'refraction', 'tension'];
 const CLINICAL_SUBS = ['plaintes', 'biomicroscopy', 'perimetry', 'attachments'];
 
 export default function AdultExamPage() {
