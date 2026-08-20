@@ -16,6 +16,8 @@ export const EventPublicSchema = z.object({
   description: z.string(),
   slug: z.string(),
   date_event: z.string(),
+  /** NULL = événement d'une seule journée. */
+  date_fin: z.string().nullable().optional(),
   heure_debut: z.string(),
   heure_fin: z.string(),
   lieu: z.string(),
@@ -124,6 +126,8 @@ export type PaginatedEvents = z.infer<typeof PaginatedEventsSchema>;
 export const EventCreateInputSchema = z.object({
   titre: z.string().min(1, 'Titre requis'),
   date_event: z.string(),
+  /** NULL = événement d'une seule journée. */
+  date_fin: z.string().nullable().optional(),
   heure_debut: z.string(),
   heure_fin: z.string(),
   lieu: z.string().min(1, 'Lieu requis'),

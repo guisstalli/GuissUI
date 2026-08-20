@@ -46,6 +46,7 @@ import {
   SERVICE_OPTIONS,
   TYPE_PERMIS_OPTIONS,
 } from '@/features/events/types/schemas';
+import { estSurPlusieursJours } from '@/features/events/utils/format-periode';
 import { cn } from '@/lib/utils';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
@@ -603,6 +604,10 @@ export default function EventDetailPage() {
                       value: (
                         <span className="capitalize">
                           {formatDate(event.date_event)}
+                          {estSurPlusieursJours(
+                            event.date_event,
+                            event.date_fin,
+                          ) && <> → {formatDate(event.date_fin!)}</>}
                         </span>
                       ),
                     },

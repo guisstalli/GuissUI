@@ -16,6 +16,7 @@ import { PublicShell } from '@/components/public/public-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePublicEvents } from '@/features/events/api/get-public-events';
 import type { EventPublic } from '@/features/events/types/schemas';
+import { estSurPlusieursJours } from '@/features/events/utils/format-periode';
 import { cn } from '@/lib/utils';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
@@ -161,7 +162,14 @@ function EventCard({ event }: { event: EventPublic }) {
       <div className="mb-5 space-y-2.5 text-sm text-slate-600">
         <div className="flex items-center gap-2.5">
           <Calendar className="size-3.5 shrink-0 text-cyan-600/80" />
-          <span className="capitalize">{formatDate(event.date_event)}</span>
+          <span className="capitalize">
+            {formatDate(event.date_event)}
+            {/* La date de fin n'apparaît que si l'événement déborde du jour :
+                afficher « du 14 au 14 » serait une régression de lisibilité. */}
+            {estSurPlusieursJours(event.date_event, event.date_fin) && (
+              <> → {formatDate(event.date_fin!)}</>
+            )}
+          </span>
         </div>
         <div className="flex items-center gap-2.5">
           <Clock className="size-3.5 shrink-0 text-cyan-600/80" />
