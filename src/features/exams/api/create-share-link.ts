@@ -18,6 +18,8 @@ export type ShareExamType = (typeof SHARE_EXAM_TYPES)[number];
 export const shareCreateInputSchema = z.object({
   exam_type: z.enum(SHARE_EXAM_TYPES),
   exam_id: z.number().int().positive(),
+  /** Dossier complet (défaut côté serveur) ou conclusion seule. */
+  document: z.enum(['dossier', 'conclusion']).optional(),
   ttl_hours: z.number().int().min(1).max(8760).optional(),
   max_access: z.number().int().min(1).nullable().optional(),
   to_phone: z.string().optional().or(z.literal('')),
@@ -52,6 +54,7 @@ function buildPayload(input: ShareCreateInput): ShareCreateInput {
     exam_id: input.exam_id,
   };
 
+  if (input.document) payload.document = input.document;
   if (input.ttl_hours != null) payload.ttl_hours = input.ttl_hours;
   if (input.max_access != null) payload.max_access = input.max_access;
   if (input.to_phone) payload.to_phone = input.to_phone;
