@@ -22,6 +22,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { CreateExamDialog } from '@/app/create-exam-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,16 +50,12 @@ import {
 import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 //import { PatientAnalyticsContext } from '@/features/analytics/components/patient-analytics-context';
-import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
-import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { CommentThread } from '@/features/exams/components/comment-thread';
-import { PreviousExamSelector } from '@/features/exams/components/previous-exam-selector';
 import { usePatient } from '@/features/patients/api/get-patient';
 import { usePatientExams } from '@/features/patients/api/get-patient-exams';
 import { usePatchPatient } from '@/features/patients/api/update-patient';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
-import { SiteSelector } from '@/features/sites/components/site-selector';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { optionalPhoneSchema } from '@/utils/phone';
 
@@ -132,68 +129,13 @@ export default function PatientDetailPage() {
 
   // Modal State for Exam Creation + Site Selection
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
-  const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
-  // Examen auquel le nouvel examen fait suite — null = examen indépendant.
-  const [selectedPreviousExamId, setSelectedPreviousExamId] = useState<
-    number | null
-  >(null);
   // Examen dont on consulte le fil de commentaires depuis la liste.
   const [commentedExam, setCommentedExam] = useState<{
     id: number;
     numero: string;
   } | null>(null);
 
-  // Mutations pour créer un examen - sélection automatique basée sur patient.is_adult
-  const createAdultExamMutation = useCreateAdultExam({
-    mutationConfig: {
-      onSuccess: (data) => {
-        const examId = data.id;
-        setIsExamModalOpen(false);
-        requestAnimationFrame(() => router.push(`/exams/adult/${examId}`));
-      },
-    },
-  });
-
-  const createChildExamMutation = useCreateChildExam({
-    mutationConfig: {
-      onSuccess: (data) => {
-        const examId = data.id;
-        setIsExamModalOpen(false);
-        requestAnimationFrame(() => router.push(`/exams/child/${examId}`));
-      },
-    },
-  });
-
-  const isCreatingExam =
-    createAdultExamMutation.isPending || createChildExamMutation.isPending;
-
-  // Sélection automatique du type d'examen avec inclusion du site
-  const handleConfirmCreateExam = () => {
-    if (!patient || !selectedSiteId) return;
-
-    if (patient.is_adult) {
-      createAdultExamMutation.mutate({
-        patient_id: patientId,
-        site_id: selectedSiteId,
-        // Omis plutôt qu'envoyé à null : un examen indépendant n'a pas de
-        // référence, il ne « référence pas rien ».
-        ...(selectedPreviousExamId !== null && {
-          examen_precedent_id: selectedPreviousExamId,
-        }),
-      });
-    } else {
-      createChildExamMutation.mutate({
-        patient_id: patientId,
-        site_id: selectedSiteId,
-      });
-    }
-  };
-
-  const handleOpenExamModal = () => {
-    setIsExamModalOpen(true);
-    setSelectedSiteId(null);
-    setSelectedPreviousExamId(null);
-  };
+  const handleOpenExamModal = () => setIsExamModalOpen(true);
 
   if (isLoading) {
     return (
@@ -264,11 +206,7 @@ export default function PatientDetailPage() {
             <Badge variant="secondary">
               {patient.is_adult ? 'Adulte' : 'Enfant'}
             </Badge>
-            <Button
-              onClick={handleOpenExamModal}
-              disabled={isCreatingExam}
-              size="sm"
-            >
+            <Button onClick={handleOpenExamModal} size="sm">
               <Plus className="mr-1.5 size-4" aria-hidden="true" />
               Nouvel examen
             </Button>
@@ -577,7 +515,6 @@ export default function PatientDetailPage() {
                       className="mt-4"
                       size="sm"
                       onClick={handleOpenExamModal}
-                      disabled={isCreatingExam}
                     >
                       <Plus className="mr-1.5 size-4" />
                       Créer un examen
@@ -743,77 +680,21 @@ export default function PatientDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Exam Creation Dialog */}
-      <Dialog
+      {/* Modale partagee avec la fiche conducteur — voir create-exam-dialog. */}
+      <CreateExamDialog
         open={isExamModalOpen}
-        onOpenChange={(open) => !open && setIsExamModalOpen(false)}
-      >
-        <DialogContent
-          className="sm:max-w-[425px]"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle>Créer un nouvel examen</DialogTitle>
-            <DialogDescription>
-              Veuillez sélectionner le site de dépistage avant de poursuivre
-              vers l&apos;examen pour le patient {patient.full_name}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Site de dépistage
-              </span>
-              <SiteSelector
-                value={selectedSiteId}
-                onChange={(id: number | null) => setSelectedSiteId(id)}
-              />
-            </div>
-
-            {/* Rattachement à un examen antérieur — proposé pour l'adulte,
-                où le suivi (contrôle, post-opératoire) a un sens clinique. */}
-            {patient?.is_adult && (
-              <div className="grid gap-2">
-                <span className="text-sm font-medium leading-none">
-                  Fait suite à un examen
-                  <span className="ml-1 font-normal text-muted-foreground">
-                    (facultatif)
-                  </span>
-                </span>
-                <PreviousExamSelector
-                  patientId={patientId}
-                  value={selectedPreviousExamId}
-                  onChange={setSelectedPreviousExamId}
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsExamModalOpen(false)}>
-              Annuler
-            </Button>
-            <Button
-              onClick={handleConfirmCreateExam}
-              disabled={
-                !selectedSiteId ||
-                createAdultExamMutation.isPending ||
-                createChildExamMutation.isPending
-              }
-            >
-              {createAdultExamMutation.isPending ||
-              createChildExamMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Création...
-                </>
-              ) : (
-                'Créer'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setIsExamModalOpen}
+        patientId={patientId}
+        patientFullName={patient.full_name}
+        isAdult={patient.is_adult}
+        onCreated={(exam) =>
+          router.push(
+            patient.is_adult
+              ? `/exams/adult/${exam.id}`
+              : `/exams/child/${exam.id}`,
+          )
+        }
+      />
     </Shell>
   );
 }

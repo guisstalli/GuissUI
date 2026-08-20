@@ -34,13 +34,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { REGIONS } from '@/features/drivers/types/schemas';
 import { usePublicEvent } from '@/features/events/api/get-public-event';
 import { useRegisterEvent } from '@/features/events/api/register-event';
 import type {
   InscriptionConfirmation,
   InscriptionPubliqueInput,
 } from '@/features/events/types/schemas';
-import { InscriptionPubliqueInputSchema } from '@/features/events/types/schemas';
+import {
+  inscriptionPubliqueSchemaFor,
+  SERVICE_OPTIONS,
+  TYPE_PERMIS_OPTIONS,
+} from '@/features/events/types/schemas';
 import { cn } from '@/lib/utils';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
@@ -179,20 +184,31 @@ function PageSkeleton() {
 function RegistrationForm({
   slug,
   canRegister,
+  pourConducteurs,
   onSuccess,
 }: {
   slug: string;
   canRegister: boolean;
+  /** Événement réservé aux conducteurs : le dossier conducteur est amorcé ici. */
+  pourConducteurs: boolean;
   onSuccess: (data: InscriptionConfirmation) => void;
 }) {
   const form = useForm<InscriptionPubliqueInput>({
-    resolver: zodResolver(InscriptionPubliqueInputSchema),
+    resolver: zodResolver(inscriptionPubliqueSchemaFor(pourConducteurs)),
     defaultValues: {
       nom: '',
       prenom: '',
       phone_number: '',
       sex: undefined,
       date_de_naissance: '',
+      ...(pourConducteurs && {
+        driver_data: {
+          numero_permis: '',
+          type_permis: undefined,
+          service: undefined,
+          zone_de_residence: '',
+        },
+      }),
     },
   });
 
@@ -343,6 +359,121 @@ function RegistrationForm({
             </FormItem>
           )}
         />
+
+        {pourConducteurs && (
+          <div className="space-y-4 rounded-xl border border-indigo-400/20 bg-indigo-400/[0.06] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-400">
+              Informations conducteur
+            </p>
+            <p className="text-xs text-slate-600">
+              Le reste de votre dossier sera complété sur place, avec votre
+              permis.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="driver_data.numero_permis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-slate-600">
+                      Numéro de permis *
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        className="border-slate-200 bg-white text-slate-700 focus:border-cyan-400/40"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-400" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="driver_data.type_permis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-slate-600">
+                      Type de permis *
+                    </FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        value={field.value ?? ''}
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-cyan-400/40"
+                      >
+                        <option value="">Sélectionner…</option>
+                        {TYPE_PERMIS_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-400" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="driver_data.service"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-slate-600">
+                      Service *
+                    </FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        value={field.value ?? ''}
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-cyan-400/40"
+                      >
+                        <option value="">Sélectionner…</option>
+                        {SERVICE_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-400" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="driver_data.zone_de_residence"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-slate-600">
+                      Région de résidence *
+                    </FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        value={field.value ?? ''}
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-cyan-400/40"
+                      >
+                        <option value="">Sélectionner…</option>
+                        {REGIONS.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-400" />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
 
         {regError && (
           <div className="rounded-xl border border-red-400/20 bg-red-400/[0.06] p-3 text-sm text-red-400">
@@ -572,6 +703,7 @@ export default function EventDetailPage() {
                   />
                 ) : (
                   <RegistrationForm
+                    pourConducteurs={event.pour_conducteurs}
                     slug={slug}
                     canRegister={canRegister}
                     onSuccess={setConfirmation}
