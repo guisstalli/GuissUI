@@ -197,7 +197,17 @@ export function DriverExperienceForm({ examId }: DriverExperienceFormProps) {
                   <FormLabel>État du conducteur</FormLabel>
                   <Select
                     value={field.value ?? ''}
-                    onValueChange={(v) => field.onChange(v || null)}
+                    onValueChange={(v) => {
+                      const etat = v || null;
+                      field.onChange(etat);
+                      // Le champ masqué reste dans le formulaire, et
+                      // `handleSubmit` soumet TOUTES les valeurs : sans ce
+                      // nettoyage, une cause de décès saisie puis abandonnée
+                      // partait en base pour un conducteur vivant.
+                      // Les cases de dommage ci-dessous font déjà de même.
+                      if (etat !== 'DCD') setValue('deces_cause', null);
+                      if (etat !== 'INACTIF') setValue('inactif_cause', null);
+                    }}
                   >
                     <FormControl>
                       <SelectTrigger>
