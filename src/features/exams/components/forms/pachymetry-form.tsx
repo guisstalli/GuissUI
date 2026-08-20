@@ -18,13 +18,13 @@ interface PachymetryFormProps {
 
 /**
  * Pachymetry Form Component
- * Adult exam ONLY
+ * Partage entre les examens ADULTE (donc conducteurs) et ENFANT
  *
  * FIELDS:
  * - OD / OG (microns)
  * - TO OD / TO OG : tension oculaire, 0–100 mmHg
  *
- * DESIGN: Highlight abnormal values (<400 or >600)
+ * DESIGN: Highlight abnormal values (<400 or >600) — sur l'EPAISSEUR
  */
 export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
   const form = useFormContext();
