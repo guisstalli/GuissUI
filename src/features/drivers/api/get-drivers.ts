@@ -7,6 +7,9 @@ import type { PaginatedDrivers } from '../types/schemas';
 export type DriversQueryParams = {
   limit?: number;
   offset?: number;
+  /** Recherche libre : nom, prénom, numéro d'identifiant patient, numéro de
+   *  permis. Le téléphone en est exclu — il est stocké haché côté serveur. */
+  search?: string;
   at_risk?: boolean;
   service?: string;
   zone_de_residence?: string;

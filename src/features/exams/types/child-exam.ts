@@ -6,6 +6,7 @@ import {
   ClinicalCheckChildSchema,
   ConclusionSchema,
   OcularTensionSchema,
+  PachymetrySchema,
   PerimetrySchema,
   PlaintesSchema,
   RefractionSchema,
@@ -24,6 +25,9 @@ export const childExamSchema = z.object({
   visualAcuity: VisualAcuitySchema,
   refraction: RefractionSchema,
   ocularTension: OcularTensionSchema,
+  // Ajoutee a l'examen enfant : le champ est nullable cote serveur, absent des
+  // examens anterieurs, et cree a la premiere saisie.
+  pachymetry: PachymetrySchema,
   visionBinoculaire: VisionBinoculaireSchema,
   clinicalCheck: ClinicalCheckChildSchema,
   plaintes: PlaintesSchema,

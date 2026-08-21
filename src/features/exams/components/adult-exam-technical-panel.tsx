@@ -61,23 +61,19 @@ export function AdultExamTechnicalPanel({
               <Check className="ml-1 size-3 text-primary" />
             )}
           </TabsTrigger>
+          {/* Onglets fusionnés : les deux mesures se lisent ensemble — la
+              correction de tension (CTO) dépend de l'épaisseur cornéenne. Les
+              séparer obligeait à passer de l'un à l'autre pour un même geste.
+              La pastille n'apparaît que si les DEUX sont renseignées. */}
           <TabsTrigger
             value="tension"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
           >
-            Tension Oculaire
-            {sectionStatus.technical.tension && (
-              <Check className="ml-1 size-3 text-primary" />
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="pachymetry"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-          >
-            Pachymétrie
-            {sectionStatus.technical.pachymetry && (
-              <Check className="ml-1 size-3 text-primary" />
-            )}
+            Tension Oculaire - Pachymétrie
+            {sectionStatus.technical.tension &&
+              sectionStatus.technical.pachymetry && (
+                <Check className="ml-1 size-3 text-primary" />
+              )}
           </TabsTrigger>
         </TabsList>
 
@@ -118,25 +114,15 @@ export function AdultExamTechnicalPanel({
         </TabsContent>
 
         <TabsContent value="tension" className="p-6">
-          <OcularTensionForm namePrefix="ocularTension" />
-          <div className="mt-6 flex justify-end border-t border-border pt-4">
-            <Button
-              type="button"
-              onClick={() => handleSaveSection('technical')}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <Loader2 className="mr-1.5 size-4 animate-spin" />
-              ) : (
-                <Save className="mr-1.5 size-4" aria-hidden="true" />
-              )}
-              Sauvegarder
-            </Button>
+          <div className="space-y-8">
+            <OcularTensionForm namePrefix="ocularTension" />
+            {/* Séparateur : deux mesures distinctes, une seule saisie. Un seul
+                bouton en bas — les deux formulaires appartiennent à la même
+                section technique et sont enregistrés ensemble. */}
+            <div className="border-t border-border pt-8">
+              <PachymetryForm namePrefix="pachymetry" />
+            </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="pachymetry" className="p-6">
-          <PachymetryForm namePrefix="pachymetry" />
           <div className="mt-6 flex justify-end border-t border-border pt-4">
             <Button
               type="button"
