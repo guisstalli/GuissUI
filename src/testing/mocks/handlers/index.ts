@@ -5,6 +5,7 @@ import { env } from '@/config/env';
 import { networkDelay } from '../utils';
 
 import { agentChannelsHandlers } from './agent-channels';
+import { aiInsightsHandlers } from './ai-insights';
 import { aiReportsHandlers } from './ai-reports';
 import { appointmentsHandlers } from './appointments';
 import { authHandlers } from './auth';
@@ -18,6 +19,9 @@ import { usersHandlers } from './users';
 
 export const handlers = [
   ...agentChannelsHandlers,
+  // ai-insights AVANT ai-reports : /ai-reports/insights/... doit être capturé
+  // avant le handler générique /ai-reports/:id/.
+  ...aiInsightsHandlers,
   ...aiReportsHandlers,
   ...appointmentsHandlers,
   ...authHandlers,
