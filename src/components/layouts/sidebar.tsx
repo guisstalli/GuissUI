@@ -19,6 +19,7 @@ import {
   Settings,
   FileClock,
   ShieldAlert,
+  Lightbulb,
   ShieldCheck,
   Sliders,
   Trash2,
@@ -321,6 +322,12 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.permissions.getHref(),
     icon: KeyRound,
     capability: CAPABILITY.PERMISSIONS_MANAGE,
+  },
+  {
+    title: 'Insights IA',
+    url: paths.administration.aiInsights.getHref(),
+    icon: Lightbulb,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
   },
 ];
 
