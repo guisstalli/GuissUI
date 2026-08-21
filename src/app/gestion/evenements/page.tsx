@@ -278,12 +278,7 @@ function CreateEventDialog() {
                 name="date_fin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Date de fin
-                      <span className="ml-1 font-normal text-muted-foreground">
-                        (si plusieurs jours)
-                      </span>
-                    </FormLabel>
+                    <FormLabel>Date de fin</FormLabel>
                     <FormControl>
                       {/* Laisser vide = événement d'une seule journée. C'est le
                           cas courant : on ne l'impose pas. */}

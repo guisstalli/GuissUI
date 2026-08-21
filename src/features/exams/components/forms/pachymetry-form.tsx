@@ -62,7 +62,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     step="1"
                     min="300"
                     max="800"
-                    placeholder="0-100"
+                    placeholder="300-800"
                     className="pr-10"
                     {...field}
                     value={field.value ?? ''}
@@ -94,7 +94,7 @@ export function PachymetryForm({ namePrefix = '' }: PachymetryFormProps) {
                     step="1"
                     min="300"
                     max="800"
-                    placeholder="0-100"
+                    placeholder="300-800"
                     className="pr-10"
                     {...field}
                     value={field.value ?? ''}
