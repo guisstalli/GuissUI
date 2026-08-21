@@ -45,6 +45,40 @@ const MODE_LABELS: Record<OrdonnanceMode, string> = {
 };
 
 // =============================================================================
+// TYPE ET HELPERS — ŒIL CONCERNÉ
+// =============================================================================
+
+/**
+ * Les trois valeurs valides depuis la migration backend.
+ * OU et NA sont des valeurs mortes (ancien format) que le backend migre en base,
+ * mais qui peuvent encore apparaître en cache ou en environnement non migré.
+ */
+export type OeilConcerne = 'OD' | 'OG' | 'ODG';
+
+export const OEIL_LABELS: Record<OeilConcerne, string> = {
+  OD: 'Œil droit',
+  OG: 'Œil gauche',
+  ODG: 'Les deux yeux',
+};
+
+/**
+ * Normalise une valeur d'œil héritée vers les trois codes actuels.
+ *
+ * - OU  → ODG  (ancien code « les deux yeux »)
+ * - NA  → ODG  (ancien code « non applicable » — repli le plus sûr :
+ *               le clinicien devra corriger vers OD/OG si nécessaire
+ *               plutôt que de voir un écran blanc ou une erreur de parse)
+ * - Toute autre valeur inconnue → ODG
+ */
+export function normalizeOeil(raw: string | null | undefined): OeilConcerne {
+  if (raw === 'OD' || raw === 'OG' || raw === 'ODG') return raw;
+  // OU = "les deux yeux" — ancienne valeur, sem. identique à ODG
+  if (raw === 'OU') return 'ODG';
+  // NA ou toute valeur inattendue : repli lisible plutôt qu'écran blanc
+  return 'ODG';
+}
+
+// =============================================================================
 // SCHEMAS
 // =============================================================================
 
@@ -64,7 +98,7 @@ const MedicamentSchema = z
     nom_prescrit: z.string().min(1, 'Nom requis'),
     forme_galenique: FormeGalenique.default('AUTRE'),
     dosage: z.string().optional().default(''),
-    oeil: z.enum(['OD', 'OG', 'OU', 'NA']).default('OU'),
+    oeil: z.enum(['OD', 'OG', 'ODG']).default('ODG'),
     posologie: z.string().min(1, 'Posologie requise'),
     duree_jours: z.coerce.number().int().positive().nullable().optional(),
     quantite: z.string().optional().default(''),
@@ -75,7 +109,7 @@ const MedicamentSchema = z
       data.forme_galenique === 'COLLYRE' ||
       data.forme_galenique === 'POMMADE'
     ) {
-      if (!data.oeil || data.oeil === 'NA') {
+      if (!data.oeil || data.oeil === 'ODG') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'Œil concerné requis pour un collyre ou une pommade',
@@ -172,8 +206,15 @@ export interface PrescriptionData {
     nom?: string; // ancien format — toléré
     forme_galenique?: string;
     dosage?: string;
-    oeil?: string;
-    oeil_concerne?: string;
+    /**
+     * Valeur d'œil actuellement stockée. Peut porter une valeur héritée
+     * (OU / NA) si l'enregistrement vient d'un cache ou d'un environnement
+     * non encore migré. Utiliser `normalizeOeil(oeil ?? oeil_concerne)`
+     * avant tout affichage ou soumission.
+     */
+    oeil?: OeilConcerne | 'OU' | 'NA';
+    /** Ancien nom de champ — toléré pour rétro-compat avec les données en cache. */
+    oeil_concerne?: OeilConcerne | 'OU' | 'NA';
     posologie?: string;
     duree_jours?: number | null;
     duree?: string; // ancien format — toléré
@@ -245,6 +286,28 @@ function buildPrescriptionData(
   };
 }
 
+/**
+ * Construit la liste de médicaments à partir de initialData en normalisant
+ * les valeurs d'œil héritées (OU / NA → ODG).
+ */
+function normalizeMedicaments(
+  medicaments: PrescriptionData['medicaments'],
+): LigneMedicament[] {
+  if (!medicaments) return [];
+  return medicaments.map((m) => ({
+    medicament_id: m.medicament_id ?? null,
+    nom_prescrit: m.nom_prescrit ?? m.nom ?? '',
+    forme_galenique:
+      (m.forme_galenique as LigneMedicament['forme_galenique']) ?? 'AUTRE',
+    dosage: m.dosage ?? '',
+    oeil: normalizeOeil(m.oeil ?? m.oeil_concerne),
+    posologie: m.posologie ?? '',
+    duree_jours: m.duree_jours ?? null,
+    quantite: m.quantite ?? '',
+    instructions: m.instructions ?? '',
+  }));
+}
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -280,8 +343,9 @@ export function OrdonnanceFormDialog({
       addition_od: initialData.correction_optique?.addition_od ?? undefined,
       addition_og: initialData.correction_optique?.addition_og ?? undefined,
       dp: initialData.correction_optique?.dp ?? undefined,
-      medicaments:
-        (initialData.medicaments as OrdonnanceFormValues['medicaments']) ?? [],
+      // Les valeurs d'œil héritées (OU / NA) sont normalisées ici afin
+      // qu'une réponse API en cache ne provoque pas d'échec silencieux.
+      medicaments: normalizeMedicaments(initialData.medicaments),
       notes_generales:
         (initialData as PrescriptionData & { notes_generales?: string })
           .notes_generales ?? '',
@@ -736,22 +800,27 @@ export function OrdonnanceFormDialog({
                         placeholder="Posologie (ex: 1 goutte 3 fois par jour)"
                         {...form.register(`medicaments.${index}.posologie`)}
                       />
+                      {/* -------------------------------------------------- */}
+                      {/* Sélecteur d'œil — OD / OG / ODG (Les deux yeux)    */}
+                      {/* Valeur par défaut : ODG.                            */}
+                      {/* Les valeurs héritées OU/NA sont normalisées lors du */}
+                      {/* chargement de initialData (voir normalizeMedicaments) */}
+                      {/* -------------------------------------------------- */}
                       <Controller
                         control={form.control}
                         name={`medicaments.${index}.oeil`}
                         render={({ field }) => (
                           <Select
-                            value={field.value ?? 'OU'}
+                            value={field.value ?? 'ODG'}
                             onValueChange={field.onChange}
                           >
-                            <SelectTrigger className="w-24">
-                              <SelectValue placeholder="Œil" />
+                            <SelectTrigger className="w-32">
+                              <SelectValue placeholder="Œil concerné" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="OD">OD</SelectItem>
-                              <SelectItem value="OG">OG</SelectItem>
-                              <SelectItem value="OU">OU</SelectItem>
-                              <SelectItem value="NA">NA</SelectItem>
+                              <SelectItem value="OD">Œil droit</SelectItem>
+                              <SelectItem value="OG">Œil gauche</SelectItem>
+                              <SelectItem value="ODG">Les deux yeux</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -789,7 +858,7 @@ export function OrdonnanceFormDialog({
                     nom_prescrit: '',
                     forme_galenique: 'AUTRE',
                     dosage: '',
-                    oeil: 'OU',
+                    oeil: 'ODG',
                     posologie: '',
                     duree_jours: null,
                     quantite: '',
