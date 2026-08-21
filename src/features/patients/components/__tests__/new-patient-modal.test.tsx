@@ -8,10 +8,15 @@
  * - phone_number vide → soumis sans erreur (règle métier)
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 import { z } from 'zod';
+
+import { env } from '@/config/env';
+import { patientsHandlers } from '@/testing/mocks/handlers/patients';
+import { server } from '@/testing/mocks/server';
 
 import { NewPatientModal } from '../new-patient-modal';
 
@@ -184,5 +189,84 @@ describe('NewPatientModal — règle métier phone_number', () => {
     const phoneInput = screen.getByPlaceholderText('77 000 00 00');
     // HTML required n'est pas posé — la validation est gérée par React Hook Form / Zod
     expect(phoneInput).not.toBeRequired();
+  });
+});
+
+// ─── Détection d'un numéro déjà utilisé ───────────────────────────────────────
+//
+// `phone_number` est UNIQUE en base : sans cette détection, l'accueil
+// remplissait tout le formulaire avant de se heurter à un 500.
+
+describe('NewPatientModal — lookup du numéro de téléphone', () => {
+  async function allerAuFormulaire(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByText('Patient adulte'));
+    await user.click(screen.getByRole('button', { name: /continuer/i }));
+    return screen.getByPlaceholderText('77 000 00 00');
+  }
+
+  test('un numéro sénégalais saisi sans indicatif est envoyé en E.164', async () => {
+    // Arrange
+    const numeros: string[] = [];
+    server.use(
+      http.get(
+        `${env.API_URL}/depistage/patients/lookup-telephone/`,
+        ({ request }) => {
+          numeros.push(
+            new URL(request.url).searchParams.get('phone_number') ?? '',
+          );
+          return HttpResponse.json({ patient_existant: null });
+        },
+      ),
+    );
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    renderModal();
+
+    // Act — le champ porte déjà l'indicatif du Sénégal (pays par défaut)
+    const champ = await allerAuFormulaire(user);
+    await user.type(champ, '775726004');
+
+    // Assert — l'indicatif est ajouté avant l'envoi, jamais deviné côté serveur
+    await waitFor(() => expect(numeros).toContain('+221775726004'), {
+      timeout: 4000,
+    });
+  });
+
+  test('des frappes rapprochées ne produisent qu’une seule requête', async () => {
+    // Arrange — le endpoint est limité à 120 requêtes/minute : une requête par
+    // frappe ferait limiter l'utilisateur au milieu de son formulaire.
+    let appels = 0;
+    server.use(
+      http.get(`${env.API_URL}/depistage/patients/lookup-telephone/`, () => {
+        appels += 1;
+        return HttpResponse.json({ patient_existant: null });
+      }),
+    );
+    const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+    renderModal();
+
+    // Act — saisie instantanée des neuf chiffres
+    const champ = await allerAuFormulaire(user);
+    await user.type(champ, '775726004');
+
+    // Assert
+    await waitFor(() => expect(appels).toBe(1), { timeout: 4000 });
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(appels).toBe(1);
+  });
+
+  test('annonce le patient qui porte déjà le numéro', async () => {
+    // Arrange
+    server.use(...patientsHandlers);
+    const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+    renderModal();
+
+    // Act
+    const champ = await allerAuFormulaire(user);
+    await user.type(champ, '775726004');
+
+    // Assert
+    expect(
+      await screen.findByText('Fatou Diop', {}, { timeout: 4000 }),
+    ).toBeInTheDocument();
   });
 });

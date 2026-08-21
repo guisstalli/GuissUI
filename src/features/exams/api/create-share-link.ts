@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 import { z } from 'zod';
 
 import { api } from '@/lib/api-client';
@@ -22,7 +23,20 @@ export const shareCreateInputSchema = z.object({
   document: z.enum(['dossier', 'conclusion']).optional(),
   ttl_hours: z.number().int().min(1).max(8760).optional(),
   max_access: z.number().int().min(1).nullable().optional(),
-  to_phone: z.string().optional().or(z.literal('')),
+  /**
+   * Destinataire WhatsApp au format E.164 (ex: `+221771234567`).
+   *
+   * Un numéro sans indicatif était accepté puis « complété » côté serveur en
+   * `+775726004` — un numéro kazakh valide : les envois partaient dans le vide.
+   * L'indicatif est donc exigé ici, à la saisie.
+   */
+  to_phone: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((value) => !value || isValidPhoneNumber(value), {
+      message: "Numéro invalide — indiquez l'indicatif pays (ex : +221…)",
+    }),
   to_email: z
     .string()
     .email('Adresse email invalide')

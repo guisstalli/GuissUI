@@ -210,3 +210,93 @@ describe('ShareRecordDialog — partage de la conclusion', () => {
     expect(recu!.document).toBe('conclusion');
   });
 });
+
+// =============================================================================
+// Numéro de destinataire — validation E.164
+// =============================================================================
+//
+// Le serveur ne peut pas deviner le pays d'un numéro nu : `775726004` devenait
+// `+775726004`, un numéro KAZAKH valide, et l'envoi WhatsApp partait dans le
+// vide. L'indicatif est désormais exigé à la saisie.
+
+describe('ShareRecordDialog — numéro de destinataire', () => {
+  test('refuse un numéro sans indicatif pays et n’appelle pas l’API', async () => {
+    // Arrange
+    let appels = 0;
+    server.use(
+      http.post(`${env.API_URL}/share/create/`, () => {
+        appels += 1;
+        return HttpResponse.json(SHARE_LINK, { status: 201 });
+      }),
+    );
+    const user = setup();
+
+    // Act — l'utilisateur efface l'indicatif puis tape le numéro nu. C'est
+    // EXACTEMENT le bug de production : `775726004` devient `+7 757 260 04`,
+    // un numéro kazakh, et le message part dans le vide.
+    await user.click(
+      screen.getByRole('button', { name: /partager le dossier/i }),
+    );
+    const champ = await screen.findByPlaceholderText(
+      /défaut : téléphone du dossier/i,
+    );
+    await user.clear(champ);
+    await user.type(champ, '775726004');
+    expect((champ as HTMLInputElement).value).not.toContain('+221');
+    await user.click(screen.getByRole('button', { name: /générer le lien/i }));
+
+    // Assert — message d'erreur affiché, aucune requête émise
+    expect(await screen.findByText(/indicatif pays/i)).toBeInTheDocument();
+    await waitFor(() => expect(appels).toBe(0));
+  });
+
+  test('accepte un numéro E.164 et le transmet tel quel', async () => {
+    // Arrange
+    let recu: Record<string, unknown> | null = null;
+    server.use(
+      http.post(`${env.API_URL}/share/create/`, async ({ request }) => {
+        recu = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(SHARE_LINK, { status: 201 });
+      }),
+    );
+    const user = setup();
+
+    // Act — le champ porte déjà l'indicatif sénégalais (pays par défaut)
+    await user.click(
+      screen.getByRole('button', { name: /partager le dossier/i }),
+    );
+    const champ = await screen.findByPlaceholderText(
+      /défaut : téléphone du dossier/i,
+    );
+    await user.type(champ, '775726004');
+    await user.click(screen.getByRole('button', { name: /générer le lien/i }));
+
+    // Assert
+    await waitFor(() => expect(recu).not.toBeNull());
+    expect(recu!.to_phone).toBe('+221775726004');
+  });
+
+  test('un champ laissé vide reste accepté (le serveur reprend le dossier)', async () => {
+    // Arrange
+    let recu: Record<string, unknown> | null = null;
+    server.use(
+      http.post(`${env.API_URL}/share/create/`, async ({ request }) => {
+        recu = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(SHARE_LINK, { status: 201 });
+      }),
+    );
+    const user = setup();
+
+    // Act
+    await user.click(
+      screen.getByRole('button', { name: /partager le dossier/i }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: /générer le lien/i }),
+    );
+
+    // Assert — pas de to_phone dans le payload, pas d'erreur bloquante
+    await waitFor(() => expect(recu).not.toBeNull());
+    expect(recu!.to_phone).toBeUndefined();
+  });
+});

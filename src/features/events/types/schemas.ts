@@ -139,3 +139,28 @@ export const EventCreateInputSchema = z.object({
 });
 
 export type EventCreateInput = z.infer<typeof EventCreateInputSchema>;
+
+/**
+ * Patient déjà porteur du numéro de téléphone d'une inscription.
+ *
+ * Chaque ligne de la liste des inscriptions porte `patient_existant` EN PLUS de
+ * `patient_id` : `patient_id` désigne le patient déjà rattaché à l'inscription,
+ * `patient_existant` celui qui porte déjà ce numéro (unique en base). Sans cette
+ * distinction, l'accueil proposait « Créer patient » et l'API répondait 500.
+ *
+ * NB : forme identique à `features/patients/types/types.ts`. Les imports
+ * inter-features sont interdits (règle ESLint) — la duplication est délibérée.
+ */
+export interface PatientExistant {
+  id: number;
+  numero_identifiant: string;
+  full_name: string;
+  date_de_naissance: string;
+  age: number;
+  sex: 'H' | 'F' | 'A' | null;
+  is_adult: boolean;
+  examens_count: number;
+  has_driver: boolean;
+  driver_id: number | null;
+  is_deleted: boolean;
+}

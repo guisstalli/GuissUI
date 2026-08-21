@@ -2,9 +2,11 @@ import { HttpResponse, http } from 'msw';
 
 import { env } from '@/config/env';
 import type {
-  Patient,
-  PatientList,
+  LookupTelephoneResponse,
   PaginatedPatientsResponse,
+  Patient,
+  PatientExistant,
+  PatientList,
 } from '@/features/patients/types/types';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -73,7 +75,52 @@ export const mockPatientFull: Patient = {
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
+// ─── Lookup téléphone ────────────────────────────────────────────────────────
+
+/** Patient portant déjà `+221775726004` (numéro unique en base). */
+export const mockPatientExistant: PatientExistant = {
+  id: 42,
+  numero_identifiant: 'PAT-2026-042',
+  full_name: 'Fatou Diop',
+  date_de_naissance: '1991-04-03',
+  age: 34,
+  sex: 'F',
+  is_adult: true,
+  examens_count: 3,
+  has_driver: false,
+  driver_id: null,
+  is_deleted: false,
+};
+
+/** Patient archivé portant `+221770000000` — le rattachement est impossible. */
+export const mockPatientExistantArchive: PatientExistant = {
+  ...mockPatientExistant,
+  id: 43,
+  numero_identifiant: 'PAT-2026-043',
+  full_name: 'Moussa Fall',
+  examens_count: 0,
+  is_deleted: true,
+};
+
+/** Numéros connus du mock, par E.164. */
+export const LOOKUP_TELEPHONE_FIXTURES: Record<string, PatientExistant> = {
+  '+221775726004': mockPatientExistant,
+  '+221770000000': mockPatientExistantArchive,
+};
+
 export const patientsHandlers = [
+  // GET /depistage/patients/lookup-telephone/ — DOIT précéder `:id/`, sinon
+  // « lookup-telephone » serait capté comme un identifiant.
+  http.get(
+    `${env.API_URL}/depistage/patients/lookup-telephone/`,
+    ({ request }) => {
+      const phone = new URL(request.url).searchParams.get('phone_number') ?? '';
+      return HttpResponse.json({
+        patient_existant: LOOKUP_TELEPHONE_FIXTURES[phone] ?? null,
+      } satisfies LookupTelephoneResponse);
+    },
+  ),
+
   // GET /depistage/patients/ — liste paginée
   http.get(`${env.API_URL}/depistage/patients/`, ({ request }) => {
     const url = new URL(request.url);

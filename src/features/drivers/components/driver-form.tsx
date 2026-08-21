@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import {
@@ -42,6 +43,12 @@ interface DriverFormProps {
   /** Libellé du bouton. `isEdit` afficherait « Mettre à jour », trompeur
    *  quand on CRÉE le dossier d'un patient existant. */
   submitLabel?: string;
+  /**
+   * Indice rendu sous le champ téléphone du patient, alimenté par la valeur
+   * courante (E.164). Injecté par l'appelant : le composant d'indice vit dans
+   * `features/patients` et un import inter-features est interdit.
+   */
+  phoneHint?: (phoneNumber: string) => ReactNode;
 }
 
 const SEX_LABELS = { H: 'Homme', F: 'Femme', A: 'Anonyme' } as const;
@@ -111,6 +118,7 @@ export function DriverForm({
   isEdit,
   hidePatientSection,
   submitLabel,
+  phoneHint,
 }: DriverFormProps) {
   const form = useForm<DriverCreate>({
     resolver: zodResolver(DriverCreateSchema),
@@ -218,6 +226,11 @@ export function DriverForm({
                       />
                     </FormControl>
                     <FormMessage />
+                    {/* `phone_number` est UNIQUE en base. L'indice est fourni
+                        par l'appelant : il vit dans `features/patients`, et un
+                        import direct depuis `features/drivers` serait un import
+                        inter-features (interdit par ESLint). */}
+                    {phoneHint?.(field.value ?? '')}
                   </FormItem>
                 )}
               />

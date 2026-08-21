@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog/dialog';
 import { Label } from '@/components/ui/form/label';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Switch } from '@/components/ui/form/switch';
 import { Input } from '@/components/ui/input';
 import { useNotifications } from '@/components/ui/notifications/notifications-store';
@@ -279,12 +280,28 @@ export function ShareRecordDialog({
 
             <div className="space-y-2">
               <Label htmlFor="share-phone">Téléphone (optionnel)</Label>
-              <Input
-                id="share-phone"
-                type="tel"
-                placeholder="Défaut : téléphone du dossier"
-                {...register('to_phone')}
+              {/* Champ international : le serveur ne peut pas deviner le pays
+                  d'un numéro nu — `775726004` devenait `+775726004`, un numéro
+                  kazakh valide, et l'envoi WhatsApp partait dans le vide. */}
+              <Controller
+                control={control}
+                name="to_phone"
+                render={({ field }) => (
+                  <PhoneInput
+                    id="share-phone"
+                    placeholder="Défaut : téléphone du dossier"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
               />
+              {errors.to_phone && (
+                <p className="text-xs text-destructive">
+                  {errors.to_phone.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

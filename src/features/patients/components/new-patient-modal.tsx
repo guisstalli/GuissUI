@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/form';
 import { PhoneInput } from '@/components/ui/form/phone-input';
 import { useCreatePatient } from '@/features/patients/api/create-patient';
+import { PhoneLookupHint } from '@/features/patients/components/phone-lookup-hint';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';
 import { optionalPhoneSchema } from '@/utils/phone';
@@ -107,6 +108,7 @@ export function NewPatientModal({
   });
 
   const watchedDateOfBirth = form.watch('date_de_naissance');
+  const watchedPhoneNumber = form.watch('phone_number');
 
   // Calculer l'âge et le type de patient basé sur la date de naissance
   const calculatedAge = useMemo(
@@ -416,6 +418,10 @@ export function NewPatientModal({
                           />
                         </FormControl>
                         <FormMessage />
+                        {/* `phone_number` est UNIQUE en base : sans cet indice,
+                            la création partait en 500 après un formulaire
+                            entièrement rempli. */}
+                        <PhoneLookupHint phoneNumber={watchedPhoneNumber} />
                       </FormItem>
                     )}
                   />

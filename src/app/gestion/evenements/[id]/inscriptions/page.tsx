@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Link2,
   LogIn,
   MapPin,
   MoreVertical,
@@ -35,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown/dropdown';
 import { Input } from '@/components/ui/input';
+import { useNotifications } from '@/components/ui/notifications';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DriverRecordDialog,
@@ -48,6 +50,7 @@ import {
   useInscriptions,
 } from '@/features/events/api/get-inscriptions';
 import { useEventQRCode } from '@/features/events/api/get-qr-code';
+import type { PatientExistant } from '@/features/events/types/schemas';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { cn } from '@/lib/utils';
 
@@ -61,6 +64,14 @@ interface Inscription {
   sex: 'H' | 'F' | 'A' | null;
   statut: 'inscrit' | 'present' | 'absent' | 'annule';
   patient_id: number | null;
+  /**
+   * Patient portant DÉJÀ ce numéro de téléphone (unique en base) — distinct de
+   * `patient_id`, qui désigne le patient rattaché à l'inscription.
+   *
+   * Sans cette distinction, l'accueil proposait « Créer patient » sur un numéro
+   * déjà pris et l'API répondait 500.
+   */
+  patient_existant: PatientExistant | null;
   // Servis par l'API depuis toujours, jamais lus par cet écran : le staff
   // ressaisissait donc des données déjà fournies en ligne.
   pour_conducteurs: boolean;
@@ -198,6 +209,7 @@ function QRCodeDialog({ eventId }: { eventId: number }) {
 export default function EventInscriptionsPage() {
   const params = useParams();
   const eventId = Number(params.id);
+  const { addNotification } = useNotifications();
 
   const [statutFilter, setStatutFilter] = usePersistentTabState({
     paramKey: 'statut',
@@ -268,7 +280,23 @@ export default function EventInscriptionsPage() {
   };
 
   const { mutate: convertToPatient } = useConvertToPatient(eventId, {
-    onSuccess: () => setConvertingId(null),
+    // Le serveur annonce ce qu'il a fait : sur un numéro déjà connu il
+    // RATTACHE au dossier existant plutôt que d'en créer un second. Annoncer
+    // « dossier créé » dans ce cas serait un mensonge.
+    onSuccess: (resultat) => {
+      setConvertingId(null);
+      addNotification({
+        type: 'success',
+        title:
+          resultat.action === 'rattache'
+            ? 'Inscription rattachée'
+            : 'Dossier patient créé',
+        message:
+          resultat.action === 'rattache'
+            ? "Ce numéro était déjà connu : l'inscription a été rattachée au dossier existant."
+            : 'Le dossier patient a été créé à partir de cette inscription.',
+      });
+    },
     onError: () => setConvertingId(null),
   });
 
@@ -521,19 +549,38 @@ export default function EventInscriptionsPage() {
                       </td>
                       <td className="px-4 py-3">
                         {(() => {
+                          const pe = ins.patient_existant;
                           const canCheckin =
                             event?.statut === 'en_cours' &&
                             ins.statut === 'inscrit';
+                          const canViewPatient = !!ins.patient_id;
+                          // Numéro déjà pris : on RATTACHE, on ne crée pas.
+                          // Créer produisait un 500 (`phone_number` unique).
+                          const canRattacher =
+                            !ins.patient_id && !!pe && !pe.is_deleted;
                           const canCreatePatient =
                             !ins.patient_id &&
+                            !pe &&
                             (ins.statut === 'inscrit' ||
                               ins.statut === 'absent');
-                          const canViewPatient = !!ins.patient_id;
+                          // Le dossier conducteur se greffe sur un patient
+                          // DÉJÀ créé, et une seule fois.
+                          const canCreateDriver =
+                            ins.pour_conducteurs &&
+                            !!ins.patient_id &&
+                            !pe?.has_driver;
+                          const canViewDriver =
+                            ins.pour_conducteurs &&
+                            !!ins.patient_id &&
+                            !!pe?.has_driver;
 
                           if (
                             !canCheckin &&
                             !canCreatePatient &&
-                            !canViewPatient
+                            !canRattacher &&
+                            !canViewPatient &&
+                            !canCreateDriver &&
+                            !canViewDriver
                           ) {
                             return (
                               <span className="text-xs text-muted-foreground">
@@ -577,6 +624,21 @@ export default function EventInscriptionsPage() {
                                     </Link>
                                   </DropdownMenuItem>
                                 )}
+                                {canRattacher && (
+                                  <DropdownMenuItem
+                                    disabled={convertingId === ins.id}
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      setConvertingId(ins.id);
+                                      convertToPatient(ins.id);
+                                    }}
+                                  >
+                                    <Link2 className="mr-2 size-3.5" />
+                                    {convertingId === ins.id
+                                      ? 'Rattachement…'
+                                      : `Rattacher à ${pe!.full_name}`}
+                                  </DropdownMenuItem>
+                                )}
                                 {canCreatePatient && (
                                   <DropdownMenuItem
                                     disabled={convertingId === ins.id}
@@ -594,8 +656,8 @@ export default function EventInscriptionsPage() {
                                 )}
                                 {/* Le dossier conducteur se greffe sur un
                                     patient DÉJÀ créé : proposé seulement une
-                                    fois le check-in fait. */}
-                                {ins.pour_conducteurs && !!ins.patient_id && (
+                                    fois le check-in fait, et une seule fois. */}
+                                {canCreateDriver && (
                                   <DropdownMenuItem
                                     onSelect={(e) => {
                                       e.preventDefault();
@@ -604,6 +666,16 @@ export default function EventInscriptionsPage() {
                                   >
                                     <Truck className="mr-2 size-3.5" />
                                     Dossier conducteur
+                                  </DropdownMenuItem>
+                                )}
+                                {canViewDriver && (
+                                  <DropdownMenuItem asChild>
+                                    <Link
+                                      href={`/conducteurs/${pe!.driver_id}`}
+                                    >
+                                      <Truck className="mr-2 size-3.5" />
+                                      Voir le dossier conducteur
+                                    </Link>
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
