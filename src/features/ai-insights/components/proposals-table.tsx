@@ -520,7 +520,7 @@ function ProposalRow({
                       <dt className="text-xs text-muted-foreground">
                         Texte actuel
                       </dt>
-                      <dd className="mt-0.5 rounded bg-destructive/10 px-2 py-1.5 text-sm line-through text-destructive">
+                      <dd className="bg-destructive/10 mt-0.5 rounded px-2 py-1.5 text-sm text-destructive line-through">
                         {proposal.target_text}
                       </dd>
                     </div>

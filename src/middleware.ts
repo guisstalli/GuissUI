@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
 
 import {
@@ -7,7 +7,43 @@ import {
   isAdminAreaPath,
 } from '@/lib/authorization';
 
-export default withAuth(
+/**
+ * Domaines qui servent la VITRINE publique, par opposition à app.guisstalli.com
+ * qui sert l'application du personnel.
+ */
+const DOMAINES_VITRINE = new Set(['guisstalli.com', 'www.guisstalli.com']);
+
+/**
+ * Sur le domaine racine, `/` sert la vitrine au lieu du tableau de bord.
+ *
+ * `rewrite` et non `redirect` : l'URL affichée reste `guisstalli.com`, sans
+ * `/landing` visible dans la barre d'adresse ni dans les liens partagés.
+ *
+ * Ce middleware ne traite QUE la racine. Le renvoi des autres chemins du
+ * domaine racine vers `app.guisstalli.com` est fait par Traefik, et c'est
+ * volontaire : le `matcher` ci-dessous exclut `/public`, `/auth` et les
+ * autres chemins publics — précisément pour qu'ils échappent à
+ * l'authentification. L'élargir pour y glisser une redirection ferait passer
+ * les pages publiques par `withAuth` et enverrait les visiteurs vers l'écran
+ * de connexion. Un routage par domaine se règle à la couche de routage.
+ *
+ * Pourquoi renvoyer plutôt que servir : `NEXT_PUBLIC_API_URL` est figé au
+ * build sur `api.guisstalli.com`, donc le navigateur appelle l'API en
+ * inter-origine. Le CORS n'autorise que `app.guisstalli.com` ; servir
+ * `/public/rendez-vous` depuis le domaine racine donnerait une page qui
+ * s'affiche et dont chaque appel échoue — une panne silencieuse, côté client.
+ */
+function reecrireVitrine(req: NextRequest) {
+  const hote = req.headers.get('host')?.split(':')[0]?.toLowerCase() ?? '';
+  if (!DOMAINES_VITRINE.has(hote)) return null;
+  if (req.nextUrl.pathname !== '/') return null;
+
+  const url = req.nextUrl.clone();
+  url.pathname = '/landing';
+  return NextResponse.rewrite(url);
+}
+
+const withAuthMiddleware = withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
 
@@ -48,6 +84,20 @@ export default withAuth(
     },
   },
 );
+
+export default function middleware(req: NextRequest) {
+  // La vitrine passe AVANT l'authentification : sans cela, un visiteur non
+  // connecté arrivant sur guisstalli.com serait envoyé vers /auth/login —
+  // exactement ce que la page publique doit éviter.
+  const vitrine = reecrireVitrine(req);
+  if (vitrine) return vitrine;
+
+  return (
+    withAuthMiddleware as unknown as (
+      r: NextRequest,
+    ) => ReturnType<typeof NextResponse.next>
+  )(req);
+}
 
 export const config = {
   matcher: [

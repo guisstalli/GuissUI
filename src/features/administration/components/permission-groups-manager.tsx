@@ -178,7 +178,7 @@ export function PermissionGroupsManager() {
                             {labels.map((label) => (
                               <span
                                 key={label}
-                                className="rounded bg-primary/10 px-1.5 py-0.5 text-xs text-foreground"
+                                className="bg-primary/10 rounded px-1.5 py-0.5 text-xs text-foreground"
                               >
                                 {label}
                               </span>
