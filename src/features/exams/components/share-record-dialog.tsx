@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog/dialog';
 import { Label } from '@/components/ui/form/label';
+import { PhoneInput } from '@/components/ui/form/phone-input';
 import { Switch } from '@/components/ui/form/switch';
 import { Input } from '@/components/ui/input';
 import { useNotifications } from '@/components/ui/notifications/notifications-store';
@@ -53,6 +54,8 @@ interface ShareRecordDialogProps {
   examId: number;
   /** Téléphone du patient (pré-rempli si connu ; sinon celui du dossier côté API). */
   defaultPhone?: string;
+  /** Document partagé : dossier complet (défaut) ou conclusion seule. */
+  document?: 'dossier' | 'conclusion';
 }
 
 /**
@@ -62,6 +65,7 @@ interface ShareRecordDialogProps {
 export function ShareRecordDialog({
   examType,
   examId,
+  document = 'dossier',
   defaultPhone = '',
 }: ShareRecordDialogProps) {
   const [open, setOpen] = useState(false);
@@ -70,6 +74,14 @@ export function ShareRecordDialog({
   // Le lien n'est affiché qu'une fois : on avertit si l'utilisateur ferme sans
   // jamais l'avoir copié (il ne pourra plus le récupérer).
   const [copiedOnce, setCopiedOnce] = useState(false);
+  // Un seul composant sert les deux partages : mêmes mécaniques de lien, seul
+  // le document diffère. Dupliquer le dialogue aurait fait diverger la durée
+  // de validité, le plafond d'accès et la notification.
+  const estConclusion = document === 'conclusion';
+  const libelle = estConclusion
+    ? 'Partager la conclusion'
+    : 'Partager le dossier';
+
   const { addNotification } = useNotifications();
 
   const {
@@ -136,6 +148,7 @@ export function ShareRecordDialog({
     createShareLink({
       exam_type: examType,
       exam_id: examId,
+      document,
       ttl_hours: values.ttl_hours,
       to_phone: values.to_phone || undefined,
       to_email: values.to_email || undefined,
@@ -175,16 +188,17 @@ export function ShareRecordDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="w-full">
           <Share2 className="mr-2 size-4" aria-hidden="true" />
-          Partager le dossier
+          {libelle}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Partager le dossier</DialogTitle>
+          <DialogTitle>{libelle}</DialogTitle>
           <DialogDescription>
             Génère un lien sécurisé à durée limitée, envoyé au patient par
-            WhatsApp/email. Le lien donne accès au PDF du dossier sans compte.
+            WhatsApp/email. Le lien donne accès au PDF{' '}
+            {estConclusion ? 'de la conclusion' : 'du dossier'} sans compte.
           </DialogDescription>
         </DialogHeader>
 
@@ -266,12 +280,28 @@ export function ShareRecordDialog({
 
             <div className="space-y-2">
               <Label htmlFor="share-phone">Téléphone (optionnel)</Label>
-              <Input
-                id="share-phone"
-                type="tel"
-                placeholder="Défaut : téléphone du dossier"
-                {...register('to_phone')}
+              {/* Champ international : le serveur ne peut pas deviner le pays
+                  d'un numéro nu — `775726004` devenait `+775726004`, un numéro
+                  kazakh valide, et l'envoi WhatsApp partait dans le vide. */}
+              <Controller
+                control={control}
+                name="to_phone"
+                render={({ field }) => (
+                  <PhoneInput
+                    id="share-phone"
+                    placeholder="Défaut : téléphone du dossier"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
               />
+              {errors.to_phone && (
+                <p className="text-xs text-destructive">
+                  {errors.to_phone.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

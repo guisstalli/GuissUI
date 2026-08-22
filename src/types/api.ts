@@ -269,6 +269,16 @@ export function extractErrorMessage(errorData: unknown): string {
     }
   }
 
+  // Format simple (409 métier, etc.): { message: "..." } sans extra ni detail
+  if (
+    typeof errorData === 'object' &&
+    errorData !== null &&
+    'message' in errorData &&
+    typeof (errorData as { message: unknown }).message === 'string'
+  ) {
+    return (errorData as { message: string }).message;
+  }
+
   // Fallback: essayer de convertir en string
   if (typeof errorData === 'string') {
     return errorData;

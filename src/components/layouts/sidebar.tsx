@@ -19,6 +19,7 @@ import {
   Settings,
   FileClock,
   ShieldAlert,
+  Lightbulb,
   ShieldCheck,
   Sliders,
   Trash2,
@@ -285,12 +286,6 @@ type AdminNavItem = {
 
 const adminItems: AdminNavItem[] = [
   {
-    title: 'Utilisateurs',
-    url: paths.admin.users.getHref(),
-    icon: ShieldCheck,
-    permission: 'admin:users',
-  },
-  {
     // Intitulé distinct de celui de l'application (« Tableau de bord », vers
     // `/`) : un SUPERUSER voit légitimement les deux, et deux entrées de même
     // nom et même icône vers des destinations différentes sont indéchiffrables.
@@ -299,6 +294,12 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.dashboard.getHref(),
     icon: LayoutDashboard,
     capability: CAPABILITY.ANALYTICS_ADMIN,
+  },
+  {
+    title: 'Utilisateurs',
+    url: paths.admin.users.getHref(),
+    icon: ShieldCheck,
+    permission: 'admin:users',
   },
   {
     title: 'Journal de sécurité',
@@ -321,6 +322,12 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.permissions.getHref(),
     icon: KeyRound,
     capability: CAPABILITY.PERMISSIONS_MANAGE,
+  },
+  {
+    title: 'Insights IA',
+    url: paths.administration.aiInsights.getHref(),
+    icon: Lightbulb,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
   },
 ];
 

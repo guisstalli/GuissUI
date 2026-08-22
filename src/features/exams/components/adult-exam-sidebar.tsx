@@ -256,6 +256,14 @@ export function AdultExamSidebar({
               Partage
             </p>
             <ShareRecordDialog examType="adulte" examId={Number(examId)} />
+            {/* Meme mecanique de lien, document different : le
+                praticien partage souvent la seule conclusion, sans le
+                detail des mesures. */}
+            <ShareRecordDialog
+              examType="adulte"
+              examId={Number(examId)}
+              document="conclusion"
+            />
           </div>
         </Can>
       )}

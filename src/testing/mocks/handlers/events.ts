@@ -6,6 +6,7 @@ import type {
   EventStaff,
   InscriptionConfirmation,
   PaginatedEvents,
+  PatientExistant,
 } from '@/features/events/types/schemas';
 
 export const mockPublicEvents: EventPublic[] = [
@@ -64,6 +65,89 @@ const mockInscriptionConfirmation: InscriptionConfirmation = {
   inscrit_at: '2024-06-20T10:30:00Z',
 };
 
+// ─── Inscriptions ────────────────────────────────────────────────────────────
+
+/** Patient portant déjà le numéro de l'inscription #2. */
+export const mockInscriptionPatientExistant: PatientExistant = {
+  id: 42,
+  numero_identifiant: 'PAT-2026-042',
+  full_name: 'Fatou Diop',
+  date_de_naissance: '1991-04-03',
+  age: 34,
+  sex: 'F',
+  is_adult: true,
+  examens_count: 3,
+  has_driver: false,
+  driver_id: null,
+  is_deleted: false,
+};
+
+/**
+ * Trois cas de figure exposés par la liste :
+ * - #1 : aucun patient → « Créer patient » légitime.
+ * - #2 : numéro déjà pris → rattachement, jamais création (l'API répondait 500).
+ * - #3 : patient déjà rattaché → consultation du dossier.
+ */
+export const mockInscriptions = [
+  {
+    id: 1,
+    numero_inscription: 'INS-2026-001',
+    nom: 'Ndiaye',
+    prenom: 'Awa',
+    phone_number: '+221771111111',
+    date_de_naissance: '1995-02-01',
+    sex: 'F',
+    statut: 'inscrit',
+    patient_id: null,
+    patient_existant: null,
+    pour_conducteurs: false,
+    driver_data: null,
+    inscrit_at: '2026-03-01T09:00:00.000Z',
+    presente_at: null,
+  },
+  {
+    id: 2,
+    numero_inscription: 'INS-2026-002',
+    nom: 'Diop',
+    prenom: 'Fatou',
+    phone_number: '+221775726004',
+    date_de_naissance: '1991-04-03',
+    sex: 'F',
+    statut: 'inscrit',
+    patient_id: null,
+    patient_existant: mockInscriptionPatientExistant,
+    pour_conducteurs: false,
+    driver_data: null,
+    inscrit_at: '2026-03-01T09:05:00.000Z',
+    presente_at: null,
+  },
+  {
+    id: 3,
+    numero_inscription: 'INS-2026-003',
+    nom: 'Fall',
+    prenom: 'Moussa',
+    phone_number: '+221772222222',
+    date_de_naissance: '1980-11-20',
+    sex: 'H',
+    statut: 'present',
+    patient_id: 7,
+    patient_existant: null,
+    pour_conducteurs: false,
+    driver_data: null,
+    inscrit_at: '2026-03-01T09:10:00.000Z',
+    presente_at: '2026-03-02T08:30:00.000Z',
+  },
+];
+
+export const mockEventStats = {
+  inscrits: 2,
+  presents: 1,
+  absents: 0,
+  annules: 0,
+  total: 3,
+  taux_presence: 33.3,
+};
+
 export const eventsHandlers = [
   http.get(`${env.API_URL}/events/public/`, () =>
     HttpResponse.json(mockPaginatedEvents),
@@ -109,6 +193,41 @@ export const eventsHandlers = [
     };
     return HttpResponse.json(created, { status: 201 });
   }),
+
+  http.get(`${env.API_URL}/events/:id/`, ({ params }) => {
+    const id = Number(params.id);
+    const event =
+      mockStaffEvents.find((e) => e.id === id) ?? mockStaffEvents[0];
+    return HttpResponse.json({ ...event, id });
+  }),
+
+  http.get(`${env.API_URL}/events/:id/inscriptions/`, () =>
+    HttpResponse.json({
+      count: mockInscriptions.length,
+      next: null,
+      previous: null,
+      results: mockInscriptions,
+    }),
+  ),
+
+  http.get(`${env.API_URL}/events/:id/statistiques/`, () =>
+    HttpResponse.json(mockEventStats),
+  ),
+
+  // Le serveur annonce ce qu'il a fait : `rattache` quand le numéro désignait
+  // déjà un patient, `cree` sinon. L'écran adapte son message en conséquence.
+  http.post(
+    `${env.API_URL}/events/:id/inscriptions/:inscriptionId/convert/`,
+    ({ params }) => {
+      const inscriptionId = Number(params.inscriptionId);
+      const inscription = mockInscriptions.find((i) => i.id === inscriptionId);
+      const patientExistant = inscription?.patient_existant ?? null;
+      return HttpResponse.json({
+        action: patientExistant ? 'rattache' : 'cree',
+        patient_id: patientExistant ? patientExistant.id : 99,
+      });
+    },
+  ),
 
   http.get(`${env.API_URL}/events/:id/qr-code/`, () => {
     // Return a minimal 1×1 PNG blob

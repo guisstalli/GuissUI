@@ -217,6 +217,9 @@ export const paths = {
     permissions: {
       getHref: () => '/administration/permissions',
     },
+    aiInsights: {
+      getHref: () => '/administration/propositions-ia',
+    },
   },
 
   // Events (public + staff)
@@ -300,6 +303,7 @@ export const activePaths = [
   '/administration',
   '/administration/securite',
   '/administration/permissions',
+  '/administration/propositions-ia',
   '/unauthorized',
   '/maintenance',
 ] as const;

@@ -68,6 +68,7 @@ import {
   type EventCreateInput,
   type EventStaff,
 } from '@/features/events/types/schemas';
+import { estSurPlusieursJours } from '@/features/events/utils/format-periode';
 import { cn } from '@/lib/utils';
 
 function statutBadge(s: string) {
@@ -203,6 +204,7 @@ function CreateEventDialog() {
     defaultValues: {
       titre: '',
       date_event: '',
+      date_fin: '',
       heure_debut: '',
       heure_fin: '',
       lieu: '',
@@ -236,7 +238,12 @@ function CreateEventDialog() {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((v) => create(v))}
+            onSubmit={form.handleSubmit((v) =>
+              // Une chaîne vide n'est pas une date : le serializer attend une
+              // date ou `null`, et `''` serait rejeté. Le champ non rempli
+              // signifie « une seule journée ».
+              create({ ...v, date_fin: v.date_fin || null }),
+            )}
             className="space-y-4"
           >
             <FormField
@@ -252,15 +259,30 @@ function CreateEventDialog() {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <FormField
                 control={form.control}
                 name="date_event"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Date de début</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date_fin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date de fin</FormLabel>
+                    <FormControl>
+                      {/* Laisser vide = événement d'une seule journée. C'est le
+                          cas courant : on ne l'impose pas. */}
+                      <Input type="date" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -528,6 +550,10 @@ export default function GestionEvenementsPage() {
                     <span className="flex items-center gap-1">
                       <Calendar className="size-3.5" />
                       {formatDate(event.date_event)}
+                      {estSurPlusieursJours(
+                        event.date_event,
+                        event.date_fin,
+                      ) && <> → {formatDate(event.date_fin!)}</>}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="size-3.5" />

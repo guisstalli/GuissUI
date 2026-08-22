@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef } from 'react';
 
@@ -78,6 +78,37 @@ function showBrowserNotification(notif: AppNotification) {
 }
 
 /**
+ * Rafraîchit la liste des inscriptions d'un événement à la volée.
+ *
+ * La notification temps réel arrivait bien, mais rien n'était invalidé : le
+ * tableau ne bougeait qu'après un rechargement complet de la page.
+ *
+ * L'invalidation reste CHIRURGICALE : invalider `['events']` purgerait aussi le
+ * détail de l'événement, ses statistiques et la liste des événements — trois
+ * requêtes inutiles à chaque inscription.
+ */
+export function invaliderInscriptions(
+  queryClient: QueryClient,
+  payload: AppNotification,
+): void {
+  if (payload.category !== 'inscription') return;
+
+  const eventId = payload.metadata?.event_id;
+  if (typeof eventId === 'number') {
+    queryClient.invalidateQueries({
+      queryKey: ['events', eventId, 'inscriptions'],
+    });
+    return;
+  }
+
+  // L'événement n'est pas identifié : on ne touche QUE les listes
+  // d'inscriptions, quel que soit l'événement — jamais les détails ni les stats.
+  queryClient.invalidateQueries({
+    predicate: (query) => query.queryKey[2] === 'inscriptions',
+  });
+}
+
+/**
  * Opens a single WebSocket connection to the Django Channels notifications
  * consumer for the authenticated user. On message:
  *   - invalidates the notifications + unread-count queries (badge & list)
@@ -152,6 +183,8 @@ export function useNotificationSocket() {
         queryClient.invalidateQueries({
           queryKey: ['notifications', 'unread-count'],
         });
+
+        invaliderInscriptions(queryClient, payload);
 
         useToastStore.getState().addNotification({
           type: 'info',

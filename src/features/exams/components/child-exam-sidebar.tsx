@@ -276,6 +276,14 @@ export function ChildExamSidebar({
               Partage
             </p>
             <ShareRecordDialog examType="enfant" examId={Number(examId)} />
+            {/* Meme mecanique de lien, document different : le
+                praticien partage souvent la seule conclusion, sans le
+                detail des mesures. */}
+            <ShareRecordDialog
+              examType="enfant"
+              examId={Number(examId)}
+              document="conclusion"
+            />
           </div>
         </Can>
       )}

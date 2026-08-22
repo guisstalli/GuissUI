@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import {
@@ -36,6 +37,18 @@ interface DriverFormProps {
   onSubmit: (data: DriverCreate) => void;
   isPending?: boolean;
   isEdit?: boolean;
+  /** Masque l'état civil : le patient existe déjà (ex. après un check-in
+   *  d'événement, où le dossier conducteur se greffe sur un patient créé). */
+  hidePatientSection?: boolean;
+  /** Libellé du bouton. `isEdit` afficherait « Mettre à jour », trompeur
+   *  quand on CRÉE le dossier d'un patient existant. */
+  submitLabel?: string;
+  /**
+   * Indice rendu sous le champ téléphone du patient, alimenté par la valeur
+   * courante (E.164). Injecté par l'appelant : le composant d'indice vit dans
+   * `features/patients` et un import inter-features est interdit.
+   */
+  phoneHint?: (phoneNumber: string) => ReactNode;
 }
 
 const SEX_LABELS = { H: 'Homme', F: 'Femme', A: 'Anonyme' } as const;
@@ -103,6 +116,9 @@ export function DriverForm({
   onSubmit,
   isPending,
   isEdit,
+  hidePatientSection,
+  submitLabel,
+  phoneHint,
 }: DriverFormProps) {
   const form = useForm<DriverCreate>({
     resolver: zodResolver(DriverCreateSchema),
@@ -115,7 +131,7 @@ export function DriverForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Section Identité patient */}
-        {!isEdit && (
+        {!isEdit && !hidePatientSection && (
           <div className="mt-2 space-y-4">
             <h3 className="border-b pb-2 text-lg font-semibold">
               Identité du patient
@@ -210,6 +226,11 @@ export function DriverForm({
                       />
                     </FormControl>
                     <FormMessage />
+                    {/* `phone_number` est UNIQUE en base. L'indice est fourni
+                        par l'appelant : il vit dans `features/patients`, et un
+                        import direct depuis `features/drivers` serait un import
+                        inter-features (interdit par ESLint). */}
+                    {phoneHint?.(field.value ?? '')}
                   </FormItem>
                 )}
               />
@@ -553,9 +574,8 @@ export function DriverForm({
           >
             {isPending
               ? 'Enregistrement…'
-              : isEdit
-                ? 'Mettre à jour'
-                : 'Créer le conducteur'}
+              : (submitLabel ??
+                (isEdit ? 'Mettre à jour' : 'Créer le conducteur'))}
           </button>
         </div>
       </form>

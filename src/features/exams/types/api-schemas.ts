@@ -329,6 +329,9 @@ export const ExamenChildDetailApiSchema = z.object({
   fo_detail: z.string().nullable().optional(),
   visual_acuity: VisualAcuityApiSchema.nullable().optional(),
   ocular_tension: OcularTensionApiSchema.nullable().optional(),
+  // Nullable et optionnelle : absente des examens enfants anterieurs a son
+  // ajout. Une reponse sans ce champ doit rester valide.
+  pachymetry: PachymetryApiSchema.nullable().optional(),
   refraction: RefractionApiSchema.nullable().optional(),
   vision_binoculaire: VisionBinoculaireApiSchema.nullable().optional(),
   is_completed: z.boolean(),

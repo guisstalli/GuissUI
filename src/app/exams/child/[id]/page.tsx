@@ -62,6 +62,7 @@ import {
   mapClinicalCheckChildApiToForm,
   mapConclusionApiToForm,
   mapOcularTensionApiToForm,
+  mapPachymetryApiToForm,
   mapPerimetryApiToForm,
   mapPlaintesApiToForm,
   mapRefractionApiToForm,
@@ -74,6 +75,7 @@ import {
   mapBiomicroscopyPosteriorFormToApi,
   mapConclusionFormToApi,
   mapOcularTensionFormToApi,
+  mapPachymetryFormToApi,
   mapPerimetryFormToApi,
   mapPlaintesFormToApi,
   mapRefractionFormToApi,
@@ -348,6 +350,7 @@ export default function ChildExamPage() {
         odg_visual_acuity_avec_correction: null,
       },
       ocularTension: { od: null, og: null },
+      pachymetry: { od: null, og: null, cto_od: null, cto_og: null },
       visionBinoculaire: {
         hirschberg_type: null,
         hirschberg_detail: null,
@@ -444,6 +447,8 @@ export default function ChildExamPage() {
       if (examData.ocular_tension) {
         const t = mapOcularTensionApiToForm(examData.ocular_tension);
         if (t) form.setValue('ocularTension', t);
+        const pachy = mapPachymetryApiToForm(examData.pachymetry);
+        if (pachy) form.setValue('pachymetry', pachy);
       }
       if (examData.vision_binoculaire) {
         const vb = mapVisionBinoculaireApiToForm(examData.vision_binoculaire);
@@ -527,6 +532,7 @@ export default function ChildExamPage() {
           visual_acuity: mapVisualAcuityFormToApi(values.visualAcuity),
           refraction: mapRefractionFormToApi(values.refraction),
           ocular_tension: mapOcularTensionFormToApi(values.ocularTension),
+          pachymetry: mapPachymetryFormToApi(values.pachymetry),
         },
       },
       {

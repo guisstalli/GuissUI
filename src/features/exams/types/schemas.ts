@@ -454,11 +454,11 @@ export const RefractionSchema = z
     }
   });
 
-/** Tension Oculaire - mmHg (0-50) */
+/** Tension Oculaire - mmHg (0-100) */
 export const OcularTensionSchema = z.object({
   id: z.number().optional(),
-  od: z.coerce.number().min(0).max(50).optional().nullable(),
-  og: z.coerce.number().min(0).max(50).optional().nullable(),
+  od: z.coerce.number().min(0).max(100).optional().nullable(),
+  og: z.coerce.number().min(0).max(100).optional().nullable(),
   ttt_hypotonisant: z.boolean().default(false).optional(),
   ttt_hypotonisant_value: z.array(TttHypotonisantEnum).optional().nullable(),
   created: z.string().datetime().optional(),
@@ -480,16 +480,21 @@ export const PachymetrySchema = z.object({
     .max(800, 'Valeur hors plage plausible (300-800 µm)')
     .optional()
     .nullable(),
+  // TO = Tension Oculaire, en mmHg — PAS une épaisseur. Les colonnes gardent
+  // leur nom historique `cto_od`/`cto_og` : les renommer imposerait une
+  // migration pour un gain cosmétique, l'interface affiche « TO OD / TO OG ».
+  // Les bornes 300-800 µm héritées de `od`/`og` rendaient le champ inutilisable
+  // pour ce qu'il mesure.
   cto_od: z.coerce
     .number()
-    .min(300, 'Valeur hors plage plausible (300-800 µm)')
-    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .min(0, 'Tension oculaire hors plage (0-100 mmHg)')
+    .max(100, 'Tension oculaire hors plage (0-100 mmHg)')
     .optional()
     .nullable(),
   cto_og: z.coerce
     .number()
-    .min(300, 'Valeur hors plage plausible (300-800 µm)')
-    .max(800, 'Valeur hors plage plausible (300-800 µm)')
+    .min(0, 'Tension oculaire hors plage (0-100 mmHg)')
+    .max(100, 'Tension oculaire hors plage (0-100 mmHg)')
     .optional()
     .nullable(),
   created: z.string().datetime().optional(),

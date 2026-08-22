@@ -66,6 +66,7 @@ import {
   type Driver,
 } from '@/features/drivers/types/schemas';
 import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
+import { PhoneLookupHint } from '@/features/patients/components/phone-lookup-hint';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 
 const ITEMS_PER_PAGE = 15;
@@ -114,6 +115,11 @@ export default function ConducteursPage() {
   const queryParams = {
     limit: ITEMS_PER_PAGE,
     offset: (currentPage - 1) * ITEMS_PER_PAGE,
+    // `debouncedSearch` était calculé, alimentait le bouton « Réinitialiser »…
+    // et n'entrait jamais ici : la barre de recherche était donc purement
+    // décorative. Le serveur cherche sur nom, prénom, numéro d'identifiant et
+    // numéro de permis.
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(serviceFilter ? { service: serviceFilter } : {}),
     ...(typePermisFilter ? { type_permis: typePermisFilter } : {}),
     ...(regionFilter ? { zone_de_residence: regionFilter } : {}),
@@ -465,6 +471,9 @@ export default function ConducteursPage() {
           <DriverForm
             onSubmit={(data) => createMutation.mutate(data)}
             isPending={createMutation.isPending}
+            // Composé ici : `features/drivers` ne peut pas importer
+            // `features/patients` (import inter-features interdit).
+            phoneHint={(numero) => <PhoneLookupHint phoneNumber={numero} />}
           />
         </DialogContent>
       </Dialog>

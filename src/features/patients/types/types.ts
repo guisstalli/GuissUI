@@ -80,3 +80,38 @@ export type PatientsQueryParams = {
   sex?: Sex;
   created_after?: string;
 };
+
+// =============================================================================
+// LOOKUP TÉLÉPHONE
+// =============================================================================
+
+/**
+ * Patient déjà porteur d'un numéro de téléphone donné.
+ *
+ * Servi par `GET /depistage/patients/lookup-telephone/`. `phone_number` est
+ * UNIQUE en base : créer un second patient avec le même numéro échouait
+ * jusqu'ici en 500. Ce résumé permet de proposer le rattachement plutôt que la
+ * création.
+ *
+ * NB : la même forme est redéclarée dans `features/events/types/schemas.ts`.
+ * Les imports inter-features sont interdits (règle ESLint) — la duplication est
+ * délibérée.
+ */
+export interface PatientExistant {
+  id: number;
+  numero_identifiant: string;
+  full_name: string;
+  date_de_naissance: string;
+  age: number;
+  sex: Sex | null;
+  is_adult: boolean;
+  examens_count: number;
+  has_driver: boolean;
+  driver_id: number | null;
+  is_deleted: boolean;
+}
+
+/** Réponse du lookup par téléphone. */
+export interface LookupTelephoneResponse {
+  patient_existant: PatientExistant | null;
+}

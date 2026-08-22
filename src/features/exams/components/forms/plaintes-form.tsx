@@ -271,16 +271,30 @@ export function PlaintesForm({ namePrefix = '' }: PlaintesFormProps) {
                         <Checkbox
                           checked={field.value?.includes(symptom)}
                           onCheckedChange={(checked) => {
-                            const currentValue = field.value || [];
-                            if (checked) {
-                              field.onChange([...currentValue, symptom]);
-                            } else {
+                            const actuels: string[] = field.value || [];
+
+                            if (!checked) {
                               field.onChange(
-                                currentValue.filter(
-                                  (v: string) => v !== symptom,
-                                ),
+                                actuels.filter((v) => v !== symptom),
                               );
+                              return;
                             }
+
+                            // « Aucun » s'exclut mutuellement du reste : cocher
+                            // un symptôme ET « aucun symptôme » décrit un état
+                            // impossible, que rien n'empêchait jusqu'ici.
+                            // L'exclusion joue dans LES DEUX SENS — la corriger
+                            // d'un seul côté laisserait l'incohérence
+                            // atteignable par l'autre.
+                            if (symptom === 'AUCUN') {
+                              field.onChange(['AUCUN']);
+                              return;
+                            }
+
+                            field.onChange([
+                              ...actuels.filter((v) => v !== 'AUCUN'),
+                              symptom,
+                            ]);
                           }}
                         />
                       </FormControl>
