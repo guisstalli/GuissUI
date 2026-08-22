@@ -405,7 +405,7 @@ function AuditRow({
                     {champ}
                   </dt>
                   <dd className="flex flex-wrap items-baseline gap-2 text-sm">
-                    <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-destructive line-through">
+                    <span className="bg-destructive/10 rounded px-1.5 py-0.5 text-destructive line-through">
                       {avant === '' || avant == null ? '∅' : String(avant)}
                     </span>
                     <span aria-hidden="true" className="text-muted-foreground">

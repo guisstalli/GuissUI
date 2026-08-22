@@ -174,7 +174,7 @@ export function CapabilityPicker({
                             {item.description}
                           </span>
                         )}
-                        <span className="mt-0.5 font-mono text-[0.65rem] text-muted-foreground/70">
+                        <span className="text-muted-foreground/70 mt-0.5 font-mono text-[0.65rem]">
                           {item.code}
                         </span>
                       </span>
