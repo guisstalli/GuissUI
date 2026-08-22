@@ -6,12 +6,7 @@ import {
   ROLES,
   isAdminAreaPath,
 } from '@/lib/authorization';
-
-/**
- * Domaines qui servent la VITRINE publique, par opposition à app.guisstalli.com
- * qui sert l'application du personnel.
- */
-const DOMAINES_VITRINE = new Set(['guisstalli.com', 'www.guisstalli.com']);
+import { estHoteVitrine } from '@/lib/vitrine';
 
 /**
  * Sur le domaine racine, `/` sert la vitrine au lieu du tableau de bord.
@@ -34,8 +29,7 @@ const DOMAINES_VITRINE = new Set(['guisstalli.com', 'www.guisstalli.com']);
  * s'affiche et dont chaque appel échoue — une panne silencieuse, côté client.
  */
 function reecrireVitrine(req: NextRequest) {
-  const hote = req.headers.get('host')?.split(':')[0]?.toLowerCase() ?? '';
-  if (!DOMAINES_VITRINE.has(hote)) return null;
+  if (!estHoteVitrine(req.headers.get('host'))) return null;
   if (req.nextUrl.pathname !== '/') return null;
 
   const url = req.nextUrl.clone();

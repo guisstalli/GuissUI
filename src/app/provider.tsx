@@ -18,9 +18,14 @@ import { queryConfig } from '@/lib/react-query';
 
 type AppProviderProps = {
   children: React.ReactNode;
+  /** Vrai quand l'hote est un domaine vitrine (lu au rendu serveur). */
+  hoteVitrine?: boolean;
 };
 
-export const AppProvider = ({ children }: AppProviderProps) => {
+export const AppProvider = ({
+  children,
+  hoteVitrine = false,
+}: AppProviderProps) => {
   const pathname = usePathname();
   const [queryClient] = React.useState(
     () =>
@@ -50,7 +55,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
               {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
               <Notifications />
               <NotificationSocketProvider />
-              <InternalAppGuard>{children}</InternalAppGuard>
+              <InternalAppGuard hoteVitrine={hoteVitrine}>
+                {children}
+              </InternalAppGuard>
             </TooltipProvider>
           </QueryClientProvider>
         </ThemeProvider>

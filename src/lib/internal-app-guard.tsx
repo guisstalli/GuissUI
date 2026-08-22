@@ -12,7 +12,15 @@ import {
   isAdminAreaPath,
 } from '@/lib/authorization';
 
-function isPublicPath(pathname: string): boolean {
+function isPublicPath(pathname: string, hoteVitrine: boolean): boolean {
+  // La racine du domaine vitrine sert /landing par REECRITURE : l'URL du
+  // navigateur reste `/`, donc usePathname() ne voit JAMAIS `/landing`. Sans
+  // ce cas, la garde prenait la vitrine pour une page interne et affichait
+  // « Redirection vers la connexion » par-dessus : page servie (HTTP 200,
+  // bon titre) et pourtant invisible — un defaut qu'aucun appel curl ne
+  // pouvait detecter, la bascule etant cliente.
+  if (hoteVitrine && pathname === '/') return true;
+
   return (
     pathname.startsWith('/landing') ||
     pathname.startsWith('/auth') ||
@@ -28,6 +36,8 @@ function isPublicPath(pathname: string): boolean {
 
 interface InternalAppGuardProps {
   children: ReactNode;
+  /** Vrai quand l'hote est un domaine vitrine (descendu du layout serveur). */
+  hoteVitrine?: boolean;
 }
 
 /**
@@ -41,12 +51,15 @@ interface InternalAppGuardProps {
  * complet. ADMIN, rôle technique sans accès clinique : uniquement l'espace
  * d'administration. Les autres : /unauthorized.
  */
-export function InternalAppGuard({ children }: InternalAppGuardProps) {
+export function InternalAppGuard({
+  children,
+  hoteVitrine = false,
+}: InternalAppGuardProps) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const isPublic = isPublicPath(pathname);
+  const isPublic = isPublicPath(pathname, hoteVitrine);
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
 
