@@ -11,6 +11,9 @@ export interface PatientExamAdult {
   numero_examen: string;
   patient: number;
   patient_name: string;
+  /** Identifiant du site : renvoye par l'API, il manquait a ce type. Sans
+   *  lui, la correction du site ne peut pas pre-selectionner la valeur. */
+  site: number | null;
   site_libelle: string | null;
   is_completed: boolean;
   created: string;
@@ -22,6 +25,9 @@ export interface PatientExamChild {
   numero_examen: string;
   patient: number;
   patient_name: string;
+  /** Identifiant du site : renvoye par l'API, il manquait a ce type. Sans
+   *  lui, la correction du site ne peut pas pre-selectionner la valeur. */
+  site: number | null;
   site_libelle: string | null;
   reflet_pupillaire: string | null;
   is_completed: boolean;

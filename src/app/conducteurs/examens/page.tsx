@@ -15,6 +15,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { BoutonSupprimerExamen } from '@/app/delete-exam-dialog';
+import { BoutonModifierSite } from '@/app/edit-exam-site-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -266,11 +268,27 @@ export default function ConducteursExamensPage() {
                         {new Date(exam.modified).toLocaleString('fr-FR')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/exams/adult/${exam.id}`}>
-                            {exam.is_completed ? 'Voir' : 'Continuer'}
-                          </Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/exams/adult/${exam.id}`}>
+                              {exam.is_completed ? 'Voir' : 'Continuer'}
+                            </Link>
+                          </Button>
+                          {/* Les conducteurs sont adultes par definition. */}
+                          <BoutonModifierSite
+                            examenId={exam.id}
+                            numeroExamen={exam.numero_examen}
+                            estAdulte
+                            siteActuelId={exam.site}
+                            siteActuelLibelle={exam.site_libelle}
+                          />
+                          <BoutonSupprimerExamen
+                            examenId={exam.id}
+                            numeroExamen={exam.numero_examen}
+                            patientNom={exam.patient_name}
+                            estAdulte
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

@@ -23,6 +23,8 @@ import { z } from 'zod';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { CreateExamDialog } from '@/app/create-exam-dialog';
+import { BoutonSupprimerExamen } from '@/app/delete-exam-dialog';
+import { BoutonModifierSite } from '@/app/edit-exam-site-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -418,6 +420,19 @@ export default function PatientDetailPage() {
                                   Voir
                                 </Link>
                               </Button>
+                              <BoutonModifierSite
+                                examenId={exam.id}
+                                numeroExamen={exam.numero_examen}
+                                estAdulte={true}
+                                siteActuelId={exam.site}
+                                siteActuelLibelle={exam.site_libelle}
+                              />
+                              <BoutonSupprimerExamen
+                                examenId={exam.id}
+                                numeroExamen={exam.numero_examen}
+                                patientNom={patient.full_name}
+                                estAdulte={true}
+                              />
                             </td>
                           </tr>
                         ))}
@@ -494,6 +509,19 @@ export default function PatientDetailPage() {
                                   Voir
                                 </Link>
                               </Button>
+                              <BoutonModifierSite
+                                examenId={exam.id}
+                                numeroExamen={exam.numero_examen}
+                                estAdulte={false}
+                                siteActuelId={exam.site}
+                                siteActuelLibelle={exam.site_libelle}
+                              />
+                              <BoutonSupprimerExamen
+                                examenId={exam.id}
+                                numeroExamen={exam.numero_examen}
+                                patientNom={patient.full_name}
+                                estAdulte={false}
+                              />
                             </td>
                           </tr>
                         ))}

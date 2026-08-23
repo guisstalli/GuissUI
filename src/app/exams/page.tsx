@@ -17,6 +17,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { BoutonSupprimerExamen } from '@/app/delete-exam-dialog';
+import { BoutonModifierSite } from '@/app/edit-exam-site-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,6 +53,7 @@ type UnifiedExam = {
   id: number;
   numero_examen: string;
   patient_name: string;
+  site: number | null | undefined;
   site_libelle: string | null | undefined;
   is_completed: boolean | undefined;
   created: string;
@@ -67,6 +70,7 @@ function toUnified(
     id: exam.id,
     numero_examen: exam.numero_examen,
     patient_name: exam.patient_name,
+    site: exam.site ?? null,
     site_libelle: exam.site_libelle,
     is_completed: 'is_completed' in exam ? exam.is_completed : undefined,
     created: exam.created,
@@ -423,9 +427,24 @@ export default function ExamsPage() {
                       {dayjs(exam.created).format('DD/MM/YYYY')}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={examDetailPath(exam)}>Ouvrir</Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={examDetailPath(exam)}>Ouvrir</Link>
+                        </Button>
+                        <BoutonModifierSite
+                          examenId={exam.id}
+                          numeroExamen={exam.numero_examen}
+                          estAdulte={exam.type === 'adult'}
+                          siteActuelId={exam.site}
+                          siteActuelLibelle={exam.site_libelle}
+                        />
+                        <BoutonSupprimerExamen
+                          examenId={exam.id}
+                          numeroExamen={exam.numero_examen}
+                          patientNom={exam.patient_name}
+                          estAdulte={exam.type === 'adult'}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

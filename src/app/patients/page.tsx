@@ -9,6 +9,7 @@ import {
   Filter,
   Loader2,
   MoreHorizontal,
+  Truck,
   Pencil,
   Plus,
   Search,
@@ -56,6 +57,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { DriverRecordDialog } from '@/features/drivers/components/driver-record-dialog';
 import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { useDeletePatient } from '@/features/patients/api/delete-patient';
@@ -92,7 +94,17 @@ export default function PatientsPage() {
     isAdult: boolean | null;
   }>({ isOpen: false, patientId: null, isAdult: null });
 
-  useDialogCleanup([!!patientToDelete, examCreationModal.isOpen]);
+  // Patient adulte que l'on rattache a un dossier conducteur.
+  const [patientVersConducteur, setPatientVersConducteur] = useState<{
+    id: number;
+    nom: string;
+  } | null>(null);
+
+  useDialogCleanup([
+    !!patientToDelete,
+    examCreationModal.isOpen,
+    !!patientVersConducteur,
+  ]);
   const [selectedSite, setSelectedSite] = useState<number | null>(null);
 
   // Construire les paramètres de requête
@@ -514,6 +526,25 @@ export default function PatientsPage() {
                               <Plus className="mr-2 size-4" />
                               Créer un examen
                             </DropdownMenuItem>
+                            {/* Un patient adulte deja enregistre peut devenir
+                                conducteur : seuls les champs du permis
+                                manquent. Propose uniquement quand il n'a pas
+                                deja de dossier — sans quoi l'API creerait un
+                                doublon. Masque pour les enfants, qui ne
+                                conduisent pas. */}
+                            {patient.is_adult && !patient.has_driver && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setPatientVersConducteur({
+                                    id: patient.id,
+                                    nom: patient.full_name,
+                                  })
+                                }
+                              >
+                                <Truck className="mr-2 size-4" />
+                                Convertir en conducteur
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() =>
@@ -683,6 +714,23 @@ export default function PatientsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Rattache un dossier conducteur a un patient DEJA cree : le dialogue
+        existait pour le check-in d'evenement, ou il resout le meme probleme
+        (le patient existe, seuls les champs du permis manquent). Le reutiliser
+        evite un second formulaire a maintenir — et evite surtout de repasser
+        par la creation classique, qui exige un patient imbrique et produirait
+        donc un DOUBLON. `driverData` est nul : rien n'a ete saisi en ligne. */}
+      {patientVersConducteur && (
+        <DriverRecordDialog
+          open
+          onOpenChange={(ouvert) => !ouvert && setPatientVersConducteur(null)}
+          patientId={patientVersConducteur.id}
+          patientNom={patientVersConducteur.nom}
+          driverData={null}
+          onCreated={() => setPatientVersConducteur(null)}
+        />
+      )}
     </Shell>
   );
 }
