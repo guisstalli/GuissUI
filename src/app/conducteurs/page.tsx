@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { CreateExamDialog } from '@/app/create-exam-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,7 +66,6 @@ import {
   TYPE_PERMIS_VALUES,
   type Driver,
 } from '@/features/drivers/types/schemas';
-import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { PhoneLookupHint } from '@/features/patients/components/phone-lookup-hint';
 import { useDialogCleanup } from '@/hooks/use-dialog-cleanup';
 
@@ -93,10 +93,12 @@ export default function ConducteursPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [driverToDelete, setDriverToDelete] = useState<Driver | null>(null);
+  // Conducteur pour lequel on ouvre le choix du site avant de creer l'examen.
+  const [driverPourExamen, setDriverPourExamen] = useState<Driver | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useDialogCleanup([showCreateDialog, !!driverToDelete]);
+  useDialogCleanup([showCreateDialog, !!driverToDelete, !!driverPourExamen]);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchInput(value);
@@ -144,12 +146,6 @@ export default function ConducteursPage() {
 
   const deleteMutation = useDeleteDriver({
     mutationConfig: { onSuccess: () => setDriverToDelete(null) },
-  });
-
-  const createAdultExamMutation = useCreateAdultExam({
-    mutationConfig: {
-      onSuccess: (data) => router.push(`/exams/adult/${data.id}`),
-    },
   });
 
   const drivers = data?.results ?? [];
@@ -230,18 +226,23 @@ export default function ConducteursPage() {
           </div>
         </div>
 
+        {/* Recherche TOUJOURS visible : c'est l'action la plus frequente sur
+            cette liste, et l'enfouir derriere « Filtres » imposait un clic
+            avant de pouvoir taper. Les filtres par secteur, permis et region
+            restent replies — on les regle rarement. */}
+        <div className="relative max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Rechercher un conducteur…"
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+        </div>
+
         {showFilters && (
           <div className="bg-muted/30 rounded-lg border p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-8"
-                  placeholder="Rechercher…"
-                  value={searchInput}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                />
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <Select
                 value={serviceFilter}
                 onValueChange={(v) => {
@@ -347,9 +348,25 @@ export default function ConducteursPage() {
               </TableHeader>
               <TableBody>
                 {drivers.map((driver) => (
-                  <TableRow key={driver.id}>
+                  // Ligne cliquable : la fiche du conducteur porte la liste de
+                  // ses examens, qui demandait jusqu'ici trois clics
+                  // (Actions -> Voir -> lecture). Le nom reste un vrai lien,
+                  // pour le clavier, l'ouverture dans un nouvel onglet et les
+                  // lecteurs d'ecran — un `onClick` sur la ligne n'offre rien
+                  // de tout cela.
+                  <TableRow
+                    key={driver.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/conducteurs/${driver.id}`)}
+                  >
                     <TableCell className="font-medium">
-                      <div>{driver.patient.full_name}</div>
+                      <Link
+                        href={`/conducteurs/${driver.id}`}
+                        className="hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {driver.patient.full_name}
+                      </Link>
                       <div className="text-xs text-muted-foreground">
                         {driver.patient.numero_identifiant}
                       </div>
@@ -372,7 +389,10 @@ export default function ConducteursPage() {
                     <TableCell className="text-muted-foreground">
                       {dayjs(driver.created).format('DD/MM/YYYY')}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell
+                      className="text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-end gap-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -397,13 +417,8 @@ export default function ConducteursPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() =>
-                                driver.patient?.id &&
-                                createAdultExamMutation.mutate({
-                                  patient_id: driver.patient.id,
-                                })
-                              }
-                              disabled={createAdultExamMutation.isPending}
+                              onClick={() => setDriverPourExamen(driver)}
+                              disabled={!driver.patient?.id}
                             >
                               <ClipboardPlus className="mr-2 size-3.5" />
                               Nouvel examen adulte
@@ -519,6 +534,25 @@ export default function ConducteursPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Choix du site AVANT creation. Le menu creait l'examen directement :
+          il naissait donc sans site, et la colonne « Site » restait vide a
+          vie alors que `site_id` est accepte par le serveur. Meme dialogue
+          que les fiches patient et conducteur — un seul endroit ou la regle
+          « un examen a toujours un lieu » est ecrite. */}
+      {driverPourExamen?.patient?.id && (
+        <CreateExamDialog
+          open
+          onOpenChange={(ouvert) => !ouvert && setDriverPourExamen(null)}
+          patientId={driverPourExamen.patient.id}
+          patientFullName={driverPourExamen.patient.full_name}
+          isAdult
+          onCreated={(exam) => {
+            setDriverPourExamen(null);
+            router.push(`/exams/adult/${exam.id}`);
+          }}
+        />
+      )}
     </Shell>
   );
 }
