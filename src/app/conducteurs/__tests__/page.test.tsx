@@ -53,14 +53,18 @@ describe('Liste des conducteurs', () => {
     ).toBeVisible();
   });
 
-  test('cliquer la ligne mene a la fiche du conducteur', async () => {
+  test('cliquer la ligne mene DIRECTEMENT aux examens du conducteur', async () => {
     const user = afficher();
     const nom = await screen.findByText('Oumar Ndiaye');
 
     await user.click(nom.closest('tr')!);
 
-    // Un seul clic, la ou il en fallait trois : Actions -> Voir -> lecture.
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/conducteurs/1'));
+    // Un seul clic la ou il en fallait trois (Actions -> Voir -> onglet).
+    // La fiche s'ouvre sur les examens, pas sur l'etat civil : c'est la liste
+    // qu'on vient consulter.
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith('/conducteurs/1?tab=examens'),
+    );
   });
 
   // NON COUVERT ICI : l'enchainement « menu Actions -> dialogue de site ».

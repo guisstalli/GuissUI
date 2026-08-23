@@ -348,20 +348,25 @@ export default function ConducteursPage() {
               </TableHeader>
               <TableBody>
                 {drivers.map((driver) => (
-                  // Ligne cliquable : la fiche du conducteur porte la liste de
-                  // ses examens, qui demandait jusqu'ici trois clics
-                  // (Actions -> Voir -> lecture). Le nom reste un vrai lien,
+                  // Ligne cliquable menant DIRECTEMENT aux examens : c'est ce
+                  // qu'on vient consulter, et il fallait trois clics pour y
+                  // arriver (Actions -> Voir -> onglet). `?tab=examens` prime
+                  // sur l'onglet memorise (voir usePersistentTabState), donc
+                  // l'arrivee est la meme pour qui a deja ouvert une fiche.
+                  // Le nom reste un vrai lien,
                   // pour le clavier, l'ouverture dans un nouvel onglet et les
                   // lecteurs d'ecran — un `onClick` sur la ligne n'offre rien
                   // de tout cela.
                   <TableRow
                     key={driver.id}
                     className="cursor-pointer"
-                    onClick={() => router.push(`/conducteurs/${driver.id}`)}
+                    onClick={() =>
+                      router.push(`/conducteurs/${driver.id}?tab=examens`)
+                    }
                   >
                     <TableCell className="font-medium">
                       <Link
-                        href={`/conducteurs/${driver.id}`}
+                        href={`/conducteurs/${driver.id}?tab=examens`}
                         className="hover:underline"
                         onClick={(e) => e.stopPropagation()}
                       >
