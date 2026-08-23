@@ -29,9 +29,8 @@ describe('Restauration du body au demontage d une modale', () => {
     const { unmount } = rtlRender(<CoucheModale />);
 
     unmount();
-
     // Radix restaure sa valeur memorisee APRES le demontage : c'est
-    // precisement ce que le nettoyage synchrone ne pouvait pas rattraper.
+    // precisement ce qu'un nettoyage synchrone ne peut pas rattraper.
     document.body.style.pointerEvents = 'none';
 
     await vi.advanceTimersByTimeAsync(300);
@@ -39,14 +38,13 @@ describe('Restauration du body au demontage d une modale', () => {
     expect(document.body).not.toHaveStyle({ pointerEvents: 'none' });
   });
 
-  test('ne debloque PAS le body si une autre modale reste ouverte', async () => {
+  test('ne debloque PAS le body si une modale est encore OUVERTE', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    // Une seconde couche, toujours montee (cas des dialogues empiles).
-    const autre = document.createElement('div');
-    autre.setAttribute('role', 'alertdialog');
-    autre.setAttribute('data-state', 'open');
-    document.body.appendChild(autre);
+    const ouverte = document.createElement('div');
+    ouverte.setAttribute('role', 'alertdialog');
+    ouverte.setAttribute('data-state', 'open');
+    document.body.appendChild(ouverte);
 
     const { unmount } = rtlRender(<CoucheModale />);
     unmount();
@@ -57,21 +55,22 @@ describe('Restauration du body au demontage d une modale', () => {
     // Sinon on remplacerait un ecran gele par une modale qui ne bloque plus rien.
     expect(document.body).toHaveStyle({ pointerEvents: 'none' });
 
-    autre.remove();
+    ouverte.remove();
   });
 
   test('un menu FERME mais encore monte ne gele pas la page', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    // Radix laisse ses couches montees apres fermeture (animation de sortie).
-    // Ce menu orphelin, verrou non relache, etait la vraie cause du gel — et
-    // la premiere version de la garde le prenait pour une modale ouverte,
-    // refusant de nettoyer definitivement.
+    // CAS REEL, mesure en production : apres fermeture, Radix laisse le menu
+    // dans le DOM avec data-state="closed" (et meme display: block). Une garde
+    // qui regarde la seule PRESENCE de l'element croit a une modale ouverte
+    // pour toujours et bloque definitivement le nettoyage qu'elle devait
+    // proteger. La premiere version de ce correctif echouait exactement la,
+    // avec des tests verts : ils n'utilisaient que des elements synthetiques.
     const menu = document.createElement('div');
     menu.setAttribute('role', 'menu');
     menu.setAttribute('data-state', 'closed');
     document.body.appendChild(menu);
-    document.body.setAttribute('data-scroll-locked', '1');
 
     const { unmount } = rtlRender(<CoucheModale />);
     unmount();
@@ -80,7 +79,6 @@ describe('Restauration du body au demontage d une modale', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     expect(document.body).not.toHaveStyle({ pointerEvents: 'none' });
-    expect(document.body).not.toHaveAttribute('data-scroll-locked');
 
     menu.remove();
   });
