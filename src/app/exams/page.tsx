@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { BoutonSupprimerExamen } from '@/app/delete-exam-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -423,9 +424,17 @@ export default function ExamsPage() {
                       {dayjs(exam.created).format('DD/MM/YYYY')}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={examDetailPath(exam)}>Ouvrir</Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={examDetailPath(exam)}>Ouvrir</Link>
+                        </Button>
+                        <BoutonSupprimerExamen
+                          examenId={exam.id}
+                          numeroExamen={exam.numero_examen}
+                          patientNom={exam.patient_name}
+                          estAdulte={exam.type === 'adult'}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

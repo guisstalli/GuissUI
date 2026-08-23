@@ -19,6 +19,7 @@ import { useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { CreateExamDialog } from '@/app/create-exam-dialog';
+import { BoutonSupprimerExamen } from '@/app/delete-exam-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -191,6 +192,12 @@ function ExamsTab({
                       >
                         Voir
                       </Button>
+                      <BoutonSupprimerExamen
+                        examenId={exam.id}
+                        numeroExamen={exam.numero_examen}
+                        patientNom={patientFullName}
+                        estAdulte
+                      />
                       {exam.is_completed && (
                         <>
                           <Button
