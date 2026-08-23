@@ -12,6 +12,10 @@ function resetBodyStyles() {
   }
   document.body.style.removeProperty('pointer-events');
   document.body.style.removeProperty('overflow');
+  // Compteur de verrous de defilement laisse par Radix. Mesure sur staging :
+  // il restait a « 1 » apres suppression, le menu n'ayant jamais relache le
+  // sien. Le laisser en place reverrouille le defilement au montage suivant.
+  document.body.removeAttribute('data-scroll-locked');
 }
 
 /**
@@ -32,11 +36,21 @@ export function useDialogCleanup(openStates: boolean[]) {
 }
 
 /**
- * Vrai si une couche modale Radix est ENCORE montée (dialogue, alerte, menu).
+ * Vrai si une couche RÉELLEMENT MODALE ET OUVERTE subsiste.
  *
- * Sans cette garde, fermer un dialogue empilé sur un autre rendrait la page
- * du dessous cliquable alors qu'une modale est toujours ouverte — on
- * remplacerait un écran gelé par une modale qui ne bloque plus rien.
+ * Deux precisions, chacune verifiee en direct sur staging :
+ *
+ * 1. `[data-state="open"]` est indispensable. Radix laisse ses couches MONTÉES
+ *    apres fermeture (animation de sortie), avec `data-state="closed"`. Une
+ *    garde qui teste la seule presence dans le DOM voit donc une couche fermee
+ *    comme ouverte et refuse de nettoyer — DÉFINITIVEMENT. C'est exactement ce
+ *    que faisait la premiere version de ce correctif : elle n'a pas debloque
+ *    l'ecran, elle a remplace une cause par une autre.
+ *
+ * 2. Un MENU n'entre pas dans le compte. Un menu deroulant n'est pas une
+ *    modale : une fois ferme, rien ne justifie que la page entiere reste
+ *    inerte. Or c'est precisement le menu orphelin — ferme mais toujours
+ *    monte, verrou non relache — qui gelait l'ecran apres une suppression.
  */
 function uneCoucheModaleEstOuverte(): boolean {
   if (typeof document === 'undefined') {
@@ -44,7 +58,7 @@ function uneCoucheModaleEstOuverte(): boolean {
   }
   return Boolean(
     document.querySelector(
-      '[role="dialog"], [role="alertdialog"], [role="menu"]',
+      '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]',
     ),
   );
 }
