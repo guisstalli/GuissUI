@@ -81,6 +81,7 @@ import {
   mapConclusionApiToForm,
 } from '@/features/exams/utils/api-to-form-mappers';
 import { hasFilledConclusion } from '@/features/exams/utils/conclusion-status';
+import { setSectionValues } from '@/features/exams/utils/form-hydration';
 import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
@@ -370,10 +371,14 @@ export default function AdultExamPage() {
         const ocularTension = mapOcularTensionApiToForm(tech.ocular_tension);
         const pachymetry = mapPachymetryApiToForm(tech.pachymetry);
 
-        if (visualAcuity) form.setValue('visualAcuity', visualAcuity);
-        if (refraction) form.setValue('refraction', refraction);
-        if (ocularTension) form.setValue('ocularTension', ocularTension);
-        if (pachymetry) form.setValue('pachymetry', pachymetry);
+        if (visualAcuity)
+          setSectionValues(form as never, 'visualAcuity', visualAcuity);
+        if (refraction)
+          setSectionValues(form as never, 'refraction', refraction);
+        if (ocularTension)
+          setSectionValues(form as never, 'ocularTension', ocularTension);
+        if (pachymetry)
+          setSectionValues(form as never, 'pachymetry', pachymetry);
       }
 
       // Charger les données cliniques
@@ -383,8 +388,8 @@ export default function AdultExamPage() {
         const perimetry = mapPerimetryApiToForm(clin.perimetry);
         const conclusion = mapConclusionApiToForm(clin.conclusion);
 
-        if (plaintes) form.setValue('plaintes', plaintes);
-        if (perimetry) form.setValue('perimetry', perimetry);
+        if (plaintes) setSectionValues(form as never, 'plaintes', plaintes);
+        if (perimetry) setSectionValues(form as never, 'perimetry', perimetry);
 
         if (clin.od) {
           const odAnterior = mapBiomicroscopyAnteriorApiToForm(
@@ -393,8 +398,10 @@ export default function AdultExamPage() {
           const odPosterior = mapBiomicroscopyPosteriorApiToForm(
             clin.od.bp_sg_posterieur,
           );
-          if (odAnterior) form.setValue('od.bp_sg_anterieur', odAnterior);
-          if (odPosterior) form.setValue('od.bp_sg_posterieur', odPosterior);
+          if (odAnterior)
+            setSectionValues(form as never, 'od.bp_sg_anterieur', odAnterior);
+          if (odPosterior)
+            setSectionValues(form as never, 'od.bp_sg_posterieur', odPosterior);
         }
         if (clin.og) {
           const ogAnterior = mapBiomicroscopyAnteriorApiToForm(
@@ -403,10 +410,13 @@ export default function AdultExamPage() {
           const ogPosterior = mapBiomicroscopyPosteriorApiToForm(
             clin.og.bp_sg_posterieur,
           );
-          if (ogAnterior) form.setValue('og.bp_sg_anterieur', ogAnterior);
-          if (ogPosterior) form.setValue('og.bp_sg_posterieur', ogPosterior);
+          if (ogAnterior)
+            setSectionValues(form as never, 'og.bp_sg_anterieur', ogAnterior);
+          if (ogPosterior)
+            setSectionValues(form as never, 'og.bp_sg_posterieur', ogPosterior);
         }
-        if (conclusion) form.setValue('conclusion', conclusion);
+        if (conclusion)
+          setSectionValues(form as never, 'conclusion', conclusion);
       }
     }
   }, [examData, attachmentsData, form, hasAnalyticsContext]);
