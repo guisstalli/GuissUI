@@ -964,6 +964,10 @@ export const ExamenAdultSchema = z.object({
   numero_examen: z.string(),
   patient: z.number(),
   patient_name: z.string(),
+  // Identifiant du site : deja renvoye par l'API, il n'etait simplement pas
+  // declare ici. Sans lui, la correction du site ne peut pas pre-selectionner
+  // la valeur courante.
+  site: z.number().nullable().optional(),
   site_libelle: z.string().nullable().optional(),
   is_completed: z.boolean(),
   created: z.string().datetime(),
@@ -1038,6 +1042,10 @@ export const ExamenChildSchema = z.object({
   numero_examen: z.string(),
   patient: z.number(),
   patient_name: z.string(),
+  // Identifiant du site : deja renvoye par l'API, il n'etait simplement pas
+  // declare ici. Sans lui, la correction du site ne peut pas pre-selectionner
+  // la valeur courante.
+  site: z.number().nullable().optional(),
   site_libelle: z.string().nullable().optional(),
   is_completed: z.boolean(),
   reflet_pupillaire: ClinicalCheckEnum.optional().nullable(),

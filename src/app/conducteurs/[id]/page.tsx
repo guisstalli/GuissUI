@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { AppShell as Shell } from '@/app/_shell';
 import { CreateExamDialog } from '@/app/create-exam-dialog';
 import { BoutonSupprimerExamen } from '@/app/delete-exam-dialog';
+import { BoutonModifierSite } from '@/app/edit-exam-site-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -192,6 +193,13 @@ function ExamsTab({
                       >
                         Voir
                       </Button>
+                      <BoutonModifierSite
+                        examenId={exam.id}
+                        numeroExamen={exam.numero_examen}
+                        estAdulte
+                        siteActuelId={exam.site}
+                        siteActuelLibelle={exam.site_libelle}
+                      />
                       <BoutonSupprimerExamen
                         examenId={exam.id}
                         numeroExamen={exam.numero_examen}
