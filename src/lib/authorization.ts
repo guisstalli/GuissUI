@@ -354,6 +354,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'drivers:restore',
     'drivers:view-deleted',
     'drivers:bulk-import',
+    'drivers:view',
   ],
 
   // TECHNICIEN : données techniques uniquement
