@@ -12,7 +12,10 @@ import { MainErrorFallback } from '@/components/errors/main';
 import { Notifications } from '@/components/ui/notifications';
 import { TooltipProvider } from '@/components/ui/tooltip/tooltip';
 import { NotificationSocketProvider } from '@/features/notifications/hooks/use-notification-socket';
-import { resetBodyStyles } from '@/hooks/use-dialog-cleanup';
+import {
+  resetBodyStyles,
+  useBodyFrozenWatchdog,
+} from '@/hooks/use-dialog-cleanup';
 import { InternalAppGuard } from '@/lib/internal-app-guard';
 import { queryConfig } from '@/lib/react-query';
 
@@ -40,6 +43,12 @@ export const AppProvider = ({
   React.useEffect(() => {
     resetBodyStyles();
   }, [pathname]);
+
+  // Filet global : `react-remove-scroll` restaure `pointer-events: none` APRES
+  // le demontage d'un dialogue ouvert par-dessus un menu, ce qu'aucun
+  // nettoyage declenche au demontage ne peut devancer. On observe donc
+  // l'ecriture au lieu de courir contre elle.
+  useBodyFrozenWatchdog();
 
   return (
     <ErrorBoundary FallbackComponent={MainErrorFallback}>

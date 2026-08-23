@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { useBodyPointerEventsCleanup } from '@/hooks/use-dialog-cleanup';
-import { rtlRender } from '@/testing/test-utils';
+import {
+  useBodyFrozenWatchdog,
+  useBodyPointerEventsCleanup,
+} from '@/hooks/use-dialog-cleanup';
+import { rtlRender, waitFor } from '@/testing/test-utils';
 
 function CoucheModale() {
   useBodyPointerEventsCleanup();
@@ -100,5 +103,57 @@ describe('Restauration du body au demontage d une modale', () => {
     expect(document.body).not.toHaveStyle({ pointerEvents: 'none' });
 
     fantome.remove();
+  });
+});
+
+function Filet() {
+  useBodyFrozenWatchdog();
+  return null;
+}
+
+/**
+ * Le defaut REEL, mesure sur staging journal de mutations a l'appui :
+ * `react-remove-scroll` memorise `pointer-events` a la prise du verrou et le
+ * RESTAURE a sa liberation. Le menu ayant deja pose `none`, c'est `none` que
+ * le dialogue memorise puis restaure en se fermant — et cette ecriture arrive
+ * APRES le demontage, donc apres tout nettoyage qu'il declenche.
+ */
+describe('Filet contre le gel tardif du body', () => {
+  test('degele apres une ecriture POSTERIEURE au demontage', async () => {
+    rtlRender(<Filet />);
+
+    // Ce qu'aucun nettoyage lie au demontage ne peut devancer.
+    document.body.style.pointerEvents = 'none';
+
+    await waitFor(() =>
+      expect(document.body).not.toHaveStyle({ pointerEvents: 'none' }),
+    );
+  });
+
+  test('ne degele PAS sous une modale encore ouverte', async () => {
+    const ouverte = document.createElement('div');
+    ouverte.setAttribute('role', 'dialog');
+    ouverte.setAttribute('data-state', 'open');
+    document.body.appendChild(ouverte);
+
+    rtlRender(<Filet />);
+    document.body.style.pointerEvents = 'none';
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    expect(document.body).toHaveStyle({ pointerEvents: 'none' });
+
+    ouverte.remove();
+  });
+
+  test('degele un body deja fige AVANT le montage', async () => {
+    document.body.style.pointerEvents = 'none';
+
+    rtlRender(<Filet />);
+
+    // Aucune mutation ne se produirait : l'etat initial doit etre inspecte.
+    await waitFor(() =>
+      expect(document.body).not.toHaveStyle({ pointerEvents: 'none' }),
+    );
   });
 });

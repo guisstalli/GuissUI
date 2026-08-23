@@ -106,3 +106,57 @@ export function useBodyPointerEventsCleanup() {
 }
 
 export { resetBodyStyles };
+
+/**
+ * Surveille `document.body` et le dégèle dès qu'il devient inerte sans raison.
+ *
+ * POURQUOI UNE SURVEILLANCE ET NON UN NETTOYAGE PONCTUEL — mesuré en direct
+ * sur staging, journal de mutations à l'appui. `react-remove-scroll`, utilisé
+ * par Radix, MÉMORISE `document.body.style.pointerEvents` au moment où un
+ * verrou est pris, et le RESTAURE fidèlement à sa libération. Le menu
+ * déroulant ayant déjà posé `none`, c'est `none` que le dialogue mémorise —
+ * puis restaure en se fermant. La page reste inerte, définitivement.
+ *
+ * Cette restauration est la DERNIÈRE écriture : elle survient après le
+ * démontage, donc après tout nettoyage déclenché par celui-ci. Les deux
+ * tentatives précédentes — nettoyage synchrone, puis reprise sur les frames
+ * suivantes — ont échoué pour cette seule raison : elles couraient contre une
+ * écriture qui arrive toujours en dernier. On ne peut pas gagner cette course,
+ * seulement constater le résultat et le corriger.
+ *
+ * D'où l'observateur : il ne devine aucun instant. Il réagit à l'écriture,
+ * quel qu'en soit l'auteur et le moment, et ne dégèle que si plus AUCUNE
+ * couche modale n'est ouverte — sinon on rendrait cliquable la page sous une
+ * modale encore affichée.
+ */
+export function useBodyFrozenWatchdog() {
+  useEffect(() => {
+    if (
+      typeof document === 'undefined' ||
+      typeof MutationObserver === 'undefined'
+    ) {
+      return;
+    }
+
+    const degelerSiInjustifie = () => {
+      if (document.body.style.pointerEvents !== 'none') {
+        return;
+      }
+      if (uneCoucheModaleEstOuverte()) {
+        return;
+      }
+      resetBodyStyles();
+    };
+
+    const observateur = new MutationObserver(degelerSiInjustifie);
+    observateur.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style', 'data-scroll-locked'],
+    });
+
+    // Un gel déjà en place au montage ne produirait aucune mutation.
+    degelerSiInjustifie();
+
+    return () => observateur.disconnect();
+  }, []);
+}
