@@ -551,9 +551,12 @@ export function DriverForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="__none__">—</SelectItem>
                       {PRISE_EN_CHARGE_VALUES.map((v) => (
-                        <SelectItem key={v} value={v}>
+                        <SelectItem
+                          key={v}
+                          value={v}
+                          defaultValue={PRISE_EN_CHARGE_VALUES[0]}
+                        >
                           {PRISE_EN_CHARGE_LABELS[v]}
                         </SelectItem>
                       ))}

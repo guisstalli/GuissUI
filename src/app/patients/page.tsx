@@ -94,13 +94,18 @@ export default function PatientsPage() {
     isAdult: boolean | null;
   }>({ isOpen: false, patientId: null, isAdult: null });
 
-  useDialogCleanup([!!patientToDelete, examCreationModal.isOpen]);
-  const [selectedSite, setSelectedSite] = useState<number | null>(null);
   // Patient adulte que l'on rattache a un dossier conducteur.
   const [patientVersConducteur, setPatientVersConducteur] = useState<{
     id: number;
     nom: string;
   } | null>(null);
+
+  useDialogCleanup([
+    !!patientToDelete,
+    examCreationModal.isOpen,
+    !!patientVersConducteur,
+  ]);
+  const [selectedSite, setSelectedSite] = useState<number | null>(null);
 
   // Construire les paramètres de requête
   const getIsAdultFilter = () => {

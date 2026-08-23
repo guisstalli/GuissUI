@@ -32,19 +32,61 @@ export function useDialogCleanup(openStates: boolean[]) {
 }
 
 /**
- * Restores `document.body` interactivity when the calling component unmounts.
+ * Vrai si une couche modale Radix est ENCORE montée (dialogue, alerte, menu).
  *
- * Wired inside the Radix-based UI primitives (Dialog/AlertDialog/Sheet/Drawer
- * Content). Because the Content component only mounts while the modal is open,
- * its unmount cleanup guarantees the body is always restored even when the
- * modal is torn down before Radix finishes its own close cleanup — the
- * well-known "frozen page" bug. Works for every consumer without changes to
- * feature code.
+ * Sans cette garde, fermer un dialogue empilé sur un autre rendrait la page
+ * du dessous cliquable alors qu'une modale est toujours ouverte — on
+ * remplacerait un écran gelé par une modale qui ne bloque plus rien.
+ */
+function uneCoucheModaleEstOuverte(): boolean {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+  return Boolean(
+    document.querySelector(
+      '[role="dialog"], [role="alertdialog"], [role="menu"]',
+    ),
+  );
+}
+
+function resetBodyStylesSiPlusAucuneCouche() {
+  if (uneCoucheModaleEstOuverte()) {
+    return;
+  }
+  resetBodyStyles();
+}
+
+/**
+ * Restaure l'interactivité de `document.body` au démontage d'une couche modale.
+ *
+ * PIÈGE CORRIGÉ — l'« écran gelé » après suppression d'un patient. Le menu
+ * déroulant pose `pointer-events: none` sur le body. Le dialogue de
+ * confirmation s'ouvre PAR-DESSUS et mémorise la valeur d'origine, qui vaut
+ * déjà `none`. À sa fermeture il « restaure » donc `none`, et le menu étant
+ * déjà démonté, plus personne ne remet la valeur vide : la page entière
+ * devenait définitivement inerte, sans message ni erreur.
+ *
+ * Un nettoyage SYNCHRONE au démontage ne suffit pas : il s'exécute AVANT la
+ * restauration de Radix, qui le réécrase juste après. D'où la reprise sur les
+ * frames suivantes — c'est la seule qui gagne la course.
+ *
+ * `setTimeout` en filet : `requestAnimationFrame` ne se déclenche pas dans un
+ * onglet en arrière-plan, et l'utilisateur retrouverait l'écran gelé en y
+ * revenant.
  */
 export function useBodyPointerEventsCleanup() {
   useEffect(() => {
     return () => {
       resetBodyStyles();
+
+      if (typeof window === 'undefined') {
+        return;
+      }
+      window.requestAnimationFrame(() => {
+        resetBodyStylesSiPlusAucuneCouche();
+        window.requestAnimationFrame(resetBodyStylesSiPlusAucuneCouche);
+      });
+      window.setTimeout(resetBodyStylesSiPlusAucuneCouche, 150);
     };
   }, []);
 }
