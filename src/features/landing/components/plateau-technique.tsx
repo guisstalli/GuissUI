@@ -28,15 +28,12 @@ export function PlateauTechnique() {
               id="plateau-heading"
               className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
             >
-              Un équipement hospitalier,
-              <br />
-              ou en stratégie avancée (hors des murs du centre).
+              Un équipement hospitalier partout
             </h2>
             <p className="mt-5 text-base leading-relaxed text-slate-600">
               L’unité mobile se déplace avec au moins deux postes de
-              consultation, des rétinographes, un MonPack One et des appareils
-              portatifs — le même niveau niveau d’examens partout, et pour tout
-              le monde.
+              consultation, des rétinographes, « mon pack one » et un appareil
+              pour le champs visuel.
             </p>
           </Reveal>
         </div>

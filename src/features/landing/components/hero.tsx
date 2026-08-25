@@ -43,7 +43,7 @@ export function Hero() {
             <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
               <strong className="text-slate-900">10/10 à la vue</strong>{' '}
               n’empêche pas les zones aveugles. Le Centre de Vision Madoune
-              Robert Ndiaye les détecte — pour vous, vos enfants, et les
+              Robert Ndiaye les détecte pour vous, vos enfants, et les
               chauffeurs.
             </p>
           </Reveal>
