@@ -67,16 +67,9 @@ export function PublicFooter() {
             </h3>
             <p className="mb-4 text-sm leading-relaxed text-slate-600">
               Initiative portée par le service de dépistage ophtalmologique du
-              le centre vision Madoune Robert Ndiaye - UFR Santé Université Iba
-              Der Thiam de Thies dans le cadre du programme national de santé
+              centre de vision Madoune Robert Ndiaye - UFR Santé Université Iba
+              Der Thiam de Thies dans le cadre de leur programme de santé
               visuelle.
-            </p>
-            <p className="text-sm text-slate-500">
-              Consultations{' '}
-              <span className="font-semibold text-emerald-600">
-                100% gratuites
-              </span>{' '}
-              · Sans compte requis
             </p>
           </div>
         </div>
