@@ -1,0 +1,23 @@
+# Normalisation de fin de ligne pour le texte, JAMAIS pour les binaires.
+* text=auto
+
+# Les icones du projet ont deja ete DETRUITES une fois : favicon.ico,
+# logo192.png et logo512.png contenaient des milliers de EF BF BD, le
+# caractere de remplacement UTF-8, signe d'une sauvegarde a travers un
+# encodage texte qui avait ecrase tout octet >= 0x80. Ces marqueurs
+# interdisent a git de leur appliquer la moindre conversion.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.mp4   binary
+*.webm  binary

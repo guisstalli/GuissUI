@@ -9,12 +9,12 @@ import { CENTRE } from '@/features/landing/utils/contenu';
 export const metadata: Metadata = {
   title: `${CENTRE.nom} — dépistage ophtalmologique à Thiès`,
   description:
-    'Dépistages ophtalmologiques gratuits pour adultes, enfants et conducteurs. ' +
+    'Dépistages ophtalmologiques pour adultes, enfants et conducteurs. ' +
     "Centre de Vision Madoune Robert Ndiaye, UFR Santé de l'Université Iba Der Thiam de Thiès.",
   openGraph: {
     title: CENTRE.nom,
     description:
-      'Un conducteur peut lire 10/10 et avoir un champ visuel amputé sans le savoir. Dépistage gratuit à Thiès.',
+      'Un conducteur peut lire 10/10 et avoir un champ visuel amputé sans le savoir.',
     locale: 'fr_SN',
     type: 'website',
   },
