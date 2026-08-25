@@ -23,7 +23,7 @@ export const MISSIONS = [
   {
     titre: 'Soins',
     texte:
-      'Consultations et dépistages ophtalmologiques, au centre et hors les murs.',
+      'Consultations et dépistages ophtalmologiques, au centre ou en stratégie avancée (hors des murs du centre).',
   },
   {
     titre: 'Recherche',
@@ -62,7 +62,7 @@ export const PLATEAU = [
       'Tonopachymètre',
       'Rétinographe',
       'Biomicroscope',
-      "Écrans et tableaux d'acuité visuelle",
+      "Écrans d'acuité visuelle",
     ],
   },
   {
@@ -72,6 +72,15 @@ export const PLATEAU = [
       'Périmètre automatisé Metrovision MonPack One',
       'Synoptophore',
       'Topographe cornéen',
+    ],
+  },
+  {
+    groupe: 'Examens complémentaires',
+    appareils: [
+      'Rajouter et échographie ( À,B,UBM)',
+      'Orthoptie',
+      'Bilan orthoptique',
+      'Rééducation orthoptique',
     ],
   },
 ] as const;

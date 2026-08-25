@@ -29,13 +29,14 @@ export function PlateauTechnique() {
               className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
             >
               Un équipement hospitalier,
-              <br />y compris hors les murs.
+              <br />
+              ou en stratégie avancée (hors des murs du centre).
             </h2>
             <p className="mt-5 text-base leading-relaxed text-slate-600">
               L’unité mobile se déplace avec au moins deux postes de
               consultation, des rétinographes, un MonPack One et des appareils
-              portatifs — le même niveau d’examen dans une école ou un Daara
-              qu’au centre.
+              portatifs — le même niveau niveau d’examens partout, et pour tout
+              le monde.
             </p>
           </Reveal>
         </div>
