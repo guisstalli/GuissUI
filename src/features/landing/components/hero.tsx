@@ -14,8 +14,7 @@ import { Reveal } from './reveal';
  * Composition ASYMÉTRIQUE (7/5) plutôt que centrée : le texte porte la
  * promesse, le relevé de champ visuel lui répond sans la concurrencer. Un
  * hero centré aurait mis les deux à égalité et dilué la seule chose que le
- * visiteur doit retenir — le dépistage est gratuit, et il peut prendre
- * rendez-vous maintenant.
+ * visiteur doit retenir.
  */
 export function Hero() {
   return (
@@ -36,20 +35,16 @@ export function Hero() {
               id="hero-heading"
               className="mt-5 text-4xl font-bold leading-[1.03] tracking-tight text-slate-900 sm:text-6xl lg:text-[4.25rem]"
             >
-              Voir ce que
-              <br />
-              l’œil ne dit pas.
+              Bien voir n’est pas tout voir.
             </h1>
           </Reveal>
 
           <Reveal delay={180}>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Un conducteur peut lire{' '}
-              <strong className="text-slate-900">10/10</strong> et avoir un
-              champ visuel amputé sans le savoir. Le Centre de Vision Madoune
-              Robert Ndiaye dépiste ce que l’acuité seule laisse passer —{' '}
-              <strong className="text-slate-900">gratuitement</strong>, pour les
-              adultes, les enfants et les conducteurs.
+              <strong className="text-slate-900">10/10 à la vue</strong>{' '}
+              n’empêche pas les zones aveugles. Le Centre de Vision Madoune
+              Robert Ndiaye les détecte — gratuitement, pour vous, vos enfants,
+              et sur la route.
             </p>
           </Reveal>
 
