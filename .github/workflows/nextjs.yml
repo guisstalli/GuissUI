@@ -157,7 +157,7 @@ jobs:
         run: echo "value=${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Declencher le deploy infrastructure
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.DEPLOY_TOKEN }}
           # Routage par branche :
