@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
 import { CreateExamDialog } from '@/app/create-exam-dialog';
+import { useNotifications } from '@/components/ui/notifications';
 import { env } from '@/config/env';
 import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, userEvent, waitFor } from '@/testing/test-utils';
@@ -19,7 +20,7 @@ vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: null, status: 'unauthenticated' }),
 }));
 
-// Le selecteur de site interroge le referentiel : hors sujet ici.
+// Le sélecteur de site interroge le référentiel : hors sujet ici.
 vi.mock('@/features/sites/components/site-selector', () => ({
   SiteSelector: ({ onChange }: { onChange: (v: number) => void }) => (
     <button type="button" onClick={() => onChange(7)}>
@@ -92,10 +93,10 @@ describe('CreateExamDialog', () => {
 /**
  * Le garde-fou refuse un second examen le meme jour — c'est son absence qui a
  * produit 114 examens pour 82 patients le 23/08/2026. Mais un refus sans issue
- * pousse a contourner : l'ecran doit proposer la bonne action.
+ * pousse à contourner : l'écran doit proposer la bonne action.
  */
-describe('Examen deja ouvert le meme jour', () => {
-  test('propose de REPRENDRE au lieu d afficher une erreur', async () => {
+describe('Examen déjà ouvert le même jour', () => {
+  test('propose de REPRENDRE au lieu d’afficher une erreur', async () => {
     server.use(
       http.post(`${env.API_URL}/depistage/examens/adultes/create/`, () =>
         HttpResponse.json(
@@ -123,7 +124,7 @@ describe('Examen deja ouvert le meme jour', () => {
     expect(screen.getByText('Reprendre l’examen en cours')).toBeVisible();
   });
 
-  test('reprendre ouvre l examen existant', async () => {
+  test('reprendre ouvre l’examen existant', async () => {
     server.use(
       http.post(`${env.API_URL}/depistage/examens/adultes/create/`, () =>
         HttpResponse.json({ examen_existant_id: 2596 }, { status: 409 }),
@@ -137,5 +138,32 @@ describe('Examen deja ouvert le meme jour', () => {
     await user.click(await screen.findByText('Reprendre l’examen en cours'));
 
     await waitFor(() => expect(ouvrir).toHaveBeenCalledWith({ id: 2596 }));
+  });
+
+  test('une erreur NON-409 previent quand meme l utilisateur', async () => {
+    server.use(
+      http.post(`${env.API_URL}/depistage/examens/adultes/create/`, () =>
+        HttpResponse.json({ detail: 'Panne serveur' }, { status: 500 }),
+      ),
+    );
+
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    afficher();
+    await user.click(screen.getByText('choisir-site-7'));
+    await user.click(screen.getByText('Créer').closest('button')!);
+
+    // Le composant <Notifications /> vit dans AppProvider, absent ici : on
+    // interroge donc le magasin. Fournir `onError` ECRASE celui de la
+    // mutation, qui portait la notification d'échec — sans rappel explicite,
+    // une panne réseau ou un 500 ne disaient plus rien à l'utilisateur.
+    await waitFor(() =>
+      expect(
+        useNotifications
+          .getState()
+          .notifications.some(
+            (n) => n.message === "Impossible de créer l'examen.",
+          ),
+      ).toBe(true),
+    );
   });
 });

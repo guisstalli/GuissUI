@@ -135,6 +135,10 @@ async function handleApiError(
   let title = 'Erreur';
   let corps: unknown;
 
+  // `clone()` d'abord : le corps ne se lit qu'une fois, et si le JSON echoue
+  // (page HTML d'un proxy, corps vide) on perdrait toute information.
+  const copie = response.clone();
+
   try {
     const errorData = await response.json();
     corps = errorData;
@@ -143,7 +147,13 @@ async function handleApiError(
     message = extractErrorMessage(errorData);
     title = extractErrorTitle(errorData, response.status);
   } catch {
-    // If we can't parse the error, use statusText
+    // Repli sur le texte brut : mieux vaut un corps illisible qu'aucun corps.
+    try {
+      const texte = await copie.text();
+      if (texte) corps = texte;
+    } catch {
+      // Corps definitivement inexploitable : on garde statusText.
+    }
   }
 
   // Only show notification if not silent

@@ -15,6 +15,18 @@ import {
 import { useDoublons } from '../api/get-doublons';
 import type { FiltresQualite } from '../types/types';
 
+/**
+ * `new Date('2026-08-23')` est parse en UTC : selon le fuseau, la date affichee
+ * peut reculer d'un jour. On construit donc une date LOCALE a partir des
+ * composants — une session datee de la veille serait un contresens sur un
+ * ecran qui sert justement a rapprocher les examens d'une journee.
+ */
+const formaterJour = (jour: string) => {
+  const [annee, mois, quantieme] = jour.split('-').map(Number);
+  if (!annee || !mois || !quantieme) return jour;
+  return new Date(annee, mois - 1, quantieme).toLocaleDateString('fr-FR');
+};
+
 type TableauDoublonsProps = {
   filtres: FiltresQualite;
 };
@@ -67,7 +79,7 @@ export function TableauDoublons({ filtres }: TableauDoublonsProps) {
           {data.map((doublon) => (
             <TableRow key={`${doublon.jour}-${doublon.patient_id}`}>
               <TableCell className="text-sm text-muted-foreground">
-                {new Date(doublon.jour).toLocaleDateString('fr-FR')}
+                {formaterJour(doublon.jour)}
               </TableCell>
               <TableCell>
                 <Link

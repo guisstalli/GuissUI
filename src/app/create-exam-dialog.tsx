@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useNotifications } from '@/components/ui/notifications';
 import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { PreviousExamSelector } from '@/features/exams/components/previous-exam-selector';
@@ -53,6 +54,7 @@ export function CreateExamDialog({
   isAdult,
   onCreated,
 }: CreateExamDialogProps) {
+  const { addNotification } = useNotifications();
   const [siteId, setSiteId] = useState<number | null>(null);
   const [examenPrecedentId, setExamenPrecedentId] = useState<number | null>(
     null,
@@ -93,12 +95,24 @@ export function CreateExamDialog({
       status?: number;
       data?: { examen_existant_id?: number; numero_examen?: string };
     };
+
     if (status === 409 && data?.examen_existant_id) {
       setExamenExistant({
         id: data.examen_existant_id,
         numero: data.numero_examen,
       });
+      return;
     }
+
+    // Fournir `onError` ECRASE celui de la mutation (`...restConfig` passe
+    // apres), qui portait la notification d'echec. Sans ce rappel, une panne
+    // reseau ou un 500 ne disaient plus rien a l'utilisateur : l'ecran restait
+    // muet et le dialogue ouvert.
+    addNotification({
+      type: 'error',
+      title: 'Erreur',
+      message: "Impossible de créer l'examen.",
+    });
   };
 
   const creerAdulte = useCreateAdultExam({
@@ -158,7 +172,7 @@ export function CreateExamDialog({
             plutot qu'un message d'erreur. Un refus sans issue pousse a
             contourner — c'est ainsi qu'on obtient 12 examens pour un patient. */}
         {examenExistant && (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-3 text-sm">
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
             <p className="font-medium text-amber-700 dark:text-amber-400">
               Un examen est déjà ouvert pour ce patient aujourd’hui
               {examenExistant.numero ? ` (${examenExistant.numero})` : ''}.
