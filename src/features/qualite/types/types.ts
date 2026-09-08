@@ -12,12 +12,26 @@ import { z } from 'zod';
 export const graviteSchema = z.enum(['critique', 'majeure', 'mineure']);
 export type Gravite = z.infer<typeof graviteSchema>;
 
+/**
+ * `examens` = la saisie d'une séance ; `dossiers` = la cohérence d'une fiche
+ * patient ou conducteur. Les deux ne se corrigent pas au même endroit ni par
+ * les mêmes personnes, d'où deux sections distinctes à l'écran.
+ */
+export const familleSchema = z.enum(['examens', 'dossiers']);
+export type Famille = z.infer<typeof familleSchema>;
+
 export const regleQualiteSchema = z.object({
   code: z.string(),
+  famille: familleSchema,
   libelle: z.string(),
   gravite: graviteSchema,
   explication: z.string(),
   nombre: z.number(),
+  // Servis pour les seules règles « dossiers ». Une anomalie saisie dans
+  // l'application se corrige — l'opérateur est identifiable, le patient
+  // joignable. Une anomalie héritée de l'ancienne plateforme, souvent pas.
+  importes: z.number().optional(),
+  saisis: z.number().optional(),
 });
 export type RegleQualite = z.infer<typeof regleQualiteSchema>;
 

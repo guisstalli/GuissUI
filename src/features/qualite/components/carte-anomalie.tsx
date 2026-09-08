@@ -82,6 +82,22 @@ export function CarteAnomalie({ regle, onOuvrir }: CarteAnomalieProps) {
       <span className="text-xs leading-relaxed text-muted-foreground">
         {sain ? 'Aucune anomalie détectée.' : regle.explication}
       </span>
+
+      {/* La ventilation décide de l'action, pas seulement de l'ampleur : une
+          anomalie saisie dans l'application se corrige (l'opérateur est
+          identifiable, le patient joignable), une anomalie héritée de
+          l'ancienne plateforme souvent pas. Affichée seulement quand une part
+          vient de l'import — sinon c'est du bruit. */}
+      {!sain && regle.importes !== undefined && regle.importes > 0 && (
+        <span className="text-xs text-muted-foreground">
+          dont{' '}
+          <strong className="font-medium text-foreground">
+            {regle.importes}
+          </strong>{' '}
+          héritée(s) de l’ancienne plateforme
+          {regle.saisis ? ` · ${regle.saisis} saisie(s) ici` : ''}
+        </span>
+      )}
     </button>
   );
 }
