@@ -56,6 +56,10 @@ import { CommentThread } from '@/features/exams/components/comment-thread';
 import { usePatient } from '@/features/patients/api/get-patient';
 import { usePatientExams } from '@/features/patients/api/get-patient-exams';
 import { usePatchPatient } from '@/features/patients/api/update-patient';
+import {
+  BoutonCorrigerNaissance,
+  BoutonRetirerStatutConducteur,
+} from '@/features/patients/components/dialogue-correction-dossier';
 import { MedicalHistoryForm } from '@/features/patients/components/medical-history-form';
 import { SEX_LABELS } from '@/features/patients/types/schemas';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
@@ -204,10 +208,21 @@ export default function PatientDetailPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">
               {patient.is_adult ? 'Adulte' : 'Enfant'}
             </Badge>
+            {/* Corrections de fiche — nées de l'import du 26/06/2026, qui a
+                repris six conducteurs dont la date de naissance en fait des
+                enfants de 0 à 7 ans, sans qu'aucun écran ne permette de les
+                réparer. */}
+            <BoutonCorrigerNaissance
+              patientId={patient.id}
+              dateActuelle={patient.date_de_naissance}
+            />
+            {patient.has_driver && (
+              <BoutonRetirerStatutConducteur patientId={patient.id} />
+            )}
             <Button onClick={handleOpenExamModal} size="sm">
               <Plus className="mr-1.5 size-4" aria-hidden="true" />
               Nouvel examen

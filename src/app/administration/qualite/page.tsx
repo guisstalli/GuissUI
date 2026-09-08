@@ -13,7 +13,10 @@ import { useQualite } from '@/features/qualite/api/get-qualite';
 import { CarteAnomalie } from '@/features/qualite/components/carte-anomalie';
 import { CourbeTendance } from '@/features/qualite/components/courbe-tendance';
 import { TableauDoublons } from '@/features/qualite/components/tableau-doublons';
-import type { FiltresQualite } from '@/features/qualite/types/types';
+import type {
+  FiltresQualite,
+  RegleQualite,
+} from '@/features/qualite/types/types';
 
 /**
  * Écran « Qualité des données ».
@@ -28,6 +31,32 @@ import type { FiltresQualite } from '@/features/qualite/types/types';
  * Cet écran ne fait rien de spectaculaire : il rend visible, le jour même, ce
  * qui n'était visible qu'après coup.
  */
+function SectionRegles({
+  titre,
+  description,
+  regles,
+}: {
+  titre: string;
+  description: string;
+  regles: RegleQualite[];
+}) {
+  if (regles.length === 0) return null;
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h3 className="font-semibold">{titre}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {regles.map((regle) => (
+          <CarteAnomalie key={regle.code} regle={regle} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /** Fenêtre par défaut de la courbe : assez large pour qu'un pic ressorte. */
 const JOURS_TENDANCE = 60;
 
@@ -132,10 +161,22 @@ export default function QualiteDonneesPage() {
             Impossible de charger la synthèse qualité.
           </p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data?.map((regle) => (
-              <CarteAnomalie key={regle.code} regle={regle} />
-            ))}
+          <div className="space-y-6">
+            {/* Deux familles séparées : la saisie d'une séance se corrige le
+                soir même par l'opérateur ; une fiche incohérente se corrige
+                dossier par dossier, parfois jamais quand elle vient de
+                l'ancienne plateforme. Les mélanger produisait une grille où
+                l'urgent et l'irréparable se ressemblaient. */}
+            <SectionRegles
+              titre="Saisie des examens"
+              description="Anomalies de la période sélectionnée."
+              regles={data?.filter((r) => r.famille === 'examens') ?? []}
+            />
+            <SectionRegles
+              titre="Cohérence des dossiers"
+              description="Patients et conducteurs — indépendant de la période."
+              regles={data?.filter((r) => r.famille === 'dossiers') ?? []}
+            />
           </div>
         )}
 
