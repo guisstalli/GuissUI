@@ -333,7 +333,7 @@ const adminItems: AdminNavItem[] = [
     title: 'Valeurs à arbitrer',
     url: paths.administration.arbitrations.getHref(),
     icon: Scale,
-    capability: CAPABILITY.ANALYTICS_ADMIN,
+    capability: CAPABILITY.QUALITY_ARBITRATE,
   },
   {
     title: 'Permissions',
