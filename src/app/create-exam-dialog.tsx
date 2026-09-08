@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useNotifications } from '@/components/ui/notifications';
 import { useCreateAdultExam } from '@/features/exams/api/adult/mutations';
 import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { PreviousExamSelector } from '@/features/exams/components/previous-exam-selector';
@@ -53,15 +54,31 @@ export function CreateExamDialog({
   isAdult,
   onCreated,
 }: CreateExamDialogProps) {
+  const { addNotification } = useNotifications();
   const [siteId, setSiteId] = useState<number | null>(null);
   const [examenPrecedentId, setExamenPrecedentId] = useState<number | null>(
     null,
   );
+  /**
+   * Examen deja ouvert aujourd'hui pour ce patient, renvoye par le serveur
+   * avec un 409.
+   *
+   * Le garde-fou refuse un second examen le meme jour — c'est son absence qui
+   * a produit 114 examens pour 82 patients le 23/08/2026. Mais refuser ne
+   * suffit pas : si l'ecran se contentait d'afficher « interdit », l'operateur
+   * chercherait a contourner. On lui propose donc la bonne action : REPRENDRE
+   * l'examen en cours.
+   */
+  const [examenExistant, setExamenExistant] = useState<{
+    id: number;
+    numero?: string;
+  } | null>(null);
 
   const fermerEtReinitialiser = () => {
     onOpenChange(false);
     setSiteId(null);
     setExamenPrecedentId(null);
+    setExamenExistant(null);
   };
 
   const succes = (exam: { id: number }) => {
@@ -73,8 +90,33 @@ export function CreateExamDialog({
     requestAnimationFrame(() => onCreated?.(exam));
   };
 
+  const surErreur = (erreur: unknown) => {
+    const { status, data } = (erreur ?? {}) as {
+      status?: number;
+      data?: { examen_existant_id?: number; numero_examen?: string };
+    };
+
+    if (status === 409 && data?.examen_existant_id) {
+      setExamenExistant({
+        id: data.examen_existant_id,
+        numero: data.numero_examen,
+      });
+      return;
+    }
+
+    // Fournir `onError` ECRASE celui de la mutation (`...restConfig` passe
+    // apres), qui portait la notification d'echec. Sans ce rappel, une panne
+    // reseau ou un 500 ne disaient plus rien a l'utilisateur : l'ecran restait
+    // muet et le dialogue ouvert.
+    addNotification({
+      type: 'error',
+      title: 'Erreur',
+      message: "Impossible de créer l'examen.",
+    });
+  };
+
   const creerAdulte = useCreateAdultExam({
-    mutationConfig: { onSuccess: succes },
+    mutationConfig: { onSuccess: succes, onError: surErreur },
   });
   const creerEnfant = useCreateChildExam({
     mutationConfig: { onSuccess: succes },
@@ -82,8 +124,16 @@ export function CreateExamDialog({
 
   const enCours = creerAdulte.isPending || creerEnfant.isPending;
 
+  const reprendre = () => {
+    if (!examenExistant) return;
+    const exam = { id: examenExistant.id };
+    fermerEtReinitialiser();
+    requestAnimationFrame(() => onCreated?.(exam));
+  };
+
   const confirmer = () => {
     if (!siteId) return;
+    setExamenExistant(null);
 
     if (isAdult) {
       creerAdulte.mutate({
@@ -117,6 +167,26 @@ export function CreateExamDialog({
             l&apos;examen pour {patientFullName}.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Le serveur a refuse un second examen : on propose la bonne action
+            plutot qu'un message d'erreur. Un refus sans issue pousse a
+            contourner — c'est ainsi qu'on obtient 12 examens pour un patient. */}
+        {examenExistant && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+            <p className="font-medium text-amber-700 dark:text-amber-400">
+              Un examen est déjà ouvert pour ce patient aujourd’hui
+              {examenExistant.numero ? ` (${examenExistant.numero})` : ''}.
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Reprenez-le plutôt que d’en créer un second : c’est la
+              multiplication des examens qui disperse les mesures entre les
+              dossiers.
+            </p>
+            <Button size="sm" className="mt-3" onClick={reprendre}>
+              Reprendre l’examen en cours
+            </Button>
+          </div>
+        )}
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">

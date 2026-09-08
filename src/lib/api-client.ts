@@ -106,12 +106,25 @@ async function handleUnauthorized() {
 class ApiError extends Error {
   status: number;
 
-  constructor(message: string, status: number) {
+  /**
+   * Corps brut de la reponse d'erreur.
+   *
+   * Sans lui, un refus qui PORTE une information exploitable la perdait : le
+   * 409 « examen deja ouvert aujourd'hui » renvoie l'identifiant de l'examen
+   * a REPRENDRE, et l'interface ne pouvait que signaler l'erreur au lieu de
+   * proposer la sortie.
+   */
+  data?: unknown;
+
+  constructor(message: string, status: number, data?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.data = data;
   }
 }
+
+export type { ApiError };
 
 // Handle API errors and extract error message
 async function handleApiError(
@@ -120,15 +133,27 @@ async function handleApiError(
 ): Promise<never> {
   let message = response.statusText;
   let title = 'Erreur';
+  let corps: unknown;
+
+  // `clone()` d'abord : le corps ne se lit qu'une fois, et si le JSON echoue
+  // (page HTML d'un proxy, corps vide) on perdrait toute information.
+  const copie = response.clone();
 
   try {
     const errorData = await response.json();
+    corps = errorData;
 
     // Utiliser les fonctions d'extraction pour parser l'erreur
     message = extractErrorMessage(errorData);
     title = extractErrorTitle(errorData, response.status);
   } catch {
-    // If we can't parse the error, use statusText
+    // Repli sur le texte brut : mieux vaut un corps illisible qu'aucun corps.
+    try {
+      const texte = await copie.text();
+      if (texte) corps = texte;
+    } catch {
+      // Corps definitivement inexploitable : on garde statusText.
+    }
   }
 
   // Only show notification if not silent
@@ -140,7 +165,7 @@ async function handleApiError(
     });
   }
 
-  throw new ApiError(message, response.status);
+  throw new ApiError(message, response.status, corps);
 }
 
 async function fetchApi<T>(
