@@ -19,8 +19,27 @@ const formaterJour = (jour: string) => {
   return new Date(annee, mois - 1, quantieme).toLocaleDateString('fr-FR');
 };
 
-const afficher = (valeur: string) =>
-  valeur.trim() === '' ? '— (vide)' : valeur;
+/**
+ * Rend une valeur stockée lisible par un médecin.
+ *
+ * Les champs multivalués — symptômes oculaires, diagnostics CIM-11 — sont
+ * conservés en JSON pour faire l'aller-retour sans perte. `["ROUGEUR",
+ * "LARMOIEMENT"]` affiché tel quel se lit mal ; la même liste séparée par des
+ * virgules se compare d'un coup d'œil, ce qui est tout l'objet de cet écran.
+ */
+const afficher = (valeur: string) => {
+  if (valeur.trim() === '') return '— (vide)';
+
+  try {
+    const analysee: unknown = JSON.parse(valeur);
+    if (Array.isArray(analysee)) {
+      return analysee.length === 0 ? '— (aucun)' : analysee.join(', ');
+    }
+  } catch {
+    // Pas du JSON : c'est un décimal ou du texte libre, affiché tel quel.
+  }
+  return valeur;
+};
 
 const LIBELLE_STATUT: Record<string, string> = {
   conservee: 'Valeur du dossier gardée',

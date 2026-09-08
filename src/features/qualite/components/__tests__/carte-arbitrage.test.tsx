@@ -69,6 +69,22 @@ describe('Carte d’arbitrage', () => {
     expect(screen.getByText('— (vide)')).toBeVisible();
   });
 
+  test('une liste multivaluée se lit comme une liste, pas comme du JSON', () => {
+    rendre(
+      arbitrage({
+        composant: 'plaintes',
+        champ: 'eye_symptom',
+        composant_libelle: 'Plaintes',
+        champ_libelle: 'Symptômes oculaires',
+        valeur_conservee: '["DOULEUR"]',
+        valeur_ecartee: '["ROUGEUR", "LARMOIEMENT"]',
+      }),
+    );
+
+    expect(screen.getByText('DOULEUR')).toBeVisible();
+    expect(screen.getByText('ROUGEUR, LARMOIEMENT')).toBeVisible();
+  });
+
   test('transmet la décision et le motif au serveur', async () => {
     let recu: unknown = null;
     server.use(
