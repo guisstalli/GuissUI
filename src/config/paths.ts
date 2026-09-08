@@ -228,6 +228,15 @@ export const paths = {
     dataQuality: {
       getHref: () => '/administration/qualite',
     },
+
+    /**
+     * Valeurs concurrentes qu'un nettoyage n'a pas pu départager. Seul un
+     * médecin tranche entre +0,500 et −0,750 de sphère — hypermétropie contre
+     * myopie.
+     */
+    arbitrations: {
+      getHref: () => '/administration/arbitrages',
+    },
   },
 
   // Events (public + staff)

@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Package,
   Receipt,
+  Scale,
   Settings,
   FileClock,
   ShieldAlert,
@@ -324,6 +325,14 @@ const adminItems: AdminNavItem[] = [
     title: 'Qualité des données',
     url: paths.administration.dataQuality.getHref(),
     icon: ClipboardCheck,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
+  },
+  {
+    // Les 24 valeurs concurrentes du 23 août dormaient dans un fichier que
+    // personne n'ouvrait : ici, elles ont un destinataire.
+    title: 'Valeurs à arbitrer',
+    url: paths.administration.arbitrations.getHref(),
+    icon: Scale,
     capability: CAPABILITY.ANALYTICS_ADMIN,
   },
   {
