@@ -1,14 +1,51 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
 
 import { CreateExamDialog } from '@/app/create-exam-dialog';
-import { rtlRender, screen } from '@/testing/test-utils';
+import { env } from '@/config/env';
+import { server } from '@/testing/mocks/server';
+import { rtlRender, screen, userEvent, waitFor } from '@/testing/test-utils';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/conducteurs',
   useSearchParams: () => new URLSearchParams(),
 }));
+
+vi.mock('next-auth/react', () => ({
+  getSession: async () => ({ accessToken: 'jeton-test' }),
+  signOut: vi.fn(),
+  useSession: () => ({ data: null, status: 'unauthenticated' }),
+}));
+
+// Le selecteur de site interroge le referentiel : hors sujet ici.
+vi.mock('@/features/sites/components/site-selector', () => ({
+  SiteSelector: ({ onChange }: { onChange: (v: number) => void }) => (
+    <button type="button" onClick={() => onChange(7)}>
+      choisir-site-7
+    </button>
+  ),
+}));
+
+function afficherAvecRetour(onCreated: (exam: { id: number }) => void) {
+  rtlRender(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <CreateExamDialog
+        open
+        onOpenChange={() => {}}
+        patientId={2}
+        patientFullName="Oumar Ndiaye"
+        isAdult
+        onCreated={onCreated}
+      />
+    </QueryClientProvider>,
+  );
+}
 
 function afficher() {
   rtlRender(
@@ -49,5 +86,56 @@ describe('CreateExamDialog', () => {
       .find(Boolean);
 
     expect(creer).toBeDisabled();
+  });
+});
+
+/**
+ * Le garde-fou refuse un second examen le meme jour — c'est son absence qui a
+ * produit 114 examens pour 82 patients le 23/08/2026. Mais un refus sans issue
+ * pousse a contourner : l'ecran doit proposer la bonne action.
+ */
+describe('Examen deja ouvert le meme jour', () => {
+  test('propose de REPRENDRE au lieu d afficher une erreur', async () => {
+    server.use(
+      http.post(`${env.API_URL}/depistage/examens/adultes/create/`, () =>
+        HttpResponse.json(
+          {
+            detail: "Un examen existe déjà pour ce patient aujourd'hui.",
+            examen_existant_id: 2596,
+            numero_examen: 'EXA-2026-4CC6CAEA',
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    afficher();
+    await user.click(screen.getByText('choisir-site-7'));
+    await user.click(screen.getByText('Créer').closest('button')!);
+
+    expect(
+      await screen.findByText(/Un examen est déjà ouvert pour ce patient/),
+    ).toBeVisible();
+    expect(
+      screen.getByText('EXA-2026-4CC6CAEA', { exact: false }),
+    ).toBeVisible();
+    expect(screen.getByText('Reprendre l’examen en cours')).toBeVisible();
+  });
+
+  test('reprendre ouvre l examen existant', async () => {
+    server.use(
+      http.post(`${env.API_URL}/depistage/examens/adultes/create/`, () =>
+        HttpResponse.json({ examen_existant_id: 2596 }, { status: 409 }),
+      ),
+    );
+    const ouvrir = vi.fn();
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    afficherAvecRetour(ouvrir);
+    await user.click(screen.getByText('choisir-site-7'));
+    await user.click(screen.getByText('Créer').closest('button')!);
+    await user.click(await screen.findByText('Reprendre l’examen en cours'));
+
+    await waitFor(() => expect(ouvrir).toHaveBeenCalledWith({ id: 2596 }));
   });
 });

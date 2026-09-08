@@ -220,6 +220,14 @@ export const paths = {
     aiInsights: {
       getHref: () => '/administration/propositions-ia',
     },
+    /**
+     * Qualité des données — anomalies de saisie. Né de l'incident du
+     * 23/08/2026 : un identifiant partagé a produit 114 examens pour 82
+     * patients sans qu'aucun écran ne le signale pendant trois semaines.
+     */
+    dataQuality: {
+      getHref: () => '/administration/qualite',
+    },
   },
 
   // Events (public + staff)
