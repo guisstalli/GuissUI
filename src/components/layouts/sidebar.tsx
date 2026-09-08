@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CalendarRange,
   ChevronRight,
+  ClipboardCheck,
   ChevronUp,
   ClipboardList,
   FileText,
@@ -316,6 +317,14 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.changeLog.getHref(),
     icon: FileClock,
     capability: CAPABILITY.SECURITY_AUDIT_VIEW,
+  },
+  {
+    // Détecte le jour même ce qui, en août 2026, n'a été vu qu'après trois
+    // semaines — quand les données étaient déjà devenues inarbitrables.
+    title: 'Qualité des données',
+    url: paths.administration.dataQuality.getHref(),
+    icon: ClipboardCheck,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
   },
   {
     title: 'Permissions',

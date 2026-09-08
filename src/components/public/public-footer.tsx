@@ -24,7 +24,7 @@ export function PublicFooter() {
               </div>
             </div>
             <p className="mb-5 max-w-xs text-sm leading-relaxed text-slate-600">
-              Service de dépistage ophtalmologique du le centre vision Madoune
+              Service de dépistage ophtalmologique du centre vision Madoune
               Robert Ndiaye - UFR Santé Université Iba Der Thiam de Thies.
               <br />
               Des consultations accessibles à tous, gratuitement.

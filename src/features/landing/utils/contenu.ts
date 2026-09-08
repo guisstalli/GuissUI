@@ -77,7 +77,7 @@ export const PLATEAU = [
   {
     groupe: 'Examens complémentaires',
     appareils: [
-      'Rajouter et échographie ( À,B,UBM)',
+      'Echographie ( À,B,UBM)',
       'Orthoptie',
       'Bilan orthoptique',
       'Rééducation orthoptique',
