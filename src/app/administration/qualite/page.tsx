@@ -1,14 +1,17 @@
 'use client';
 
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Scale } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/form/input';
 import { Spinner } from '@/components/ui/spinner';
+import { paths } from '@/config/paths';
 import { useQualite } from '@/features/qualite/api/get-qualite';
 import { CarteAnomalie } from '@/features/qualite/components/carte-anomalie';
+import { CourbeTendance } from '@/features/qualite/components/courbe-tendance';
 import { TableauDoublons } from '@/features/qualite/components/tableau-doublons';
 import type { FiltresQualite } from '@/features/qualite/types/types';
 
@@ -25,12 +28,27 @@ import type { FiltresQualite } from '@/features/qualite/types/types';
  * Cet écran ne fait rien de spectaculaire : il rend visible, le jour même, ce
  * qui n'était visible qu'après coup.
  */
+/** Fenêtre par défaut de la courbe : assez large pour qu'un pic ressorte. */
+const JOURS_TENDANCE = 60;
+
+const ilYAJours = (jours: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - jours);
+  return d.toISOString().slice(0, 10);
+};
+
 export default function QualiteDonneesPage() {
   const [filtres, setFiltres] = useState<FiltresQualite>({});
   const { data, isLoading, isError, refetch, isFetching } = useQualite(filtres);
 
   const critiques =
     data?.filter((r) => r.gravite === 'critique' && r.nombre > 0) ?? [];
+
+  // La courbe suit les filtres quand ils existent ; sinon elle regarde en
+  // arrière d'elle-même — un écran de surveillance qui démarre vide ne
+  // surveille rien.
+  const dateDebut = filtres.dateDebut ?? ilYAJours(JOURS_TENDANCE);
+  const dateFin = filtres.dateFin ?? new Date().toISOString().slice(0, 10);
 
   return (
     <Shell title="Qualité des données">
@@ -82,13 +100,22 @@ export default function QualiteDonneesPage() {
               <RefreshCw className="mr-1.5 size-3.5" />
               Actualiser
             </Button>
+            {/* Le nettoyage résout ce qui ne se contredit pas ; le reste
+                attend un médecin. Sans ce lien, cette file n'a pas de porte
+                d'entrée depuis l'écran où l'on constate le problème. */}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={paths.administration.arbitrations.getHref()}>
+                <Scale className="mr-1.5 size-3.5" />
+                Valeurs à arbitrer
+              </Link>
+            </Button>
           </div>
         </div>
 
         {/* Une bannière seulement s'il y a du critique : sinon l'écran crie
             en permanence et on cesse de le lire. */}
         {critiques.length > 0 && (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="border-destructive/40 bg-destructive/5 rounded-lg border px-4 py-3 text-sm text-destructive">
             {critiques.reduce((total, r) => total + r.nombre, 0)} anomalie(s)
             critique(s) : les données cliniques concernées se dispersent entre
             plusieurs examens. Corriger maintenant coûte quelques minutes ;
@@ -111,6 +138,8 @@ export default function QualiteDonneesPage() {
             ))}
           </div>
         )}
+
+        <CourbeTendance dateDebut={dateDebut} dateFin={dateFin} />
 
         <div className="space-y-3 pt-2">
           <div>

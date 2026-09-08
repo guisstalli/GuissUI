@@ -16,6 +16,11 @@ import { api } from '@/lib/api-client';
 export const CAPABILITY = {
   AI_CHAT_ACCESS: 'ai.chat.access',
   ANALYTICS_ADMIN: 'analytics.admin',
+  // Trancher entre deux mesures cliniques concurrentes. Volontairement plus
+  // étroit qu'analytics.admin : ni l'agent de saisie — dont l'identifiant
+  // partagé a produit ces conflits — ni l'admin, rôle technique sans écriture
+  // clinique, ne peuvent arbitrer.
+  QUALITY_ARBITRATE: 'quality.arbitrate',
   SECURITY_AUDIT_VIEW: 'security.audit.view',
   PERMISSIONS_MANAGE: 'permissions.manage',
   USERS_MANAGE: 'users.manage',
