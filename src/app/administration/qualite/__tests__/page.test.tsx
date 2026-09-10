@@ -21,6 +21,7 @@ vi.mock('@/app/_shell', () => ({
 const SYNTHESE = [
   {
     code: 'doublons',
+    famille: 'examens',
     libelle: 'Plusieurs examens pour un patient le même jour',
     gravite: 'critique',
     explication: 'Les données cliniques se dispersent entre les doublons.',
@@ -28,10 +29,25 @@ const SYNTHESE = [
   },
   {
     code: 'sans_site',
+    famille: 'examens',
     libelle: 'Examen sans site de dépistage',
     gravite: 'majeure',
     explication: "L'examen disparaît de toute analyse par site.",
     nombre: 38,
+  },
+  {
+    // Famille « dossiers » : cohérence d'une fiche patient ou conducteur.
+    // L'import du 26/06/2026 en a laissé six — des conducteurs dont la date
+    // de naissance en fait des enfants de 0 à 7 ans.
+    code: 'conducteur_trop_jeune',
+    famille: 'dossiers',
+    libelle: 'Conducteur de moins de 16 ans',
+    gravite: 'critique',
+    explication:
+      'Date de naissance fausse sur un conducteur réel : il fausse toute analyse par tranche d’âge.',
+    nombre: 6,
+    importes: 6,
+    saisis: 0,
   },
 ];
 
@@ -89,4 +105,21 @@ describe('Écran Qualité des données', () => {
 
     expect(await screen.findByText('Patient 3691')).toBeVisible();
   });
+});
+
+/**
+ * Les deux familles ne se corrigent ni au même endroit ni par les mêmes
+ * personnes : la saisie d'une séance se reprend le soir même, une fiche
+ * héritée de l'ancienne plateforme ne se reprend souvent jamais. Les
+ * mélanger dans une même grille rendait l'urgent et l'irréparable
+ * indiscernables.
+ */
+test('sépare la saisie des examens de la cohérence des dossiers', async () => {
+  afficher();
+
+  expect(await screen.findByText('Saisie des examens')).toBeVisible();
+  expect(screen.getByText('Cohérence des dossiers')).toBeVisible();
+  expect(
+    screen.getByText(/héritée\(s\) de l’ancienne plateforme/),
+  ).toBeVisible();
 });

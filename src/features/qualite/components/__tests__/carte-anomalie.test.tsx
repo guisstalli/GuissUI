@@ -7,6 +7,7 @@ import type { RegleQualite } from '../../types/types';
 
 const regle = (partiel: Partial<RegleQualite> = {}): RegleQualite => ({
   code: 'doublons',
+  famille: 'examens',
   libelle: 'Plusieurs examens pour un patient le même jour',
   gravite: 'critique',
   explication: 'Les données cliniques se dispersent entre les doublons.',
@@ -55,5 +56,49 @@ describe('Carte d’anomalie', () => {
     await user.click(screen.getByRole('button'));
 
     expect(ouvrir).toHaveBeenCalledWith('doublons');
+  });
+});
+
+/**
+ * L'import du 26/06/2026 a repris 410 conducteurs de l'ancienne plateforme.
+ * Six ont une date de naissance qui en fait des enfants de 0 à 7 ans. Sans
+ * cette ventilation, la carte afficherait « 6 » sans dire que ces six-là ne
+ * se corrigent pas comme une faute de frappe de la semaine dernière.
+ */
+describe('Provenance des anomalies de dossier', () => {
+  test('affiche la part héritée de l’ancienne plateforme', () => {
+    rtlRender(
+      <CarteAnomalie
+        regle={regle({
+          code: 'conducteur_trop_jeune',
+          famille: 'dossiers',
+          libelle: 'Conducteur de moins de 16 ans',
+          nombre: 6,
+          importes: 6,
+          saisis: 0,
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(/héritée\(s\) de l’ancienne plateforme/),
+    ).toBeVisible();
+  });
+
+  test('ne dit rien quand tout a été saisi dans l’application', () => {
+    rtlRender(
+      <CarteAnomalie
+        regle={regle({
+          code: 'permis_perime',
+          famille: 'dossiers',
+          nombre: 8,
+          importes: 0,
+          saisis: 8,
+        })}
+      />,
+    );
+
+    // Une mention « dont 0 héritée » serait du bruit sur chaque carte saine.
+    expect(screen.queryByText(/ancienne plateforme/)).not.toBeInTheDocument();
   });
 });
