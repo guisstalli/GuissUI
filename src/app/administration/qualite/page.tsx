@@ -12,6 +12,8 @@ import { paths } from '@/config/paths';
 import { useQualite } from '@/features/qualite/api/get-qualite';
 import { CarteAnomalie } from '@/features/qualite/components/carte-anomalie';
 import { CourbeTendance } from '@/features/qualite/components/courbe-tendance';
+import { HistoriqueNettoyages } from '@/features/qualite/components/historique-nettoyages';
+import { PanneauNettoyage } from '@/features/qualite/components/panneau-nettoyage';
 import { TableauDoublons } from '@/features/qualite/components/tableau-doublons';
 import type {
   FiltresQualite,
@@ -181,6 +183,21 @@ export default function QualiteDonneesPage() {
         )}
 
         <CourbeTendance dateDebut={dateDebut} dateFin={dateFin} />
+
+        {/* Voir une anomalie sans pouvoir agir dessus obligeait à ouvrir un
+            terminal sur le serveur. */}
+        <PanneauNettoyage />
+
+        <div className="space-y-3 pt-2">
+          <div>
+            <h3 className="font-semibold">Nettoyages effectués</h3>
+            <p className="text-sm text-muted-foreground">
+              Ce que chaque exécution a fait, la tâche de 5&nbsp;h comprise — et
+              de quoi la défaire.
+            </p>
+          </div>
+          <HistoriqueNettoyages />
+        </div>
 
         <div className="space-y-3 pt-2">
           <div>
