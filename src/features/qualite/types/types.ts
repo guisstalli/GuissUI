@@ -128,3 +128,20 @@ export const planNettoyageSchema = z.object({
   rapport: z.string(),
 });
 export type PlanNettoyage = z.infer<typeof planNettoyageSchema>;
+
+/**
+ * Date du jour au format `AAAA-MM-JJ`, en heure LOCALE.
+ *
+ * `toISOString().slice(0, 10)` renvoie la date UTC : passé minuit dans un
+ * fuseau en avance, elle désigne le lendemain, et la veille dans un fuseau en
+ * retard. Les champs `type="date"` et les filtres du serveur attendent une
+ * date locale — c'est la même erreur que celle déjà corrigée à l'affichage
+ * des journées.
+ */
+export const jourLocal = (decalageJours = 0): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + decalageJours);
+  const mois = String(d.getMonth() + 1).padStart(2, '0');
+  const quantieme = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mois}-${quantieme}`;
+};

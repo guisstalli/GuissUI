@@ -5,9 +5,11 @@ import { useState } from 'react';
 import { AppShell as Shell } from '@/app/_shell';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { CapabilityGate } from '@/features/administration/components/capability-gate';
 import { useArbitrages } from '@/features/qualite/api/get-arbitrages';
 import { CarteArbitrage } from '@/features/qualite/components/carte-arbitrage';
 import type { StatutArbitrage } from '@/features/qualite/types/types';
+import { CAPABILITY } from '@/lib/capabilities';
 
 const ONGLETS: { statut: StatutArbitrage; libelle: string }[] = [
   { statut: 'en_attente', libelle: 'À trancher' },
@@ -35,53 +37,58 @@ export default function ArbitragesPage() {
 
   return (
     <Shell title="Valeurs à arbitrer">
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Mesures concurrentes issues d’un nettoyage
-          </h2>
-          <p className="max-w-3xl text-sm text-muted-foreground">
-            Deux examens du même patient portaient, le même jour, des valeurs
-            différentes pour la même mesure. Le nettoyage n’en a choisi aucune :
-            seule une décision médicale peut trancher.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {ONGLETS.map((onglet) => (
-            <Button
-              key={onglet.statut}
-              size="sm"
-              variant={statut === onglet.statut ? 'default' : 'outline'}
-              onClick={() => setStatut(onglet.statut)}
-            >
-              {onglet.libelle}
-            </Button>
-          ))}
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <Spinner />
+      {/* Le gating du menu ne protège rien : l'URL reste accessible en direct.
+          Le serveur refuse (403), mais l'écran afficherait une erreur brute
+          plutôt qu'un refus lisible. */}
+      <CapabilityGate capability={CAPABILITY.QUALITY_ARBITRATE}>
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Mesures concurrentes issues d’un nettoyage
+            </h2>
+            <p className="max-w-3xl text-sm text-muted-foreground">
+              Deux examens du même patient portaient, le même jour, des valeurs
+              différentes pour la même mesure. Le nettoyage n’en a choisi aucune
+              : seule une décision médicale peut trancher.
+            </p>
           </div>
-        ) : isError ? (
-          <p className="py-16 text-center text-sm text-destructive">
-            Impossible de charger les valeurs à arbitrer.
-          </p>
-        ) : !data || data.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            {statut === 'en_attente'
-              ? 'Aucune valeur en attente. Rien ne réclame d’arbitrage.'
-              : 'Aucune décision de ce type pour le moment.'}
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {data.map((arbitrage) => (
-              <CarteArbitrage key={arbitrage.id} arbitrage={arbitrage} />
+
+          <div className="flex flex-wrap gap-2">
+            {ONGLETS.map((onglet) => (
+              <Button
+                key={onglet.statut}
+                size="sm"
+                variant={statut === onglet.statut ? 'default' : 'outline'}
+                onClick={() => setStatut(onglet.statut)}
+              >
+                {onglet.libelle}
+              </Button>
             ))}
           </div>
-        )}
-      </div>
+
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <Spinner />
+            </div>
+          ) : isError ? (
+            <p className="py-16 text-center text-sm text-destructive">
+              Impossible de charger les valeurs à arbitrer.
+            </p>
+          ) : !data || data.length === 0 ? (
+            <p className="py-16 text-center text-sm text-muted-foreground">
+              {statut === 'en_attente'
+                ? 'Aucune valeur en attente. Rien ne réclame d’arbitrage.'
+                : 'Aucune décision de ce type pour le moment.'}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {data.map((arbitrage) => (
+                <CarteArbitrage key={arbitrage.id} arbitrage={arbitrage} />
+              ))}
+            </div>
+          )}
+        </div>
+      </CapabilityGate>
     </Shell>
   );
 }
