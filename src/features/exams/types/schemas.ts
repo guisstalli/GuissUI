@@ -981,6 +981,10 @@ export const ExamenAdultCreateSchema = z.object({
   /** Examen auquel celui-ci fait suite. Le backend vérifie qu'il appartient
    *  au même patient. */
   examen_precedent_id: z.number().optional(),
+  /** Raison d'un second examen le même jour — reprise après dilatation,
+   *  contrôle de fin de séance. Renseigné, il lève le refus du serveur, sort
+   *  l'examen du compte des doublons et l'exclut du nettoyage automatique. */
+  motif_reprise: z.string().optional(),
 });
 
 /** Patient nested schema */

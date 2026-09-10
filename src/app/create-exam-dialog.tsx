@@ -18,6 +18,19 @@ import { useCreateChildExam } from '@/features/exams/api/child/mutations';
 import { PreviousExamSelector } from '@/features/exams/components/previous-exam-selector';
 import { SiteSelector } from '@/features/sites/components/site-selector';
 
+/**
+ * Raisons courantes d'un second examen le même jour.
+ *
+ * Proposées plutôt que laissées au champ libre : le centre tient des dossiers
+ * physiques, ces trois cas couvrent l'essentiel, et un vocabulaire commun rend
+ * la relecture possible. Le champ reste libre pour le reste.
+ */
+const MOTIFS_SUGGERES = [
+  'Reprise après dilatation',
+  'Contrôle de fin de séance',
+  'Nouvelle mesure',
+];
+
 type CreateExamDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -73,12 +86,23 @@ export function CreateExamDialog({
     id: number;
     numero?: string;
   } | null>(null);
+  /**
+   * Motif saisi quand l'opérateur déclare un second examen assumé.
+   *
+   * C'est la seconde issue du refus. Sans elle, un centre qui enregistre
+   * légitimement deux examens dans la journée n'a aucun moyen de le faire —
+   * et un garde-fou sans issue pousse à contourner.
+   */
+  const [motifReprise, setMotifReprise] = useState('');
+  const [declareReprise, setDeclareReprise] = useState(false);
 
   const fermerEtReinitialiser = () => {
     onOpenChange(false);
     setSiteId(null);
     setExamenPrecedentId(null);
     setExamenExistant(null);
+    setMotifReprise('');
+    setDeclareReprise(false);
   };
 
   const succes = (exam: { id: number }) => {
@@ -144,6 +168,11 @@ export function CreateExamDialog({
         ...(examenPrecedentId !== null && {
           examen_precedent_id: examenPrecedentId,
         }),
+        // Envoyé seulement s'il est renseigné : un motif vide vaut « examen
+        // ordinaire », et le serveur doit alors continuer de refuser.
+        ...(motifReprise.trim() !== '' && {
+          motif_reprise: motifReprise.trim(),
+        }),
       });
     } else {
       creerEnfant.mutate({ patient_id: patientId, site_id: siteId });
@@ -178,13 +207,66 @@ export function CreateExamDialog({
               {examenExistant.numero ? ` (${examenExistant.numero})` : ''}.
             </p>
             <p className="mt-1 text-muted-foreground">
-              Reprenez-le plutôt que d’en créer un second : c’est la
-              multiplication des examens qui disperse les mesures entre les
-              dossiers.
+              Reprenez-le si c’est le même passage. S’il s’agit réellement d’un
+              second examen, dites pourquoi : c’est ce qui le distinguera d’un
+              doublon et l’exclura du nettoyage automatique.
             </p>
-            <Button size="sm" className="mt-3" onClick={reprendre}>
-              Reprendre l’examen en cours
-            </Button>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" onClick={reprendre}>
+                Reprendre l’examen en cours
+              </Button>
+              {!declareReprise && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDeclareReprise(true)}
+                >
+                  C’est un second examen
+                </Button>
+              )}
+            </div>
+
+            {declareReprise && (
+              <div className="mt-3 flex flex-col gap-2">
+                <label
+                  htmlFor="motif-reprise"
+                  className="text-xs font-medium text-foreground"
+                >
+                  Motif du second examen
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {MOTIFS_SUGGERES.map((motif) => (
+                    <Button
+                      key={motif}
+                      type="button"
+                      size="sm"
+                      variant={motifReprise === motif ? 'default' : 'outline'}
+                      className="h-7 text-xs"
+                      onClick={() => setMotifReprise(motif)}
+                    >
+                      {motif}
+                    </Button>
+                  ))}
+                </div>
+                <input
+                  id="motif-reprise"
+                  value={motifReprise}
+                  onChange={(e) => setMotifReprise(e.target.value)}
+                  maxLength={200}
+                  placeholder="ou saisir une autre raison"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <Button
+                  size="sm"
+                  className="self-start"
+                  disabled={motifReprise.trim() === '' || enCours}
+                  onClick={confirmer}
+                >
+                  Créer le second examen
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
