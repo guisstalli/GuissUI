@@ -88,3 +88,43 @@ export type Arbitrage = z.infer<typeof arbitrageSchema>;
 export type DecisionArbitrage = 'conservee' | 'remplacee' | 'ignoree';
 
 export type StatutArbitrage = Arbitrage['statut'];
+
+/**
+ * Une exécution de nettoyage — manuelle ou planifiée.
+ *
+ * La tâche de 5 h fusionnait, archivait et supprimait sans que personne puisse
+ * voir son effet. Ces lignes sont ce qui rend l'automatisation inspectable.
+ */
+export const nettoyageRunSchema = z.object({
+  id: z.number(),
+  operation: z.string(),
+  jour: z.string().nullable(),
+  declencheur: z.enum(['automatique', 'manuel', 'commande']),
+  lance_le: z.string(),
+  lance_par_email: z.string().nullable().optional(),
+  statut: z.enum(['simulation', 'applique', 'restaure', 'echoue']),
+  examens_concernes: z.number(),
+  fusions: z.number(),
+  supprimes: z.number(),
+  arbitrages_crees: z.number(),
+  rattaches_site: z.number(),
+  archive: z.string(),
+  est_restaurable: z.boolean(),
+  restaure_le: z.string().nullable().optional(),
+  restaure_par_email: z.string().nullable().optional(),
+});
+export type NettoyageRun = z.infer<typeof nettoyageRunSchema>;
+
+/** Ce que la simulation annonce avant toute écriture. */
+export const planNettoyageSchema = z.object({
+  jour: z.string(),
+  examens_concernes: z.number(),
+  patients: z.number(),
+  reprises_epargnees: z.number(),
+  fusions: z.number(),
+  supprimes: z.number(),
+  conflits: z.number(),
+  simulation: z.boolean(),
+  rapport: z.string(),
+});
+export type PlanNettoyage = z.infer<typeof planNettoyageSchema>;
