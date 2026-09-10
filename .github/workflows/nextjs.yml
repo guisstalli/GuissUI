@@ -69,7 +69,6 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
-          NEXT_PUBLIC_ENABLE_API_MOCKING: 'false'
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           NEXT_TELEMETRY_DISABLED: 1
@@ -131,7 +130,6 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}
-            NEXT_PUBLIC_ENABLE_API_MOCKING=false
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

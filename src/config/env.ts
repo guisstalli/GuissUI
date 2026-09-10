@@ -6,11 +6,6 @@ import * as z from 'zod';
  */
 const clientEnvSchema = z.object({
   API_URL: z.string(),
-  ENABLE_API_MOCKING: z
-    .string()
-    .refine((s) => s === 'true' || s === 'false')
-    .transform((s) => s === 'true')
-    .optional(),
   APP_URL: z.string().optional().default('http://localhost:3000'),
 });
 
@@ -26,7 +21,6 @@ const serverEnvSchema = z.object({
 const createClientEnv = () => {
   const envVars = {
     API_URL: process.env.NEXT_PUBLIC_API_URL,
-    ENABLE_API_MOCKING: process.env.NEXT_PUBLIC_ENABLE_API_MOCKING,
     APP_URL: process.env.NEXT_PUBLIC_URL,
   };
 
