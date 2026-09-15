@@ -66,3 +66,26 @@ export const useDeleteEvent = (
     onError,
   });
 };
+
+/**
+ * Rétablit un événement annulé (retour au statut « planifié »).
+ *
+ * L'annulation était irréversible depuis l'interface : le 14/09/2026,
+ * « Mairie Thiès Nord » annulé par erreur a dû être corrigé en base. Le serveur
+ * prévient les inscrits que l'événement est maintenu, et réserve ce geste à
+ * l'administration (capacité `config.manage`).
+ */
+export const useRestoreEvent = (
+  eventId: number,
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {},
+) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.patch(`/events/${eventId}/retablir/`),
+    onSuccess: () => {
+      invalidateAll(qc);
+      onSuccess?.();
+    },
+    onError,
+  });
+};
