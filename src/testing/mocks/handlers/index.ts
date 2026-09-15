@@ -10,11 +10,8 @@ import { aiReportsHandlers } from './ai-reports';
 import { appointmentsHandlers } from './appointments';
 import { authHandlers } from './auth';
 import { billingHandlers } from './billing';
-import { commentsHandlers } from './comments';
 import { dashboardHandlers } from './dashboard';
-import { discussionsHandlers } from './discussions';
 import { notificationsHandlers } from './notifications';
-import { teamsHandlers } from './teams';
 import { usersHandlers } from './users';
 
 export const handlers = [
@@ -26,11 +23,8 @@ export const handlers = [
   ...appointmentsHandlers,
   ...authHandlers,
   ...billingHandlers,
-  ...commentsHandlers,
   ...dashboardHandlers,
-  ...discussionsHandlers,
   ...notificationsHandlers,
-  ...teamsHandlers,
   ...usersHandlers,
   http.get(`${env.API_URL}/healthcheck`, async () => {
     await networkDelay();

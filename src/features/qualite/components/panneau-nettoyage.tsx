@@ -7,13 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/form/input';
 
 import { useAppliquerNettoyage, useSimulerNettoyage } from '../api/nettoyage';
-import type { PlanNettoyage } from '../types/types';
+import { jourLocal, type PlanNettoyage } from '../types/types';
 
-const hier = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
-};
+const hier = () => jourLocal(-1);
 
 /**
  * Nettoyer une journée depuis l'écran.

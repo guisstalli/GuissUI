@@ -15,10 +15,16 @@ import { CourbeTendance } from '@/features/qualite/components/courbe-tendance';
 import { HistoriqueNettoyages } from '@/features/qualite/components/historique-nettoyages';
 import { PanneauNettoyage } from '@/features/qualite/components/panneau-nettoyage';
 import { TableauDoublons } from '@/features/qualite/components/tableau-doublons';
-import type {
-  FiltresQualite,
-  RegleQualite,
+import {
+  jourLocal,
+  type FiltresQualite,
+  type RegleQualite,
 } from '@/features/qualite/types/types';
+import {
+  CAPABILITY,
+  hasCapability,
+  useMyCapabilities,
+} from '@/lib/capabilities';
 
 /**
  * Écran « Qualité des données ».
@@ -62,14 +68,12 @@ function SectionRegles({
 /** Fenêtre par défaut de la courbe : assez large pour qu'un pic ressorte. */
 const JOURS_TENDANCE = 60;
 
-const ilYAJours = (jours: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - jours);
-  return d.toISOString().slice(0, 10);
-};
-
 export default function QualiteDonneesPage() {
   const [filtres, setFiltres] = useState<FiltresQualite>({});
+  // Le lien vers l'arbitrage suit la même capacité que l'entrée de menu :
+  // proposer une action que le serveur refusera n'aide personne.
+  const { data: capacites } = useMyCapabilities();
+  const peutArbitrer = hasCapability(capacites, CAPABILITY.QUALITY_ARBITRATE);
   const { data, isLoading, isError, refetch, isFetching } = useQualite(filtres);
 
   const critiques =
@@ -78,8 +82,8 @@ export default function QualiteDonneesPage() {
   // La courbe suit les filtres quand ils existent ; sinon elle regarde en
   // arrière d'elle-même — un écran de surveillance qui démarre vide ne
   // surveille rien.
-  const dateDebut = filtres.dateDebut ?? ilYAJours(JOURS_TENDANCE);
-  const dateFin = filtres.dateFin ?? new Date().toISOString().slice(0, 10);
+  const dateDebut = filtres.dateDebut ?? jourLocal(-JOURS_TENDANCE);
+  const dateFin = filtres.dateFin ?? jourLocal();
 
   return (
     <Shell title="Qualité des données">
@@ -133,13 +137,18 @@ export default function QualiteDonneesPage() {
             </Button>
             {/* Le nettoyage résout ce qui ne se contredit pas ; le reste
                 attend un médecin. Sans ce lien, cette file n'a pas de porte
-                d'entrée depuis l'écran où l'on constate le problème. */}
-            <Button variant="outline" size="sm" asChild>
-              <Link href={paths.administration.arbitrations.getHref()}>
-                <Scale className="mr-1.5 size-3.5" />
-                Valeurs à arbitrer
-              </Link>
-            </Button>
+                d'entrée depuis l'écran où l'on constate le problème.
+
+                Gaté sur la même capacité que l'entrée de menu : proposer une
+                action que le serveur refusera n'aide personne. */}
+            {peutArbitrer && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={paths.administration.arbitrations.getHref()}>
+                  <Scale className="mr-1.5 size-3.5" />
+                  Valeurs à arbitrer
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 

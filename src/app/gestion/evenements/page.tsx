@@ -3,16 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Calendar,
-  CheckCircle,
   Clock,
   ExternalLink,
   MapPin,
-  MoreHorizontal,
-  Play,
   Plus,
-  Trash2,
   Users,
-  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -20,6 +15,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppShell as Shell } from '@/app/_shell';
+import { EventActions } from '@/app/gestion/evenements/event-actions-menu';
 import { Badge } from '@/components/ui/badge/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,13 +26,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown/dropdown';
 import {
   Form,
   FormControl,
@@ -56,12 +45,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateEvent } from '@/features/events/api/create-event';
-import {
-  useCancelEvent,
-  useCloseEvent,
-  useDeleteEvent,
-  useStartEvent,
-} from '@/features/events/api/event-actions';
 import { useStaffEvents } from '@/features/events/api/get-staff-events';
 import {
   EventCreateInputSchema,
@@ -108,93 +91,6 @@ function formatDate(d: string) {
     month: 'short',
     year: 'numeric',
   });
-}
-
-/**
- * Actions d'un événement.
- *
- * Les deux gestes du quotidien — pointer les inscrits et faire avancer le
- * statut — étaient enfouis dans le menu « … », donc invisibles : depuis la
- * liste, rien ne montrait qu'on pouvait faire un check-in. Ils passent en
- * boutons explicites ; le menu ne garde que le secondaire et le destructif.
- */
-function EventActions({ event }: { event: EventStaff }) {
-  const { mutate: start, isPending: starting } = useStartEvent(event.id);
-  const { mutate: close, isPending: closing } = useCloseEvent(event.id);
-  const { mutate: cancel } = useCancelEvent(event.id);
-  const { mutate: del } = useDeleteEvent(event.id);
-
-  const isClosed = event.statut === 'annule' || event.statut === 'termine';
-
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      {/* Le check-in se fait sur l'écran Inscriptions : on y mène directement. */}
-      <Button variant="outline" size="sm" asChild>
-        <Link href={`/gestion/evenements/${event.id}/inscriptions`}>
-          <Users className="mr-1.5 size-4" />
-          Inscrits
-        </Link>
-      </Button>
-
-      {event.statut === 'planifie' && (
-        <Button
-          size="sm"
-          onClick={() => start()}
-          disabled={starting}
-          className="bg-emerald-600 hover:bg-emerald-700"
-        >
-          <Play className="mr-1.5 size-4" />
-          Démarrer
-        </Button>
-      )}
-      {event.statut === 'en_cours' && (
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => close()}
-          disabled={closing}
-        >
-          <CheckCircle className="mr-1.5 size-4" />
-          Clôturer
-        </Button>
-      )}
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8">
-            <MoreHorizontal className="size-4" />
-            <span className="sr-only">Autres actions</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem asChild>
-            <Link href={`/public/evenements/${event.slug}`} target="_blank">
-              <ExternalLink className="mr-2 size-4" />
-              Page publique
-            </Link>
-          </DropdownMenuItem>
-          {!isClosed && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => cancel({})}
-                className="text-red-600"
-              >
-                <XCircle className="mr-2 size-4" />
-                Annuler l&apos;événement
-              </DropdownMenuItem>
-            </>
-          )}
-          {event.statut === 'planifie' && (
-            <DropdownMenuItem onClick={() => del()} className="text-red-600">
-              <Trash2 className="mr-2 size-4" />
-              Supprimer
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
 }
 
 function CreateEventDialog() {
