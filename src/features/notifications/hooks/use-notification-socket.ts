@@ -91,7 +91,13 @@ export function invaliderInscriptions(
   queryClient: QueryClient,
   payload: AppNotification,
 ): void {
-  if (payload.category !== 'inscription') return;
+  // Le backend émettait ces notifications en catégorie « system » : on se fie
+  // aussi à la présence d'une inscription dans les métadonnées, ce qui couvre
+  // les notifications déjà en base et un backend pas encore redéployé.
+  const concerneInscription =
+    payload.category === 'inscription' ||
+    typeof payload.metadata?.inscription_id === 'number';
+  if (!concerneInscription) return;
 
   const eventId = payload.metadata?.event_id;
   if (typeof eventId === 'number') {

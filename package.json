@@ -9,13 +9,11 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
-    "test-e2e": "pm2 start \"yarn run-mock-server\" --name server && yarn playwright test",
     "prepare": "husky",
     "check-types": "tsc --project tsconfig.json --pretty --noEmit",
     "generate": "plop",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "run-mock-server": "tsx ./mock-server.ts",
     "test:report": "yarn playwright test --reporter=line 2>&1 | tee test-results/last-run.txt"
   },
   "dependencies": {
@@ -71,7 +69,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.2",
     "@mswjs/data": "^0.16.1",
-    "@mswjs/http-middleware": "^0.10.1",
     "@ngneat/falso": "^8.0.2",
     "@playwright/test": "^1.43.1",
     "@storybook/addon-a11y": "^8.0.10",
@@ -86,7 +83,6 @@
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^15.0.5",
     "@testing-library/user-event": "^14.5.2",
-    "@types/cors": "^2.8.17",
     "@types/dompurify": "^3.0.5",
     "@types/js-cookie": "^3.0.6",
     "@types/marked": "^6.0.0",
@@ -99,7 +95,6 @@
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/coverage-v8": "^2.1.4",
     "autoprefixer": "^10.4.19",
-    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "eslint": "8",
     "eslint-config-next": "^14.2.5",
@@ -115,17 +110,14 @@
     "eslint-plugin-tailwindcss": "^3.15.1",
     "eslint-plugin-testing-library": "^6.2.2",
     "eslint-plugin-vitest": "^0.5.4",
-    "express": "^4.19.2",
     "husky": "^9.0.11",
     "jest-environment-jsdom": "^29.7.0",
     "js-cookie": "^3.0.5",
     "jsdom": "^24.0.0",
     "lint-staged": "^15.2.2",
     "msw": "^2.2.14",
-    "pino-http": "^10.1.0",
     "pino-pretty": "^11.1.0",
     "plop": "^4.0.1",
-    "pm2": "^5.4.0",
     "postcss": "^8.4.38",
     "prettier": "^3.2.5",
     "shadcn": "^4.7.0",
@@ -136,8 +128,5 @@
     "undici": "^7.22.0",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^2.1.4"
-  },
-  "msw": {
-    "workerDirectory": "public"
   }
 }

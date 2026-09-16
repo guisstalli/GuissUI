@@ -13,28 +13,6 @@ const models = {
     bio: String,
     createdAt: Date.now,
   },
-  team: {
-    id: primaryKey(nanoid),
-    name: String,
-    description: String,
-    createdAt: Date.now,
-  },
-  discussion: {
-    id: primaryKey(nanoid),
-    title: String,
-    body: String,
-    authorId: String,
-    teamId: String,
-    createdAt: Date.now,
-    public: Boolean,
-  },
-  comment: {
-    id: primaryKey(nanoid),
-    body: String,
-    authorId: String,
-    discussionId: String,
-    createdAt: Date.now,
-  },
 };
 
 export const db = factory(models);
