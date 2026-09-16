@@ -114,3 +114,70 @@ describe('Rétablir un événement annulé', () => {
     expect(screen.queryByText(/Annuler l.événement/)).not.toBeInTheDocument();
   });
 });
+
+/**
+ * Le 16/09/2026, « Mairie Thiès Nord », prévu le lendemain, a été clôturé : ses
+ * 29 inscrits ont été marqués absents, et la clôture était irréversible depuis
+ * l'interface.
+ */
+describe('Rouvrir un événement terminé', () => {
+  test('un administrateur rouvre un événement terminé', async () => {
+    let rouvert: string | undefined;
+    server.use(
+      http.patch(`${env.API_URL}/events/:id/rouvrir/`, ({ params }) => {
+        rouvert = String(params.id);
+        return HttpResponse.json({
+          ...evenement('planifie'),
+          inscriptions_remises: 29,
+        });
+      }),
+    );
+    rendre(evenement('termine'), { capabilities: ['config.manage'] });
+
+    const user = await ouvrirLeMenu();
+    await user.click(screen.getByText(/Rouvrir l.événement/));
+
+    await waitFor(() => expect(rouvert).toBe(String(mockStaffEvents[0].id)));
+  });
+
+  test('le staff ne voit pas la réouverture — le serveur la refuserait', async () => {
+    rendre(evenement('termine'), { capabilities: ['events.manage'] });
+
+    await ouvrirLeMenu();
+
+    expect(screen.queryByText(/Rouvrir l.événement/)).not.toBeInTheDocument();
+  });
+
+  test('un événement en cours ne propose pas la réouverture', async () => {
+    rendre(evenement('en_cours'), { capabilities: ['config.manage'] });
+
+    await ouvrirLeMenu();
+
+    expect(screen.queryByText(/Rouvrir l.événement/)).not.toBeInTheDocument();
+  });
+});
+
+describe('Clôturer un événement', () => {
+  test('demande confirmation avant de marquer les inscrits absents', async () => {
+    let cloture = false;
+    server.use(
+      http.patch(`${env.API_URL}/events/:id/terminer/`, () => {
+        cloture = true;
+        return HttpResponse.json({ ...evenement('termine') });
+      }),
+    );
+    rendre(evenement('en_cours'));
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+    await user.click(screen.getByRole('button', { name: /^Clôturer$/ }));
+
+    expect(await screen.findByText(/marqués absents/)).toBeInTheDocument();
+    expect(cloture).toBe(false);
+
+    await user.click(
+      screen.getByRole('button', { name: /Clôturer l.événement/ }),
+    );
+
+    await waitFor(() => expect(cloture).toBe(true));
+  });
+});
