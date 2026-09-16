@@ -34,6 +34,10 @@ export const createAdultExam = (
   return api.post<ExamenAdultDetailApi>(
     '/depistage/examens/adultes/create/',
     data,
+    // Le 409 « examen déjà ouvert aujourd'hui » est un résultat métier : la
+    // fenêtre de création le traduit en bandeau de reprise. Le toast
+    // automatique du client API s'y ajoutait et faisait croire à une panne.
+    { silentStatusCodes: [409] },
   );
 };
 
@@ -65,11 +69,17 @@ export const useCreateAdultExam = ({
       });
       onSuccess?.(data, ...args);
     },
-    onError: () => {
+    onError: (error) => {
+      // Un écran sans bandeau de reprise garde le message du serveur, qui dit
+      // quoi faire, plutôt qu'un « impossible » générique.
+      const conflit = (error as { status?: number }).status === 409;
       addNotification({
         type: 'error',
         title: 'Erreur',
-        message: "Impossible de créer l'examen.",
+        message:
+          conflit && error.message
+            ? error.message
+            : "Impossible de créer l'examen.",
       });
     },
     ...restConfig,

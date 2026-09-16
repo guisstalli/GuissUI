@@ -181,3 +181,54 @@ describe('Clôturer un événement', () => {
     await waitFor(() => expect(cloture).toBe(true));
   });
 });
+
+describe('Annuler un événement', () => {
+  test('demande confirmation : le 14/09/2026, un clic dans le menu en a annulé un par erreur', async () => {
+    let annule = false;
+    server.use(
+      http.patch(`${env.API_URL}/events/:id/annuler/`, () => {
+        annule = true;
+        return HttpResponse.json({ ...evenement('annule') });
+      }),
+    );
+    rendre(evenement('planifie'));
+    const user = await ouvrirLeMenu();
+
+    await user.click(screen.getByText(/Annuler l.événement/));
+
+    expect(
+      await screen.findByText(/Les inscrits seront prévenus/),
+    ).toBeInTheDocument();
+    expect(annule).toBe(false);
+
+    await user.click(
+      screen.getByRole('button', { name: /Oui, annuler l.événement/ }),
+    );
+
+    await waitFor(() => expect(annule).toBe(true));
+  });
+
+  test("renoncer ne touche pas à l'événement", async () => {
+    let annule = false;
+    server.use(
+      http.patch(`${env.API_URL}/events/:id/annuler/`, () => {
+        annule = true;
+        return HttpResponse.json({ ...evenement('annule') });
+      }),
+    );
+    rendre(evenement('planifie'));
+    const user = await ouvrirLeMenu();
+
+    await user.click(screen.getByText(/Annuler l.événement/));
+    await user.click(
+      await screen.findByRole('button', { name: /Garder l.événement/ }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/Les inscrits seront prévenus/),
+      ).not.toBeInTheDocument(),
+    );
+    expect(annule).toBe(false);
+  });
+});
