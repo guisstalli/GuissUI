@@ -4,9 +4,14 @@ import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { useNotifications } from '@/components/ui/notifications';
 import { server } from '@/testing/mocks/server';
 
-import { useAddTechnicalData, useAddClinicalData } from '../mutations';
+import {
+  useAddTechnicalData,
+  useAddClinicalData,
+  useCreateAdultExam,
+} from '../mutations';
 
 // =============================================================================
 // Factory: mock d'une réponse d'examen adulte
@@ -293,5 +298,68 @@ describe('useAddClinicalData', () => {
         expect(result.current.isError).toBe(true);
       });
     });
+  });
+});
+
+// =============================================================================
+// useCreateAdultExam — refus 409 « examen déjà ouvert aujourd'hui »
+// =============================================================================
+
+describe('useCreateAdultExam — examen déjà ouvert aujourd’hui (409)', () => {
+  const API_URL = 'http://localhost:8000';
+  const MESSAGE_SERVEUR =
+    "Un examen existe déjà pour ce patient aujourd'hui. Reprenez-le au lieu d'en créer un second.";
+
+  beforeEach(() => {
+    useNotifications.setState({ notifications: [] });
+    server.use(
+      http.post(`${API_URL}/depistage/examens/adultes/create/`, () =>
+        HttpResponse.json(
+          {
+            detail: MESSAGE_SERVEUR,
+            examen_existant_id: 49,
+            numero_examen: 'EXA-1',
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+  });
+
+  it("n'affiche qu'UN message, celui du serveur, quand l'écran ne gère pas le cas", async () => {
+    // Deux toasts s'empilaient (client API + mutation), l'un générique.
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useCreateAdultExam(), { wrapper });
+
+    act(() => {
+      result.current.mutate({ patient_id: 1, site_id: 7 } as never);
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    const erreurs = useNotifications
+      .getState()
+      .notifications.filter((n) => n.type === 'error');
+    expect(erreurs).toHaveLength(1);
+    expect(erreurs[0].message).toBe(MESSAGE_SERVEUR);
+  });
+
+  it("reste silencieux quand l'écran gère le 409 avec son bandeau de reprise", async () => {
+    const surErreur = vi.fn();
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(
+      () => useCreateAdultExam({ mutationConfig: { onError: surErreur } }),
+      { wrapper },
+    );
+
+    act(() => {
+      result.current.mutate({ patient_id: 1, site_id: 7 } as never);
+    });
+    await waitFor(() => expect(surErreur).toHaveBeenCalled());
+
+    expect(
+      useNotifications
+        .getState()
+        .notifications.filter((n) => n.type === 'error'),
+    ).toHaveLength(0);
   });
 });

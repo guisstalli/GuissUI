@@ -12,9 +12,18 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +62,12 @@ export function EventActions({ event }: { event: EventStaff }) {
   const { addNotification } = useNotifications();
   const { mutate: start, isPending: starting } = useStartEvent(event.id);
   const { mutate: close, isPending: closing } = useCloseEvent(event.id);
-  const { mutate: cancel } = useCancelEvent(event.id);
+  // Annulation confirmée dans une fenêtre pilotée par état : ouverte depuis un
+  // élément du menu, elle ne peut pas vivre DANS le menu, qui se referme.
+  const [confirmerAnnulation, setConfirmerAnnulation] = useState(false);
+  const { mutate: cancel, isPending: cancelling } = useCancelEvent(event.id, {
+    onSuccess: () => setConfirmerAnnulation(false),
+  });
   const { mutate: del } = useDeleteEvent(event.id);
   const { mutate: restore, isPending: restoring } = useRestoreEvent(event.id, {
     onSuccess: () =>
@@ -136,7 +150,10 @@ export function EventActions({ event }: { event: EventStaff }) {
         />
       )}
 
-      <DropdownMenu>
+      {/* modal={false} : la fenêtre de confirmation s'ouvre depuis ce menu.
+          Menu modal + fenêtre modale se disputent le focus et laissent le
+          `pointer-events: none` de Radix bloqué sur la page. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="size-8">
             <MoreHorizontal className="size-4" />
@@ -154,7 +171,7 @@ export function EventActions({ event }: { event: EventStaff }) {
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => cancel({})}
+                onClick={() => setConfirmerAnnulation(true)}
                 className="text-red-600"
               >
                 <XCircle className="mr-2 size-4" />
@@ -190,6 +207,36 @@ export function EventActions({ event }: { event: EventStaff }) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Le 14/09/2026, un clic dans ce menu a annulé un événement par erreur :
+          l'annulation prévient aussi les inscrits, elle doit être délibérée. */}
+      <Dialog open={confirmerAnnulation} onOpenChange={setConfirmerAnnulation}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Annuler « {event.titre} » ?</DialogTitle>
+            <DialogDescription>
+              Les inscrits seront prévenus que l&apos;événement est annulé. Un
+              administrateur pourra le rétablir si c&apos;est une erreur.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmerAnnulation(false)}
+              disabled={cancelling}
+            >
+              Garder l&apos;événement
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancel({})}
+              disabled={cancelling}
+            >
+              Oui, annuler l&apos;événement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

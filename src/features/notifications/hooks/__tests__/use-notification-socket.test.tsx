@@ -47,7 +47,9 @@ describe('invaliderInscriptions', () => {
     expect(estPerimee(client, ['events', 1, 'inscriptions'])).toBe(true);
   });
 
-  it('épargne les statistiques et le détail du même événement', () => {
+  it("rafraîchit aussi les compteurs de l'événement, mais épargne son détail et la liste", () => {
+    // Les compteurs « Inscrits / Présents » sont affichés au-dessus de la
+    // liste : la ligne apparaissait en direct, le compteur restait figé.
     const client = new QueryClient();
     amorcer(client, ['events', 1, 'inscriptions']);
     amorcer(client, ['events', 1, 'stats']);
@@ -57,7 +59,7 @@ describe('invaliderInscriptions', () => {
     invaliderInscriptions(client, notification());
 
     expect(estPerimee(client, ['events', 1, 'inscriptions'])).toBe(true);
-    expect(estPerimee(client, ['events', 1, 'stats'])).toBe(false);
+    expect(estPerimee(client, ['events', 1, 'stats'])).toBe(true);
     expect(estPerimee(client, ['events', 1])).toBe(false);
     expect(estPerimee(client, ['events'])).toBe(false);
   });
