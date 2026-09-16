@@ -7,12 +7,14 @@ import {
   Play,
   RotateCcw,
   Trash2,
+  Undo2,
   Users,
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,7 @@ import {
   useCancelEvent,
   useCloseEvent,
   useDeleteEvent,
+  useReopenEvent,
   useRestoreEvent,
   useStartEvent,
 } from '@/features/events/api/event-actions';
@@ -68,7 +71,16 @@ export function EventActions({ event }: { event: EventStaff }) {
       }),
   });
 
-  // Même capacité que le serveur (`CanRestoreEvent`) : l'écran et l'API ne
+  const { mutate: reopen, isPending: reopening } = useReopenEvent(event.id, {
+    onSuccess: ({ inscriptions_remises }) =>
+      addNotification({
+        type: 'success',
+        title: 'Événement rouvert',
+        message: `${inscriptions_remises} inscription(s) marquée(s) absente(s) sont de nouveau inscrites.`,
+      }),
+  });
+
+  // Même capacité que le serveur (`CanRestoreEvent`, `CanReopenEvent`) : l'écran et l'API ne
   // peuvent pas diverger. `config.manage` reproduit l'accès administrateur.
   const { data: capacites } = useMyCapabilities();
   const peutRetablir = hasCapability(capacites, CAPABILITY.CONFIG_MANAGE);
@@ -96,16 +108,32 @@ export function EventActions({ event }: { event: EventStaff }) {
           Démarrer
         </Button>
       )}
+      {/* Confirmation : la clôture marque absents tous les inscrits non
+          pointés. Le 16/09/2026, un clic la veille de l'événement en a
+          marqué 29 à tort. */}
       {event.statut === 'en_cours' && (
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => close()}
-          disabled={closing}
-        >
-          <CheckCircle className="mr-1.5 size-4" />
-          Clôturer
-        </Button>
+        <ConfirmationDialog
+          icon="danger"
+          title="Clôturer l'événement ?"
+          body="Les inscrits qui n'ont pas été pointés seront marqués absents."
+          cancelButtonText="Annuler"
+          isDone={!closing}
+          triggerButton={
+            <Button size="sm" variant="secondary" disabled={closing}>
+              <CheckCircle className="mr-1.5 size-4" />
+              Clôturer
+            </Button>
+          }
+          confirmButton={
+            <Button
+              variant="destructive"
+              onClick={() => close()}
+              disabled={closing}
+            >
+              Clôturer l&apos;événement
+            </Button>
+          }
+        />
       )}
 
       <DropdownMenu>
@@ -142,6 +170,15 @@ export function EventActions({ event }: { event: EventStaff }) {
               <DropdownMenuItem onClick={() => restore()} disabled={restoring}>
                 <RotateCcw className="mr-2 size-4" />
                 Rétablir l&apos;événement
+              </DropdownMenuItem>
+            </>
+          )}
+          {event.statut === 'termine' && peutRetablir && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => reopen()} disabled={reopening}>
+                <Undo2 className="mr-2 size-4" />
+                Rouvrir l&apos;événement
               </DropdownMenuItem>
             </>
           )}

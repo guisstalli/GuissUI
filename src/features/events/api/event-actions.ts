@@ -89,3 +89,34 @@ export const useRestoreEvent = (
     onError,
   });
 };
+
+export type ReopenEventResult = { inscriptions_remises: number };
+
+/**
+ * Rouvre un événement terminé et remet ses absents « inscrits ».
+ *
+ * La clôture était irréversible depuis l'interface : le 16/09/2026,
+ * « Mairie Thiès Nord », prévu le lendemain, a été clôturé et ses 29 inscrits
+ * marqués absents. Réservé à l'administration (capacité `config.manage`).
+ */
+export const useReopenEvent = (
+  eventId: number,
+  {
+    onSuccess,
+    onError,
+  }: {
+    onSuccess?: (result: ReopenEventResult) => void;
+    onError?: () => void;
+  } = {},
+) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api.patch<ReopenEventResult>(`/events/${eventId}/rouvrir/`),
+    onSuccess: (result) => {
+      invalidateAll(qc);
+      onSuccess?.(result);
+    },
+    onError,
+  });
+};
