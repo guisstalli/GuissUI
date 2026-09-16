@@ -73,6 +73,36 @@ describe('invaliderInscriptions', () => {
     expect(estPerimee(client, ['events', 2, 'inscriptions'])).toBe(false);
   });
 
+  it('réagit au payload RÉEL du backend : catégorie « system » portant une inscription', () => {
+    // Le backend a toujours émis category « system » (défaut de
+    // notification_notify_staff) : filtrer sur « inscription » seul laissait
+    // la liste figée, alors que le toast s'affichait bien.
+    const client = new QueryClient();
+    amorcer(client, ['events', 1, 'inscriptions']);
+
+    invaliderInscriptions(
+      client,
+      notification({
+        category: 'system',
+        metadata: { inscription_id: 7, event_id: 1, event_slug: 'mairie' },
+      }),
+    );
+
+    expect(estPerimee(client, ['events', 1, 'inscriptions'])).toBe(true);
+  });
+
+  it('ignore une notification système sans rapport avec une inscription', () => {
+    const client = new QueryClient();
+    amorcer(client, ['events', 1, 'inscriptions']);
+
+    invaliderInscriptions(
+      client,
+      notification({ category: 'system', metadata: { event_id: 1 } }),
+    );
+
+    expect(estPerimee(client, ['events', 1, 'inscriptions'])).toBe(false);
+  });
+
   it('ignore une notification qui ne concerne pas une inscription', () => {
     const client = new QueryClient();
     amorcer(client, ['events', 1, 'inscriptions']);
