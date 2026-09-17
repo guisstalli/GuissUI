@@ -83,9 +83,9 @@ function showBrowserNotification(notif: AppNotification) {
  * La notification temps réel arrivait bien, mais rien n'était invalidé : le
  * tableau ne bougeait qu'après un rechargement complet de la page.
  *
- * L'invalidation reste CHIRURGICALE : invalider `['events']` purgerait aussi le
- * détail de l'événement, ses statistiques et la liste des événements — trois
- * requêtes inutiles à chaque inscription.
+ * L'invalidation reste CHIRURGICALE : la liste et les compteurs de
+ * l'événement concerné, jamais `['events']` en bloc (détail et liste de tous
+ * les événements refaits à chaque inscription).
  */
 export function invaliderInscriptions(
   queryClient: QueryClient,
@@ -104,6 +104,9 @@ export function invaliderInscriptions(
     queryClient.invalidateQueries({
       queryKey: ['events', eventId, 'inscriptions'],
     });
+    // Les compteurs « Inscrits / Présents » sont sur la même page : sans eux,
+    // la ligne apparaissait mais le compteur restait à l'ancienne valeur.
+    queryClient.invalidateQueries({ queryKey: ['events', eventId, 'stats'] });
     return;
   }
 

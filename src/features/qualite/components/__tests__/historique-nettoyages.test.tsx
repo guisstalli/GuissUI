@@ -7,7 +7,7 @@ import { HistoriqueNettoyages } from '@/features/qualite/components/historique-n
 import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, userEvent, waitFor } from '@/testing/test-utils';
 
-const rendre = () =>
+const rendre = ({ peutRestaurer = true }: { peutRestaurer?: boolean } = {}) =>
   rtlRender(
     <QueryClientProvider
       client={
@@ -19,7 +19,7 @@ const rendre = () =>
         })
       }
     >
-      <HistoriqueNettoyages />
+      <HistoriqueNettoyages peutRestaurer={peutRestaurer} />
     </QueryClientProvider>,
   );
 
@@ -78,9 +78,65 @@ describe('Historique des nettoyages', () => {
 
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     rendre();
-    await user.click(await screen.findByText('Restaurer'));
+    await user.click(
+      await screen.findByRole('button', { name: /^Restaurer$/ }),
+    );
+
+    // Restaurer réinsère des examens : rien ne part avant confirmation.
+    expect(
+      await screen.findByText(/examens archivés seront réinsérés/),
+    ).toBeInTheDocument();
+    expect(restaure).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: /Oui, restaurer/ }));
 
     await waitFor(() => expect(restaure).toBe(1));
+  });
+
+  test('renoncer à la restauration ne touche à rien', async () => {
+    let restaure = false;
+    server.use(
+      http.get(`${env.API_URL}/analytics/qualite/nettoyage/historique/`, () =>
+        HttpResponse.json([run()]),
+      ),
+      http.post(
+        `${env.API_URL}/analytics/qualite/nettoyage/1/restaurer/`,
+        () => {
+          restaure = true;
+          return HttpResponse.json(run({ statut: 'restaure' }));
+        },
+      ),
+    );
+
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    rendre();
+    await user.click(
+      await screen.findByRole('button', { name: /^Restaurer$/ }),
+    );
+    await user.click(await screen.findByRole('button', { name: /^Annuler$/ }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/examens archivés seront réinsérés/),
+      ).not.toBeInTheDocument(),
+    );
+    expect(restaure).toBe(false);
+  });
+
+  test('sans la capacité de nettoyer, l’historique se lit mais ne se défait pas', async () => {
+    // Même règle que le serveur (quality.clean) : l'agent de saisie voit ce
+    // qui a été fait, sans bouton qui lui renverrait un 403.
+    server.use(
+      http.get(`${env.API_URL}/analytics/qualite/nettoyage/historique/`, () =>
+        HttpResponse.json([run()]),
+      ),
+    );
+    rendre({ peutRestaurer: false });
+
+    expect(await screen.findByText('Tâche de 5 h')).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: /Restaurer/ }),
+    ).not.toBeInTheDocument();
   });
 
   test('une exécution déjà restaurée n’offre plus le bouton', async () => {

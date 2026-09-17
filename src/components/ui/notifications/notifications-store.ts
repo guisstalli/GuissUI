@@ -14,15 +14,31 @@ type NotificationsStore = {
   dismissNotification: (id: string) => void;
 };
 
-export const useNotifications = create<NotificationsStore>((set) => ({
+/**
+ * Durée d'affichage avant fermeture automatique. Sans elle, les toasts
+ * s'empilaient sans fin et masquaient les boutons de la page (staging,
+ * 17/09/2026). Une erreur reste plus longtemps : elle se lit, elle ne se
+ * survole pas.
+ */
+export const DUREE_AFFICHAGE_MS: Record<Notification['type'], number> = {
+  success: 5_000,
+  info: 5_000,
+  warning: 8_000,
+  error: 8_000,
+};
+
+export const useNotifications = create<NotificationsStore>((set, get) => ({
   notifications: [],
-  addNotification: (notification) =>
+  addNotification: (notification) => {
+    const complete = { id: nanoid(), ...notification };
     set((state) => ({
-      notifications: [
-        ...state.notifications,
-        { id: nanoid(), ...notification },
-      ],
-    })),
+      notifications: [...state.notifications, complete],
+    }));
+    setTimeout(
+      () => get().dismissNotification(complete.id),
+      DUREE_AFFICHAGE_MS[complete.type],
+    );
+  },
   dismissNotification: (id) =>
     set((state) => ({
       notifications: state.notifications.filter(
