@@ -74,7 +74,9 @@ describe('Dossier de campagne', () => {
 
     const groupe = screen.getByRole('group', { name: /Objectifs spécifiques/ });
     await user.click(within(groupe).getByRole('button', { name: /Ajouter/ }));
-    expect(screen.getByLabelText('Objectifs spécifiques 1')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Objectifs spécifiques 1'),
+    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: /Retirer objectifs spécifiques 1/i }),
