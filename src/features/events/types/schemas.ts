@@ -123,20 +123,43 @@ export const PaginatedEventsSchema = z.object({
 
 export type PaginatedEvents = z.infer<typeof PaginatedEventsSchema>;
 
-export const EventCreateInputSchema = z.object({
-  titre: z.string().min(1, 'Titre requis'),
-  date_event: z.string(),
-  /** NULL = événement d'une seule journée. */
-  date_fin: z.string().nullable().optional(),
-  heure_debut: z.string(),
-  heure_fin: z.string(),
-  lieu: z.string().min(1, 'Lieu requis'),
-  type_examen: EventTypeExamenSchema,
-  capacite_max: z.number().optional().nullable(),
-  description: z.string().optional(),
-  pour_conducteurs: z.boolean().optional(),
-  site_id: z.number().optional().nullable(),
-});
+export const EventCreateInputSchema = z
+  .object({
+    titre: z.string().min(1, 'Titre requis'),
+    date_event: z.string(),
+    /** NULL = événement d'une seule journée. */
+    date_fin: z.string().nullable().optional(),
+    heure_debut: z.string(),
+    heure_fin: z.string(),
+    lieu: z.string().min(1, 'Lieu requis'),
+    type_examen: EventTypeExamenSchema,
+    capacite_max: z.number().optional().nullable(),
+    description: z.string().optional(),
+    pour_conducteurs: z.boolean().optional(),
+    site_id: z.number().optional().nullable(),
+  })
+  // Miroir de ScreeningEvent.clean : le serveur refuse une fin avant le début.
+  // Le formulaire l'acceptait, et l'erreur revenait sans champ désigné.
+  .superRefine((data, ctx) => {
+    if (
+      data.heure_debut &&
+      data.heure_fin &&
+      data.heure_fin <= data.heure_debut
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['heure_fin'],
+        message: "L'heure de fin doit être après l'heure de début",
+      });
+    }
+    if (data.date_fin && data.date_event && data.date_fin < data.date_event) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['date_fin'],
+        message: 'La date de fin ne peut pas précéder la date de début',
+      });
+    }
+  });
 
 export type EventCreateInput = z.infer<typeof EventCreateInputSchema>;
 

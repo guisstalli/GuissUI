@@ -11,6 +11,7 @@ import { describe, expect, test } from 'vitest';
 import {
   DriverEssentialsSchema,
   inscriptionPubliqueSchemaFor,
+  EventCreateInputSchema,
 } from '../schemas';
 
 const INSCRIT = {
@@ -116,4 +117,66 @@ describe('DriverEssentialsSchema — bornes', () => {
       ).toBe(true);
     },
   );
+});
+
+// ─── Cohérence des dates et heures (miroir de ScreeningEvent.clean) ──────────
+
+describe('EventCreateInputSchema — cohérence dates et heures', () => {
+  // Audit du 17/09/2026 : le serveur refuse une fin avant le début
+  // (apps/events/models.py, ScreeningEvent.clean), le formulaire l'acceptait.
+  // L'erreur revenait sans champ désigné.
+  const BASE = {
+    titre: 'Dépistage Thiès',
+    date_event: '2026-10-05',
+    date_fin: null,
+    heure_debut: '08:00',
+    heure_fin: '17:00',
+    lieu: 'Centre',
+    type_examen: 'adulte' as const,
+  };
+
+  const champs = (data: unknown) => {
+    const r = EventCreateInputSchema.safeParse(data);
+    return r.success ? [] : r.error.issues.map((i) => String(i.path[0]));
+  };
+
+  test('accepte un événement cohérent', () => {
+    expect(EventCreateInputSchema.safeParse(BASE).success).toBe(true);
+  });
+
+  test("refuse une heure de fin avant l'heure de début", () => {
+    expect(
+      champs({ ...BASE, heure_debut: '17:00', heure_fin: '08:00' }),
+    ).toContain('heure_fin');
+  });
+
+  test('refuse des heures identiques', () => {
+    expect(
+      champs({ ...BASE, heure_debut: '09:00', heure_fin: '09:00' }),
+    ).toContain('heure_fin');
+  });
+
+  test('refuse une date de fin avant la date de début', () => {
+    expect(champs({ ...BASE, date_fin: '2026-10-01' })).toContain('date_fin');
+  });
+
+  test('accepte un événement sur plusieurs jours', () => {
+    expect(
+      EventCreateInputSchema.safeParse({ ...BASE, date_fin: '2026-10-07' })
+        .success,
+    ).toBe(true);
+  });
+
+  test('sur plusieurs jours, les heures peuvent se chevaucher entre journées', () => {
+    // 17h → 8h n'a de sens que sur une nuit : le serveur le refuse aussi,
+    // l'événement décrit les horaires de CHAQUE journée.
+    expect(
+      champs({
+        ...BASE,
+        date_fin: '2026-10-07',
+        heure_debut: '17:00',
+        heure_fin: '08:00',
+      }),
+    ).toContain('heure_fin');
+  });
 });
