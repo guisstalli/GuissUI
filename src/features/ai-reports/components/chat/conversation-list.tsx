@@ -30,6 +30,8 @@ import { useConversations } from '../../api/get-conversations';
 import { useRenameConversation } from '../../api/rename-conversation';
 import type { ConversationListItem } from '../../types';
 
+import { AgentMemoryPanel } from './agent-memory-panel';
+
 const SIDEBAR_PAGE_SIZE = 50;
 
 type ConversationListProps = {
@@ -208,6 +210,7 @@ export function ConversationList({
           Nouvelle conversation
         </Link>
       </Button>
+      <AgentMemoryPanel />
       {conversations.length > 0 && (
         <div className="relative">
           <Search
