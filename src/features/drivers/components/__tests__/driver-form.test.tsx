@@ -148,6 +148,36 @@ describe('DriverForm — type_permis "Autres"', () => {
       screen.queryByRole('textbox', { name: /préciser le type/i }),
     ).not.toBeInTheDocument();
   });
+
+  test("la précision saisie puis abandonnée n'est pas envoyée", async () => {
+    // Le serveur REFUSE une précision quand le type n'est pas « Autres »
+    // (driver/models.py, Conducteur.clean). Le champ est masqué dès qu'on
+    // change de type, mais sa valeur restait dans le formulaire : le dossier
+    // était refusé sur un champ devenu invisible.
+    const onSubmit = vi.fn();
+    render(
+      <DriverForm
+        defaultValues={{
+          ...VALID_DEFAULTS,
+          type_permis: 'Autres',
+          autre_type_permis: 'Permis moto',
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+    await user.click(screen.getByRole('combobox', { name: /type de permis/i }));
+    await user.click(screen.getByRole('option', { name: /^lourd$/i }));
+    await user.click(
+      screen.getByRole('button', { name: /créer le conducteur/i }),
+    );
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    const envoye = onSubmit.mock.calls[0][0] as DriverCreate;
+    expect(envoye.type_permis).toBe('Lourd');
+    expect(envoye.autre_type_permis ?? '').toBe('');
+  });
 });
 
 // ─── État désactivé ───────────────────────────────────────────────────────────
