@@ -8,6 +8,7 @@ import {
   PlaintesSchema,
   BiomicroscopyAnteriorSchema,
   BiomicroscopyPosteriorSchema,
+  ExamenAdditionelSchema,
 } from '../schemas';
 
 // =============================================================================
@@ -1032,6 +1033,50 @@ describe('BiomicroscopyAnteriorSchema', () => {
     });
   });
 
+  // Le serveur exige le type ET la quantité dès que la transparence est
+  // anormale (clinical_components.py, SegmentAnterieur.clean). Le formulaire
+  // affiche les deux champs mais ne les exigeait pas : laissés vides,
+  // l'enregistrement partait et repartait en 400.
+  describe('transparence anormale : type et quantité exigés', () => {
+    it('échoue si transparence=ANORMALE sans type ni quantité', () => {
+      const data = {
+        segment: 'PRESENCE_LESION' as const,
+        transparence: 'ANORMALE' as const,
+        type_anomalie_value: null,
+        quantite_anomalie: null,
+      };
+
+      const result = BiomicroscopyAnteriorSchema.safeParse(data);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path[0]);
+        expect(paths).toContain('type_anomalie_value');
+        expect(paths).toContain('quantite_anomalie');
+      }
+    });
+
+    it('passe si transparence=ANORMALE avec type et quantité', () => {
+      const data = {
+        segment: 'PRESENCE_LESION' as const,
+        transparence: 'ANORMALE' as const,
+        type_anomalie_value: 'PIGMENTS' as const,
+        quantite_anomalie: 'MINIME' as const,
+      };
+
+      expect(BiomicroscopyAnteriorSchema.safeParse(data).success).toBe(true);
+    });
+
+    it('passe si transparence=NORMAL sans type ni quantité', () => {
+      const data = {
+        segment: 'PRESENCE_LESION' as const,
+        transparence: 'NORMAL' as const,
+      };
+
+      expect(BiomicroscopyAnteriorSchema.safeParse(data).success).toBe(true);
+    });
+  });
+
   describe('type_anomalie_autre conditionnel', () => {
     it('échoue si type_anomalie_value=AUTRE et type_anomalie_autre absent', () => {
       // Arrange
@@ -1253,5 +1298,88 @@ describe('BiomicroscopyPosteriorSchema', () => {
       // Assert
       expect(result.success).toBe(true);
     });
+  });
+});
+
+// =============================================================================
+// EXAMENS ADDITIONNELS — cohérence type / valeur / options
+// =============================================================================
+
+describe('ExamenAdditionelSchema', () => {
+  // Le serveur valide la cohérence par Pydantic (apps/depistage/schemas.py) :
+  // number → nombre, boolean → booléen, select → options non vides et valeur
+  // parmi elles. Le formulaire acceptait tout : un examen numérique laissé
+  // vide, ou un « select » sans options, partait et revenait en erreur.
+  it('refuse un examen numérique dont la valeur est vide', () => {
+    const result = ExamenAdditionelSchema.safeParse({
+      titre: 'Pression',
+      type_valeur: 'number',
+      value: '',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('refuse un examen numérique dont la valeur est du texte', () => {
+    const result = ExamenAdditionelSchema.safeParse({
+      titre: 'Pression',
+      type_valeur: 'number',
+      value: 'abc',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepte un examen numérique avec un nombre', () => {
+    expect(
+      ExamenAdditionelSchema.safeParse({
+        titre: 'Pression',
+        type_valeur: 'number',
+        value: 18,
+      }).success,
+    ).toBe(true);
+  });
+
+  it('refuse un choix sans options', () => {
+    const result = ExamenAdditionelSchema.safeParse({
+      titre: 'Aspect',
+      type_valeur: 'select',
+      value: 'Clair',
+      options: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("refuse un choix dont la valeur n'est pas dans les options", () => {
+    const result = ExamenAdditionelSchema.safeParse({
+      titre: 'Aspect',
+      type_valeur: 'select',
+      value: 'Trouble',
+      options: ['Clair', 'Laiteux'],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepte un choix valide', () => {
+    expect(
+      ExamenAdditionelSchema.safeParse({
+        titre: 'Aspect',
+        type_valeur: 'select',
+        value: 'Clair',
+        options: ['Clair', 'Laiteux'],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('refuse un booléen dont la valeur est du texte', () => {
+    expect(
+      ExamenAdditionelSchema.safeParse({
+        titre: 'Réalisé',
+        type_valeur: 'boolean',
+        value: 'oui',
+      }).success,
+    ).toBe(false);
   });
 });
