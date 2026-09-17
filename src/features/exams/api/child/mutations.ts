@@ -142,6 +142,8 @@ export const updateTechnicalData = ({
   return api.put<ExamenChildDetailApi>(
     `/depistage/examens/enfants/${id}/technical/`,
     data,
+    // Un 400 porte la règle de saisie à corriger : le hook l'affiche lui-même.
+    { silentStatusCodes: [400] },
   );
 };
 
@@ -186,11 +188,18 @@ export const useUpdateTechnicalData = ({
       });
       onSuccess?.(data, variables, ...args);
     },
-    onError: () => {
+    onError: (error) => {
+      // Un refus de saisie (400) dit quel champ corriger : on l'affiche tel
+      // quel plutôt qu'un « impossible » qui laissait le praticien bloqué
+      // (prod, 17/09/2026, reflet pupillaire).
+      const refusDeSaisie = (error as { status?: number }).status === 400;
       addNotification({
         type: 'error',
-        title: 'Erreur',
-        message: 'Impossible de mettre à jour les données techniques.',
+        title: refusDeSaisie ? 'Saisie à corriger' : 'Erreur',
+        message:
+          refusDeSaisie && error.message
+            ? error.message
+            : 'Impossible de mettre à jour les données techniques.',
       });
     },
     ...restConfig,

@@ -342,6 +342,7 @@ export const mapVisionBinoculaireApiToForm = (
       data.reflet_pupillaire as VisionBinoculaire['pupillary_reflex'],
     pupillary_reflex_laterality:
       data.reflet_lateralite as VisionBinoculaire['pupillary_reflex_laterality'],
+    pupillary_reflex_detail: data.reflet_pupillaire_detail ?? null,
     cover_test_vl_type:
       data.cover_vl_type as VisionBinoculaire['cover_test_vl_type'],
     cover_test_vl_direction:
