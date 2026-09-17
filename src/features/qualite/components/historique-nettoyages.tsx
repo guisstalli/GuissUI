@@ -3,6 +3,7 @@
 import { Loader2, Undo2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
 import { Spinner } from '@/components/ui/spinner';
 import {
   TableBody,
@@ -49,7 +50,15 @@ const formaterJour = (jour: string | null) => {
  * par être coupée — et la couper ramènerait à trois semaines de délai de
  * détection.
  */
-export function HistoriqueNettoyages() {
+type HistoriqueNettoyagesProps = {
+  /** Capacité `quality.clean`, décidée par la page : sans elle, pas de bouton
+   *  qui renverrait un 403 (l'historique reste lisible). */
+  peutRestaurer: boolean;
+};
+
+export function HistoriqueNettoyages({
+  peutRestaurer,
+}: HistoriqueNettoyagesProps) {
   const { data, isLoading, isError } = useHistoriqueNettoyage();
   const restaurer = useRestaurerNettoyage();
 
@@ -119,20 +128,37 @@ export function HistoriqueNettoyages() {
                 ) : null}
               </TableCell>
               <TableCell className="text-right">
-                {run.est_restaurable ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={restaurer.isPending}
-                    onClick={() => restaurer.mutate(run.id)}
-                  >
-                    {restaurer.isPending ? (
-                      <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-                    ) : (
-                      <Undo2 className="mr-1.5 size-3.5" />
-                    )}
-                    Restaurer
-                  </Button>
+                {run.est_restaurable && peutRestaurer ? (
+                  // Restaurer réinsère des examens supprimés : un geste qui
+                  // modifie des dossiers, donc délibéré, comme le nettoyage.
+                  <ConfirmationDialog
+                    icon="info"
+                    title={`Restaurer le nettoyage du ${formaterJour(run.jour)} ?`}
+                    body={`Les ${run.supprimes} examens archivés seront réinsérés. Les champs déjà fusionnés et les arbitrages déjà tranchés ne sont pas défaits.`}
+                    cancelButtonText="Annuler"
+                    isDone={restaurer.isSuccess}
+                    triggerButton={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={restaurer.isPending}
+                      >
+                        <Undo2 className="mr-1.5 size-3.5" />
+                        Restaurer
+                      </Button>
+                    }
+                    confirmButton={
+                      <Button
+                        disabled={restaurer.isPending}
+                        onClick={() => restaurer.mutate(run.id)}
+                      >
+                        {restaurer.isPending ? (
+                          <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                        ) : null}
+                        Oui, restaurer
+                      </Button>
+                    }
+                  />
                 ) : null}
               </TableCell>
             </TableRow>

@@ -74,6 +74,9 @@ export default function QualiteDonneesPage() {
   // proposer une action que le serveur refusera n'aide personne.
   const { data: capacites } = useMyCapabilities();
   const peutArbitrer = hasCapability(capacites, CAPABILITY.QUALITY_ARBITRATE);
+  // Même règle que le serveur (CanCleanData) : l'agent de saisie consulte la
+  // qualité mais ne supprime pas d'examens.
+  const peutNettoyer = hasCapability(capacites, CAPABILITY.QUALITY_CLEAN);
   const { data, isLoading, isError, refetch, isFetching } = useQualite(filtres);
 
   const critiques =
@@ -195,7 +198,7 @@ export default function QualiteDonneesPage() {
 
         {/* Voir une anomalie sans pouvoir agir dessus obligeait à ouvrir un
             terminal sur le serveur. */}
-        <PanneauNettoyage />
+        {peutNettoyer && <PanneauNettoyage />}
 
         <div className="space-y-3 pt-2">
           <div>
@@ -205,7 +208,7 @@ export default function QualiteDonneesPage() {
               de quoi la défaire.
             </p>
           </div>
-          <HistoriqueNettoyages />
+          <HistoriqueNettoyages peutRestaurer={peutNettoyer} />
         </div>
 
         <div className="space-y-3 pt-2">

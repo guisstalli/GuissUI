@@ -21,6 +21,9 @@ export const CAPABILITY = {
   // partagé a produit ces conflits — ni l'admin, rôle technique sans écriture
   // clinique, ne peuvent arbitrer.
   QUALITY_ARBITRATE: 'quality.arbitrate',
+  // Appliquer ou restaurer un nettoyage (supprime des examens). Fermé à
+  // l'agent de saisie, comme côté serveur (CanCleanData).
+  QUALITY_CLEAN: 'quality.clean',
   SECURITY_AUDIT_VIEW: 'security.audit.view',
   PERMISSIONS_MANAGE: 'permissions.manage',
   USERS_MANAGE: 'users.manage',
