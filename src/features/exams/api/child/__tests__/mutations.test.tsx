@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { useNotifications } from '@/components/ui/notifications';
 import { server } from '@/testing/mocks/server';
 
 import { useUpdateTechnicalData, useUpdateClinicalData } from '../mutations';
@@ -405,5 +406,44 @@ describe('useUpdateClinicalData', () => {
         expect(result.current.isError).toBe(true);
       });
     });
+  });
+});
+
+// =============================================================================
+// useUpdateTechnicalData — règle de saisie refusée par le serveur
+// =============================================================================
+
+describe('useUpdateTechnicalData — refus de saisie (400)', () => {
+  const API_URL = 'http://localhost:8000';
+  const MESSAGE = 'Veuillez préciser les détails du reflet pupillaire anormal.';
+
+  beforeEach(() => {
+    useNotifications.setState({ notifications: [] });
+    server.use(
+      http.put(`${API_URL}/depistage/examens/enfants/:id/technical/`, () =>
+        HttpResponse.json(
+          { detail: MESSAGE, fields: { reflet_pupillaire_detail: [MESSAGE] } },
+          { status: 400 },
+        ),
+      ),
+    );
+  });
+
+  it('affiche UN message, celui qui dit quoi corriger', async () => {
+    // Prod, 17/09/2026 : « Une erreur inattendue » puis « Impossible de
+    // mettre à jour » — jamais le champ à corriger.
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useUpdateTechnicalData(), { wrapper });
+
+    act(() => {
+      result.current.mutate({ id: 1, data: {} } as never);
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    const erreurs = useNotifications
+      .getState()
+      .notifications.filter((n) => n.type === 'error');
+    expect(erreurs).toHaveLength(1);
+    expect(erreurs[0].message).toBe(MESSAGE);
   });
 });

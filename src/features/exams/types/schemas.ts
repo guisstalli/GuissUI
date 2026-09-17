@@ -513,6 +513,9 @@ export const VisionBinoculaireSchema = z
     // Pupillary Reflex
     pupillary_reflex: ReflexEnum.optional().nullable(),
     pupillary_reflex_laterality: LateralityEnum.optional().nullable(),
+    // Précision d'un reflet anormal : exigée par le serveur, absente du
+    // formulaire jusqu'au 17/09/2026 (tout reflet anormal échouait).
+    pupillary_reflex_detail: z.string().max(255).optional().nullable(),
     // Cover Test VL (Vision Loin)
     cover_test_vl_type: CoverTestTypeEnum.optional().nullable(),
     cover_test_vl_direction: CoverTestDirectionEnum.optional().nullable(),
@@ -546,6 +549,18 @@ export const VisionBinoculaireSchema = z
     {
       message: 'Latéralité requise si réflexe anormal',
       path: ['pupillary_reflex_laterality'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.pupillary_reflex && data.pupillary_reflex !== 'rouge') {
+        return !!data.pupillary_reflex_detail?.trim();
+      }
+      return true;
+    },
+    {
+      message: "Précisez l'anomalie du reflet pupillaire",
+      path: ['pupillary_reflex_detail'],
     },
   )
   .refine(
