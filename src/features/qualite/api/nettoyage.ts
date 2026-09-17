@@ -11,13 +11,25 @@ import { api } from '@/lib/api-client';
 import type { NettoyageRun, PlanNettoyage } from '../types/types';
 
 /**
+ * Refus métier du nettoyage (journée vide, archive introuvable, déjà restauré).
+ * Chaque hook affiche son propre toast avec le message du serveur : le toast
+ * automatique du client API s'y ajoutait (« Non trouvé » + « Restauration
+ * impossible » pour la même erreur, staging 17/09/2026).
+ */
+const REFUS_METIER = { silentStatusCodes: [400, 404, 409] };
+
+/**
  * Simulation : n'écrit rien, annonce ce qui serait supprimé.
  *
  * C'est ce que l'écran affiche avant de demander confirmation. Confirmer une
  * suppression sans en connaître la portée n'est pas une confirmation.
  */
 export const simulerNettoyage = (jour: string): Promise<PlanNettoyage> =>
-  api.post<PlanNettoyage>('/analytics/qualite/nettoyage/simulation/', { jour });
+  api.post<PlanNettoyage>(
+    '/analytics/qualite/nettoyage/simulation/',
+    { jour },
+    REFUS_METIER,
+  );
 
 export const useSimulerNettoyage = () => {
   const { addNotification } = useNotifications();
@@ -35,7 +47,11 @@ export const useSimulerNettoyage = () => {
 };
 
 export const appliquerNettoyage = (jour: string): Promise<NettoyageRun> =>
-  api.post<NettoyageRun>('/analytics/qualite/nettoyage/', { jour });
+  api.post<NettoyageRun>(
+    '/analytics/qualite/nettoyage/',
+    { jour },
+    REFUS_METIER,
+  );
 
 export const useAppliquerNettoyage = ({
   onSuccess,
@@ -84,6 +100,7 @@ export const restaurerNettoyage = (runId: number): Promise<NettoyageRun> =>
   api.post<NettoyageRun>(
     `/analytics/qualite/nettoyage/${runId}/restaurer/`,
     {},
+    REFUS_METIER,
   );
 
 export const useRestaurerNettoyage = () => {
