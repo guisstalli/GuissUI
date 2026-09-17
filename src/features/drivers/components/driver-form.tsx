@@ -267,7 +267,18 @@ export function DriverForm({
                   <FormLabel>
                     Type de permis <span className="text-destructive">*</span>
                   </FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      // Le serveur refuse une précision quand le type n'est
+                      // pas « Autres » : la garder dans le formulaire faisait
+                      // rejeter le dossier sur un champ devenu invisible.
+                      if (v !== 'Autres') {
+                        form.setValue('autre_type_permis', '');
+                      }
+                    }}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />

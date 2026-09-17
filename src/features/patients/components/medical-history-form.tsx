@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, FileText, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,56 +25,13 @@ import {
 import {
   FAMILIAL_LABELS,
   TYPE_ADDICTION_LABELS,
-  TypeAddictionEnum,
 } from '@/features/patients/types/schemas';
 import { cn } from '@/lib/utils';
 
-// =============================================================================
-// SCHEMA
-// =============================================================================
-
-const FamilialEnum = z.enum(['CECITE', 'GPAO', 'OTHER']);
-
-const medicalHistorySchema = z
-  .object({
-    has_antecedents: z.boolean().default(false),
-    has_antecedents_medico_chirurgicaux: z.boolean(),
-    antecedents_medico_chirurgicaux: z.array(z.string().max(255)),
-    has_pathologie_ophtalmologique: z.boolean(),
-    pathologie_ophtalmologique: z.array(z.string().max(255)),
-    familial: z.array(FamilialEnum),
-    autre_familial_detail: z.string().max(255).nullable().optional(),
-    uses_screen: z.boolean().nullable(),
-    screen_time_hours_per_day: z
-      .number()
-      .int()
-      .min(0)
-      .max(24)
-      .nullable()
-      .optional(),
-    // Addictions (conducteurs)
-    addiction: z.boolean().default(false),
-    type_addiction: z.array(TypeAddictionEnum),
-    autre_addiction_detail: z.string().max(255).nullable().optional(),
-    tabagisme_detail: z.string().max(50).nullable().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.familial.includes('OTHER')) {
-        return (
-          data.autre_familial_detail &&
-          data.autre_familial_detail.trim().length > 0
-        );
-      }
-      return true;
-    },
-    {
-      message: "Veuillez préciser l'antécédent familial",
-      path: ['autre_familial_detail'],
-    },
-  );
-
-type MedicalHistoryFormValues = z.infer<typeof medicalHistorySchema>;
+import {
+  medicalHistorySchema,
+  type MedicalHistoryFormValues,
+} from '../types/medical-history-schema';
 
 // =============================================================================
 // MAIN COMPONENT
