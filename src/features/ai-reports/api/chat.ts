@@ -10,6 +10,8 @@ type ChatInput = {
   conversation_id?: number;
   /** Pièces jointes (images → vision, documents → texte extrait) — max 5 × 8 Mo */
   attachments?: File[];
+  /** Permet d'interrompre le tour depuis le bouton « Arrêter » du fil. */
+  signal?: AbortSignal;
 };
 
 /**
@@ -27,6 +29,7 @@ export const postChat = ({
   filters,
   conversation_id,
   attachments,
+  signal,
 }: ChatInput): Promise<ChatResponse> => {
   if (attachments && attachments.length > 0) {
     const formData = new FormData();
@@ -40,6 +43,7 @@ export const postChat = ({
     }
     return api.upload('/ai-reports/chat/', formData, {
       silentStatusCodes: [429],
+      signal,
     });
   }
 
@@ -50,7 +54,7 @@ export const postChat = ({
       filters: filters ?? {},
       ...(conversation_id !== undefined ? { conversation_id } : {}),
     },
-    { silentStatusCodes: [429] },
+    { silentStatusCodes: [429], signal },
   );
 };
 

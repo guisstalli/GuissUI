@@ -20,6 +20,8 @@ type RequestOptions = {
   silentErrors?: boolean;
   /** Codes de statut HTTP à ignorer silencieusement (retourne l'erreur sans toast) */
   silentStatusCodes?: number[];
+  /** Permet à l'appelant d'interrompre la requête (bouton « Arrêter »). */
+  signal?: AbortSignal;
 };
 
 /**
@@ -184,6 +186,7 @@ async function fetchApi<T>(
     isFormData = false,
     silentErrors = false,
     silentStatusCodes = [],
+    signal,
   } = options;
 
   // Get cookies from the request when running on server
@@ -221,6 +224,7 @@ async function fetchApi<T>(
     credentials: 'include',
     cache,
     next,
+    signal,
   });
 
   // Handle 401 Unauthorized — sign out and redirect to login

@@ -9,6 +9,7 @@ import { MarkdownContent } from '../markdown-content';
 
 import { ChatSourcesAccordion } from './chat-sources-accordion';
 import { ChatTrajectoryAccordion } from './chat-trajectory-accordion';
+import { ReportArtifactCard } from './report-artifact-card';
 
 type ChatMessageProps = {
   message: ChatMessageType;
@@ -36,19 +37,36 @@ export function ChatMessage({ message }: ChatMessageProps) {
     );
   }
 
+  // Réponse assistant : PLEINE COLONNE, sans bulle. Les réponses analytiques
+  // contiennent des tableaux GFM et des sections ; les comprimer dans une bulle
+  // à 85 % bordée les rendait illisibles et forçait un scroll horizontal. La
+  // bulle reste sur les messages utilisateur, où elle distingue les tours.
+  const artifacts = message.artifacts ?? [];
+
   return (
-    <div className="flex justify-start gap-2">
-      <div
-        className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-full',
-          'bg-primary/10 text-primary',
-        )}
-        aria-hidden
-      >
-        <Bot className="size-4" />
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span
+          className={cn(
+            'flex size-5 shrink-0 items-center justify-center rounded',
+            'bg-primary/10 text-primary',
+          )}
+          aria-hidden
+        >
+          <Bot className="size-3.5" />
+        </span>
+        Assistant
       </div>
-      <div className="min-w-0 max-w-[85%] space-y-1 rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-2.5 shadow-sm">
+      <div className="min-w-0 space-y-2">
         <MarkdownContent content={message.content} />
+
+        {artifacts.map((artifact) => (
+          <ReportArtifactCard
+            key={`${artifact.type}-${artifact.report_id}`}
+            artifact={artifact}
+          />
+        ))}
+
         <ChatSourcesAccordion
           sources={message.sources}
           sources_display={message.sources_display}
