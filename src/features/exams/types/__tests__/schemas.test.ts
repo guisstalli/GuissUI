@@ -257,6 +257,7 @@ describe('VisionBinoculaireSchema', () => {
       hirschberg_detail: 'iris',
       pupillary_reflex: 'leucocorie',
       pupillary_reflex_laterality: 'od',
+      pupillary_reflex_detail: 'Leucocorie OD',
       cover_test_vl_type: 'tropie',
       cover_test_vl_direction: 'eso',
       cover_test_vp_type: 'phorie',
@@ -372,6 +373,7 @@ describe('VisionBinoculaireSchema', () => {
       const data = {
         pupillary_reflex: 'leucocorie',
         pupillary_reflex_laterality: 'og',
+        pupillary_reflex_detail: 'Leucocorie OG',
       };
 
       // Act

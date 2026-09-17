@@ -358,6 +358,7 @@ export default function ChildExamPage() {
         stereoscopy_lang: null,
         pupillary_reflex: null,
         pupillary_reflex_laterality: null,
+        pupillary_reflex_detail: null,
         cover_test_vl_type: null,
         cover_test_vl_direction: null,
         cover_test_vp_type: null,
@@ -516,7 +517,9 @@ export default function ChildExamPage() {
       if (pupillaryReflex) {
         payload.reflet_pupillaire = pupillaryReflex;
         if (needsDetail) {
-          payload.reflet_pupillaire_detail = null;
+          // La précision était envoyée à null alors que le serveur l'exige
+          // pour tout reflet anormal : l'enregistrement échouait à coup sûr.
+          payload.reflet_pupillaire_detail = vb.pupillary_reflex_detail;
           payload.reflet_lateralite = vb.pupillary_reflex_laterality;
         }
       }

@@ -29,6 +29,7 @@ function VisionBinoculaireFormWrapper({
       stereoscopy_lang: null,
       pupillary_reflex: null,
       pupillary_reflex_laterality: null,
+      pupillary_reflex_detail: null,
       cover_test_vl_type: null,
       cover_test_vl_direction: null,
       cover_test_vp_type: null,
@@ -222,6 +223,56 @@ describe('VisionBinoculaireForm', () => {
     });
   });
 
+  // Prod, 17/09/2026 : le serveur exige une précision pour un reflet anormal,
+  // mais le formulaire n'avait aucun champ pour la saisir et envoyait null —
+  // l'examen échouait sans que le praticien sache pourquoi.
+  describe('précision du reflet anormal', () => {
+    it('demande une précision quand le reflet est anormal', async () => {
+      const user = userEvent.setup();
+      render(<VisionBinoculaireFormWrapper />);
+
+      await user.click(screen.getByRole('combobox', { name: /réflexe/i }));
+      await user.click(screen.getByRole('option', { name: /leucocorie/i }));
+
+      expect(
+        await screen.findByRole('textbox', { name: /précision/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('ne demande rien de plus quand le reflet est rouge (normal)', async () => {
+      const user = userEvent.setup();
+      render(<VisionBinoculaireFormWrapper />);
+
+      await user.click(screen.getByRole('combobox', { name: /réflexe/i }));
+      await user.click(screen.getByRole('option', { name: /rouge/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('textbox', { name: /précision/i }),
+        ).not.toBeInTheDocument(),
+      );
+    });
+
+    it('refuse un reflet anormal sans précision, avec un message explicite', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<VisionBinoculaireFormWrapper onSubmit={onSubmit} />);
+
+      await user.click(screen.getByRole('combobox', { name: /réflexe/i }));
+      await user.click(screen.getByRole('option', { name: /^anormal/i }));
+      await user.click(
+        await screen.findByRole('combobox', { name: /latéralité/i }),
+      );
+      await user.click(screen.getByRole('option', { name: /od \(droit\)/i }));
+      await user.click(screen.getByRole('button', { name: /soumettre/i }));
+
+      expect(
+        await screen.findByText(/précisez l.anomalie du reflet/i),
+      ).toBeInTheDocument();
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+  });
+
   // --------------------------------------------------------------------------
   // Cover Test VL
   // --------------------------------------------------------------------------
@@ -350,6 +401,10 @@ describe('VisionBinoculaireForm', () => {
         });
         await user.click(lateraliteSelect);
         await user.click(screen.getByRole('option', { name: /od \(droit\)/i }));
+        await user.type(
+          await screen.findByRole('textbox', { name: /précision/i }),
+          'Leucocorie OD',
+        );
 
         // Cover Test VL: tropie + direction
         const updatedTypeSelects = screen.getAllByRole('combobox', {
@@ -375,6 +430,7 @@ describe('VisionBinoculaireForm', () => {
               hirschberg_detail: 'iris',
               pupillary_reflex: 'leucocorie',
               pupillary_reflex_laterality: 'od',
+              pupillary_reflex_detail: 'Leucocorie OD',
               cover_test_vl_type: 'tropie',
               cover_test_vl_direction: 'eso',
             }),

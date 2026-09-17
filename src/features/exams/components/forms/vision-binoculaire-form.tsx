@@ -10,6 +10,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -117,6 +118,7 @@ export function VisionBinoculaireForm({
   useEffect(() => {
     if (pupillaryReflex === 'rouge' || !pupillaryReflex) {
       form.setValue(`${prefix}pupillary_reflex_laterality`, null);
+      form.setValue(`${prefix}pupillary_reflex_detail`, null);
     }
   }, [pupillaryReflex, form, prefix]);
 
@@ -301,6 +303,27 @@ export function VisionBinoculaireForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          {pupillaryReflex && pupillaryReflex !== 'rouge' && (
+            <FormField
+              control={form.control}
+              name={`${prefix}pupillary_reflex_detail`}
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>
+                    Précision <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="Décrivez l'anomalie du reflet..."
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
