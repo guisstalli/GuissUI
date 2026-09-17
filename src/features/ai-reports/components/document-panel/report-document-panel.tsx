@@ -31,11 +31,12 @@ import { cn } from '@/utils/cn';
 import { useReportPolling } from '../../hooks/use-report-polling';
 import { REPORT_STATUS, type ReportDetail } from '../../types';
 import { formatCost } from '../../utils/format-cost';
-import { MarkdownContent } from '../markdown-content';
 import { ReportApproveDialog } from '../report-approve-dialog';
 import { ReportDeliverDialog } from '../report-deliver-dialog';
 import { ReportRejectDialog } from '../report-reject-dialog';
 import { ReportStatusBadge } from '../report-status-badge';
+
+import { ReportEditor } from './report-editor';
 
 type ReportDocumentPanelProps = {
   reportId: number;
@@ -316,15 +317,9 @@ export function ReportDocumentPanel({ reportId }: ReportDocumentPanelProps) {
               id="panneau-apercu"
               aria-labelledby="onglet-apercu"
             >
-              {report.markdown ? (
-                <MarkdownContent content={report.markdown} />
-              ) : (
-                !enGeneration && (
-                  <p className="text-sm text-muted-foreground">
-                    Aucun contenu disponible pour ce rapport.
-                  </p>
-                )
-              )}
+              {report.markdown || !enGeneration ? (
+                <ReportEditor report={report} />
+              ) : null}
             </div>
           )}
           {tab === 'sources' && (

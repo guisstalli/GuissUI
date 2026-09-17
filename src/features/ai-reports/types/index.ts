@@ -63,6 +63,10 @@ export const reportDetailSchema = reportListItemSchema.extend({
   // sur le détail, pour ne pas transporter le texte intégral dans une liste.
   // Vide tant que le rapport est en PENDING, et en cas d'échec.
   markdown: z.string().nullable(),
+  // Texte tel que le modèle l'a produit, conservé par le serveur dès la
+  // première correction du relecteur. Vide tant que personne n'a corrigé :
+  // c'est ce qui permet de montrer l'écart plutôt que le seul résultat final.
+  markdown_original: z.string().nullable().optional(),
   pdf_url: z.string().nullable(),
   docx_url: z.string().nullable(),
   llm_backend: z.string(),

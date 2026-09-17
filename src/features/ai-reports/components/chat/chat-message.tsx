@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertCircle, Bot } from 'lucide-react';
+import { AlertCircle, Bot, Check, Copy } from 'lucide-react';
+import { useState } from 'react';
 
 import { cn } from '@/utils/cn';
 
@@ -14,6 +15,40 @@ import { ReportArtifactCard } from './report-artifact-card';
 type ChatMessageProps = {
   message: ChatMessageType;
 };
+
+/**
+ * Copier une réponse : elle finit dans un compte rendu ou un courriel. La
+ * sélectionner à la souris ramassait aussi les libellés des accordéons.
+ */
+function BoutonCopier({ texte }: { texte: string }) {
+  const [copie, setCopie] = useState(false);
+
+  if (!texte.trim()) return null;
+
+  return (
+    <button
+      type="button"
+      className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-xs hover:bg-muted"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(texte);
+          setCopie(true);
+          setTimeout(() => setCopie(false), 2000);
+        } catch {
+          // Presse-papiers refusé (contexte non sécurisé, permission) : on ne
+          // casse pas l'affichage pour autant.
+        }
+      }}
+    >
+      {copie ? (
+        <Check className="size-3 text-emerald-600" aria-hidden />
+      ) : (
+        <Copy className="size-3" aria-hidden />
+      )}
+      {copie ? 'Copié' : 'Copier'}
+    </button>
+  );
+}
 
 export function ChatMessage({ message }: ChatMessageProps) {
   if (message.role === 'user') {
@@ -56,6 +91,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <Bot className="size-3.5" />
         </span>
         Assistant
+        <BoutonCopier texte={message.content} />
       </div>
       <div className="min-w-0 space-y-2">
         <MarkdownContent content={message.content} />

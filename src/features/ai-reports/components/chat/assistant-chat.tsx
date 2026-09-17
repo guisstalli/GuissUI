@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Square } from 'lucide-react';
+import { RotateCcw, Square } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
@@ -27,6 +27,7 @@ import { toChatMessage } from '../../types';
 import { ChatDisclaimerBanner } from './chat-disclaimer-banner';
 import { ChatInput } from './chat-input';
 import { ChatMessageList } from './chat-message-list';
+import { ChatProgress, type EtapeProgression } from './chat-progress';
 
 const QUOTA_MESSAGE =
   'Limite de questions atteinte (30 par heure). Réessayez dans quelques minutes.';
@@ -112,6 +113,10 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
   // Streaming (SSE) : progression affichée + drapeau d'envoi en cours.
   const [streaming, setStreaming] = useState(false);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const [etapes, setEtapes] = useState<EtapeProgression[]>([]);
+  // Mémorisée pour pouvoir relancer la même question : régénérer était
+  // impossible, il fallait la retaper à l'identique.
+  const [derniereQuestion, setDerniereQuestion] = useState<string | null>(null);
 
   // Réconciliation du cache après un tour réussi — partagée par le streaming
   // (événement `done`) et le repli synchrone (mutation onSuccess).
@@ -216,6 +221,8 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
     if (chatMutation.isPending || streaming) return;
     setFlightError(null);
     setPendingQuestion(question);
+    setDerniereQuestion(question);
+    setEtapes([]);
     setStreaming(true);
     setStreamStatus('L’assistant réfléchit…');
     const controller = new AbortController();
@@ -227,10 +234,22 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
         ...(attachments.length > 0 ? { attachments } : {}),
         ...(isExisting ? { conversation_id: conversationId } : {}),
         onEvent: (e) => {
-          if (e.type === 'tools' && e.tools.length) {
-            setStreamStatus(`Analyse en cours : ${e.tools.join(', ')}…`);
-          } else if (e.type === 'step') {
+          // Chaque étape est CONSERVÉE, au lieu d'écraser la précédente dans
+          // une ligne de statut : après quarante secondes, l'utilisateur voyait
+          // un message immobile sans savoir si quelque chose avançait.
+          if (e.type === 'step') {
             setStreamStatus('L’assistant réfléchit…');
+            setEtapes((precedentes) => [
+              ...precedentes.map((etape) => ({ ...etape, terminee: true })),
+              { index: e.index, outils: [], terminee: false },
+            ]);
+          } else if (e.type === 'tools' && e.tools.length) {
+            setStreamStatus(`Analyse en cours : ${e.tools.join(', ')}…`);
+            setEtapes((precedentes) =>
+              precedentes.map((etape) =>
+                etape.index === e.index ? { ...etape, outils: e.tools } : etape,
+              ),
+            );
           }
         },
       });
@@ -340,6 +359,25 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
               >
                 <Square className="mr-1 size-3" aria-hidden />
                 Arrêter
+              </Button>
+            </div>
+          )}
+          {(streaming || chatMutation.isPending) && (
+            <div className="mb-2">
+              <ChatProgress etapes={etapes} />
+            </div>
+          )}
+          {!streaming && !chatMutation.isPending && derniereQuestion && (
+            <div className="mb-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => handleSend(derniereQuestion, [])}
+              >
+                <RotateCcw className="mr-1 size-3" aria-hidden />
+                Régénérer la réponse
               </Button>
             </div>
           )}
