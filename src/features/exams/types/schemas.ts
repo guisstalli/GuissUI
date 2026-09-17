@@ -758,12 +758,47 @@ export const ExamenAdditionelTypeEnum = z.enum([
   'select',
 ]);
 
-export const ExamenAdditionelSchema = z.object({
-  titre: z.string().min(1, 'Le titre est requis'),
-  type_valeur: ExamenAdditionelTypeEnum,
-  value: z.union([z.string(), z.number(), z.boolean()]),
-  options: z.array(z.string()).optional(),
-});
+export const ExamenAdditionelSchema = z
+  .object({
+    titre: z.string().min(1, 'Le titre est requis'),
+    type_valeur: ExamenAdditionelTypeEnum,
+    value: z.union([z.string(), z.number(), z.boolean()]),
+    options: z.array(z.string()).optional(),
+  })
+  // Le serveur valide la cohérence type/valeur (apps/depistage/schemas.py).
+  // Sans ces règles, un examen numérique laissé vide ou un choix sans options
+  // partait quand même et revenait en erreur, sans champ désigné.
+  .superRefine((data, ctx) => {
+    if (data.type_valeur === 'number' && typeof data.value !== 'number') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['value'],
+        message: 'Une valeur numérique est requise',
+      });
+    }
+    if (data.type_valeur === 'boolean' && typeof data.value !== 'boolean') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['value'],
+        message: 'Répondez Oui ou Non',
+      });
+    }
+    if (data.type_valeur === 'select') {
+      if (!data.options || data.options.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options'],
+          message: 'Renseignez au moins une option',
+        });
+      } else if (!data.options.includes(String(data.value))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['value'],
+          message: 'Choisissez une des options renseignées',
+        });
+      }
+    }
+  });
 
 export type ExamenAdditionel = z.infer<typeof ExamenAdditionelSchema>;
 
@@ -849,6 +884,26 @@ export const BiomicroscopyAnteriorSchema = z
       path: ['iris_autres'],
     },
   )
+  // Le serveur exige les deux dès que la transparence est anormale
+  // (SegmentAnterieur.clean). Le formulaire affichait les champs sans les
+  // exiger : laissés vides, l'enregistrement repartait en 400.
+  .superRefine((data, ctx) => {
+    if (data.transparence !== 'ANORMALE') return;
+    if (!data.type_anomalie_value) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['type_anomalie_value'],
+        message: "Type d'anomalie requis si la transparence est anormale",
+      });
+    }
+    if (!data.quantite_anomalie) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['quantite_anomalie'],
+        message: 'Quantité requise si la transparence est anormale',
+      });
+    }
+  })
   .refine(
     (data) => {
       if (data.type_anomalie_value === 'AUTRE') {
