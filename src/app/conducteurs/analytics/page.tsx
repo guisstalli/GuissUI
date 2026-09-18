@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { Can } from '@/components/ui/can';
+import { DataChatBubble } from '@/features/ai-reports/components/chat/data-chat-bubble';
 import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
 import { useAnalyticsOcularTension } from '@/features/analytics/api/get-analytics-ocular-tension';
 import { useAnalyticsOverview } from '@/features/analytics/api/get-analytics-overview';
@@ -120,6 +121,13 @@ export default function DriverAnalyticsPage() {
         libelle: s.libelle,
       })),
     [sitesData?.results],
+  );
+
+  // Le périmètre de la bulle se lit « Sites : Centre Dakar », pas
+  // « Sites : 9 » : un identifiant ne dit rien au lecteur.
+  const siteNames = useMemo(
+    () => new Map(siteOptions.map((s) => [s.id, s.libelle])),
+    [siteOptions],
   );
 
   // Queries
@@ -266,6 +274,9 @@ export default function DriverAnalyticsPage() {
             )}
           </div>
         )}
+        {/* Poser une question sur ces chiffres sans quitter l'écran qui les
+            affiche : le périmètre appliqué part avec la question. */}
+        <DataChatBubble filters={appliedFilters} siteNames={siteNames} />
       </Shell>
     </Can>
   );

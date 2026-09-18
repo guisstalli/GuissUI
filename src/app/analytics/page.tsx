@@ -14,6 +14,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
+import { DataChatBubble } from '@/features/ai-reports/components/chat/data-chat-bubble';
 import { useAnalyticsBiomicroscopy } from '@/features/analytics/api/get-analytics-biomicroscopy';
 import { useAnalyticsDriverExperience } from '@/features/analytics/api/get-analytics-driver-experience';
 import { useAnalyticsGlaucoma } from '@/features/analytics/api/get-analytics-glaucoma';
@@ -191,6 +192,13 @@ export default function AnalyticsPage() {
         libelle: s.libelle,
       })),
     [sitesData?.results],
+  );
+
+  // Le périmètre de la bulle se lit « Sites : Centre Dakar », pas
+  // « Sites : 9 » : un identifiant ne dit rien au lecteur.
+  const siteNames = useMemo(
+    () => new Map(siteOptions.map((s) => [s.id, s.libelle])),
+    [siteOptions],
   );
 
   // Queries
@@ -478,6 +486,9 @@ export default function AnalyticsPage() {
             onAnalyze={handleAnalyzeCohort}
           />
         )}
+        {/* Poser une question sur ces chiffres sans quitter l'écran qui les
+            affiche : le périmètre appliqué part avec la question. */}
+        <DataChatBubble filters={appliedFilters} siteNames={siteNames} />
       </Shell>
     </Can>
   );
