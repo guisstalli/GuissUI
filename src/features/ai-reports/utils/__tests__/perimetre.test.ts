@@ -42,18 +42,36 @@ describe('entreesDuPerimetre', () => {
     );
   });
 
+  test('annonce la cohorte par son effectif, pas par ses identifiants', () => {
+    // Les identifiants n'apprendraient rien au lecteur, et le serveur ne les
+    // montre pas davantage — il les injecte après l'appel du modèle.
+    expect(entreesDuPerimetre({ patient_ids: [1, 2, 3] })).toEqual([
+      { label: 'Cohorte', valeur: '3 patients sélectionnés' },
+    ]);
+  });
+
+  test('un seul patient se lit au singulier', () => {
+    expect(entreesDuPerimetre({ patient_ids: [7] })[0].valeur).toBe(
+      '1 patient sélectionné',
+    );
+  });
+
   test("ignore une dimension qu'aucun outil n'accepte", () => {
-    // `patient_ids` est propre à l'écran : l'annoncer promettrait un filtre
-    // que le serveur n'applique pas.
-    expect(entreesDuPerimetre({ patient_ids: [1, 2, 3] })).toEqual([]);
+    // Le filtre posé en cliquant un segment reste propre à l'écran :
+    // l'annoncer promettrait un filtre que le serveur n'applique pas.
+    expect(entreesDuPerimetre({ acuity: 'basse' })).toEqual([]);
   });
 });
 
 describe('restrictionsNonTransmises', () => {
-  test('nomme la cohorte sélectionnée, que l’assistant ne peut pas appliquer', () => {
-    expect(restrictionsNonTransmises({ patient_ids: [1, 2] })).toEqual([
-      'la cohorte sélectionnée',
+  test("nomme un filtre de clic, que l'assistant ne peut pas appliquer", () => {
+    expect(restrictionsNonTransmises({ acuity: 'basse' })).toEqual([
+      "le filtre d'acuité",
     ]);
+  });
+
+  test('la cohorte ne compte plus parmi les restrictions perdues', () => {
+    expect(restrictionsNonTransmises({ patient_ids: [1, 2] })).toEqual([]);
   });
 
   test('ne signale rien quand rien ne manque', () => {

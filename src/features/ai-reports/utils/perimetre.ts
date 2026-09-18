@@ -21,6 +21,7 @@
 const DIMENSIONS_TRANSMISES = [
   'date_start',
   'date_end',
+  'patient_ids',
   'site_id',
   'sex',
   'exam_type',
@@ -45,6 +46,7 @@ const VALEURS_NEUTRES: Record<string, unknown> = {
 const LIBELLES: Record<string, string> = {
   date_start: 'Depuis le',
   date_end: "Jusqu'au",
+  patient_ids: 'Cohorte',
   site_id: 'Sites',
   sex: 'Sexe',
   exam_type: "Type d'examen",
@@ -69,7 +71,6 @@ const VALEURS: Record<string, Record<string, string>> = {
  * prévenir au lieu de les laisser tomber en silence.
  */
 const NON_TRANSMISES: Record<string, string> = {
-  patient_ids: 'la cohorte sélectionnée',
   acuity: "le filtre d'acuité",
   tension: 'le filtre de tension',
   conclusion: 'le filtre de conclusion',
@@ -101,6 +102,18 @@ export function entreesDuPerimetre(
         valeur: valeur
           .map((id) => nomsDeSites?.get(Number(id)) ?? `Site ${id}`)
           .join(', '),
+      });
+      continue;
+    }
+    if (cle === 'patient_ids' && Array.isArray(valeur)) {
+      // Un effectif, jamais la liste des identifiants : ils n'apprendraient
+      // rien au lecteur, et le serveur ne les affiche pas davantage.
+      entrees.push({
+        label: LIBELLES[cle],
+        valeur:
+          valeur.length === 1
+            ? '1 patient sélectionné'
+            : `${valeur.length} patients sélectionnés`,
       });
       continue;
     }
