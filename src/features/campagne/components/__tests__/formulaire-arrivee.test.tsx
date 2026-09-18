@@ -4,16 +4,17 @@ import { describe, expect, test } from 'vitest';
 
 import { env } from '@/config/env';
 import { FormulaireArrivee } from '@/features/campagne/components/formulaire-arrivee';
+import type { Campagne } from '@/features/campagne/types/types';
 import { server } from '@/testing/mocks/server';
 import { rtlRender, screen, userEvent, waitFor } from '@/testing/test-utils';
 
-const CAMPAGNE = {
+const CAMPAGNE: Campagne = {
   siteId: 7,
   eventId: null,
   libelle: 'Gare Routière de Thiès',
 };
 
-const rendre = (campagne = CAMPAGNE) =>
+const rendre = (campagne: Campagne = CAMPAGNE) =>
   rtlRender(
     <QueryClientProvider
       client={
