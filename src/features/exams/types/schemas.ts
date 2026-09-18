@@ -1143,6 +1143,10 @@ export const ExamenChildCreateSchema = z
     fo_detail: z.string().max(255).optional().nullable(),
     technical_data: TechnicalExamSchema.optional(),
     clinical_data: ClinicalExamSchema.optional(),
+    /** Raison d'un second examen le même jour. Renseigné, il lève le refus du
+     *  serveur et sort l'examen du compte des doublons (campagne du
+     *  17/09/2026 : 189 examens pour 139 enfants). */
+    motif_reprise: z.string().optional(),
   })
   .refine(
     (data) => {
