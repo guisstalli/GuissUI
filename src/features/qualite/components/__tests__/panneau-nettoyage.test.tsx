@@ -129,7 +129,66 @@ describe('Panneau de nettoyage', () => {
     await waitFor(() =>
       expect(recu).toEqual({
         jour: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        operation: 'doublons',
       }),
     );
+  });
+});
+
+/**
+ * La campagne scolaire du 17/09/2026 a produit 98 examens enfant vides sur
+ * 189. L'écran ne savait nettoyer que l'adulte : ces examens comptaient
+ * partout comme réalisés, et les purger supposait un accès à la base.
+ */
+describe('Purge des examens enfant vides', () => {
+  const planEnfant = {
+    jour: '2026-09-17',
+    examens_concernes: 189,
+    supprimes: 98,
+    numeros: ['EXE-0001', 'EXE-0002'],
+    simulation: true,
+    rapport: '',
+  };
+
+  test('l’opération choisie est transmise au serveur', async () => {
+    let recu: Record<string, unknown> | null = null;
+    server.use(
+      http.post(
+        `${env.API_URL}/analytics/qualite/nettoyage/simulation/`,
+        async ({ request }) => {
+          recu = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json(planEnfant);
+        },
+      ),
+    );
+
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    rendre();
+    await user.click(screen.getByRole('tab', { name: 'Examens enfant vides' }));
+    await user.click(screen.getByText('Analyser cette journée'));
+
+    expect(await screen.findByText('Ce qui sera fait')).toBeVisible();
+    await waitFor(() => expect(recu?.operation).toBe('coquilles_enfant'));
+    expect(screen.getByText('98')).toBeVisible();
+    expect(screen.getByText('Appliquer la purge')).toBeVisible();
+  });
+
+  test('changer d’opération efface un plan devenu trompeur', async () => {
+    server.use(
+      http.post(`${env.API_URL}/analytics/qualite/nettoyage/simulation/`, () =>
+        HttpResponse.json(plan()),
+      ),
+    );
+
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    rendre();
+    await user.click(screen.getByText('Analyser cette journée'));
+    expect(await screen.findByText('Ce qui sera fait')).toBeVisible();
+
+    // Appliquer un plan calculé pour les doublons adulte alors que l'écran
+    // affiche la purge enfant supprimerait autre chose que ce qui est annoncé.
+    await user.click(screen.getByRole('tab', { name: 'Examens enfant vides' }));
+
+    expect(screen.queryByText('Ce qui sera fait')).not.toBeInTheDocument();
   });
 });

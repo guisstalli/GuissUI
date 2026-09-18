@@ -8,7 +8,17 @@ import {
 import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 
-import type { NettoyageRun, PlanNettoyage } from '../types/types';
+import type {
+  NettoyageRun,
+  OperationNettoyage,
+  PlanNettoyage,
+} from '../types/types';
+
+/** Journée + nature de l'opération : l'écran pilote désormais les deux. */
+export type DemandeNettoyage = {
+  jour: string;
+  operation: OperationNettoyage;
+};
 
 /**
  * Refus métier du nettoyage (journée vide, archive introuvable, déjà restauré).
@@ -24,10 +34,13 @@ const REFUS_METIER = { silentStatusCodes: [400, 404, 409] };
  * C'est ce que l'écran affiche avant de demander confirmation. Confirmer une
  * suppression sans en connaître la portée n'est pas une confirmation.
  */
-export const simulerNettoyage = (jour: string): Promise<PlanNettoyage> =>
+export const simulerNettoyage = ({
+  jour,
+  operation,
+}: DemandeNettoyage): Promise<PlanNettoyage> =>
   api.post<PlanNettoyage>(
     '/analytics/qualite/nettoyage/simulation/',
-    { jour },
+    { jour, operation },
     REFUS_METIER,
   );
 
@@ -46,10 +59,13 @@ export const useSimulerNettoyage = () => {
   });
 };
 
-export const appliquerNettoyage = (jour: string): Promise<NettoyageRun> =>
+export const appliquerNettoyage = ({
+  jour,
+  operation,
+}: DemandeNettoyage): Promise<NettoyageRun> =>
   api.post<NettoyageRun>(
     '/analytics/qualite/nettoyage/',
-    { jour },
+    { jour, operation },
     REFUS_METIER,
   );
 
@@ -67,9 +83,12 @@ export const useAppliquerNettoyage = ({
         type: 'success',
         title: 'Nettoyage effectué',
         message:
-          `${run.fusions} champ(s) fusionné(s), ${run.supprimes} examen(s) ` +
-          `archivé(s), ${run.arbitrages_crees} valeur(s) à arbitrer. ` +
-          'L’opération reste restaurable.',
+          run.operation === 'coquilles_enfant'
+            ? `${run.supprimes} examen(s) enfant vide(s) archivé(s) puis ` +
+              'supprimé(s). L’opération reste restaurable.'
+            : `${run.fusions} champ(s) fusionné(s), ${run.supprimes} examen(s) ` +
+              `archivé(s), ${run.arbitrages_crees} valeur(s) à arbitrer. ` +
+              'L’opération reste restaurable.',
       });
       onSuccess?.();
     },
