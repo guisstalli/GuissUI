@@ -4,6 +4,7 @@ import {
   BarChart3,
   Bot,
   CalendarDays,
+  Tent,
   CalendarRange,
   ChevronRight,
   ClipboardCheck,
@@ -18,6 +19,7 @@ import {
   Package,
   Receipt,
   Scale,
+  ScrollText,
   Settings,
   FileClock,
   ShieldAlert,
@@ -148,6 +150,15 @@ const navGroups: NavGroup[] = [
   {
     label: 'Activité',
     items: [
+      {
+        // Premier de son groupe : pendant une campagne, c'est l'écran où l'on
+        // passe la journée. Enterré plus bas, il resterait inutilisé et
+        // l'enregistrement continuerait de se faire en trois écrans.
+        title: 'Campagne',
+        url: paths.campagne.getHref(),
+        icon: Tent,
+        permission: 'patients:view',
+      },
       {
         title: 'Événements',
         url: paths.events.staff.list.getHref(),
@@ -334,6 +345,14 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.arbitrations.getHref(),
     icon: Scale,
     capability: CAPABILITY.QUALITY_ARBITRATE,
+  },
+  {
+    // Le 17/09/2026, personne ne savait d'où venait la règle qui refusait 102
+    // enregistrements. Elle est désormais lisible sans ouvrir le code.
+    title: 'Règles de saisie',
+    url: paths.administration.inputRules.getHref(),
+    icon: ScrollText,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
   },
   {
     title: 'Permissions',

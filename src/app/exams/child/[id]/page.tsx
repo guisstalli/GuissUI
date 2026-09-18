@@ -84,6 +84,7 @@ import {
   mapVisualAcuityFormToApi,
 } from '@/features/exams/utils/form-to-api-mappers';
 import { validerSection } from '@/features/exams/utils/valider-section';
+import { BanniereAntecedents } from '@/features/patients/components/banniere-antecedents';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   usePersistentLocalTabState,
@@ -974,6 +975,13 @@ function ChildExamContent(props: ChildExamContentProps) {
             >
               <FormProvider {...form}>
                 <main className="size-full overflow-y-auto p-6">
+                  {/* Antécédents jamais demandés : visible à chaque ouverture du
+                dossier, jamais bloquant. La Pre a tranché qu'on n'arrête
+                pas une file de cent personnes sur un champ déclaratif —
+                mais un manque que rien ne montre ne se rattrape jamais. */}
+                  <div className="mb-4">
+                    <BanniereAntecedents patientId={Number(patient.id)} />
+                  </div>
                   {/* Mobile section nav — hidden on md+ */}
                   {isMobile && (
                     <div className="mb-4 flex overflow-x-auto rounded-lg border bg-card">
