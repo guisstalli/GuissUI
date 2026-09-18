@@ -70,7 +70,9 @@ const forgeTurnMessages = (
       status: 'SUCCESS',
       error_message: '',
       sources: null,
-      sources_display: null,
+      // Sans les cartes, les marqueurs « [n] » du texte ne désigneraient rien
+      // tant que le fil n'a pas été rechargé.
+      sources_display: response.sources_display ?? null,
       verification: null,
       tools_used: response.tools_used,
       // Sans cette ligne, la carte du rapport n'apparaîtrait qu'après un

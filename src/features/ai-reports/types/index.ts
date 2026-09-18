@@ -155,6 +155,9 @@ export const chatResponseSchema = z.object({
   message_id: z.number(),
   trajectory: z.array(trajectoryStepSchema),
   artifacts: z.array(chatArtifactSchema).default([]),
+  // Cartes des sources du tour : elles donnent leur destination aux marqueurs
+  // « [n] » du texte. `default([])` couvre une réponse d'une version anterieure.
+  sources_display: z.array(sourceDisplaySchema).default([]),
 });
 
 // Contraintes pièces jointes — miroir de apps/ai_core/agent/attachments.py
