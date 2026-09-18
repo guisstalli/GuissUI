@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { paths } from '@/config/paths';
 import { ConversationList } from '@/features/ai-reports/components/chat/conversation-list';
+import { DocumentPanel } from '@/features/ai-reports/components/document-panel/document-panel';
 import { CAPABILITY } from '@/lib/capabilities';
 
 /**
@@ -122,6 +123,11 @@ export default function AssistantIaLayout({
             </Sheet>
             {children}
           </div>
+          {/* Aperçu du document produit par l'assistant. Monté au niveau du
+              layout — donc persistant entre deux conversations — alors que
+              l'ouverture est déclenchée depuis une carte enfouie dans le fil :
+              c'est ce qui justifie le store plutôt que des props. */}
+          <DocumentPanel />
         </div>
       </Shell>
     </Can>

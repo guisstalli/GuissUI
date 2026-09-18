@@ -63,6 +63,10 @@ export const reportDetailSchema = reportListItemSchema.extend({
   // sur le détail, pour ne pas transporter le texte intégral dans une liste.
   // Vide tant que le rapport est en PENDING, et en cas d'échec.
   markdown: z.string().nullable(),
+  // Texte tel que le modèle l'a produit, conservé par le serveur dès la
+  // première correction du relecteur. Vide tant que personne n'a corrigé :
+  // c'est ce qui permet de montrer l'écart plutôt que le seul résultat final.
+  markdown_original: z.string().nullable().optional(),
   pdf_url: z.string().nullable(),
   docx_url: z.string().nullable(),
   llm_backend: z.string(),
@@ -83,12 +87,23 @@ export const reportDetailSchema = reportListItemSchema.extend({
  * Carte « source » lisible construite côté backend (services/sources.py) :
  * libellé FR de l'outil, filtres traduits, effectif du périmètre.
  */
+export const distributionSchema = z.object({
+  cle: z.string(),
+  valeurs: z.array(z.object({ label: z.string(), valeur: z.number() })),
+});
+
 export const sourceDisplaySchema = z.object({
   tool: z.string(),
   label: z.string(),
   filters: z.array(z.object({ label: z.string(), value: z.string() })),
   cell_count: z.number().nullable(),
+  // Répartitions déjà agrégées et suppressées, telles que la réponse les cite.
+  // `.optional()` : les messages enregistrés avant cette version n'en portent
+  // pas, et un historique ne doit pas devenir illisible pour autant.
+  distributions: z.array(distributionSchema).optional(),
 });
+
+export type Distribution = z.infer<typeof distributionSchema>;
 
 export const askResponseSchema = z.object({
   answer_markdown: z.string(),
@@ -112,6 +127,26 @@ export const trajectoryStepSchema = z.object({
   errors: z.array(z.string()),
 });
 
+/**
+ * Artefact produit pendant un tour — aujourd'hui un rapport déclenché par
+ * l'outil `generate_report`. C'est ce descripteur qui permet d'ancrer une carte
+ * cliquable dans le fil : sans lui, la trajectoire ne porte que le NOM de
+ * l'outil et l'utilisateur doit aller chercher le rapport dans la liste.
+ *
+ * `status` est un indice d'affichage initial (souvent PENDING) : l'état courant
+ * vient du détail du rapport, sondé par le panneau.
+ */
+export const reportArtifactSchema = z.object({
+  type: z.literal('report'),
+  report_id: z.number(),
+  status: z.string(),
+  report_type: z.string(),
+});
+
+/** Champ ouvert : un type d'artefact inconnu du client est simplement ignoré
+ *  au rendu plutôt que de faire échouer le parsing du tour. */
+export const chatArtifactSchema = reportArtifactSchema;
+
 /** Réponse du POST /ai-reports/chat/ (assistant AGENTIQUE — boucle ReAct). */
 export const chatResponseSchema = z.object({
   answer_markdown: z.string(),
@@ -119,6 +154,7 @@ export const chatResponseSchema = z.object({
   conversation_id: z.number(),
   message_id: z.number(),
   trajectory: z.array(trajectoryStepSchema),
+  artifacts: z.array(chatArtifactSchema).default([]),
 });
 
 // Contraintes pièces jointes — miroir de apps/ai_core/agent/attachments.py
@@ -149,6 +185,10 @@ export const conversationMessageSchema = z.object({
   sources_display: z.array(sourceDisplaySchema).nullable(),
   verification: z.unknown(),
   tools_used: z.array(z.string()),
+  /** Artefacts persistés du tour — permettent de retrouver la carte de rapport
+   *  après un rechargement du fil. `default([])` couvre les messages
+   *  antérieurs à la migration, qui n'ont pas le champ. */
+  artifacts: z.array(chatArtifactSchema).default([]),
   created_at: z.string(),
   /** Trajectoire agentique — présente uniquement sur les tours semés côté
    *  client depuis /chat/ (le détail serveur ne la renvoie pas). */
@@ -176,6 +216,8 @@ export type SourceDisplay = z.infer<typeof sourceDisplaySchema>;
 export type AskResponse = z.infer<typeof askResponseSchema>;
 export type TrajectoryStep = z.infer<typeof trajectoryStepSchema>;
 export type ChatResponse = z.infer<typeof chatResponseSchema>;
+export type ChatArtifact = z.infer<typeof chatArtifactSchema>;
+export type ReportArtifact = z.infer<typeof reportArtifactSchema>;
 export type ConversationListItem = z.infer<typeof conversationListItemSchema>;
 export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
 export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
@@ -309,6 +351,8 @@ export type ChatMessage = {
   timestamp: number;
   /** Trajectoire agentique du tour (pas → outils → erreurs auto-corrigées) */
   trajectory?: TrajectoryStep[];
+  /** Rapports déclenchés pendant ce tour — rendus en cartes sous la réponse */
+  artifacts?: ChatArtifact[];
   /** Message d'erreur affiché dans le fil (429, indisponibilité…) */
   isError?: boolean;
 };
@@ -328,6 +372,7 @@ export const toChatMessage = (message: ConversationMessage): ChatMessage => {
     tools_used: message.tools_used,
     timestamp: Date.parse(message.created_at),
     trajectory: message.trajectory,
+    artifacts: message.artifacts,
     isError: isFailed,
   };
 };

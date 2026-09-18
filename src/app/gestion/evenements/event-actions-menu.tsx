@@ -3,6 +3,7 @@
 import {
   CheckCircle,
   ExternalLink,
+  FileText,
   MoreHorizontal,
   Play,
   RotateCcw,
@@ -40,6 +41,7 @@ import {
   useRestoreEvent,
   useStartEvent,
 } from '@/features/events/api/event-actions';
+import { CampaignDossierDialog } from '@/features/events/components/campaign-dossier-dialog';
 import type { EventStaff } from '@/features/events/types/schemas';
 import {
   CAPABILITY,
@@ -60,6 +62,7 @@ import {
  */
 export function EventActions({ event }: { event: EventStaff }) {
   const { addNotification } = useNotifications();
+  const [dossierOuvert, setDossierOuvert] = useState(false);
   const { mutate: start, isPending: starting } = useStartEvent(event.id);
   const { mutate: close, isPending: closing } = useCloseEvent(event.id);
   // Annulation confirmée dans une fenêtre pilotée par état : ouverte depuis un
@@ -167,6 +170,13 @@ export function EventActions({ event }: { event: EventStaff }) {
               Page publique
             </Link>
           </DropdownMenuItem>
+          {/* Sans ce dossier, le rapport d'activité de la campagne reste
+              générique : la justification, les objectifs, la méthodologie et
+              l'équipe ne se déduisent d'aucun examen. */}
+          <DropdownMenuItem onSelect={() => setDossierOuvert(true)}>
+            <FileText className="mr-2 size-4" />
+            Dossier de campagne
+          </DropdownMenuItem>
           {!isClosed && (
             <>
               <DropdownMenuSeparator />
@@ -207,6 +217,12 @@ export function EventActions({ event }: { event: EventStaff }) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <CampaignDossierDialog
+        event={event}
+        ouvert={dossierOuvert}
+        onOuvertChange={setDossierOuvert}
+      />
 
       {/* Le 14/09/2026, un clic dans ce menu a annulé un événement par erreur :
           l'annulation prévient aussi les inscrits, elle doit être délibérée. */}

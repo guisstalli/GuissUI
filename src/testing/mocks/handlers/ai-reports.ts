@@ -59,6 +59,7 @@ export const mockChatResponse = {
     },
     { index: 1, text: 'Voici le résultat.', tool_calls: [], errors: [] },
   ],
+  artifacts: [],
 };
 
 export const mockConversationMessages = [
@@ -72,6 +73,7 @@ export const mockConversationMessages = [
     sources_display: null,
     verification: null,
     tools_used: [],
+    artifacts: [],
     created_at: '2026-07-06T10:00:00Z',
   },
   {
@@ -84,6 +86,7 @@ export const mockConversationMessages = [
     sources_display: mockAskResponse.sources_display,
     verification: mockAskResponse.verification,
     tools_used: mockAskResponse.tools_used,
+    artifacts: [],
     created_at: '2026-07-06T10:05:00Z',
   },
 ];
@@ -111,6 +114,7 @@ export const mockReportDetail = {
   risk_tier: 'aggregate',
   filters: {},
   prompt: '',
+  markdown: '## Synthèse\n\n412 conducteurs examinés en août 2026.',
   pdf_url: null,
   docx_url: 'https://s3.example.test/ai_reports/report_1.docx',
   llm_backend: 'gemini',

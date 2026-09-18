@@ -1,6 +1,12 @@
 'use client';
 
-import { MessageSquarePlus, MoreHorizontal, Pencil, Trash } from 'lucide-react';
+import {
+  MessageSquarePlus,
+  MoreHorizontal,
+  Pencil,
+  Search,
+  Trash,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -23,6 +29,8 @@ import { useDeleteConversation } from '../../api/delete-conversation';
 import { useConversations } from '../../api/get-conversations';
 import { useRenameConversation } from '../../api/rename-conversation';
 import type { ConversationListItem } from '../../types';
+
+import { AgentMemoryPanel } from './agent-memory-panel';
 
 const SIDEBAR_PAGE_SIZE = 50;
 
@@ -180,7 +188,19 @@ export function ConversationList({
     params: { limit: SIDEBAR_PAGE_SIZE },
   });
 
+  const [recherche, setRecherche] = useState('');
   const conversations = data?.results ?? [];
+  // Filtrage LOCAL sur les conversations déjà chargées : la sidebar en tient au
+  // plus quelques dizaines, et un aller-retour serveur par frappe coûterait
+  // plus cher que le service rendu. Le jour où l'historique dépassera cette
+  // page, il faudra une recherche côté serveur.
+  const filtrees = recherche.trim()
+    ? conversations.filter((conversation) =>
+        (conversation.title ?? '')
+          .toLowerCase()
+          .includes(recherche.trim().toLowerCase()),
+      )
+    : conversations;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
@@ -190,6 +210,23 @@ export function ConversationList({
           Nouvelle conversation
         </Link>
       </Button>
+      <AgentMemoryPanel />
+      {conversations.length > 0 && (
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={recherche}
+            onChange={(event) => setRecherche(event.target.value)}
+            placeholder="Rechercher une conversation…"
+            aria-label="Rechercher une conversation"
+            className="w-full rounded-md border border-input bg-background py-1.5 pl-7 pr-2 text-xs"
+          />
+        </div>
+      )}
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
           <Spinner size="sm" />
@@ -221,7 +258,7 @@ export function ConversationList({
             aria-label="Historique des conversations"
             className="space-y-0.5 pr-2"
           >
-            {conversations.map((conversation) => (
+            {filtrees.map((conversation) => (
               <ConversationRow
                 key={conversation.id}
                 conversation={conversation}
@@ -234,6 +271,11 @@ export function ConversationList({
                 }}
               />
             ))}
+            {filtrees.length === 0 && (
+              <p className="px-2 py-4 text-xs text-muted-foreground">
+                Aucune conversation ne correspond à « {recherche} ».
+              </p>
+            )}
           </nav>
         </ScrollArea>
       )}

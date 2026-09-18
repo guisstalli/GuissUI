@@ -1,9 +1,10 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { RotateCcw, Square } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -26,6 +27,7 @@ import { toChatMessage } from '../../types';
 import { ChatDisclaimerBanner } from './chat-disclaimer-banner';
 import { ChatInput } from './chat-input';
 import { ChatMessageList } from './chat-message-list';
+import { ChatProgress, type EtapeProgression } from './chat-progress';
 
 const QUOTA_MESSAGE =
   'Limite de questions atteinte (30 par heure). Réessayez dans quelques minutes.';
@@ -58,6 +60,7 @@ const forgeTurnMessages = (
       sources_display: null,
       verification: null,
       tools_used: [],
+      artifacts: [],
       created_at: now,
     },
     {
@@ -70,6 +73,9 @@ const forgeTurnMessages = (
       sources_display: null,
       verification: null,
       tools_used: response.tools_used,
+      // Sans cette ligne, la carte du rapport n'apparaîtrait qu'après un
+      // rechargement du fil : le tour est semé dans le cache sans refetch.
+      artifacts: response.artifacts ?? [],
       trajectory: response.trajectory,
       created_at: now,
     },
@@ -107,6 +113,10 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
   // Streaming (SSE) : progression affichée + drapeau d'envoi en cours.
   const [streaming, setStreaming] = useState(false);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const [etapes, setEtapes] = useState<EtapeProgression[]>([]);
+  // Mémorisée pour pouvoir relancer la même question : régénérer était
+  // impossible, il fallait la retaper à l'identique.
+  const [derniereQuestion, setDerniereQuestion] = useState<string | null>(null);
 
   // Réconciliation du cache après un tour réussi — partagée par le streaming
   // (événement `done`) et le repli synchrone (mutation onSuccess).
@@ -147,12 +157,26 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
     [isExisting, conversationId, queryClient, router],
   );
 
+  /** Contrôleur du tour en vol — interrompt le streaming ET le repli synchrone. */
+  const abortRef = useRef<AbortController | null>(null);
+
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
   const chatMutation = useChat({
     mutationConfig: {
       onSuccess: (response) => {
         applyTurn(pendingQuestion ?? '', response);
       },
       onError: (error) => {
+        // Arrêt volontaire du repli synchrone : ni erreur, ni message. On
+        // retire simplement la bulle en vol.
+        if (abortRef.current?.signal.aborted) {
+          setPendingQuestion(null);
+          queryClient.invalidateQueries({ queryKey: ['ai-conversations'] });
+          return;
+        }
         const status =
           error instanceof Error && 'status' in error
             ? (error as { status?: number }).status
@@ -197,23 +221,49 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
     if (chatMutation.isPending || streaming) return;
     setFlightError(null);
     setPendingQuestion(question);
+    setDerniereQuestion(question);
+    setEtapes([]);
     setStreaming(true);
     setStreamStatus('L’assistant réfléchit…');
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const response = await streamChat({
         question,
+        signal: controller.signal,
         ...(attachments.length > 0 ? { attachments } : {}),
         ...(isExisting ? { conversation_id: conversationId } : {}),
         onEvent: (e) => {
-          if (e.type === 'tools' && e.tools.length) {
-            setStreamStatus(`Analyse en cours : ${e.tools.join(', ')}…`);
-          } else if (e.type === 'step') {
+          // Chaque étape est CONSERVÉE, au lieu d'écraser la précédente dans
+          // une ligne de statut : après quarante secondes, l'utilisateur voyait
+          // un message immobile sans savoir si quelque chose avançait.
+          if (e.type === 'step') {
             setStreamStatus('L’assistant réfléchit…');
+            setEtapes((precedentes) => [
+              ...precedentes.map((etape) => ({ ...etape, terminee: true })),
+              { index: e.index, outils: [], terminee: false },
+            ]);
+          } else if (e.type === 'tools' && e.tools.length) {
+            setStreamStatus(`Analyse en cours : ${e.tools.join(', ')}…`);
+            setEtapes((precedentes) =>
+              precedentes.map((etape) =>
+                etape.index === e.index ? { ...etape, outils: e.tools } : etape,
+              ),
+            );
           }
         },
       });
       applyTurn(question, response);
     } catch (err) {
+      // Arrêt demandé par l'utilisateur : ce n'est pas une panne. On retire la
+      // bulle en vol sans message d'erreur, et surtout SANS repli sur le chat
+      // synchrone — relancer la requête qu'on vient d'interrompre serait le
+      // contraire de ce qui a été demandé.
+      if (controller.signal.aborted) {
+        setPendingQuestion(null);
+        queryClient.invalidateQueries({ queryKey: ['ai-conversations'] });
+        return;
+      }
       const business =
         err instanceof Error &&
         (err as Error & { business?: boolean }).business === true;
@@ -222,8 +272,11 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
         showBusinessError((err as Error).message);
       } else {
         // Streaming indisponible (réseau/proxy) : repli sur le chat synchrone.
+        // Même contrôleur que le streaming : le repli peut durer jusqu'à une
+        // minute, il doit rester interruptible par le bouton « Arrêter ».
         chatMutation.mutate({
           question,
+          signal: controller.signal,
           ...(attachments.length > 0 ? { attachments } : {}),
           ...(isExisting ? { conversation_id: conversationId } : {}),
         });
@@ -282,11 +335,51 @@ export function AssistantChat({ conversationId }: AssistantChatProps) {
           isThinking={chatMutation.isPending || streaming}
         />
         <div className="border-t border-border p-3">
-          {streaming && streamStatus && (
-            <p className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Spinner className="size-3" />
-              {streamStatus}
-            </p>
+          {/* Affiché aussi pendant le repli synchrone : cet appel peut durer
+              près d'une minute, c'est justement là que l'arrêt manque le plus. */}
+          {(streaming || chatMutation.isPending) && (
+            <div className="mb-2 flex items-center gap-2">
+              <p
+                className="flex items-center gap-2 text-xs text-muted-foreground"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <Spinner className="size-3" />
+                {streamStatus ?? 'L’assistant réfléchit…'}
+              </p>
+              {/* Huit secondes d'attente sans possibilité d'interrompre, c'est
+                  le manque de contrôle le plus criant du fil. `streamChat`
+                  acceptait déjà un AbortSignal — il n'était jamais fourni. */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={handleStop}
+              >
+                <Square className="mr-1 size-3" aria-hidden />
+                Arrêter
+              </Button>
+            </div>
+          )}
+          {(streaming || chatMutation.isPending) && (
+            <div className="mb-2">
+              <ChatProgress etapes={etapes} />
+            </div>
+          )}
+          {!streaming && !chatMutation.isPending && derniereQuestion && (
+            <div className="mb-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => handleSend(derniereQuestion, [])}
+              >
+                <RotateCcw className="mr-1 size-3" aria-hidden />
+                Régénérer la réponse
+              </Button>
+            </div>
           )}
           <ChatInput
             onSend={handleSend}
