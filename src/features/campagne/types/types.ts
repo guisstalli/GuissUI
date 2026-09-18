@@ -63,3 +63,21 @@ export const nouvellePersonneSchema = z.object({
   sex: z.enum(['H', 'F'], { message: 'Indiquez le sexe.' }),
 });
 export type NouvellePersonne = z.infer<typeof nouvellePersonneSchema>;
+
+/** Ce que la campagne a réellement mesuré. */
+export const completudeSchema = z.object({
+  jour: z.string(),
+  passages: z.number(),
+  adultes: z.number(),
+  enfants: z.number(),
+  // Les passages ne suffisent pas : le 17/09/2026, 98 des 189 examens enfant
+  // ne portaient aucune mesure et comptaient pourtant comme réalisés.
+  avec_mesure: z.number(),
+  sans_mesure: z.number(),
+  complets: z.number(),
+  taux_mesure: z.number(),
+  taux_complet: z.number(),
+  seuil_interpretation: z.number(),
+  effectif_interpretable: z.boolean(),
+});
+export type Completude = z.infer<typeof completudeSchema>;

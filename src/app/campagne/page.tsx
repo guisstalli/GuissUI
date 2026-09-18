@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { AppShell as Shell } from '@/app/_shell';
 import { useSitesOuverts } from '@/features/campagne/api/campagne';
+import { BilanCampagne } from '@/features/campagne/components/bilan-campagne';
 import { FileDuJour } from '@/features/campagne/components/file-du-jour';
 import { FormulaireArrivee } from '@/features/campagne/components/formulaire-arrivee';
 import {
@@ -48,6 +49,10 @@ export default function CampagnePage() {
     <Shell title="Campagne">
       <div className="space-y-4">
         <SelecteurCampagne campagne={campagne} onChange={setCampagne} />
+
+        {/* Le bilan pendant la campagne, pas après : c'est le seul moment où
+            un dossier vide peut encore être rempli. */}
+        <BilanCampagne campagne={campagne} />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <FormulaireArrivee campagne={campagne} />

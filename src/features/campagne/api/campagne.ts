@@ -9,6 +9,7 @@ import { useNotifications } from '@/components/ui/notifications';
 import { api } from '@/lib/api-client';
 
 import type {
+  Completude,
   Enregistrement,
   LigneFile,
   NouvellePersonne,
@@ -176,4 +177,26 @@ export const useSitesOuverts = () =>
     queryKey: ['campagne', 'sites'],
     queryFn: getSitesOuverts,
     staleTime: 5 * 60_000,
+  });
+
+export const getCompletude = (params: {
+  siteId: number | null;
+  eventId: number | null;
+}): Promise<Completude> =>
+  api.get<Completude>('/depistage/campagne/completude/', {
+    params: {
+      site: params.siteId ?? undefined,
+      event: params.eventId ?? undefined,
+    },
+  });
+
+export const useCompletude = (params: {
+  siteId: number | null;
+  eventId: number | null;
+}) =>
+  useQuery({
+    queryKey: ['campagne', 'completude', params.siteId, params.eventId],
+    queryFn: () => getCompletude(params),
+    enabled: params.siteId !== null || params.eventId !== null,
+    refetchInterval: 60_000,
   });
