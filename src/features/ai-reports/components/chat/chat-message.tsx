@@ -8,6 +8,7 @@ import { cn } from '@/utils/cn';
 import type { ChatMessage as ChatMessageType } from '../../types';
 import { MarkdownContent } from '../markdown-content';
 
+import { AnswerCharts } from './answer-charts';
 import { ChatSourcesAccordion } from './chat-sources-accordion';
 import { ChatTrajectoryAccordion } from './chat-trajectory-accordion';
 import { ReportArtifactCard } from './report-artifact-card';
@@ -95,6 +96,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
       </div>
       <div className="min-w-0 space-y-2">
         <MarkdownContent content={message.content} />
+
+        {/* Les répartitions citées dans le texte, tracées : le lecteur n'a plus
+            à les reconstruire de tête. */}
+        <AnswerCharts sources={message.sources_display} />
 
         {artifacts.map((artifact) => (
           <ReportArtifactCard

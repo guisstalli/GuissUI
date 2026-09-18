@@ -87,12 +87,23 @@ export const reportDetailSchema = reportListItemSchema.extend({
  * Carte « source » lisible construite côté backend (services/sources.py) :
  * libellé FR de l'outil, filtres traduits, effectif du périmètre.
  */
+export const distributionSchema = z.object({
+  cle: z.string(),
+  valeurs: z.array(z.object({ label: z.string(), valeur: z.number() })),
+});
+
 export const sourceDisplaySchema = z.object({
   tool: z.string(),
   label: z.string(),
   filters: z.array(z.object({ label: z.string(), value: z.string() })),
   cell_count: z.number().nullable(),
+  // Répartitions déjà agrégées et suppressées, telles que la réponse les cite.
+  // `.optional()` : les messages enregistrés avant cette version n'en portent
+  // pas, et un historique ne doit pas devenir illisible pour autant.
+  distributions: z.array(distributionSchema).optional(),
 });
+
+export type Distribution = z.infer<typeof distributionSchema>;
 
 export const askResponseSchema = z.object({
   answer_markdown: z.string(),
