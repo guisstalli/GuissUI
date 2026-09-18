@@ -19,6 +19,7 @@ import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/components/ui/notifications';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -86,6 +87,7 @@ import {
   mapTechnicalFormToApi,
   mapClinicalFormToApi,
 } from '@/features/exams/utils/form-to-api-mappers';
+import { validerSection } from '@/features/exams/utils/valider-section';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   usePersistentLocalTabState,
@@ -425,7 +427,27 @@ export default function AdultExamPage() {
   // Handlers
   // =====================================================================
 
-  const handleSaveTechnical = useCallback(() => {
+  const { addNotification } = useNotifications();
+
+  /** Dit QUEL champ corriger, au lieu d'un refus du serveur sans contexte. */
+  const signalerSaisie = useCallback(
+    (message: string) => {
+      addNotification({ type: 'error', title: 'Saisie à corriger', message });
+    },
+    [addNotification],
+  );
+
+  const handleSaveTechnical = useCallback(async () => {
+    // Les regles du formulaire ne s'executaient jamais : `getValues()` lit
+    // sans valider (constate en prod sur l'examen enfant, 17/09/2026).
+    if (
+      !(await validerSection(
+        form,
+        ['visualAcuity', 'refraction', 'ocularTension', 'pachymetry'],
+        signalerSaisie,
+      ))
+    )
+      return;
     const formData = {
       visualAcuity: form.getValues('visualAcuity'),
       refraction: form.getValues('refraction'),
@@ -455,9 +477,17 @@ export default function AdultExamPage() {
         },
       },
     );
-  }, [addTechnical, form, numericExamId]);
+  }, [addTechnical, form, numericExamId, signalerSaisie]);
 
-  const handleSaveClinical = useCallback(() => {
+  const handleSaveClinical = useCallback(async () => {
+    if (
+      !(await validerSection(
+        form,
+        ['plaintes', 'perimetry', 'od', 'og', 'conclusion'],
+        signalerSaisie,
+      ))
+    )
+      return;
     const data = {
       plaintes: form.getValues('plaintes'),
       perimetry: form.getValues('perimetry'),
@@ -488,7 +518,7 @@ export default function AdultExamPage() {
         },
       },
     );
-  }, [addClinical, form, numericExamId]);
+  }, [addClinical, form, numericExamId, signalerSaisie]);
 
   const handleSaveSection = useCallback(
     (section: Section) => {

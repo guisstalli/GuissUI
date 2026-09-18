@@ -16,6 +16,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { Header } from '@/components/layouts/header';
 import { AppSidebar } from '@/components/layouts/sidebar';
 import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/components/ui/notifications';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -82,6 +83,7 @@ import {
   mapRefractionFormToApi,
   mapVisualAcuityFormToApi,
 } from '@/features/exams/utils/form-to-api-mappers';
+import { validerSection } from '@/features/exams/utils/valider-section';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   usePersistentLocalTabState,
@@ -501,6 +503,16 @@ export default function ChildExamPage() {
     }
   }, [examData, form]);
 
+  /** Dit QUEL champ corriger, au lieu d'un refus du serveur sans contexte. */
+  const { addNotification } = useNotifications();
+
+  const signalerSaisie = useCallback(
+    (message: string) => {
+      addNotification({ type: 'error', title: 'Saisie à corriger', message });
+    },
+    [addNotification],
+  );
+
   const buildVisionBinoculairePayload = useCallback(
     (vb: ChildExamFormValues['visionBinoculaire']) => {
       const pupillaryReflex = vb.pupillary_reflex;
@@ -528,7 +540,17 @@ export default function ChildExamPage() {
     [],
   );
 
-  const handleSaveTechnical = useCallback(() => {
+  const handleSaveTechnical = useCallback(async () => {
+    // Les regles du formulaire ne s'executaient jamais : `getValues()` lit
+    // sans valider (Sentry GUISSAPI-17/-N, prod 17/09/2026).
+    if (
+      !(await validerSection(
+        form,
+        ['visualAcuity', 'refraction', 'ocularTension', 'pachymetry'],
+        signalerSaisie,
+      ))
+    )
+      return;
     const values = form.getValues();
     saveTechnical(
       {
@@ -547,9 +569,19 @@ export default function ChildExamPage() {
         },
       },
     );
-  }, [saveTechnical, form, numericExamId, refetchExam]);
+  }, [saveTechnical, form, numericExamId, refetchExam, signalerSaisie]);
 
-  const handleSaveClinical = useCallback(() => {
+  const handleSaveClinical = useCallback(async () => {
+    // Les regles du formulaire ne s'executaient jamais : `getValues()` lit
+    // sans valider (Sentry GUISSAPI-17/-N, prod 17/09/2026).
+    if (
+      !(await validerSection(
+        form,
+        ['visionBinoculaire', 'clinicalCheck'],
+        signalerSaisie,
+      ))
+    )
+      return;
     const values = form.getValues();
     // Save VB + reflet/FO fields to technical endpoint, simplified flag to clinical endpoint
     saveTechnical(
@@ -593,9 +625,20 @@ export default function ChildExamPage() {
     simplifiedClinicalExam,
     buildVisionBinoculairePayload,
     refetchExam,
+    signalerSaisie,
   ]);
 
-  const handleSaveComplementary = useCallback(() => {
+  const handleSaveComplementary = useCallback(async () => {
+    // Les regles du formulaire ne s'executaient jamais : `getValues()` lit
+    // sans valider (Sentry GUISSAPI-17/-N, prod 17/09/2026).
+    if (
+      !(await validerSection(
+        form,
+        ['plaintes', 'perimetry', 'od', 'og'],
+        signalerSaisie,
+      ))
+    )
+      return;
     const values = form.getValues();
     saveClinical(
       {
@@ -625,9 +668,12 @@ export default function ChildExamPage() {
         },
       },
     );
-  }, [saveClinical, form, numericExamId, refetchExam]);
+  }, [saveClinical, form, numericExamId, refetchExam, signalerSaisie]);
 
-  const handleSaveConclusion = useCallback(() => {
+  const handleSaveConclusion = useCallback(async () => {
+    // Les regles du formulaire ne s'executaient jamais : `getValues()` lit
+    // sans valider (Sentry GUISSAPI-17/-N, prod 17/09/2026).
+    if (!(await validerSection(form, ['conclusion'], signalerSaisie))) return;
     const values = form.getValues();
     saveClinical(
       {
@@ -645,7 +691,7 @@ export default function ChildExamPage() {
         },
       },
     );
-  }, [saveClinical, form, numericExamId, refetchExam]);
+  }, [saveClinical, form, numericExamId, refetchExam, signalerSaisie]);
 
   const isSaving = isSavingTechnical || isSavingClinical;
 

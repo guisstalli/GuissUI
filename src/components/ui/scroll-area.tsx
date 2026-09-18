@@ -5,11 +5,26 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+type ScrollAreaProps = React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+  /**
+   * Accès au viewport interne (l'élément qui défile réellement).
+   *
+   * Les props de ce composant vont sur `Root`, qui ne défile pas : sans cette
+   * échappatoire, impossible de lire `scrollTop` ou de brancher `onScroll` —
+   * or l'événement `scroll` ne remonte pas via React depuis un enfant.
+   */
+  viewportRef?: React.Ref<HTMLDivElement>;
+  /** Handler de défilement, posé sur le viewport et non sur la racine. */
+  onViewportScroll?: React.UIEventHandler<HTMLDivElement>;
+};
+
 function ScrollArea({
   className,
   children,
+  viewportRef,
+  onViewportScroll,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+}: ScrollAreaProps) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -25,6 +40,8 @@ function ScrollArea({
         pour que la largeur vienne du parent et non du contenu.
       */}
       <ScrollAreaPrimitive.Viewport
+        ref={viewportRef}
+        onScroll={onViewportScroll}
         data-slot="scroll-area-viewport"
         className="focus-visible:ring-ring/50 size-full min-w-0 rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring [&>div]:!block [&>div]:!min-w-0"
       >

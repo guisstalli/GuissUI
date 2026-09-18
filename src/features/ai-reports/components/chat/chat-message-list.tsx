@@ -1,8 +1,9 @@
 'use client';
 
-import { MessageSquareText } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { ArrowDown, MessageSquareText } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import type { ChatMessage as ChatMessageType } from '../../types';
@@ -21,15 +22,36 @@ const EXAMPLE_QUESTIONS = [
   'Quels sont les facteurs de risque les plus fréquents ?',
 ];
 
+/** Marge sous laquelle on considère l'utilisateur « collé au bas » du fil. */
+const BOTTOM_THRESHOLD_PX = 80;
+
 export function ChatMessageList({
   messages,
   isThinking,
 }: ChatMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [colleEnBas, setColleEnBas] = useState(true);
 
+  // Ne recoller au bas QUE si l'utilisateur y était déjà. L'ancienne version
+  // appelait scrollIntoView à chaque changement, sans condition : remonter pour
+  // relire une réponse pendant que l'assistant écrivait ramenait de force en
+  // bas du fil — impossible de lire sa propre conversation en cours de tour.
   useEffect(() => {
+    if (!colleEnBas) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, isThinking]);
+  }, [messages.length, isThinking, colleEnBas]);
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    setColleEnBas(
+      scrollHeight - scrollTop - clientHeight <= BOTTOM_THRESHOLD_PX,
+    );
+  };
+
+  // Repasser  à true suffit : l'effet ci-dessus fait le défilement.
+  // L'appeler aussi ici déclenchait deux animations concurrentes.
+  const revenirEnBas = () => setColleEnBas(true);
 
   if (messages.length === 0 && !isThinking) {
     return (
@@ -58,14 +80,33 @@ export function ChatMessageList({
   }
 
   return (
-    <ScrollArea className="min-h-0 flex-1">
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
-        {isThinking && <ThinkingIndicator />}
-        <div ref={bottomRef} />
-      </div>
-    </ScrollArea>
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportRef={viewportRef}
+        onViewportScroll={handleScroll}
+      >
+        <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4">
+          {messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
+          {isThinking && <ThinkingIndicator />}
+          <div ref={bottomRef} />
+        </div>
+      </ScrollArea>
+
+      {!colleEnBas && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={revenirEnBas}
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 shadow-md"
+        >
+          <ArrowDown className="mr-1.5 size-3.5" aria-hidden />
+          Revenir en bas
+        </Button>
+      )}
+    </div>
   );
 }

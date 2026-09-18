@@ -30,10 +30,38 @@ export const EventPublicSchema = z.object({
 
 export type EventPublic = z.infer<typeof EventPublicSchema>;
 
+/**
+ * Dossier de campagne : ce qu'aucun examen ne porte.
+ *
+ * Un rapport d'activité institutionnel s'ouvre sur la justification du projet,
+ * ses objectifs et sa méthodologie, et se termine par l'équipe. Ces faits ne se
+ * déduisent d'aucune donnée clinique : faute de les saisir, le module IA — à qui
+ * l'on interdit d'inventer — écrivait un paragraphe générique.
+ */
+export const MembreEquipeSchema = z.object({
+  nom: z.string().min(1, 'Nom requis'),
+  role: z.string().default(''),
+});
+
+export const EventDossierSchema = z.object({
+  projet: z.string().default(''),
+  contexte: z.string().default(''),
+  objectif_general: z.string().default(''),
+  objectifs_specifiques: z.array(z.string()).default([]),
+  methodologie: z.string().default(''),
+  materiel: z.array(z.string()).default([]),
+  partenaires: z.array(z.string()).default([]),
+  equipe: z.array(MembreEquipeSchema).default([]),
+  population_cible: z.string().default(''),
+});
+
+export type EventDossier = z.infer<typeof EventDossierSchema>;
+export type MembreEquipe = z.infer<typeof MembreEquipeSchema>;
+
 export const EventStaffSchema = EventPublicSchema.extend({
   id: z.number(),
   created: z.string().optional(),
-});
+}).merge(EventDossierSchema.partial());
 
 export type EventStaff = z.infer<typeof EventStaffSchema>;
 
