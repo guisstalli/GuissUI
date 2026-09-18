@@ -161,3 +161,32 @@ export const jourLocal = (decalageJours = 0): string => {
   const quantieme = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mois}-${quantieme}`;
 };
+
+/** Ce que le rattrapage annonce, puis ce qu'il a fait. */
+export const rattachementSitesSchema = z.object({
+  patients: z.number(),
+  rattaches: z.number(),
+  // Examinés sur plusieurs sites : jamais devinés — 3 sur 3 441 dans le dump
+  // du 18/09/2026, et choisir à leur place inventerait une donnée.
+  ambigus: z.number(),
+  patients_ambigus: z.array(z.number()).optional(),
+  sans_examen: z.number(),
+  deja_rattaches: z.number(),
+  applique: z.boolean(),
+});
+export type RattachementSites = z.infer<typeof rattachementSitesSchema>;
+
+export const siteBrefSchema = z.object({
+  id: z.number(),
+  libelle: z.string(),
+  code: z.string(),
+  is_active: z.boolean(),
+});
+export type SiteBref = z.infer<typeof siteBrefSchema>;
+
+/** Deux écritures du même lieu — « CLAIRE AMITIÉ » et « Claire amitie ». */
+export const groupeSitesDoublonsSchema = z.object({
+  cle: z.string(),
+  sites: z.array(siteBrefSchema),
+});
+export type GroupeSitesDoublons = z.infer<typeof groupeSitesDoublonsSchema>;
