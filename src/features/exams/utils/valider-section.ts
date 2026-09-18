@@ -25,8 +25,8 @@ export async function validerSection<T extends FieldValues>(
   // composant ABONNÉ au rendu. Appelé depuis un gestionnaire de clic, il
   // renvoie un objet vide : on lit l'état interne, seule source à jour ici.
   const erreurs =
-    (form.control as unknown as { _formState?: { errors?: unknown } })._formState
-      ?.errors ?? form.formState.errors;
+    (form.control as unknown as { _formState?: { errors?: unknown } })
+      ._formState?.errors ?? form.formState.errors;
 
   signaler(premierMessage(erreurs, champs));
   return false;

@@ -1,16 +1,18 @@
 'use client';
 
 import { AlertCircle, Bot, Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { cn } from '@/utils/cn';
 
 import type { ChatMessage as ChatMessageType } from '../../types';
+import { lierCitations } from '../../utils/citations';
 import { MarkdownContent } from '../markdown-content';
 
 import { AnswerCharts } from './answer-charts';
 import { ChatSourcesAccordion } from './chat-sources-accordion';
 import { ChatTrajectoryAccordion } from './chat-trajectory-accordion';
+import { useCitationComponents } from './citation-marker';
 import { ReportArtifactCard } from './report-artifact-card';
 
 type ChatMessageProps = {
@@ -79,6 +81,32 @@ export function ChatMessage({ message }: ChatMessageProps) {
   // bulle reste sur les messages utilisateur, où elle distingue les tours.
   const artifacts = message.artifacts ?? [];
 
+  return <ReponseAssistant message={message} artifacts={artifacts} />;
+}
+
+/**
+ * Corps d'une réponse d'assistant. Séparé parce qu'il porte de l'état (la
+ * source mise en avant par un clic sur « [n] ») : les branches « utilisateur »
+ * et « erreur » ci-dessus rendent avant tout hook.
+ */
+function ReponseAssistant({
+  message,
+  artifacts,
+}: {
+  message: ChatMessageType;
+  artifacts: NonNullable<ChatMessageType['artifacts']>;
+}) {
+  // Source désignée par le dernier clic sur un marqueur. Elle déplie
+  // l'accordéon et met la carte en évidence : sans cela, le renvoi conduirait
+  // à un bloc replié, donc à rien du tout.
+  const [sourceActive, setSourceActive] = useState<number | null>(null);
+  const selectionner = useCallback((numero: number) => {
+    // Re-cliquer le même marqueur doit re-déclencher la mise en évidence.
+    setSourceActive(null);
+    requestAnimationFrame(() => setSourceActive(numero));
+  }, []);
+  const composants = useCitationComponents(selectionner);
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -95,7 +123,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <BoutonCopier texte={message.content} />
       </div>
       <div className="min-w-0 space-y-2">
-        <MarkdownContent content={message.content} />
+        <MarkdownContent
+          content={lierCitations(message.content)}
+          components={composants}
+        />
 
         {/* Les répartitions citées dans le texte, tracées : le lecteur n'a plus
             à les reconstruire de tête. */}
@@ -112,6 +143,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           sources={message.sources}
           sources_display={message.sources_display}
           tools_used={message.tools_used}
+          sourceActive={sourceActive}
         />
         <ChatTrajectoryAccordion trajectory={message.trajectory} />
       </div>

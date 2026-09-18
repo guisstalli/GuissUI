@@ -1,6 +1,7 @@
 'use client';
 
 import { Database } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   Accordion,
@@ -9,6 +10,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion/accordion';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/utils/cn';
 
 import type { SourceDisplay } from '../../types';
 
@@ -16,6 +18,8 @@ type ChatSourcesAccordionProps = {
   sources?: unknown;
   sources_display?: SourceDisplay[];
   tools_used?: string[];
+  /** Rang (1-based) de la source désignée par un marqueur « [n] » du texte. */
+  sourceActive?: number | null;
 };
 
 /** « Basé sur 128 examens » — effectif du périmètre après suppression K. */
@@ -26,12 +30,45 @@ function cellCountLabel(cellCount: number | null): string | null {
     : `Basé sur ${cellCount} examen`;
 }
 
-function SourceCard({ source }: { source: SourceDisplay }) {
+function SourceCard({
+  source,
+  rang,
+  designee,
+}: {
+  source: SourceDisplay;
+  rang: number;
+  designee: boolean;
+}) {
   const countLabel = cellCountLabel(source.cell_count);
+  const carte = useRef<HTMLDivElement>(null);
+
+  // Une carte désignée depuis le texte peut se trouver hors écran : l'amener
+  // sous les yeux fait partie du renvoi, sinon le clic semble sans effet.
+  useEffect(() => {
+    if (designee) {
+      carte.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [designee]);
+
   return (
-    <div className="bg-muted/40 space-y-1.5 rounded-md border border-border p-2.5">
+    <div
+      ref={carte}
+      data-testid={`source-card-${rang}`}
+      data-designee={designee ? 'true' : undefined}
+      className={cn(
+        'bg-muted/40 space-y-1.5 rounded-md border border-border p-2.5',
+        'transition-shadow',
+        designee && 'border-primary ring-2 ring-primary/40',
+      )}
+    >
       <div className="flex items-center gap-1.5">
         <Database className="size-3.5 shrink-0 text-primary" aria-hidden />
+        <span
+          className="bg-primary/10 rounded px-1 text-[10px] font-medium text-primary"
+          aria-hidden
+        >
+          {rang}
+        </span>
         <span className="text-xs font-medium">{source.label}</span>
       </div>
       {source.filters.length > 0 && (
@@ -64,16 +101,30 @@ export function ChatSourcesAccordion({
   sources,
   sources_display,
   tools_used,
+  sourceActive = null,
 }: ChatSourcesAccordionProps) {
   const displayCards = sources_display ?? [];
   const uniqueTools = Array.from(new Set(tools_used ?? []));
   const hasRawSources = sources !== undefined && sources !== null;
 
+  // Accordéon contrôlé : un marqueur « [n] » du texte doit pouvoir l'ouvrir.
+  // Replié par défaut, comme avant — seul un clic sur un renvoi le déplie.
+  const [ouvert, setOuvert] = useState('');
+  useEffect(() => {
+    if (sourceActive !== null) setOuvert('sources');
+  }, [sourceActive]);
+
   if (displayCards.length === 0 && !hasRawSources && uniqueTools.length === 0)
     return null;
 
   return (
-    <Accordion type="single" collapsible className="w-full">
+    <Accordion
+      type="single"
+      collapsible
+      className="w-full"
+      value={ouvert}
+      onValueChange={setOuvert}
+    >
       <AccordionItem value="sources" className="border-none">
         <AccordionTrigger className="py-1 text-xs text-muted-foreground hover:no-underline">
           Sources et outils utilisés
@@ -82,7 +133,12 @@ export function ChatSourcesAccordion({
           {displayCards.length > 0 && (
             <div className="space-y-1.5">
               {displayCards.map((source, index) => (
-                <SourceCard key={`${source.tool}-${index}`} source={source} />
+                <SourceCard
+                  key={`${source.tool}-${index}`}
+                  source={source}
+                  rang={index + 1}
+                  designee={sourceActive === index + 1}
+                />
               ))}
             </div>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { cn } from '@/utils/cn';
@@ -8,6 +8,13 @@ import { cn } from '@/utils/cn';
 type MarkdownContentProps = {
   content: string;
   className?: string;
+  /**
+   * Rendus d'éléments à surcharger (transmis tels quels à react-markdown).
+   * Sert aux marqueurs de citation « [n] », rendus en renvois cliquables
+   * plutôt qu'en liens ordinaires. Les garde-fous ci-dessous (skipHtml,
+   * images interdites) restent appliqués quoi qu'il arrive.
+   */
+  components?: Components;
 };
 
 /**
@@ -20,7 +27,11 @@ type MarkdownContentProps = {
  * un hôte arbitraire (exfiltration d'IP/métadonnées si un prompt injection y
  * glisse une URL de tracker). On interdit donc `img` au rendu.
  */
-export function MarkdownContent({ content, className }: MarkdownContentProps) {
+export function MarkdownContent({
+  content,
+  className,
+  components,
+}: MarkdownContentProps) {
   return (
     <div
       className={cn(
@@ -38,6 +49,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
         skipHtml
         disallowedElements={['img']}
         unwrapDisallowed
+        components={components}
       >
         {content}
       </ReactMarkdown>
