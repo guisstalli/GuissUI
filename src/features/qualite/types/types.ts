@@ -69,6 +69,9 @@ export const arbitrageSchema = z.object({
   patient_id: z.number(),
   patient_nom: z.string().nullable().optional(),
   examen_conserve_id: z.number(),
+  // Une réfraction d'enfant ne se lit pas comme celle d'un adulte : le
+  // médecin qui tranche doit savoir de quel formulaire vient la valeur.
+  type_examen: z.enum(['adulte', 'enfant']).optional(),
   examen_ecarte_id: z.number(),
   numero_examen_ecarte: z.string(),
   composant: z.string(),
@@ -125,6 +128,7 @@ export type NettoyageRun = z.infer<typeof nettoyageRunSchema>;
  */
 export const operationNettoyageSchema = z.enum([
   'doublons',
+  'doublons_enfant',
   'coquilles_enfant',
 ]);
 export type OperationNettoyage = z.infer<typeof operationNettoyageSchema>;
