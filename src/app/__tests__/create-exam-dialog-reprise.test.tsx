@@ -51,7 +51,10 @@ function serveurExigeantUnMotif(recu: { corps?: Record<string, unknown> }) {
   );
 }
 
-function afficher(onCreated?: (exam: { id: number }) => void) {
+function afficher(
+  onCreated?: (exam: { id: number }) => void,
+  { isAdult = true }: { isAdult?: boolean } = {},
+) {
   rtlRender(
     <QueryClientProvider
       client={
@@ -68,7 +71,7 @@ function afficher(onCreated?: (exam: { id: number }) => void) {
         onOpenChange={() => {}}
         patientId={2}
         patientFullName="Oumar Ndiaye"
-        isAdult
+        isAdult={isAdult}
         onCreated={onCreated}
       />
     </QueryClientProvider>,
@@ -160,5 +163,78 @@ describe('Déclarer un second examen le même jour', () => {
     await user.click(screen.getByText('Créer le second examen'));
 
     await waitFor(() => expect(ouvrir).toHaveBeenCalledWith({ id: 3000 }));
+  });
+});
+
+/**
+ * Le 17/09/2026, une campagne scolaire a produit 189 examens enfant pour 139
+ * patients : le garde-fou et le motif de reprise n'existaient que pour
+ * l'adulte. L'écran enfant doit offrir exactement les mêmes issues.
+ */
+describe('Second examen le même jour — côté enfant', () => {
+  function serveurEnfantExigeantUnMotif(recu: {
+    corps?: Record<string, unknown>;
+  }) {
+    server.use(
+      http.post(
+        `${env.API_URL}/depistage/examens/enfants/create/`,
+        async ({ request }) => {
+          const corps = (await request.json()) as Record<string, unknown>;
+          if (!corps.motif_reprise) {
+            return HttpResponse.json(
+              {
+                detail: "Un examen existe deja pour cet enfant aujourd'hui.",
+                examen_existant_id: 3001,
+                numero_examen: 'EXC-2026-11AA22',
+              },
+              { status: 409 },
+            );
+          }
+          recu.corps = corps;
+          return HttpResponse.json({ id: 3002 }, { status: 201 });
+        },
+      ),
+    );
+  }
+
+  test('le refus offre les DEUX issues, comme pour l’adulte', async () => {
+    serveurEnfantExigeantUnMotif({});
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    afficher(undefined, { isAdult: false });
+
+    await user.click(screen.getByText('choisir-site-7'));
+    await user.click(screen.getByText('Créer').closest('button')!);
+
+    expect(
+      await screen.findByText(/Un examen est déjà ouvert pour ce patient/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Reprendre l’examen en cours/)).toBeInTheDocument();
+    expect(screen.getByText(/C’est un second examen/)).toBeInTheDocument();
+  });
+
+  test('un motif déclaré part au serveur et crée l’examen enfant', async () => {
+    const recu: { corps?: Record<string, unknown> } = {};
+    serveurEnfantExigeantUnMotif(recu);
+    const onCreated = vi.fn();
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    afficher(onCreated, { isAdult: false });
+
+    await user.click(screen.getByText('choisir-site-7'));
+    await user.click(screen.getByText('Créer').closest('button')!);
+    await screen.findByText(/Un examen est déjà ouvert pour ce patient/);
+    await user.click(
+      screen.getByText(/C’est un second examen/).closest('button')!,
+    );
+    await user.click(
+      screen.getByText('Reprise après dilatation').closest('button')!,
+    );
+    await user.click(
+      screen.getByText(/Créer le second examen/).closest('button')!,
+    );
+
+    await waitFor(() =>
+      expect(recu.corps?.motif_reprise).toBe('Reprise après dilatation'),
+    );
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith({ id: 3002 }));
   });
 });

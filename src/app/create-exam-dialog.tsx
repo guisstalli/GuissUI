@@ -143,7 +143,7 @@ export function CreateExamDialog({
     mutationConfig: { onSuccess: succes, onError: surErreur },
   });
   const creerEnfant = useCreateChildExam({
-    mutationConfig: { onSuccess: succes },
+    mutationConfig: { onSuccess: succes, onError: surErreur },
   });
 
   const enCours = creerAdulte.isPending || creerEnfant.isPending;
@@ -175,7 +175,15 @@ export function CreateExamDialog({
         }),
       });
     } else {
-      creerEnfant.mutate({ patient_id: patientId, site_id: siteId });
+      creerEnfant.mutate({
+        patient_id: patientId,
+        site_id: siteId,
+        // Même règle que pour l'adulte depuis le 18/09/2026 : un motif vide
+        // vaut « examen ordinaire », et le serveur doit continuer de refuser.
+        ...(motifReprise.trim() !== '' && {
+          motif_reprise: motifReprise.trim(),
+        }),
+      });
     }
   };
 
