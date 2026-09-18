@@ -115,15 +115,31 @@ export const nettoyageRunSchema = z.object({
 });
 export type NettoyageRun = z.infer<typeof nettoyageRunSchema>;
 
+/**
+ * Ce que le nettoyage sait faire.
+ *
+ * `doublons` recolle les examens adulte saisis deux fois. `coquilles_enfant`
+ * supprime les examens enfant restés vides : la campagne scolaire du
+ * 17/09/2026 en a produit 98 sur 189, comptés partout comme des examens
+ * réalisés.
+ */
+export const operationNettoyageSchema = z.enum([
+  'doublons',
+  'coquilles_enfant',
+]);
+export type OperationNettoyage = z.infer<typeof operationNettoyageSchema>;
+
 /** Ce que la simulation annonce avant toute écriture. */
 export const planNettoyageSchema = z.object({
   jour: z.string(),
   examens_concernes: z.number(),
-  patients: z.number(),
-  reprises_epargnees: z.number(),
-  fusions: z.number(),
+  // Absents du plan de purge enfant, qui ne fusionne ni n'arbitre rien.
+  patients: z.number().optional(),
+  reprises_epargnees: z.number().optional(),
+  fusions: z.number().optional(),
   supprimes: z.number(),
-  conflits: z.number(),
+  conflits: z.number().optional(),
+  numeros: z.array(z.string()).optional(),
   simulation: z.boolean(),
   rapport: z.string(),
 });
@@ -145,3 +161,32 @@ export const jourLocal = (decalageJours = 0): string => {
   const quantieme = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mois}-${quantieme}`;
 };
+
+/** Ce que le rattrapage annonce, puis ce qu'il a fait. */
+export const rattachementSitesSchema = z.object({
+  patients: z.number(),
+  rattaches: z.number(),
+  // Examinés sur plusieurs sites : jamais devinés — 3 sur 3 441 dans le dump
+  // du 18/09/2026, et choisir à leur place inventerait une donnée.
+  ambigus: z.number(),
+  patients_ambigus: z.array(z.number()).optional(),
+  sans_examen: z.number(),
+  deja_rattaches: z.number(),
+  applique: z.boolean(),
+});
+export type RattachementSites = z.infer<typeof rattachementSitesSchema>;
+
+export const siteBrefSchema = z.object({
+  id: z.number(),
+  libelle: z.string(),
+  code: z.string(),
+  is_active: z.boolean(),
+});
+export type SiteBref = z.infer<typeof siteBrefSchema>;
+
+/** Deux écritures du même lieu — « CLAIRE AMITIÉ » et « Claire amitie ». */
+export const groupeSitesDoublonsSchema = z.object({
+  cle: z.string(),
+  sites: z.array(siteBrefSchema),
+});
+export type GroupeSitesDoublons = z.infer<typeof groupeSitesDoublonsSchema>;

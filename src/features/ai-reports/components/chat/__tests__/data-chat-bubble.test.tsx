@@ -127,7 +127,9 @@ describe('Bulle de discussion des données', () => {
 
   test('une restriction non transmissible est annoncée, pas tue', async () => {
     const user = userEvent.setup();
-    monter({ ...FILTRES, patient_ids: [1, 2, 3] });
+    // Le filtre posé en cliquant un segment de graphique reste propre à
+    // l'écran : aucun outil d'analyse ne l'accepte.
+    monter({ ...FILTRES, acuity: 'basse' });
 
     await user.click(
       screen.getByRole('button', {
@@ -136,8 +138,51 @@ describe('Bulle de discussion des données', () => {
     );
 
     expect(
-      await screen.findByText(/ne peut pas appliquer la cohorte sélectionnée/i),
+      await screen.findByText(/ne peut pas appliquer le filtre d'acuité/i),
     ).toBeInTheDocument();
+  });
+
+  test('la cohorte sélectionnée part avec la question', async () => {
+    const user = userEvent.setup();
+    const envoyes: unknown[] = [];
+    server.use(
+      http.post(`${env.API_URL}/ai-reports/chat/`, async ({ request }) => {
+        envoyes.push(await request.json());
+        return HttpResponse.json({
+          answer_markdown: 'Réponse.',
+          tools_used: [],
+          conversation_id: 42,
+          message_id: 8,
+          trajectory: [],
+          artifacts: [],
+          sources_display: [],
+        });
+      }),
+    );
+    monter({ ...FILTRES, patient_ids: [11, 12, 13] });
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /Discuter de ces données avec l'assistant/i,
+      }),
+    );
+    // L'effectif est annoncé, jamais les identifiants (il figure dans le
+    // résumé d'en-tête ET dans la puce du périmètre).
+    expect(
+      await screen.findAllByText(/3 patients sélectionnés/),
+    ).not.toHaveLength(0);
+
+    await user.type(screen.getByRole('textbox'), 'Pourquoi ceux-là ?');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => expect(envoyes).toHaveLength(1));
+    expect(
+      (envoyes[0] as { filters: { patient_ids: number[] } }).filters
+        .patient_ids,
+    ).toEqual([11, 12, 13]);
+    expect(
+      screen.queryByText(/ne peut pas appliquer/i),
+    ).not.toBeInTheDocument();
   });
 
   test('sans cohorte, aucun avertissement ne s’affiche', async () => {
