@@ -115,15 +115,31 @@ export const nettoyageRunSchema = z.object({
 });
 export type NettoyageRun = z.infer<typeof nettoyageRunSchema>;
 
+/**
+ * Ce que le nettoyage sait faire.
+ *
+ * `doublons` recolle les examens adulte saisis deux fois. `coquilles_enfant`
+ * supprime les examens enfant restés vides : la campagne scolaire du
+ * 17/09/2026 en a produit 98 sur 189, comptés partout comme des examens
+ * réalisés.
+ */
+export const operationNettoyageSchema = z.enum([
+  'doublons',
+  'coquilles_enfant',
+]);
+export type OperationNettoyage = z.infer<typeof operationNettoyageSchema>;
+
 /** Ce que la simulation annonce avant toute écriture. */
 export const planNettoyageSchema = z.object({
   jour: z.string(),
   examens_concernes: z.number(),
-  patients: z.number(),
-  reprises_epargnees: z.number(),
-  fusions: z.number(),
+  // Absents du plan de purge enfant, qui ne fusionne ni n'arbitre rien.
+  patients: z.number().optional(),
+  reprises_epargnees: z.number().optional(),
+  fusions: z.number().optional(),
   supprimes: z.number(),
-  conflits: z.number(),
+  conflits: z.number().optional(),
+  numeros: z.array(z.string()).optional(),
   simulation: z.boolean(),
   rapport: z.string(),
 });
