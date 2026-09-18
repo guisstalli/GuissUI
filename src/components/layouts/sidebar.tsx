@@ -19,6 +19,7 @@ import {
   Package,
   Receipt,
   Scale,
+  ScrollText,
   Settings,
   FileClock,
   ShieldAlert,
@@ -344,6 +345,14 @@ const adminItems: AdminNavItem[] = [
     url: paths.administration.arbitrations.getHref(),
     icon: Scale,
     capability: CAPABILITY.QUALITY_ARBITRATE,
+  },
+  {
+    // Le 17/09/2026, personne ne savait d'où venait la règle qui refusait 102
+    // enregistrements. Elle est désormais lisible sans ouvrir le code.
+    title: 'Règles de saisie',
+    url: paths.administration.inputRules.getHref(),
+    icon: ScrollText,
+    capability: CAPABILITY.ANALYTICS_ADMIN,
   },
   {
     title: 'Permissions',

@@ -10,7 +10,9 @@ import { rtlRender, screen } from '@/testing/test-utils';
 const rendre = () =>
   rtlRender(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
       <BilanCampagne
         campagne={{ siteId: 7, eventId: null, libelle: 'Gare Routière' }}

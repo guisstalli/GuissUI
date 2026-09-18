@@ -242,6 +242,15 @@ export const paths = {
     arbitrations: {
       getHref: () => '/administration/arbitrages',
     },
+
+    /**
+     * Registre des règles de saisie et de leur source clinique. Né du 17/09/2026 :
+     * 102 enregistrements refusés par une règle que personne ne savait rattacher
+     * à une validation médicale.
+     */
+    inputRules: {
+      getHref: () => '/administration/regles-de-saisie',
+    },
   },
 
   // Events (public + staff)
