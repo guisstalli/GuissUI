@@ -26,6 +26,10 @@ export const createChildExam = (
   return api.post<ExamenChildDetailApi>(
     '/depistage/examens/enfants/create/',
     data,
+    // Le 409 « examen déjà ouvert aujourd'hui » est un résultat métier : la
+    // fenêtre le traduit en bandeau de reprise. Le toast automatique du client
+    // API s'y ajoutait et faisait croire à une panne.
+    { silentStatusCodes: [409] },
   );
 };
 

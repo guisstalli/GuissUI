@@ -13,6 +13,7 @@ import { useQualite } from '@/features/qualite/api/get-qualite';
 import { CarteAnomalie } from '@/features/qualite/components/carte-anomalie';
 import { CourbeTendance } from '@/features/qualite/components/courbe-tendance';
 import { HistoriqueNettoyages } from '@/features/qualite/components/historique-nettoyages';
+import { PanneauLieux } from '@/features/qualite/components/panneau-lieux';
 import { PanneauNettoyage } from '@/features/qualite/components/panneau-nettoyage';
 import { TableauDoublons } from '@/features/qualite/components/tableau-doublons';
 import {
@@ -199,6 +200,11 @@ export default function QualiteDonneesPage() {
         {/* Voir une anomalie sans pouvoir agir dessus obligeait à ouvrir un
             terminal sur le serveur. */}
         {peutNettoyer && <PanneauNettoyage />}
+
+        {/* Le lieu manquait sur le patient : on voyait l'anomalie « Patient
+            rattaché à aucun lieu » sans pouvoir la corriger autrement qu'en
+            base. */}
+        {peutNettoyer && <PanneauLieux />}
 
         <div className="space-y-3 pt-2">
           <div>

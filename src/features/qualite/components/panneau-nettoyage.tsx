@@ -5,11 +5,49 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/form/input';
+import { cn } from '@/utils/cn';
 
 import { useAppliquerNettoyage, useSimulerNettoyage } from '../api/nettoyage';
-import { jourLocal, type PlanNettoyage } from '../types/types';
+import {
+  jourLocal,
+  type OperationNettoyage,
+  type PlanNettoyage,
+} from '../types/types';
 
 const hier = () => jourLocal(-1);
+
+/**
+ * Les deux nettoyages que l'écran sait piloter.
+ *
+ * L'adulte était seul servi : la campagne scolaire du 17/09/2026 — 98 examens
+ * enfant vides sur 189 — ne déclenchait rien ici, alors qu'elle gonflait les
+ * effectifs de tous les rapports.
+ */
+const OPERATIONS: {
+  code: OperationNettoyage;
+  onglet: string;
+  titre: string;
+  explication: string;
+}[] = [
+  {
+    code: 'doublons',
+    onglet: 'Doublons (adulte)',
+    titre: 'Nettoyer une journée',
+    explication:
+      'Fusionne ce qui ne se contredit pas, archive avant de supprimer, et ' +
+      'crée un arbitrage pour chaque valeur concurrente — il n’en tranche ' +
+      'jamais aucune.',
+  },
+  {
+    code: 'coquilles_enfant',
+    onglet: 'Examens enfant vides',
+    titre: 'Purger les examens enfant restés vides',
+    explication:
+      'Supprime les examens enfant ouverts puis jamais remplis — aucune ' +
+      'acuité mesurée. Ils comptent aujourd’hui comme des examens réalisés. ' +
+      'Archivés avant suppression, donc restaurables.',
+  },
+];
 
 /**
  * Nettoyer une journée depuis l'écran.
@@ -24,24 +62,55 @@ const hier = () => jourLocal(-1);
  */
 export function PanneauNettoyage() {
   const [jour, setJour] = useState(hier);
+  const [operation, setOperation] = useState<OperationNettoyage>('doublons');
   const [plan, setPlan] = useState<PlanNettoyage | null>(null);
 
   const simuler = useSimulerNettoyage();
   const appliquer = useAppliquerNettoyage({ onSuccess: () => setPlan(null) });
   const enCours = simuler.isPending || appliquer.isPending;
+  const active = OPERATIONS.find((o) => o.code === operation) ?? OPERATIONS[0];
+  const estEnfant = operation === 'coquilles_enfant';
 
   const lancerSimulation = () =>
-    simuler.mutate(jour, { onSuccess: (resultat) => setPlan(resultat) });
+    simuler.mutate(
+      { jour, operation },
+      { onSuccess: (resultat) => setPlan(resultat) },
+    );
 
   return (
     <div className="rounded-lg border bg-card">
       <div className="border-b px-4 py-3">
-        <h3 className="font-semibold">Nettoyer une journée</h3>
-        <p className="text-sm text-muted-foreground">
-          Fusionne ce qui ne se contredit pas, archive avant de supprimer, et
-          crée un arbitrage pour chaque valeur concurrente — il n’en tranche
-          jamais aucune.
-        </p>
+        <h3 className="font-semibold">{active.titre}</h3>
+        <p className="text-sm text-muted-foreground">{active.explication}</p>
+      </div>
+
+      <div
+        role="tablist"
+        aria-label="Nature du nettoyage"
+        className="flex gap-1 border-b px-4 py-2"
+      >
+        {OPERATIONS.map((choix) => (
+          <button
+            key={choix.code}
+            type="button"
+            role="tab"
+            aria-selected={choix.code === operation}
+            className={cn(
+              'rounded-md px-3 py-1.5 text-sm transition-colors',
+              choix.code === operation
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted',
+            )}
+            onClick={() => {
+              setOperation(choix.code);
+              // Un plan calculé pour une autre opération n'a plus de sens :
+              // le garder afficherait un bouton « Appliquer » trompeur.
+              setPlan(null);
+            }}
+          >
+            {choix.onglet}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-end gap-2 px-4 py-3">
@@ -80,33 +149,62 @@ export function PanneauNettoyage() {
           {plan.supprimes === 0 ? (
             <p className="text-sm text-muted-foreground">
               Rien à nettoyer ce jour-là : {plan.examens_concernes} examen(s)
-              pour {plan.patients} patient(s), aucun doublon.
+              {estEnfant
+                ? ', tous porteurs d’au moins une mesure.'
+                : ` pour ${plan.patients} patient(s), aucun doublon.`}
             </p>
           ) : (
             <>
               <p className="text-sm font-medium">Ce qui sera fait</p>
               <ul className="mt-2 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-                <li>
-                  <b className="font-mono text-foreground">{plan.fusions}</b>{' '}
-                  champ(s) recollé(s) sur l’examen conservé
-                </li>
-                <li>
-                  <b className="font-mono text-foreground">{plan.supprimes}</b>{' '}
-                  examen(s) archivé(s) puis supprimé(s)
-                </li>
-                <li>
-                  <b className="font-mono text-foreground">{plan.conflits}</b>{' '}
-                  valeur(s) concurrente(s) mise(s) en arbitrage
-                </li>
-                <li>
-                  <b className="font-mono text-foreground">
-                    {plan.reprises_epargnees}
-                  </b>{' '}
-                  reprise(s) déclarée(s) épargnée(s)
-                </li>
+                {estEnfant ? (
+                  <>
+                    <li>
+                      <b className="font-mono text-foreground">
+                        {plan.supprimes}
+                      </b>{' '}
+                      examen(s) enfant sans aucune mesure, archivé(s) puis
+                      supprimé(s)
+                    </li>
+                    <li>
+                      sur{' '}
+                      <b className="font-mono text-foreground">
+                        {plan.examens_concernes}
+                      </b>{' '}
+                      examen(s) enfant ce jour-là
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      <b className="font-mono text-foreground">
+                        {plan.fusions}
+                      </b>{' '}
+                      champ(s) recollé(s) sur l’examen conservé
+                    </li>
+                    <li>
+                      <b className="font-mono text-foreground">
+                        {plan.supprimes}
+                      </b>{' '}
+                      examen(s) archivé(s) puis supprimé(s)
+                    </li>
+                    <li>
+                      <b className="font-mono text-foreground">
+                        {plan.conflits}
+                      </b>{' '}
+                      valeur(s) concurrente(s) mise(s) en arbitrage
+                    </li>
+                    <li>
+                      <b className="font-mono text-foreground">
+                        {plan.reprises_epargnees}
+                      </b>{' '}
+                      reprise(s) déclarée(s) épargnée(s)
+                    </li>
+                  </>
+                )}
               </ul>
 
-              {plan.conflits > 0 && (
+              {!estEnfant && (plan.conflits ?? 0) > 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   Les valeurs concurrentes ne sont jamais tranchées
                   automatiquement : elles partent vers l’écran d’arbitrage et
@@ -114,16 +212,23 @@ export function PanneauNettoyage() {
                 </p>
               )}
 
+              {estEnfant && plan.numeros && plan.numeros.length > 0 && (
+                <p className="mt-2 break-all font-mono text-xs text-muted-foreground">
+                  {plan.numeros.join(' · ')}
+                  {plan.numeros.length < plan.supprimes && ' …'}
+                </p>
+              )}
+
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
                   disabled={enCours}
-                  onClick={() => appliquer.mutate(jour)}
+                  onClick={() => appliquer.mutate({ jour, operation })}
                 >
                   {appliquer.isPending && (
                     <Loader2 className="mr-1.5 size-3.5 animate-spin" />
                   )}
-                  Appliquer le nettoyage
+                  {estEnfant ? 'Appliquer la purge' : 'Appliquer le nettoyage'}
                 </Button>
                 <Button
                   size="sm"
