@@ -39,6 +39,16 @@ const OPERATIONS: {
       'jamais aucune.',
   },
   {
+    code: 'doublons_enfant',
+    onglet: 'Doublons (enfant)',
+    titre: 'Fusionner les examens enfant en double',
+    explication:
+      'Mêmes règles que pour l’adulte : on garde l’examen le plus rempli, on ' +
+      'recolle ce qui lui manque, et on n’écrase jamais une valeur — les ' +
+      'valeurs concurrentes partent en arbitrage. Après la campagne du 17/09, ' +
+      '24 enfants portaient encore plusieurs examens mesurés.',
+  },
+  {
     code: 'coquilles_enfant',
     onglet: 'Examens enfant vides',
     titre: 'Purger les examens enfant restés vides',
@@ -69,7 +79,9 @@ export function PanneauNettoyage() {
   const appliquer = useAppliquerNettoyage({ onSuccess: () => setPlan(null) });
   const enCours = simuler.isPending || appliquer.isPending;
   const active = OPERATIONS.find((o) => o.code === operation) ?? OPERATIONS[0];
-  const estEnfant = operation === 'coquilles_enfant';
+  // La fusion enfant s'affiche comme la fusion adulte — mêmes compteurs,
+  // mêmes conséquences ; seule la purge a une autre forme.
+  const estPurge = operation === 'coquilles_enfant';
 
   const lancerSimulation = () =>
     simuler.mutate(
@@ -149,7 +161,7 @@ export function PanneauNettoyage() {
           {plan.supprimes === 0 ? (
             <p className="text-sm text-muted-foreground">
               Rien à nettoyer ce jour-là : {plan.examens_concernes} examen(s)
-              {estEnfant
+              {estPurge
                 ? ', tous porteurs d’au moins une mesure.'
                 : ` pour ${plan.patients} patient(s), aucun doublon.`}
             </p>
@@ -157,7 +169,7 @@ export function PanneauNettoyage() {
             <>
               <p className="text-sm font-medium">Ce qui sera fait</p>
               <ul className="mt-2 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-                {estEnfant ? (
+                {estPurge ? (
                   <>
                     <li>
                       <b className="font-mono text-foreground">
@@ -194,17 +206,19 @@ export function PanneauNettoyage() {
                       </b>{' '}
                       valeur(s) concurrente(s) mise(s) en arbitrage
                     </li>
-                    <li>
-                      <b className="font-mono text-foreground">
-                        {plan.reprises_epargnees}
-                      </b>{' '}
-                      reprise(s) déclarée(s) épargnée(s)
-                    </li>
+                    {plan.reprises_epargnees !== undefined && (
+                      <li>
+                        <b className="font-mono text-foreground">
+                          {plan.reprises_epargnees}
+                        </b>{' '}
+                        reprise(s) déclarée(s) épargnée(s)
+                      </li>
+                    )}
                   </>
                 )}
               </ul>
 
-              {!estEnfant && (plan.conflits ?? 0) > 0 && (
+              {!estPurge && (plan.conflits ?? 0) > 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   Les valeurs concurrentes ne sont jamais tranchées
                   automatiquement : elles partent vers l’écran d’arbitrage et
@@ -212,7 +226,7 @@ export function PanneauNettoyage() {
                 </p>
               )}
 
-              {estEnfant && plan.numeros && plan.numeros.length > 0 && (
+              {estPurge && plan.numeros && plan.numeros.length > 0 && (
                 <p className="mt-2 break-all font-mono text-xs text-muted-foreground">
                   {plan.numeros.join(' · ')}
                   {plan.numeros.length < plan.supprimes && ' …'}
@@ -228,7 +242,7 @@ export function PanneauNettoyage() {
                   {appliquer.isPending && (
                     <Loader2 className="mr-1.5 size-3.5 animate-spin" />
                   )}
-                  {estEnfant ? 'Appliquer la purge' : 'Appliquer le nettoyage'}
+                  {estPurge ? 'Appliquer la purge' : 'Appliquer le nettoyage'}
                 </Button>
                 <Button
                   size="sm"
