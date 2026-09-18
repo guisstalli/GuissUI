@@ -192,3 +192,47 @@ describe('Purge des examens enfant vides', () => {
     expect(screen.queryByText('Ce qui sera fait')).not.toBeInTheDocument();
   });
 });
+
+/**
+ * Après la purge des coquilles, 24 enfants du 17/09 portaient encore plusieurs
+ * examens MESURÉS. La fusion enfant est proposée au même endroit que celle de
+ * l'adulte, avec les mêmes garde-fous.
+ */
+describe('Fusion des doublons enfant', () => {
+  const planEnfant = {
+    jour: '2026-09-17',
+    examens_concernes: 52,
+    patients: 24,
+    fusions: 31,
+    supprimes: 28,
+    conflits: 9,
+    simulation: true,
+    rapport: '',
+  };
+
+  test('annonce les valeurs concurrentes avant d’écrire', async () => {
+    let recu: Record<string, unknown> | null = null;
+    server.use(
+      http.post(
+        `${env.API_URL}/analytics/qualite/nettoyage/simulation/`,
+        async ({ request }) => {
+          recu = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json(planEnfant);
+        },
+      ),
+    );
+
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    rendre();
+    await user.click(screen.getByRole('tab', { name: 'Doublons (enfant)' }));
+    await user.click(screen.getByText('Analyser cette journée'));
+
+    expect(await screen.findByText('Ce qui sera fait')).toBeVisible();
+    await waitFor(() => expect(recu?.operation).toBe('doublons_enfant'));
+    expect(screen.getByText('9')).toBeVisible();
+    // Ce sont ces valeurs-là qui appelleront un médecin : le dire avant.
+    expect(
+      screen.getByText(/ne sont jamais tranchées\s+automatiquement/),
+    ).toBeVisible();
+  });
+});

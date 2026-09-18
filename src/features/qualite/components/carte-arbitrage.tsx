@@ -82,7 +82,8 @@ export function CarteArbitrage({ arbitrage }: CarteArbitrageProps) {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          Examen conservé #{arbitrage.examen_conserve_id} · écarté{' '}
+          {arbitrage.type_examen === 'enfant' ? 'Examen enfant' : 'Examen'}{' '}
+          conservé #{arbitrage.examen_conserve_id} · écarté{' '}
           {arbitrage.numero_examen_ecarte || `#${arbitrage.examen_ecarte_id}`}
         </p>
       </div>
