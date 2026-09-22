@@ -144,6 +144,9 @@ export const planNettoyageSchema = z.object({
   supprimes: z.number(),
   conflits: z.number().optional(),
   numeros: z.array(z.string()).optional(),
+  // Ce que le nettoyage refuse de toucher, et pourquoi. Un examen laissé de
+  // côté sans explication ressemble à un oubli.
+  alertes: z.array(z.string()).optional(),
   simulation: z.boolean(),
   rapport: z.string(),
 });

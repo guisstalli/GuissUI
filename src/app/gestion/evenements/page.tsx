@@ -52,6 +52,7 @@ import {
   type EventStaff,
 } from '@/features/events/types/schemas';
 import { estSurPlusieursJours } from '@/features/events/utils/format-periode';
+import { useSites } from '@/features/sites/api/get-sites';
 import { cn } from '@/lib/utils';
 
 function statutBadge(s: string) {
@@ -110,6 +111,8 @@ function CreateEventDialog() {
       pour_conducteurs: false,
     },
   });
+  const { data: sites } = useSites({ params: { limit: 100 } });
+  const sitesActifs = (sites?.results ?? []).filter((s) => s.is_active);
   const { mutate: create, isPending } = useCreateEvent({
     onSuccess: () => {
       setOpen(false);
@@ -211,6 +214,47 @@ function CreateEventDialog() {
                 )}
               />
             </div>
+            {/* Le site de l'événement est posé sur chaque patient qui s'y
+                inscrit, dès la création de sa fiche. Sans lui, les fiches
+                restaient sans lieu. */}
+            <FormField
+              control={form.control}
+              name="site_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Site</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(valeur) => {
+                      const id = Number(valeur);
+                      field.onChange(id);
+                      // Le lieu affiché reprend le nom du site s'il est vide :
+                      // l'opérateur n'a pas à le saisir deux fois.
+                      const site = sitesActifs.find((s) => s.id === id);
+                      if (site && !form.getValues('lieu')) {
+                        form.setValue('lieu', site.libelle, {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir le site de dépistage" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sitesActifs.map((site) => (
+                        <SelectItem key={site.id} value={String(site.id)}>
+                          {site.libelle}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="lieu"

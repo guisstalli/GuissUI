@@ -97,6 +97,7 @@ function CreateEventComponent({ onSuccess }: { onSuccess: () => void }) {
           heure_fin: '17:00',
           lieu: 'Hôpital de Thiès',
           type_examen: 'adulte',
+          site_id: 1,
         })
       }
       disabled={isPending}

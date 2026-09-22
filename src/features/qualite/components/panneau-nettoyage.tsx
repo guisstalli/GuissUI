@@ -158,6 +158,13 @@ export function PanneauNettoyage() {
 
       {plan && (
         <div className="border-t px-4 py-3">
+          {plan.alertes && plan.alertes.length > 0 && (
+            <ul className="mb-3 space-y-1 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs dark:border-amber-800 dark:bg-amber-950/30">
+              {plan.alertes.map((alerte) => (
+                <li key={alerte}>{alerte}</li>
+              ))}
+            </ul>
+          )}
           {plan.supprimes === 0 ? (
             <p className="text-sm text-muted-foreground">
               Rien à nettoyer ce jour-là : {plan.examens_concernes} examen(s)

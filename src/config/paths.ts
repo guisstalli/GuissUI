@@ -81,11 +81,6 @@ export const paths = {
     },
   },
 
-  // Campagne : le geste de terrain — une personne, un lieu, un examen.
-  campagne: {
-    getHref: () => '/campagne',
-  },
-
   // Exams
   exams: {
     // Unified list

@@ -133,6 +133,7 @@ describe('EventCreateInputSchema — cohérence dates et heures', () => {
     heure_fin: '17:00',
     lieu: 'Centre',
     type_examen: 'adulte' as const,
+    site_id: 3,
   };
 
   const champs = (data: unknown) => {
@@ -142,6 +143,11 @@ describe('EventCreateInputSchema — cohérence dates et heures', () => {
 
   test('accepte un événement cohérent', () => {
     expect(EventCreateInputSchema.safeParse(BASE).success).toBe(true);
+  });
+
+  test('exige le site : c’est lui que reçoivent les patients inscrits', () => {
+    const { site_id: _site, ...sansSite } = BASE;
+    expect(champs(sansSite)).toContain('site_id');
   });
 
   test("refuse une heure de fin avant l'heure de début", () => {
