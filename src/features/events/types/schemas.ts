@@ -61,6 +61,10 @@ export type MembreEquipe = z.infer<typeof MembreEquipeSchema>;
 export const EventStaffSchema = EventPublicSchema.extend({
   id: z.number(),
   created: z.string().optional(),
+  // Servis par l'API depuis le début, jamais déclarés ici : la modification
+  // d'un événement ne pouvait donc pas pré-remplir son site.
+  site_id: z.number().nullable().optional(),
+  site_nom: z.string().nullable().optional(),
 }).merge(EventDossierSchema.partial());
 
 export type EventStaff = z.infer<typeof EventStaffSchema>;
