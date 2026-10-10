@@ -16,7 +16,7 @@ interface BanniereAntecedentsProps {
  * « Les antécédents n'ont pas été demandés » — visible, jamais bloquant.
  *
  * Le rapport de la Gare Routière de Thiès pointe des antécédents manquants sur
- * une large part des dossiers. La Pre a tranché : on ne bloque pas un dépistage
+ * une large part des dossiers. L'équipe projet a retenu de ne pas bloquer un dépistage
  * de masse sur un champ déclaratif — une file de cent personnes s'arrête à la
  * première question sans réponse. Mais un manque qu'aucun écran ne montre ne se
  * rattrape jamais : le lendemain, la personne n'est plus joignable.

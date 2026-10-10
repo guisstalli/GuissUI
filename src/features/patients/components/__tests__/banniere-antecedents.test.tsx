@@ -29,7 +29,7 @@ const antecedentsAbsents = () =>
   );
 
 /**
- * La Pre a tranché : on ne bloque pas un dépistage de masse sur un champ
+ * L'équipe projet a retenu de ne pas bloquer un dépistage de masse sur un champ
  * déclaratif. Ces tests protègent l'autre moitié de la décision — que le manque
  * reste visible, et qu'« aucun antécédent » compte comme une réponse.
  */

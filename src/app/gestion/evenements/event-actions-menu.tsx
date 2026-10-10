@@ -5,6 +5,7 @@ import {
   ExternalLink,
   FileText,
   MoreHorizontal,
+  Pencil,
   Play,
   RotateCcw,
   Trash2,
@@ -15,6 +16,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { EditEventDialog } from '@/app/gestion/evenements/edit-event-dialog';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/dialog/confirmation-dialog/confirmation-dialog';
 import {
@@ -63,6 +65,7 @@ import {
 export function EventActions({ event }: { event: EventStaff }) {
   const { addNotification } = useNotifications();
   const [dossierOuvert, setDossierOuvert] = useState(false);
+  const [modificationOuverte, setModificationOuverte] = useState(false);
   const { mutate: start, isPending: starting } = useStartEvent(event.id);
   const { mutate: close, isPending: closing } = useCloseEvent(event.id);
   // Annulation confirmée dans une fenêtre pilotée par état : ouverte depuis un
@@ -164,6 +167,14 @@ export function EventActions({ event }: { event: EventStaff }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
+          {/* Modifiable tant que le dépistage n'a pas commencé : ensuite, la
+              date et le site décrivent ce qui s'est réellement passé. */}
+          {event.statut === 'planifie' && (
+            <DropdownMenuItem onSelect={() => setModificationOuverte(true)}>
+              <Pencil className="mr-2 size-4" />
+              Modifier
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link href={`/public/evenements/${event.slug}`} target="_blank">
               <ExternalLink className="mr-2 size-4" />
@@ -223,6 +234,14 @@ export function EventActions({ event }: { event: EventStaff }) {
         ouvert={dossierOuvert}
         onOuvertChange={setDossierOuvert}
       />
+
+      {event.statut === 'planifie' && (
+        <EditEventDialog
+          event={event}
+          ouvert={modificationOuverte}
+          onOuvertChange={setModificationOuverte}
+        />
+      )}
 
       {/* Le 14/09/2026, un clic dans ce menu a annulé un événement par erreur :
           l'annulation prévient aussi les inscrits, elle doit être délibérée. */}

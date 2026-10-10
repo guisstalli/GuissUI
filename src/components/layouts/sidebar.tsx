@@ -4,7 +4,6 @@ import {
   BarChart3,
   Bot,
   CalendarDays,
-  Tent,
   CalendarRange,
   ChevronRight,
   ClipboardCheck,
@@ -150,15 +149,6 @@ const navGroups: NavGroup[] = [
   {
     label: 'Activité',
     items: [
-      {
-        // Premier de son groupe : pendant une campagne, c'est l'écran où l'on
-        // passe la journée. Enterré plus bas, il resterait inutilisé et
-        // l'enregistrement continuerait de se faire en trois écrans.
-        title: 'Campagne',
-        url: paths.campagne.getHref(),
-        icon: Tent,
-        permission: 'patients:view',
-      },
       {
         title: 'Événements',
         url: paths.events.staff.list.getHref(),

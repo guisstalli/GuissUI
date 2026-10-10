@@ -61,6 +61,10 @@ export type MembreEquipe = z.infer<typeof MembreEquipeSchema>;
 export const EventStaffSchema = EventPublicSchema.extend({
   id: z.number(),
   created: z.string().optional(),
+  // Servis par l'API depuis le début, jamais déclarés ici : la modification
+  // d'un événement ne pouvait donc pas pré-remplir son site.
+  site_id: z.number().nullable().optional(),
+  site_nom: z.string().nullable().optional(),
 }).merge(EventDossierSchema.partial());
 
 export type EventStaff = z.infer<typeof EventStaffSchema>;
@@ -164,7 +168,14 @@ export const EventCreateInputSchema = z
     capacite_max: z.number().optional().nullable(),
     description: z.string().optional(),
     pour_conducteurs: z.boolean().optional(),
-    site_id: z.number().optional().nullable(),
+    // Requis à la création : c'est le site de l'événement que reçoivent les
+    // patients qui s'y inscrivent. Un événement sans site produisait des
+    // fiches sans lieu — 3 441 dans le dump du 18/09/2026. Le serveur
+    // l'accepte encore nul, pour les événements déjà créés.
+    site_id: z.number({
+      required_error: 'Choisissez le site où se déroule l’événement.',
+      invalid_type_error: 'Choisissez le site où se déroule l’événement.',
+    }),
   })
   // Miroir de ScreeningEvent.clean : le serveur refuse une fin avant le début.
   // Le formulaire l'acceptait, et l'erreur revenait sans champ désigné.

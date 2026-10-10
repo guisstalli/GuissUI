@@ -976,7 +976,7 @@ function ChildExamContent(props: ChildExamContentProps) {
               <FormProvider {...form}>
                 <main className="size-full overflow-y-auto p-6">
                   {/* Antécédents jamais demandés : visible à chaque ouverture du
-                dossier, jamais bloquant. La Pre a tranché qu'on n'arrête
+                dossier, jamais bloquant. L'équipe projet a retenu qu'on n'arrête
                 pas une file de cent personnes sur un champ déclaratif —
                 mais un manque que rien ne montre ne se rattrape jamais. */}
                   <div className="mb-4">
