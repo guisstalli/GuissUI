@@ -12,12 +12,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsSymptoms } from '../../types/types';
 
+import { DiagnosticsListeComplete } from './diagnostics-liste-complete';
+
 type SymptomsGroupedBarProps = {
   data: AnalyticsSymptoms;
 };
 
 export const SymptomsGroupedBar = ({ data }: SymptomsGroupedBarProps) => {
-  if (!data || !data.kpis || data.kpis.esterman_sample_size === 0) {
+  const vide =
+    !data?.kpis ||
+    ((data.kpis.top_diagnostics ?? []).length === 0 &&
+      Object.values(data.kpis.symptoms ?? {}).every((n) => n === 0));
+  // La carte ne dépend plus du score d'Esterman (C9) : chez l'enfant, il
+  // n'existe pas, et 111 examens diagnostiqués restaient invisibles.
+  if (vide) {
     return (
       <Card className="col-span-full h-full">
         <CardHeader>
@@ -55,14 +63,14 @@ export const SymptomsGroupedBar = ({ data }: SymptomsGroupedBarProps) => {
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-sm font-medium">
-            Analyse des Symptômes et Diagnostics Top 5
+            Symptômes et diagnostics (top 10)
           </CardTitle>
           <div className="text-right">
             <div className="text-xs text-muted-foreground">
-              Échantillon Global
+              Examens diagnostiqués
             </div>
             <div className="text-sm font-bold">
-              {kpis.esterman_sample_size} examens
+              {kpis.diagnostics_exam_count ?? '—'}
             </div>
           </div>
         </div>
@@ -111,6 +119,11 @@ export const SymptomsGroupedBar = ({ data }: SymptomsGroupedBarProps) => {
                 </div>
               )}
             </div>
+            {(kpis.all_diagnostics ?? []).length > chartDiagnostics.length && (
+              <DiagnosticsListeComplete
+                diagnostics={kpis.all_diagnostics ?? []}
+              />
+            )}
           </div>
           <div className="flex flex-col justify-between p-6">
             <div>
@@ -152,16 +165,18 @@ export const SymptomsGroupedBar = ({ data }: SymptomsGroupedBarProps) => {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t pt-2 text-sm">
-              <span className="text-muted-foreground">
-                Score Esterman Moyen
-              </span>
-              <span className="text-lg font-bold">
-                {kpis.esterman_mean != null
-                  ? `${kpis.esterman_mean.toFixed(1)} %`
-                  : 'N/A'}
-              </span>
-            </div>
+            {kpis.esterman_sample_size > 0 && (
+              <div className="mt-4 flex items-center justify-between border-t pt-2 text-sm">
+                <span className="text-muted-foreground">
+                  Score Esterman Moyen
+                </span>
+                <span className="text-lg font-bold">
+                  {kpis.esterman_mean != null
+                    ? `${kpis.esterman_mean.toFixed(1)} %`
+                    : 'N/A'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
