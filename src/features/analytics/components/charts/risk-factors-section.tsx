@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsRiskFactors } from '../../types/types';
 
+import { AntecedentsCouverture } from './antecedents-couverture';
+
 type RiskFactorsSectionProps = {
   data: AnalyticsRiskFactors;
 };
@@ -54,7 +56,7 @@ export const RiskFactorsSection = ({ data }: RiskFactorsSectionProps) => {
             Facteurs de risque
           </CardTitle>
           <span className="text-xs text-muted-foreground">
-            {data.sample_size} patients
+            % sur {data.sample_size} fiches renseignées
           </span>
         </div>
       </CardHeader>
@@ -224,6 +226,7 @@ export const RiskFactorsSection = ({ data }: RiskFactorsSectionProps) => {
             )}
           </div>
         </div>
+        <AntecedentsCouverture data={data} />
       </CardContent>
     </Card>
   );
