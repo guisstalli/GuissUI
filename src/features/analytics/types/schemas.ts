@@ -10,6 +10,9 @@ export const SEX_VALUES = ['H', 'F', 'A'] as const;
 export const AGE_BAND_VALUES = ['all', 'child', 'adult', 'over_40'] as const;
 export const EYE_STRATEGY_VALUES = ['separate', 'average', 'worst'] as const;
 export const EXAM_SCOPE_VALUES = ['all', 'first'] as const;
+// Périmètre conducteur à trois choix (C18) : hors conducteurs (défaut de l'API),
+// conducteurs seuls, ou toute la population.
+export const DRIVER_SCOPE_VALUES = ['exclude', 'only', 'all'] as const;
 
 // Critères cliniques de cohorte (un seul à la fois côté backend)
 export const ACUITY_VALUES = ['malvoyance', 'basse_vision', 'moyenne'] as const;
@@ -43,6 +46,7 @@ export const SexSchema = z.enum(SEX_VALUES);
 export const AgeBandSchema = z.enum(AGE_BAND_VALUES);
 export const EyeStrategySchema = z.enum(EYE_STRATEGY_VALUES);
 export const ExamScopeSchema = z.enum(EXAM_SCOPE_VALUES);
+export const DriverScopeSchema = z.enum(DRIVER_SCOPE_VALUES);
 export const AcuityCategorySchema = z.enum(ACUITY_VALUES);
 export const TensionCategorySchema = z.enum(TENSION_VALUES);
 export const ConclusionCategorySchema = z.enum(CONCLUSION_VALUES);
@@ -62,6 +66,7 @@ export const AnalyticsFiltersSchema = z.object({
   eye_strategy: EyeStrategySchema.optional(),
   exam_scope: ExamScopeSchema.optional(),
   driver_only: z.boolean().optional(),
+  driver_scope: DriverScopeSchema.optional(),
   // Critères cliniques de cohorte — un seul appliqué à la fois
   acuity: AcuityCategorySchema.optional(),
   tension: TensionCategorySchema.optional(),
@@ -75,6 +80,8 @@ export const AnalyticsOverviewSchema = z.object({
   filters: AnalyticsFiltersSchema,
   population: z.object({
     patients_total: z.number(),
+    // Patients réellement examinés (C12) ; optionnel pour les anciennes réponses.
+    patients_examined: z.number().optional(),
     examens_total: z.number(),
     age_mean: z.number().nullable(),
     sex_distribution: z.record(z.number()),
@@ -101,6 +108,8 @@ export const AnalyticsSiteItemSchema = z.object({
   examens_total: z.number(),
   av_mean: z.number().nullable(),
   to_mean: z.number().nullable(),
+  av_sample_size: z.number().optional(),
+  to_sample_size: z.number().optional(),
 });
 export const AnalyticsSitesSchema = z.object({
   filters: AnalyticsFiltersSchema,
@@ -124,15 +133,37 @@ export const AnalyticsGlaucomaSchema = z.object({
   scatter_to_cd: z.array(AnalyticsGlaucomaItemSchema),
 });
 
+const _AcuitySummarySchema = z.object({
+  sample_size: z.number(),
+  av_logmar_mean: z.number().nullable().optional(),
+  av_logmar_decimal: z.number().nullable().optional(),
+  av_zero_count: z.number().optional(),
+  count_av_less_than_10: z.number().optional(),
+  pct_av_less_than_10: z.number(),
+  count_av_less_than_5: z.number().optional(),
+  pct_av_less_than_5: z.number(),
+  count_av_less_than_3: z.number().optional(),
+  pct_av_less_than_3: z.number(),
+});
+
 export const AnalyticsVisualAcuitySchema = z.object({
   filters: AnalyticsFiltersSchema,
   kpis: z.object({
     av_mean: z.number().nullable(),
+    av_logmar_mean: z.number().nullable().optional(),
+    av_logmar_decimal: z.number().nullable().optional(),
+    av_zero_count: z.number().optional(),
     pct_av_less_than_10: z.number(),
     pct_av_less_than_5: z.number(),
     pct_av_less_than_3: z.number(),
+    count_av_less_than_10: z.number().optional(),
+    count_av_less_than_5: z.number().optional(),
+    count_av_less_than_3: z.number().optional(),
     sample_size: z.number(),
+    patients_count: z.number().optional(),
   }),
+  // Second indicateur (C19) : sans correction, meilleur œil, une valeur par examen.
+  uncorrected_best_eye: _AcuitySummarySchema.optional(),
 });
 
 export const AnalyticsRefractionSchema = z.object({
@@ -142,8 +173,36 @@ export const AnalyticsRefractionSchema = z.object({
     pct_myope: z.number(),
     pct_hypermetrope: z.number(),
     pct_normal: z.number(),
+    myope_count: z.number().optional(),
+    hypermetrope_count: z.number().optional(),
+    normal_count: z.number().optional(),
+    eqs_mean_od: z.number().nullable().optional(),
+    eqs_mean_og: z.number().nullable().optional(),
+    sample_size_od: z.number().optional(),
+    sample_size_og: z.number().optional(),
+    eqs_mean_myopes: z.number().nullable().optional(),
+    eqs_mean_hypermetropes: z.number().nullable().optional(),
+    anisometropia_count: z.number().optional(),
+    anisometropia_evaluable: z.number().optional(),
+    astigmatism_count: z.number().optional(),
+    astigmatism_evaluable: z.number().optional(),
     sample_size: z.number(),
+    patients_count: z.number().optional(),
   }),
+  severity: z
+    .object({
+      myopie: z.object({
+        legere: z.number(),
+        moyenne: z.number(),
+        forte: z.number(),
+      }),
+      hypermetropie: z.object({
+        legere: z.number(),
+        moyenne: z.number(),
+        forte: z.number(),
+      }),
+    })
+    .optional(),
 });
 
 export const AnalyticsOcularTensionSchema = z.object({
@@ -152,8 +211,21 @@ export const AnalyticsOcularTensionSchema = z.object({
     to_mean: z.number().nullable(),
     pct_to_above_21: z.number(),
     pct_to_above_25: z.number(),
+    count_to_above_21: z.number().optional(),
+    count_to_above_25: z.number().optional(),
     sample_size: z.number(),
+    patients_count: z.number().optional(),
   }),
+  by_eye: z
+    .record(
+      z.object({
+        to_mean: z.number().nullable(),
+        count_to_above_21: z.number(),
+        pct_to_above_21: z.number(),
+        sample_size: z.number(),
+      }),
+    )
+    .optional(),
 });
 
 export const AnalyticsPachymetrySchema = z.object({
@@ -169,6 +241,9 @@ export const AnalyticsSymptomsSchema = z.object({
   kpis: z.object({
     symptoms: z.record(z.number()),
     top_diagnostics: z.array(z.tuple([z.string(), z.number()])),
+    // Liste complète (C9) : top 10 affiché, le reste sur demande.
+    all_diagnostics: z.array(z.tuple([z.string(), z.number()])).optional(),
+    diagnostics_exam_count: z.number().optional(),
     esterman_mean: z.number().nullable(),
     esterman_sample_size: z.number(),
   }),
@@ -178,9 +253,20 @@ export const AnalyticsSymptomsSchema = z.object({
 // NEW ANALYTICS SCHEMAS
 // =============================================================================
 
+const _NamedCountSchema = z.object({ name: z.string(), count: z.number() });
+
 export const AnalyticsRiskFactorsSchema = z.object({
   filters: AnalyticsFiltersSchema,
   sample_size: z.number(),
+  // Couverture (C16) : les % portent sur les fiches renseignées.
+  coverage: z
+    .object({
+      patients_examined: z.number(),
+      with_record: z.number(),
+      not_recorded: z.number(),
+      coverage_pct: z.number(),
+    })
+    .optional(),
   screen_usage: z.object({
     uses_screen_pct: z.number(),
     mean_hours_per_day: z.number().nullable(),
@@ -191,11 +277,15 @@ export const AnalyticsRiskFactorsSchema = z.object({
     cecite_pct: z.number(),
     gpao_pct: z.number(),
     other_pct: z.number(),
+    other_categories: z
+      .array(z.object({ name: z.string(), count: z.number(), pct: z.number() }))
+      .optional(),
   }),
   medical_antecedents: z.object({
     has_medical_pct: z.number(),
     has_ophthalmic_pct: z.number(),
-    top_ophthalmic: z.array(z.object({ name: z.string(), count: z.number() })),
+    top_ophthalmic: z.array(_NamedCountSchema),
+    top_medical: z.array(_NamedCountSchema).optional(),
   }),
   addiction: z.object({
     has_addiction_pct: z.number(),
@@ -236,8 +326,24 @@ const _SegmentStatsSchema = <T extends z.ZodRawShape>(extraFields: T) =>
     ...extraFields,
   });
 
+export const LesionStructureSchema = z.object({
+  examined_eyes: z.number(),
+  examined_patients: z.number(),
+  items: z.array(
+    z.object({
+      value: z.string(),
+      eyes: z.number(),
+      eyes_pct: z.number(),
+      patients: z.number(),
+      patients_pct: z.number(),
+    }),
+  ),
+});
+
 export const AnalyticsBiomicroscopySchema = z.object({
   filters: AnalyticsFiltersSchema,
+  // Lésions seules, en % d'yeux et de patients examinés (C15).
+  lesions: z.record(LesionStructureSchema).optional(),
   anterior: z.object({
     segment_distribution: z.record(z.number()),
     cristallin: _SegmentStatsSchema({
@@ -311,6 +417,9 @@ export const AnalyticsVisualFieldSchema = z.object({
   filters: AnalyticsFiltersSchema,
   sample_size: z.number(),
   esterman_mean: z.number().nullable(),
+  // Conducteurs seulement (C10) ; déficit = plus de 13 % de champ déficitaire.
+  drivers_count: z.number().optional(),
+  drivers_deficit_count: z.number().optional(),
   defect_distribution: z.array(
     z.object({ value: z.string(), count: z.number(), pct: z.number() }),
   ),

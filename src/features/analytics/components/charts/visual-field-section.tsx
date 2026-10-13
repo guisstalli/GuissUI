@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsVisualField } from '../../types/types';
 
+import { Effectif } from './effectif';
+
 type VisualFieldSectionProps = {
   data: AnalyticsVisualField;
 };
@@ -21,7 +23,9 @@ export const VisualFieldSection = ({ data }: VisualFieldSectionProps) => {
     return (
       <Card className="col-span-full">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Champ visuel</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Champ visuel — conducteurs
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex h-[120px] items-center justify-center">
           <p className="text-sm text-muted-foreground">Aucune donnée.</p>
@@ -42,11 +46,29 @@ export const VisualFieldSection = ({ data }: VisualFieldSectionProps) => {
     <Card className="col-span-full">
       <CardHeader>
         <div className="flex items-start justify-between">
-          <CardTitle className="text-sm font-medium">Champ visuel</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Champ visuel — conducteurs
+          </CardTitle>
           <span className="text-xs text-muted-foreground">
             {data.sample_size} examens
           </span>
         </div>
+        {/* Réservé aux conducteurs (C10, Pre R9) : chez l'enfant, des champs
+            « NORMAL » étaient saisis dès 0-2 ans. Le score d'Esterman saisi est
+            le % de champ déficitaire ; déficit au-delà de 13 %. */}
+        {data.drivers_count != null && (
+          <p className="text-xs text-muted-foreground">
+            Déficit &gt; 13 % :{' '}
+            <span className="font-medium text-foreground">
+              {data.drivers_deficit_count ?? 0}
+            </span>{' '}
+            <Effectif
+              count={data.drivers_deficit_count}
+              total={data.drivers_count}
+              unit="conducteur"
+            />
+          </p>
+        )}
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid divide-y border-t md:grid-cols-2 md:divide-x md:divide-y-0">

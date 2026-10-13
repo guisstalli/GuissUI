@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
 import { DEFAULT_ANALYTICS_FILTERS } from '../../types/types';
-import { analyticsFiltersToSearchParams } from '../filters';
+import {
+  analyticsFiltersToSearchParams,
+  normalizeAnalyticsFilters,
+} from '../filters';
 
 describe('analyticsFiltersToSearchParams', () => {
   test('sérialise patient_ids en paramètres répétables (pas une chaîne 1,2,3)', () => {
@@ -46,5 +49,29 @@ describe('analyticsFiltersToSearchParams', () => {
 
     expect(params.get('symptom')).toBe('BAV');
     expect(params.getAll('patient_ids')).toEqual(['5', '6']);
+  });
+});
+
+describe('C18 — périmètre conducteur à trois choix', () => {
+  test('driver_scope part dans la requête', () => {
+    const params = analyticsFiltersToSearchParams(
+      normalizeAnalyticsFilters({
+        ...DEFAULT_ANALYTICS_FILTERS,
+        driver_scope: 'all',
+      }),
+    );
+    expect(params.get('driver_scope')).toBe('all');
+  });
+
+  test('driver_only l’emporte et driver_scope n’est pas envoyé', () => {
+    const params = analyticsFiltersToSearchParams(
+      normalizeAnalyticsFilters({
+        ...DEFAULT_ANALYTICS_FILTERS,
+        driver_only: true,
+        driver_scope: 'all',
+      }),
+    );
+    expect(params.get('driver_only')).toBe('true');
+    expect(params.get('driver_scope')).toBeNull();
   });
 });

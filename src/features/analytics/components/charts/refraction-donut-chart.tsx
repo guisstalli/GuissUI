@@ -11,6 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsRefraction } from '../../types/types';
 
+import { RefractionDetails } from './refraction-details';
+import { UnitesEchantillon } from './unites-echantillon';
+
 type RefractionDonutChartProps = {
   data: AnalyticsRefraction;
 };
@@ -40,13 +43,24 @@ export const RefractionDonutChart = ({ data }: RefractionDonutChartProps) => {
   const { kpis } = data;
 
   const chartData = [
-    { name: 'Myope', value: kpis.pct_myope, fill: COLORS.Myope },
+    {
+      name: 'Myope',
+      value: kpis.pct_myope,
+      count: kpis.myope_count,
+      fill: COLORS.Myope,
+    },
     {
       name: 'Hypermetrope',
       value: kpis.pct_hypermetrope,
+      count: kpis.hypermetrope_count,
       fill: COLORS.Hypermetrope,
     },
-    { name: 'Normal/Autre', value: kpis.pct_normal, fill: COLORS.Normal },
+    {
+      name: 'Normal/Autre',
+      value: kpis.pct_normal,
+      count: kpis.normal_count,
+      fill: COLORS.Normal,
+    },
   ].filter((d) => d.value > 0);
 
   return (
@@ -58,10 +72,10 @@ export const RefractionDonutChart = ({ data }: RefractionDonutChartProps) => {
               Bilan Réfractif
             </CardTitle>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Échantillon</div>
-            <div className="text-lg font-bold">{kpis.sample_size}</div>
-          </div>
+          <UnitesEchantillon
+            eyes={kpis.sample_size}
+            patients={kpis.patients_count}
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -82,7 +96,15 @@ export const RefractionDonutChart = ({ data }: RefractionDonutChartProps) => {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: any) => [`${value}%`, 'Proportion']}
+                formatter={(value, _name, item) => {
+                  const count = (item?.payload as { count?: number })?.count;
+                  return [
+                    count != null
+                      ? `${value} % (${count} sur ${kpis.sample_size} yeux)`
+                      : `${value} %`,
+                    'Proportion',
+                  ];
+                }}
                 contentStyle={{ borderRadius: '8px' }}
               />
               <Legend verticalAlign="bottom" height={36} />
@@ -97,6 +119,7 @@ export const RefractionDonutChart = ({ data }: RefractionDonutChartProps) => {
               : 'N/A'}
           </span>
         </div>
+        {kpis.eqs_mean_od !== undefined && <RefractionDetails data={data} />}
       </CardContent>
     </Card>
   );

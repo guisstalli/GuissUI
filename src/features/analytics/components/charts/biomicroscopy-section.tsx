@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsBiomicroscopy } from '../../types/types';
 
+import { BiomicroscopyLesions } from './biomicroscopy-lesions';
+
 const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#3b82f6'];
 
 function pct(val: number) {
@@ -75,6 +77,21 @@ type BiomicroscopySectionProps = {
 
 export const BiomicroscopySection = ({ data }: BiomicroscopySectionProps) => {
   const { anterior, posterior } = data;
+
+  if (data.lesions) {
+    return (
+      <Card className="col-span-full">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">
+            Biomicroscopie — lésions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="border-t p-0">
+          <BiomicroscopyLesions lesions={data.lesions} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="col-span-full">

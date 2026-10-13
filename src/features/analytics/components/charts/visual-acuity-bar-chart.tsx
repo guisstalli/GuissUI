@@ -13,7 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { AnalyticsVisualAcuity, CohortCriterion } from '../../types/types';
 
+import { AcuiteSansCorrection } from './acuite-sans-correction';
 import { DrilldownHint } from './drilldown-hint';
+import { Effectif } from './effectif';
+import { MoyenneLogmar } from './moyenne-logmar';
+import { UnitesEchantillon } from './unites-echantillon';
 
 type VisualAcuityBarChartProps = {
   data: AnalyticsVisualAcuity;
@@ -43,6 +47,7 @@ export const VisualAcuityBarChart = ({
     {
       name: '< 3/10 (Malvoyance)',
       value: kpis.pct_av_less_than_3,
+      count: kpis.count_av_less_than_3,
       color: '#ef4444',
       criterion: {
         type: 'acuity' as const,
@@ -53,6 +58,7 @@ export const VisualAcuityBarChart = ({
     {
       name: '< 5/10 (Basse)',
       value: kpis.pct_av_less_than_5,
+      count: kpis.count_av_less_than_5,
       color: '#f59e0b',
       criterion: {
         type: 'acuity' as const,
@@ -63,6 +69,7 @@ export const VisualAcuityBarChart = ({
     {
       name: '< 10/10 (Moyenne)',
       value: kpis.pct_av_less_than_10,
+      count: kpis.count_av_less_than_10,
       color: '#3b82f6',
       criterion: {
         type: 'acuity' as const,
@@ -91,10 +98,10 @@ export const VisualAcuityBarChart = ({
             </CardTitle>
             {onSegmentClick && <DrilldownHint />}
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Échantillon</div>
-            <div className="text-lg font-bold">{kpis.sample_size}</div>
-          </div>
+          <UnitesEchantillon
+            eyes={kpis.sample_size}
+            patients={kpis.patients_count}
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -109,7 +116,15 @@ export const VisualAcuityBarChart = ({
               <XAxis type="number" unit="%" domain={[0, 100]} fontSize={12} />
               <YAxis type="category" dataKey="name" fontSize={11} width={120} />
               <Tooltip
-                formatter={(value: any) => [`${value}%`, 'Proportion']}
+                formatter={(value, _name, item) => {
+                  const count = (item?.payload as { count?: number })?.count;
+                  return [
+                    count != null
+                      ? `${value} % (${count} sur ${kpis.sample_size} yeux)`
+                      : `${value} %`,
+                    'Proportion',
+                  ];
+                }}
                 contentStyle={{ borderRadius: '8px' }}
               />
               <Bar
@@ -127,12 +142,33 @@ export const VisualAcuityBarChart = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 flex items-center justify-between border-t pt-4 text-sm">
-          <span className="text-muted-foreground">Moyenne Globale AV</span>
-          <span className="text-lg font-bold">
-            {kpis.av_mean != null ? `${kpis.av_mean.toFixed(2)} / 10` : 'N/A'}
-          </span>
-        </div>
+        <ul className="mt-3 space-y-1 text-xs">
+          {chartData.map((entry) => (
+            <li key={entry.name} className="flex justify-between gap-2">
+              <span className="text-muted-foreground">{entry.name}</span>
+              <span>
+                <span className="font-medium">{entry.value} %</span>{' '}
+                <Effectif
+                  count={entry.count}
+                  total={kpis.sample_size}
+                  unit="œil"
+                  unitPlural="yeux"
+                />
+              </span>
+            </li>
+          ))}
+        </ul>
+        <MoyenneLogmar
+          titre="Moyenne (LogMAR)"
+          decimal={kpis.av_logmar_decimal}
+          logmar={kpis.av_logmar_mean}
+          zeros={kpis.av_zero_count}
+          repli={kpis.av_mean}
+        />
+        {data.uncorrected_best_eye &&
+          data.uncorrected_best_eye.sample_size > 0 && (
+            <AcuiteSansCorrection resume={data.uncorrected_best_eye} />
+          )}
       </CardContent>
     </Card>
   );

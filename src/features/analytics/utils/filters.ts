@@ -70,6 +70,7 @@ export const normalizeAnalyticsFilters = (
     eye_strategy: filters.eye_strategy ?? 'separate',
     exam_scope: filters.exam_scope ?? 'all',
     driver_only: filters.driver_only,
+    driver_scope: filters.driver_only ? undefined : filters.driver_scope,
     acuity: filters.acuity,
     tension: filters.tension,
     conclusion: filters.conclusion,
