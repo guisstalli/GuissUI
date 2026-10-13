@@ -64,6 +64,12 @@ export const SitesBarChart = ({ data }: SitesBarChartProps) => {
       Cell: ({ entry }) => (
         <div className="text-right">
           {entry.av_mean != null ? entry.av_mean.toFixed(2) : '-'}
+          {/* Effectif à côté de la moyenne (C8, C11) */}
+          {entry.av_sample_size != null && (
+            <div className="text-xs text-muted-foreground">
+              {entry.av_sample_size} yeux
+            </div>
+          )}
         </div>
       ),
     },
@@ -73,6 +79,11 @@ export const SitesBarChart = ({ data }: SitesBarChartProps) => {
       Cell: ({ entry }) => (
         <div className="text-right">
           {entry.to_mean != null ? entry.to_mean.toFixed(1) : '-'}
+          {entry.to_sample_size != null && (
+            <div className="text-xs text-muted-foreground">
+              {entry.to_sample_size} yeux
+            </div>
+          )}
         </div>
       ),
     },
