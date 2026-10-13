@@ -16,6 +16,8 @@ import type {
 } from '../../types/types';
 
 import { DrilldownHint } from './drilldown-hint';
+import { TensionParOeil } from './tension-par-oeil';
+import { UnitesEchantillon } from './unites-echantillon';
 
 type OcularTensionBarChartProps = {
   data: AnalyticsOcularTension;
@@ -97,10 +99,10 @@ export const OcularTensionBarChart = ({
               <DrilldownHint label="Cliquez sur une tranche pour explorer" />
             )}
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Échantillon</div>
-            <div className="text-lg font-bold">{kpis.sample_size}</div>
-          </div>
+          <UnitesEchantillon
+            eyes={kpis.sample_size}
+            patients={kpis.patients_count}
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -142,6 +144,13 @@ export const OcularTensionBarChart = ({
             {kpis.to_mean != null ? `${kpis.to_mean.toFixed(1)} mmHg` : 'N/A'}
           </span>
         </div>
+        {kpis.count_to_above_21 != null && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            &gt; 21 mmHg : {kpis.pct_to_above_21} % ({kpis.count_to_above_21}{' '}
+            yeux sur {kpis.sample_size})
+          </p>
+        )}
+        {data.by_eye && <TensionParOeil byEye={data.by_eye} />}
       </CardContent>
     </Card>
   );
