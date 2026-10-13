@@ -9,6 +9,9 @@ type AnalyticsKpiRowProps = {
 };
 
 export const AnalyticsKpiRow = ({ data }: AnalyticsKpiRowProps) => {
+  // Patients réellement examinés (C12) : patients_total compte aussi les
+  // inscrits jamais examinés, et faussait « Activité ».
+  const examines = data.patients_examined ?? data.patients_total;
   return (
     <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -26,7 +29,7 @@ export const AnalyticsKpiRow = ({ data }: AnalyticsKpiRowProps) => {
           <Users className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.patients_total}</div>
+          <div className="text-2xl font-bold">{examines}</div>
           <p className="text-xs text-muted-foreground">
             Ayant au moins un examen sur la période filtrée
           </p>
@@ -68,9 +71,7 @@ export const AnalyticsKpiRow = ({ data }: AnalyticsKpiRowProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {data.patients_total > 0
-              ? (data.examens_total / data.patients_total).toFixed(1)
-              : '0'}
+            {examines > 0 ? (data.examens_total / examines).toFixed(1) : '0'}
           </div>
           <p className="text-xs text-muted-foreground">Examens par patient</p>
         </CardContent>
