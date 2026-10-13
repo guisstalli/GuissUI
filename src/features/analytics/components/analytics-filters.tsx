@@ -34,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 import {
@@ -42,6 +41,7 @@ import {
   AGE_BAND_VALUES,
   EYE_STRATEGY_VALUES,
   EXAM_SCOPE_VALUES,
+  DRIVER_SCOPE_VALUES,
 } from '../types/schemas';
 import { type AnalyticsFilters } from '../types/types';
 
@@ -65,6 +65,13 @@ const EYE_STRATEGY_OPTIONS: Option[] = [
   { label: 'Yeux séparés', value: 'separate' },
   { label: 'Moyenne OD/OG', value: 'average' },
   { label: 'Pire œil', value: 'worst' },
+];
+
+// Trois choix (C18, Pre R11) : hors conducteurs reste le défaut de l'API.
+const DRIVER_SCOPE_OPTIONS: Option[] = [
+  { label: 'Hors conducteurs', value: 'exclude' },
+  { label: 'Conducteurs seuls', value: 'only' },
+  { label: 'Toute la population', value: 'all' },
 ];
 
 const EXAM_SCOPE_OPTIONS: Option[] = [
@@ -91,7 +98,11 @@ function countActiveFilters(filters: AnalyticsFilters): number {
   if (filters.age_band && filters.age_band !== 'all') count++;
   if (filters.eye_strategy && filters.eye_strategy !== 'separate') count++;
   if (filters.exam_scope && filters.exam_scope !== 'all') count++;
-  if (filters.driver_only) count++;
+  if (
+    filters.driver_only ||
+    (filters.driver_scope && filters.driver_scope !== 'exclude')
+  )
+    count++;
   return count;
 }
 
@@ -472,36 +483,35 @@ export const AnalyticsFiltersBar = ({
                 </Select>
               </div>
 
-              {/* Conducteurs seulement */}
-              <div className="flex items-end pb-1">
-                <label
-                  htmlFor="driver-only-toggle"
-                  className={cn(
-                    'flex cursor-pointer items-center gap-2.5 rounded-md border border-input bg-background px-3 py-2.5 transition-colors hover:bg-accent/50',
-                    lockDriverOnly && 'cursor-not-allowed opacity-60',
-                    draftFilters.driver_only &&
-                      'border-primary/50 bg-primary/5',
-                  )}
+              {/* Périmètre conducteur (C18) */}
+              <div>
+                <FilterLabel>Conducteurs</FilterLabel>
+                <Select
+                  value={
+                    draftFilters.driver_only
+                      ? 'only'
+                      : (draftFilters.driver_scope ?? 'exclude')
+                  }
+                  onValueChange={(val) =>
+                    onChange({
+                      ...draftFilters,
+                      driver_only: undefined,
+                      driver_scope: val as (typeof DRIVER_SCOPE_VALUES)[number],
+                    })
+                  }
+                  disabled={lockDriverOnly}
                 >
-                  <Switch
-                    id="driver-only-toggle"
-                    checked={draftFilters.driver_only ?? false}
-                    onCheckedChange={(checked) =>
-                      onChange({
-                        ...draftFilters,
-                        driver_only: checked || undefined,
-                      })
-                    }
-                    disabled={lockDriverOnly}
-                  />
-                  <span className="text-sm font-medium leading-tight">
-                    Conducteurs
-                    <br />
-                    <span className="text-xs text-muted-foreground">
-                      seulement
-                    </span>
-                  </span>
-                </label>
+                  <SelectTrigger className="h-10" aria-label="Conducteurs">
+                    <SelectValue placeholder="Hors conducteurs" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DRIVER_SCOPE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </FilterSection>
