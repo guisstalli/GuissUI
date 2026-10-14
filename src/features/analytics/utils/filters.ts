@@ -67,7 +67,6 @@ export const normalizeAnalyticsFilters = (
     site_id: normalizedSiteIds?.length ? normalizedSiteIds : undefined,
     sex: filters.sex,
     age_band: filters.age_band ?? 'all',
-    eye_strategy: filters.eye_strategy ?? 'separate',
     exam_scope: filters.exam_scope ?? 'all',
     driver_only: filters.driver_only,
     driver_scope: filters.driver_only ? undefined : filters.driver_scope,

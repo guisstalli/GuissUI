@@ -86,9 +86,9 @@ const acuite: AnalyticsVisualAcuity = {
 };
 
 describe('C12, C17, C19 — carte acuité', () => {
-  test('donne yeux et patients', () => {
+  test('donne examens et patients (meilleur œil, C20)', () => {
     rtlRender(<VisualAcuityBarChart data={acuite} />);
-    expect(screen.getByText(/4\s?807 yeux/)).toBeInTheDocument();
+    expect(screen.getByText(/4\s?807 examens/)).toBeInTheDocument();
     expect(screen.getByText(/2\s?415 patients/)).toBeInTheDocument();
   });
 

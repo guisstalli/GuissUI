@@ -96,10 +96,14 @@ export const VisualAcuityBarChart = ({
             <CardTitle className="text-sm font-medium">
               Acuité Visuelle
             </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Meilleur œil, une valeur par examen
+            </p>
             {onSegmentClick && <DrilldownHint />}
           </div>
           <UnitesEchantillon
-            eyes={kpis.sample_size}
+            count={kpis.sample_size}
+            unit="examen"
             patients={kpis.patients_count}
           />
         </div>
@@ -120,7 +124,7 @@ export const VisualAcuityBarChart = ({
                   const count = (item?.payload as { count?: number })?.count;
                   return [
                     count != null
-                      ? `${value} % (${count} sur ${kpis.sample_size} yeux)`
+                      ? `${value} % (${count} sur ${kpis.sample_size} examens)`
                       : `${value} %`,
                     'Proportion',
                   ];
@@ -151,8 +155,7 @@ export const VisualAcuityBarChart = ({
                 <Effectif
                   count={entry.count}
                   total={kpis.sample_size}
-                  unit="œil"
-                  unitPlural="yeux"
+                  unit="examen"
                 />
               </span>
             </li>

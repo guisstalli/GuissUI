@@ -26,7 +26,6 @@ const DIMENSIONS_TRANSMISES = [
   'sex',
   'exam_type',
   'age_band',
-  'eye_strategy',
   'exam_scope',
   'driver_scope',
   'driver_only',
@@ -36,7 +35,6 @@ const DIMENSIONS_TRANSMISES = [
 const VALEURS_NEUTRES: Record<string, unknown> = {
   exam_type: 'all',
   age_band: 'all',
-  eye_strategy: 'separate',
   exam_scope: 'all',
   driver_scope: 'all',
   driver_only: false,
@@ -51,7 +49,6 @@ const LIBELLES: Record<string, string> = {
   sex: 'Sexe',
   exam_type: "Type d'examen",
   age_band: "Tranche d'âge",
-  eye_strategy: 'Stratégie œil',
   exam_scope: 'Examens',
   driver_scope: 'Conducteurs',
   driver_only: 'Conducteurs uniquement',
@@ -61,7 +58,6 @@ const VALEURS: Record<string, Record<string, string>> = {
   sex: { H: 'Hommes', F: 'Femmes' },
   exam_type: { adult: 'Adulte', child: 'Enfant' },
   age_band: { child: 'Enfants', adult: 'Adultes', over_40: 'Plus de 40 ans' },
-  eye_strategy: { worst: 'Œil le plus atteint', average: 'Moyenne OD/OG' },
   exam_scope: { first: 'Premier par patient' },
   driver_scope: { only: 'Conducteurs seuls', exclude: 'Hors conducteurs' },
 };
