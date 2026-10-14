@@ -15,7 +15,8 @@ import { FamilialEnum, TypeAddictionEnum } from './schemas';
  */
 export const medicalHistorySchema = z
   .object({
-    has_antecedents: z.boolean().default(false),
+    // Sans valeur par défaut et non bloquant (C25) : null = « non renseigné ».
+    has_antecedents: z.boolean().nullable(),
     has_antecedents_medico_chirurgicaux: z.boolean(),
     antecedents_medico_chirurgicaux: z.array(z.string().max(255)),
     has_pathologie_ophtalmologique: z.boolean(),
@@ -38,7 +39,7 @@ export const medicalHistorySchema = z
   })
   .superRefine((data, ctx) => {
     // Hors antécédent déclaré, le serveur remet tout à zéro : rien à exiger.
-    if (!data.has_antecedents) return;
+    if (data.has_antecedents !== true) return;
 
     const exiger = (path: string, message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
