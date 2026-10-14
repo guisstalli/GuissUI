@@ -384,7 +384,7 @@ export const mapMedicalHistoryApiToForm = (
   return {
     id: data.id,
     patient: data.patient,
-    has_antecedents: data.has_antecedents ?? false,
+    has_antecedents: data.has_antecedents ?? null,
     has_antecedents_medico_chirurgicaux:
       data.has_antecedents_medico_chirurgicaux ?? false,
     antecedents_medico_chirurgicaux: data.antecedents_medico_chirurgicaux || [],

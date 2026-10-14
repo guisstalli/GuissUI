@@ -39,12 +39,16 @@ export const HIRSCHBERG_DETAIL_VALUES = [
 
 export const HirschbergDetailEnum = z.enum(HIRSCHBERG_DETAIL_VALUES);
 
-/** Stereoscopy Lang II choices - Aligné avec StereoLangIIChoices Python */
+/**
+ * Stéréoscopie Lang II — aligné avec StereoLangIIChoices Python. Saisie du
+ * résultat et non plus de la figure (C27b, Pre 12/10) : éléphant ou auto =
+ * réussi, étoile seule = échoué ; « non fait » distingue le test non réalisé
+ * d'un champ oublié (vide).
+ */
 export const STEREOSCOPY_LANG_VALUES = [
-  'etoile',
-  'lune',
-  'auto',
-  'elephant',
+  'reussi',
+  'echoue',
+  'non_fait',
 ] as const;
 
 export const StereoscopyLangEnum = z.enum(STEREOSCOPY_LANG_VALUES);
@@ -102,12 +106,16 @@ export const DiplopieTypeEnum = z.enum(DIPLOPIE_TYPES);
 
 /** Antécédents familiaux - Aligné avec FamilialChoices Python */
 export const FAMILIAL_VALUES = [
-  'AUCUN',
-  'GLAUCOME',
   'CECITE',
+  'GPAO',
+  'AMETROPIE',
+  'MYOPIE',
   'CATARACTE',
-  'RETINOPATHIE',
-  'AUTRES',
+  'DIABETE',
+  'HTA',
+  'ASTHME',
+  'DREPANOCYTOSE',
+  'OTHER',
 ] as const;
 export const FamilialEnum = z.enum(FAMILIAL_VALUES);
 
@@ -732,7 +740,7 @@ export const PlaintesSchema = z
 export const MedicalHistorySchema = z.object({
   id: z.number().optional(),
   patient: z.number().optional(),
-  has_antecedents: z.boolean().default(false),
+  has_antecedents: z.boolean().nullable().optional(),
   has_antecedents_medico_chirurgicaux: z.boolean().default(false),
   antecedents_medico_chirurgicaux: z.array(z.string()).default([]),
   has_pathologie_ophtalmologique: z.boolean().default(false),

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { FormDescription, FormLabel, Input } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 
+import { estReponseAucun } from './est-reponse-aucun';
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -33,6 +35,12 @@ export interface ICDSelectorProps {
   error?: string;
   maxItems?: number;
   placeholder?: string;
+  /**
+   * Retire les réponses « Aucun… » de la nomenclature (« AUCUN obstacle … 0-4 % »,
+   * « Aucune déficience visuelle ») : saisies comme antécédents, elles se
+   * comptaient comme des antécédents réels (C27, Kamal 11/10).
+   */
+  excludeNoneAnswers?: boolean;
 }
 
 // =============================================================================
@@ -82,6 +90,7 @@ export function ICDSelector({
   error,
   maxItems,
   placeholder = 'Rechercher une pathologie (ICD-11)...',
+  excludeNoneAnswers = false,
 }: ICDSelectorProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ICDSearchResult[]>([]);
@@ -92,27 +101,32 @@ export function ICDSelector({
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced search
-  const handleSearch = useCallback((searchQuery: string) => {
-    setQuery(searchQuery);
+  const handleSearch = useCallback(
+    (searchQuery: string) => {
+      setQuery(searchQuery);
 
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
 
-    if (searchQuery.trim().length < 2) {
-      setResults([]);
-      setIsOpen(false);
-      return;
-    }
+      if (searchQuery.trim().length < 2) {
+        setResults([]);
+        setIsOpen(false);
+        return;
+      }
 
-    debounceRef.current = setTimeout(async () => {
-      setIsLoading(true);
-      const searchResults = await searchICD11(searchQuery);
-      setResults(searchResults);
-      setIsOpen(searchResults.length > 0);
-      setIsLoading(false);
-    }, 300);
-  }, []);
+      debounceRef.current = setTimeout(async () => {
+        setIsLoading(true);
+        const searchResults = (await searchICD11(searchQuery)).filter(
+          (r) => !excludeNoneAnswers || !estReponseAucun(r.title),
+        );
+        setResults(searchResults);
+        setIsOpen(searchResults.length > 0);
+        setIsLoading(false);
+      }, 300);
+    },
+    [excludeNoneAnswers],
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {

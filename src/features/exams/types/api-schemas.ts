@@ -228,7 +228,7 @@ export const ConclusionApiSchema = z.object({
 export const MedicalHistoryApiSchema = z.object({
   id: z.number().optional(),
   patient: z.number().optional(),
-  has_antecedents: z.boolean(),
+  has_antecedents: z.boolean().nullable(),
   has_antecedents_medico_chirurgicaux: z.boolean(),
   antecedents_medico_chirurgicaux: z.array(z.string()),
   has_pathologie_ophtalmologique: z.boolean(),

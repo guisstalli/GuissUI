@@ -33,6 +33,8 @@ import {
   type MedicalHistoryFormValues,
 } from '../types/medical-history-schema';
 
+import { ReponseTroisEtats } from './reponse-trois-etats';
+
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
@@ -59,7 +61,9 @@ export function MedicalHistoryForm({
   const form = useForm<MedicalHistoryFormValues>({
     resolver: zodResolver(medicalHistorySchema),
     defaultValues: {
-      has_antecedents: false,
+      // Aucune réponse préremplie (C25) : « non renseigné » tant que la
+      // question n'a pas été posée.
+      has_antecedents: null,
       has_antecedents_medico_chirurgicaux: false,
       antecedents_medico_chirurgicaux: [],
       has_pathologie_ophtalmologique: false,
@@ -90,7 +94,7 @@ export function MedicalHistoryForm({
 
       form.reset({
         has_antecedents:
-          hasAnyAntecedentData || form.getValues('has_antecedents'),
+          antecedent.has_antecedents ?? (hasAnyAntecedentData ? true : null),
         has_antecedents_medico_chirurgicaux:
           antecedent.has_antecedents_medico_chirurgicaux ??
           (antecedent.antecedents_medico_chirurgicaux || []).length > 0,
@@ -115,7 +119,8 @@ export function MedicalHistoryForm({
   }, [antecedent, form]);
 
   const hasHydratedFromApi = useRef(false);
-  const previousHasAntecedents = useRef<boolean | null>(null);
+  // undefined = pas encore observé ; null = « non renseigné ».
+  const previousHasAntecedents = useRef<boolean | null | undefined>(undefined);
 
   const hasAntecedents = form.watch('has_antecedents');
   const watchFamilial = form.watch('familial');
@@ -132,9 +137,10 @@ export function MedicalHistoryForm({
 
   const buildApiPayload = useCallback(
     (data: MedicalHistoryFormValues) => {
-      if (!data.has_antecedents) {
+      if (data.has_antecedents !== true) {
         return {
           patient: patientId,
+          has_antecedents: data.has_antecedents,
           has_antecedents_medico_chirurgicaux: false,
           antecedents_medico_chirurgicaux: [],
           has_pathologie_ophtalmologique: false,
@@ -152,6 +158,7 @@ export function MedicalHistoryForm({
 
       return {
         patient: patientId,
+        has_antecedents: true,
         has_antecedents_medico_chirurgicaux:
           data.has_antecedents_medico_chirurgicaux,
         antecedents_medico_chirurgicaux:
@@ -186,7 +193,7 @@ export function MedicalHistoryForm({
   );
 
   useEffect(() => {
-    if (!hasAntecedents) {
+    if (hasAntecedents !== true) {
       form.setValue('has_antecedents_medico_chirurgicaux', false);
       form.setValue('antecedents_medico_chirurgicaux', []);
       form.setValue('has_pathologie_ophtalmologique', false);
@@ -203,7 +210,7 @@ export function MedicalHistoryForm({
   }, [hasAntecedents, form]);
 
   useEffect(() => {
-    if (previousHasAntecedents.current === null) {
+    if (previousHasAntecedents.current === undefined) {
       previousHasAntecedents.current = hasAntecedents;
       return;
     }
@@ -220,7 +227,12 @@ export function MedicalHistoryForm({
       return;
     }
 
-    if (previousValue === false && hasAntecedents && !antecedent) {
+    if (previousValue === hasAntecedents) {
+      return;
+    }
+
+    // « Oui » sur un dossier vierge : on crée la fiche pour la compléter.
+    if (hasAntecedents === true && !antecedent) {
       updateAntecedentMutation.mutate({
         patientId,
         data: buildApiPayload({
@@ -231,12 +243,13 @@ export function MedicalHistoryForm({
       return;
     }
 
-    if (previousValue === true && !hasAntecedents && antecedent) {
+    // « Non » ou « Non renseigné » : la réponse est enregistrée telle quelle.
+    if (hasAntecedents !== true) {
       updateAntecedentMutation.mutate({
         patientId,
         data: buildApiPayload({
           ...form.getValues(),
-          has_antecedents: false,
+          has_antecedents: hasAntecedents,
         }),
       });
     }
@@ -294,21 +307,22 @@ export function MedicalHistoryForm({
                   Le patient a-t-il des antécédents médicaux ?
                 </FormLabel>
                 <FormDescription>
-                  Activez cette option pour afficher et renseigner les
-                  antécédents. Si désactivé, les valeurs sont nettoyées.
+                  Aucune réponse n&apos;est cochée d&apos;avance : sans réponse,
+                  le dossier reste « non renseigné ». « Non » efface les
+                  antécédents saisis.
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <ReponseTroisEtats
+                  value={field.value ?? null}
+                  onChange={field.onChange}
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        {hasAntecedents && (
+        {hasAntecedents === true && (
           <>
             {/* Section 1: Antécédents médico-chirurgicaux */}
             <section className="space-y-4 rounded-lg border border-border bg-card p-6">
@@ -354,6 +368,7 @@ export function MedicalHistoryForm({
                   render={({ field, fieldState }) => (
                     <FormItem>
                       <ICDSelector
+                        excludeNoneAnswers
                         label="Pathologies générales"
                         description="Recherchez et sélectionnez dans la nomenclature ICD-11"
                         value={field.value}
@@ -407,6 +422,7 @@ export function MedicalHistoryForm({
                   render={({ field, fieldState }) => (
                     <FormItem>
                       <ICDSelector
+                        excludeNoneAnswers
                         label=""
                         description="Recherchez et sélectionnez dans la nomenclature ICD-11"
                         value={field.value}

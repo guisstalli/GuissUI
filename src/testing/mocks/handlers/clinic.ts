@@ -13,6 +13,11 @@ export const mockClinicSettings: ClinicSettings = {
   numero_etablissement: 'SN-MED-2024-001',
   mentions_legales:
     'Établissement de santé agréé. Toutes données sont confidentielles.',
+  logmar_zero_value: 1.9,
+  adult_min_age: 16,
+  driver_min_age: 18,
+  rupture_window_exams: 30,
+  rupture_threshold_points: 20,
 };
 
 export const clinicHandlers = [

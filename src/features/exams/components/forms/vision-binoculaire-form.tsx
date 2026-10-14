@@ -44,10 +44,9 @@ const LABELS = {
     limbe: 'Limbe',
   } as Record<string, string>,
   STEREOSCOPY: {
-    etoile: 'Étoile',
-    lune: 'Lune',
-    auto: 'Auto',
-    elephant: 'Éléphant',
+    reussi: 'Réussi (éléphant ou auto)',
+    echoue: 'Échoué (étoile seule)',
+    non_fait: 'Non fait',
   } as Record<string, string>,
   REFLEX: {
     rouge: 'Rouge (Normal)',
