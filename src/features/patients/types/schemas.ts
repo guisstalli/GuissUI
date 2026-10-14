@@ -17,7 +17,20 @@ export const SEX_LABELS: Record<z.infer<typeof SexEnum>, string> = {
 };
 
 /** Antécédents familiaux */
-export const FamilialEnum = z.enum(['CECITE', 'GPAO', 'OTHER']);
+// Cases à cocher (C27, Kamal 11/10) : les catégories saisies jusqu'ici en texte
+// libre dans « autre » deviennent des cases (mêmes catégories qu'au tableau de bord).
+export const FamilialEnum = z.enum([
+  'CECITE',
+  'GPAO',
+  'AMETROPIE',
+  'MYOPIE',
+  'CATARACTE',
+  'DIABETE',
+  'HTA',
+  'ASTHME',
+  'DREPANOCYTOSE',
+  'OTHER',
+]);
 
 /** Types d'addiction (conducteurs) */
 export const TypeAddictionEnum = z.enum(['TABAGISME', 'ALCOOL', 'AUTRES']);
@@ -34,6 +47,13 @@ export const TYPE_ADDICTION_LABELS: Record<
 export const FAMILIAL_LABELS: Record<z.infer<typeof FamilialEnum>, string> = {
   CECITE: 'Cécité',
   GPAO: 'GPAO',
+  AMETROPIE: 'Amétropie',
+  MYOPIE: 'Myopie',
+  CATARACTE: 'Cataracte',
+  DIABETE: 'Diabète',
+  HTA: 'HTA',
+  ASTHME: 'Asthme',
+  DREPANOCYTOSE: 'Drépanocytose',
   OTHER: 'Autre',
 };
 
@@ -112,6 +132,8 @@ export const PatientUpdateSchema = PatientCreateSchema.partial();
 export const AntecedentSchema = z.object({
   id: z.number(),
   patient: z.number(),
+  // null = « non renseigné » (C25)
+  has_antecedents: z.boolean().nullable().optional(),
   has_antecedents_medico_chirurgicaux: z.boolean().optional(),
   antecedents_medico_chirurgicaux: z.array(z.string().max(255)).optional(),
   has_pathologie_ophtalmologique: z.boolean().optional(),
@@ -134,6 +156,8 @@ export const AntecedentSchema = z.object({
  */
 export const AntecedentCreateSchema = z.object({
   patient: z.number(),
+  // null = « non renseigné » (C25)
+  has_antecedents: z.boolean().nullable().optional(),
   has_antecedents_medico_chirurgicaux: z.boolean().optional(),
   antecedents_medico_chirurgicaux: z.array(z.string().max(255)).optional(),
   has_pathologie_ophtalmologique: z.boolean().optional(),
