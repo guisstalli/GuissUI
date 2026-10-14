@@ -38,6 +38,7 @@ import { useUpdateBillingPreferences } from '@/features/billing/api/update-billi
 import type { BillingPreferences } from '@/features/billing/types/schemas';
 import { useClinicSettings } from '@/features/clinic/api/get-clinic-settings';
 import { ClinicSettingsForm } from '@/features/clinic/components/clinic-settings-form';
+import { ClinicalParametersForm } from '@/features/clinic/components/clinical-parameters-form';
 import { MedicamentsAdminTable } from '@/features/medicaments-admin/components/medicaments-admin-table';
 import { usePersistentTabState } from '@/hooks/use-persistent-tab-state';
 import { useUser } from '@/lib/auth';
@@ -498,6 +499,18 @@ export default function ParametresPage() {
                   )}
                 </CardContent>
               </Card>
+              {clinicSettings && (
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      Paramètres cliniques
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ClinicalParametersForm settings={clinicSettings} />
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           )}
 
