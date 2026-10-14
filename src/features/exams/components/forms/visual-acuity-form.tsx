@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+import { AcuityAlerts } from './acuity-alerts';
+
 const PARINAUD_VALUES = [
   '1.5',
   '2',
@@ -296,6 +298,8 @@ export function VisualAcuityForm({ namePrefix = '' }: VisualAcuityFormProps) {
           />
         </div>
       </div>
+
+      <AcuityAlerts prefix={prefix} />
 
       {/* CHAMPS AVEC CORRECTION CONDITIONNELS */}
       {correction && (
