@@ -8,7 +8,6 @@ export const ANALYTICS_SCOPE_VALUES = [
 export const EXAM_TYPE_VALUES = ['all', 'child', 'adult'] as const;
 export const SEX_VALUES = ['H', 'F', 'A'] as const;
 export const AGE_BAND_VALUES = ['all', 'child', 'adult', 'over_40'] as const;
-export const EYE_STRATEGY_VALUES = ['separate', 'average', 'worst'] as const;
 export const EXAM_SCOPE_VALUES = ['all', 'first'] as const;
 // Périmètre conducteur à trois choix (C18) : hors conducteurs (défaut de l'API),
 // conducteurs seuls, ou toute la population.
@@ -44,7 +43,6 @@ export const AnalyticsScopeSchema = z.enum(ANALYTICS_SCOPE_VALUES);
 export const ExamTypeSchema = z.enum(EXAM_TYPE_VALUES);
 export const SexSchema = z.enum(SEX_VALUES);
 export const AgeBandSchema = z.enum(AGE_BAND_VALUES);
-export const EyeStrategySchema = z.enum(EYE_STRATEGY_VALUES);
 export const ExamScopeSchema = z.enum(EXAM_SCOPE_VALUES);
 export const DriverScopeSchema = z.enum(DRIVER_SCOPE_VALUES);
 export const AcuityCategorySchema = z.enum(ACUITY_VALUES);
@@ -63,7 +61,6 @@ export const AnalyticsFiltersSchema = z.object({
   site_id: z.array(z.number()).optional(),
   sex: SexSchema.optional(),
   age_band: AgeBandSchema.optional(),
-  eye_strategy: EyeStrategySchema.optional(),
   exam_scope: ExamScopeSchema.optional(),
   driver_only: z.boolean().optional(),
   driver_scope: DriverScopeSchema.optional(),

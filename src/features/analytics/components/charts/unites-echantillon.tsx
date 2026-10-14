@@ -1,25 +1,34 @@
 type UnitesEchantillonProps = {
-  eyes: number;
+  /** Nombre d'yeux (cartes par œil) ou d'examens (acuité au meilleur œil). */
+  count: number;
+  /** « œil » (défaut) ou « examen ». */
+  unit?: 'œil' | 'examen';
   patients?: number;
 };
 
+const PLURIEL = { œil: 'yeux', examen: 'examens' } as const;
+
 /**
- * Échantillon d'une carte « par œil » : « 4 807 yeux · 2 415 patients » (C12).
- * « Échantillon 4 824 » à côté de 1 195 patients se lisait comme une erreur.
+ * Échantillon d'une carte : « 4 807 yeux · 2 415 patients » (C12), ou
+ * « 2 915 examens » pour l'acuité, comptée au meilleur œil (C20).
  */
 export const UnitesEchantillon = ({
-  eyes,
+  count,
+  unit = 'œil',
   patients,
-}: UnitesEchantillonProps) => (
-  <div className="text-right">
-    <div className="text-xs text-muted-foreground">Échantillon</div>
-    <div className="text-sm font-bold">
-      {eyes.toLocaleString('fr-FR')} {eyes > 1 ? 'yeux' : 'œil'}
-    </div>
-    {patients != null && (
-      <div className="text-xs text-muted-foreground">
-        {patients.toLocaleString('fr-FR')} patient{patients > 1 ? 's' : ''}
+}: UnitesEchantillonProps) => {
+  const n = count ?? 0;
+  return (
+    <div className="text-right">
+      <div className="text-xs text-muted-foreground">Échantillon</div>
+      <div className="text-sm font-bold">
+        {n.toLocaleString('fr-FR')} {n > 1 ? PLURIEL[unit] : unit}
       </div>
-    )}
-  </div>
-);
+      {patients != null && (
+        <div className="text-xs text-muted-foreground">
+          {patients.toLocaleString('fr-FR')} patient{patients > 1 ? 's' : ''}
+        </div>
+      )}
+    </div>
+  );
+};

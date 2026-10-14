@@ -21,7 +21,6 @@ import {
   AnalyticsScopeSchema,
   ExamScopeSchema,
   ExamTypeSchema,
-  EyeStrategySchema,
   SexSchema,
   AcuityCategorySchema,
   TensionCategorySchema,
@@ -37,7 +36,6 @@ export type AnalyticsScope = z.infer<typeof AnalyticsScopeSchema>;
 export type ExamType = z.infer<typeof ExamTypeSchema>;
 export type Sex = z.infer<typeof SexSchema>;
 export type AgeBand = z.infer<typeof AgeBandSchema>;
-export type EyeStrategy = z.infer<typeof EyeStrategySchema>;
 export type ExamScope = z.infer<typeof ExamScopeSchema>;
 export type AnalyticsFilters = z.infer<typeof AnalyticsFiltersSchema>;
 
@@ -65,7 +63,6 @@ export const DEFAULT_ANALYTICS_FILTERS: AnalyticsFilters = {
   analytics_scope: 'population',
   exam_type: 'all',
   age_band: 'all',
-  eye_strategy: 'separate',
   exam_scope: 'all',
 };
 

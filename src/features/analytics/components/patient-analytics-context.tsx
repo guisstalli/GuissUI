@@ -37,7 +37,6 @@ export function PatientAnalyticsContext({
     () =>
       buildPatientAnalyticsFilters(patientId, {
         exam_scope: 'all',
-        eye_strategy: 'separate',
       }),
     [patientId],
   );

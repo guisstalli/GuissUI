@@ -12,7 +12,6 @@ export const mockAnalyticsOverview: AnalyticsOverview = {
     analytics_scope: 'population',
     exam_type: 'all',
     age_band: 'all',
-    eye_strategy: 'separate',
     exam_scope: 'all',
   },
   population: {
@@ -28,7 +27,6 @@ export const mockAnalyticsSites: AnalyticsSites = {
     analytics_scope: 'population',
     exam_type: 'all',
     age_band: 'all',
-    eye_strategy: 'separate',
     exam_scope: 'all',
   },
   sites: [
@@ -121,7 +119,6 @@ export const analyticsHandlers = [
         analytics_scope: 'population',
         exam_type: 'all',
         age_band: 'all',
-        eye_strategy: 'separate',
         exam_scope: 'all',
       },
       timeline: [],
@@ -135,7 +132,6 @@ export const analyticsHandlers = [
         analytics_scope: 'population',
         exam_type: 'all',
         age_band: 'all',
-        eye_strategy: 'separate',
         exam_scope: 'all',
       },
       kpis: {
@@ -155,7 +151,6 @@ export const analyticsHandlers = [
         analytics_scope: 'population',
         exam_type: 'all',
         age_band: 'all',
-        eye_strategy: 'separate',
         exam_scope: 'all',
       },
       kpis: {
@@ -174,7 +169,6 @@ export const analyticsHandlers = [
         analytics_scope: 'population',
         exam_type: 'all',
         age_band: 'all',
-        eye_strategy: 'separate',
         exam_scope: 'all',
       },
       kpis: {

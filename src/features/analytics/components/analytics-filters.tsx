@@ -39,7 +39,6 @@ import { cn } from '@/lib/utils';
 import {
   SEX_VALUES,
   AGE_BAND_VALUES,
-  EYE_STRATEGY_VALUES,
   EXAM_SCOPE_VALUES,
   DRIVER_SCOPE_VALUES,
 } from '../types/schemas';
@@ -59,12 +58,6 @@ const AGE_BAND_OPTIONS: Option[] = [
   { label: 'Enfants (< 16 ans)', value: 'child' },
   { label: 'Adultes (16 ans et +)', value: 'adult' },
   { label: 'Séniors (> 40 ans)', value: 'over_40' },
-];
-
-const EYE_STRATEGY_OPTIONS: Option[] = [
-  { label: 'Yeux séparés', value: 'separate' },
-  { label: 'Moyenne OD/OG', value: 'average' },
-  { label: 'Pire œil', value: 'worst' },
 ];
 
 // Trois choix (C18, Pre R11) : hors conducteurs reste le défaut de l'API.
@@ -96,7 +89,6 @@ function countActiveFilters(filters: AnalyticsFilters): number {
   if (filters.date_end) count++;
   if (filters.sex) count++;
   if (filters.age_band && filters.age_band !== 'all') count++;
-  if (filters.eye_strategy && filters.eye_strategy !== 'separate') count++;
   if (filters.exam_scope && filters.exam_scope !== 'all') count++;
   if (
     filters.driver_only ||
@@ -425,31 +417,6 @@ export const AnalyticsFiltersBar = ({
                   </SelectTrigger>
                   <SelectContent>
                     {AGE_BAND_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Eye strategy */}
-              <div>
-                <FilterLabel>Stratégie œil</FilterLabel>
-                <Select
-                  value={draftFilters.eye_strategy ?? 'separate'}
-                  onValueChange={(val) =>
-                    onChange({
-                      ...draftFilters,
-                      eye_strategy: val as (typeof EYE_STRATEGY_VALUES)[number],
-                    })
-                  }
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Séparée" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EYE_STRATEGY_OPTIONS.map((o) => (
                       <SelectItem key={o.value} value={o.value}>
                         {o.label}
                       </SelectItem>

@@ -100,7 +100,7 @@ export const OcularTensionBarChart = ({
             )}
           </div>
           <UnitesEchantillon
-            eyes={kpis.sample_size}
+            count={kpis.sample_size}
             patients={kpis.patients_count}
           />
         </div>

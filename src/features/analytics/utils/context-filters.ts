@@ -3,22 +3,12 @@ import type { AnalyticsFilters, ExamType } from '../types/types';
 type CommonAnalyticsFilterOverrides = Partial<
   Pick<
     AnalyticsFilters,
-    | 'date_start'
-    | 'date_end'
-    | 'site_id'
-    | 'sex'
-    | 'age_band'
-    | 'eye_strategy'
-    | 'exam_scope'
+    'date_start' | 'date_end' | 'site_id' | 'sex' | 'age_band' | 'exam_scope'
   >
 >;
 
-const DETAIL_DEFAULTS: Pick<
-  AnalyticsFilters,
-  'age_band' | 'eye_strategy' | 'exam_scope'
-> = {
+const DETAIL_DEFAULTS: Pick<AnalyticsFilters, 'age_band' | 'exam_scope'> = {
   age_band: 'all',
-  eye_strategy: 'separate',
   exam_scope: 'all',
 };
 
